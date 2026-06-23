@@ -16,7 +16,7 @@
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200">
 
     <nav class="bg-pink-600 dark:bg-gray-800 shadow">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="px-4 py-3 flex items-center justify-between">
             <span class="font-bold text-lg text-white">BIMONI 管理画面</span>
 
             <div class="flex items-center gap-1 text-sm">
@@ -76,7 +76,7 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 text-gray-800 dark:text-gray-200">
+    <main class="px-4 py-6 text-gray-800 dark:text-gray-200">
         @yield('content')
     </main>
 

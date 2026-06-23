@@ -87,13 +87,19 @@
                     {{ $campaign->application_end_at?->format('Y/m/d') ?? '-' }}
                 </td>
                 <td class="px-4 py-3 text-right">
-                    <a href="{{ route('admin.campaigns.edit', $campaign) }}"
-                       class="text-blue-600 dark:text-blue-400 hover:underline text-xs mr-2">編集</a>
-                    <form method="POST" action="{{ route('admin.campaigns.destroy', $campaign) }}"
-                          class="inline" onsubmit="return confirm('削除しますか？')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="text-red-500 dark:text-red-400 hover:underline text-xs">削除</button>
-                    </form>
+                    <div class="flex gap-2 justify-end flex-wrap">
+                        <a href="{{ route('admin.campaigns.applications', $campaign) }}"
+                           class="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 px-2 py-0.5 rounded hover:bg-purple-200">応募者を見る</a>
+                        <a href="{{ route('admin.campaigns.daily_slots.index', $campaign) }}"
+                           class="text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded hover:bg-indigo-200">日別件数</a>
+                        <a href="{{ route('admin.campaigns.edit', $campaign) }}"
+                           class="text-blue-600 dark:text-blue-400 hover:underline text-xs">編集</a>
+                        <form method="POST" action="{{ route('admin.campaigns.destroy', $campaign) }}"
+                              class="inline" onsubmit="return confirm('削除しますか？')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="text-red-500 dark:text-red-400 hover:underline text-xs">削除</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             @empty

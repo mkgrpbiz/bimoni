@@ -4,9 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\ApplicationStatusLog;
 use App\Models\Campaign;
+use App\Models\CampaignDailySlot;
+use App\Models\LineMessageJob;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ApplicationController extends Controller
@@ -33,39 +40,146 @@ class ApplicationController extends Controller
 
     public function campaignIndex(Campaign $campaign, Request $request): View
     {
-        $query = $campaign->applications()->with('user')->latest('applied_at');
+        $query = $campaign->applications()->with(['user', 'statusLogs.changedBy', 'lineMessageJobs'])->latest('applied_at');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+        if ($request->filled('q')) {
+            $query->whereHas('user', fn($q) =>
+                $q->where('name', 'like', '%'.$request->q.'%')
+                  ->orWhere('name_kana', 'like', '%'.$request->q.'%')
+            );
+        }
 
-        $applications = $query->paginate(30)->withQueryString();
+        $applications = $query->paginate(50)->withQueryString();
 
-        return view('admin.applications.campaign_index', compact('campaign', 'applications'));
+        // 全ユーザーIDを収集して他案件情報を一括取得
+        $userIds = $applications->pluck('user_id')->unique();
+        $otherApplicationsMap = $this->getOtherApplicationsMap($userIds, $campaign->id);
+
+        // 各応募に対して 48h 制限・他案件ステータスを付与
+        $applications->getCollection()->transform(function (Application $app) use ($otherApplicationsMap) {
+            $others = $otherApplicationsMap->get($app->user_id, collect());
+            $app->other_applications = $others;
+            $app->unlock_at = $app->getUnlockAt($others);
+            $app->is_locked = $app->isLocked($others);
+            return $app;
+        });
+
+        // ヘッダー集計
+        $today    = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        $dayAfter = Carbon::today()->addDays(2);
+
+        $slots = CampaignDailySlot::where('campaign_id', $campaign->id)
+            ->whereIn('target_date', [$today->toDateString(), $tomorrow->toDateString(), $dayAfter->toDateString()])
+            ->get()
+            ->keyBy(fn($s) => $s->target_date->toDateString());
+
+        $completedApps = $campaign->applications()->where('status', 'completed')->with('user')->get();
+        $summary = [
+            'today'    => $slots->get($today->toDateString()),
+            'tomorrow' => $slots->get($tomorrow->toDateString()),
+            'day_after' => $slots->get($dayAfter->toDateString()),
+            'completed_male'   => $completedApps->filter(fn($a) => $a->user?->gender === 'male')->count(),
+            'completed_female' => $completedApps->filter(fn($a) => $a->user?->gender === 'female')->count(),
+            'total_completed'  => $completedApps->count(),
+            'target_male_ratio'   => $campaign->target_male_ratio,
+            'target_female_ratio' => $campaign->target_female_ratio,
+        ];
+
+        $allCampaigns = Campaign::orderBy('title')->get(['id', 'title', 'status']);
+
+        return view('admin.applications.campaign_index', compact('campaign', 'applications', 'summary', 'allCampaigns'));
     }
 
     public function show(Application $application): View
     {
-        $application->load(['user', 'campaign', 'schedules.proposedBy']);
+        $application->load(['user', 'campaign', 'schedules.proposedBy', 'statusLogs.changedBy']);
+
+        $others = $this->getOtherApplicationsMap(
+            collect([$application->user_id]),
+            $application->campaign_id
+        )->get($application->user_id, collect());
+
+        $application->other_applications = $others;
+        $application->unlock_at = $application->getUnlockAt($others);
+        $application->is_locked = $application->isLocked($others);
+
         return view('admin.applications.show', compact('application'));
     }
 
     public function updateStatus(Request $request, Application $application): RedirectResponse
     {
         $request->validate([
-            'status' => 'required|in:selected,rejected,line_contacted,scheduled,completed,cancelled',
+            'status'         => 'required|in:selected,rejected,line_contacted,scheduled,confirming,completed,reported,approved,point_granted,cancelled',
+            'memo'           => 'nullable|string|max:500',
+            'invited_at'     => 'nullable|date',
+            'invited_end_at' => 'nullable|date|after_or_equal:invited_at',
         ]);
 
-        $data = ['status' => $request->status];
+        // 打診中への変更処理
+        if ($request->status === 'line_contacted') {
+            // 48h・ロックチェック
+            $others = $this->getOtherApplicationsMap(
+                collect([$application->user_id]),
+                $application->campaign_id
+            )->get($application->user_id, collect());
 
-        if ($request->status === 'selected') {
-            $data['selected_at'] = now();
-        } elseif ($request->status === 'line_contacted') {
-            $data['line_contacted_at'] = now();
-            $data['line_contact_status'] = 'sent';
+            if ($application->isLocked($others)) {
+                return back()->with('error', 'このユーザーは現在打診不可の状態です（他案件対応中または48時間制限）。');
+            }
+
+            // invited_at を保存（打診時に設定）
+            if ($request->filled('invited_at')) {
+                $application->update([
+                    'invited_at'     => $request->invited_at,
+                    'invited_end_at' => $request->invited_end_at,
+                ]);
+            }
+
+            // 打診トークンを生成（初回のみ）
+            if (!$application->proposal_token) {
+                $application->update(['proposal_token' => Str::random(64)]);
+            }
+            $application->refresh();
+
+            // 打診 LINE ジョブ作成
+            $proposalUrl  = route('proposals.confirm', $application->proposal_token);
+            $invitedLabel = $application->invited_at
+                ? $application->invited_at->format('m月d日 H:i')
+                  . ($application->invited_end_at ? '〜' . $application->invited_end_at->format('H:i') : '')
+                : '（日時未設定）';
+
+            $proposalMsg = "【モニターご案内】\n"
+                . $application->campaign->title . "\n\n"
+                . "実施予定日時: {$invitedLabel}\n\n"
+                . "以下のURLよりご回答をお願いします。\n"
+                . $proposalUrl;
+
+            LineMessageJob::create([
+                'application_id' => $application->id,
+                'user_id'        => $application->user_id,
+                'campaign_id'    => $application->campaign_id,
+                'line_user_id'   => $application->user?->line_user_id,
+                'send_type'      => 'proposal',
+                'message_body'   => $proposalMsg,
+                'send_at'        => now(),
+                'status'         => 'pending',
+            ]);
         }
 
-        $application->update($data);
+        // 予約中に管理者側から直接移行する場合も案内日時を保存
+        if ($request->status === 'scheduled' && $request->filled('invited_at')) {
+            $application->update([
+                'invited_at'     => $request->invited_at,
+                'invited_end_at' => $request->invited_end_at,
+            ]);
+        }
+
+        $adminId = auth('admin')->id();
+        $application->changeStatus($request->status, $adminId, $request->memo);
 
         return back()->with('success', 'ステータスを更新しました。');
     }
@@ -75,5 +189,30 @@ class ApplicationController extends Controller
         $request->validate(['notes' => 'nullable|string']);
         $application->update(['notes' => $request->notes]);
         return back()->with('success', 'メモを保存しました。');
+    }
+
+    public function updateInviteSchedule(Request $request, Application $application): RedirectResponse
+    {
+        $request->validate([
+            'invited_at'              => 'nullable|date',
+            'invited_end_at'          => 'nullable|date',
+            'continuation_invite_date' => 'nullable|date',
+        ]);
+
+        $application->update($request->only(['invited_at', 'invited_end_at', 'continuation_invite_date']));
+        return back()->with('success', '案内日時を保存しました。');
+    }
+
+    // ユーザーIDリストに対して、指定案件以外の進行中応募を一括取得
+    private function getOtherApplicationsMap(Collection $userIds, int $currentCampaignId): Collection
+    {
+        $lockStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed'];
+
+        return Application::with('campaign:id,title')
+            ->whereIn('user_id', $userIds)
+            ->where('campaign_id', '!=', $currentCampaignId)
+            ->whereIn('status', $lockStatuses)
+            ->get()
+            ->groupBy('user_id');
     }
 }

@@ -8,12 +8,14 @@ class Campaign extends Model
 {
     protected $fillable = [
         'category_id', 'title', 'campaign_type', 'status', 'pr_media',
-        'description', 'requirements', 'notes', 'product_name', 'product_price',
+        'description', 'requirements', 'notes', 'monitor_invite_message', 'monitor_end_message',
+        'product_name', 'product_price',
         'cooperation_fee', 'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
-        'continuation_rate', 'target_gender_ratio', 'capacity',
-        'solicitation_target', 'thumbnail', 'application_start_at',
-        'application_end_at', 'created_by',
+        'continuation_rate', 'target_gender_ratio',
+        'target_male_ratio', 'target_female_ratio',
+        'capacity', 'solicitation_target', 'thumbnail',
+        'application_start_at', 'application_end_at', 'created_by',
     ];
 
     protected function casts(): array
@@ -27,6 +29,7 @@ class Campaign extends Model
     public function category()     { return $this->belongsTo(Category::class); }
     public function tags()         { return $this->belongsToMany(Tag::class); }
     public function applications() { return $this->hasMany(Application::class); }
+    public function dailySlots()   { return $this->hasMany(CampaignDailySlot::class)->orderBy('target_date'); }
     public function createdBy()    { return $this->belongsTo(Admin::class, 'created_by'); }
 
     public function getTypeLabel(): string

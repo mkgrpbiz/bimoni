@@ -35,12 +35,11 @@ class FormFieldSeeder extends Seeder
                 'field_key' => 'available_times', 'label' => '実施可能な時間帯', 'type' => 'checkbox',
                 'is_required' => false, 'is_system' => true, 'maps_to' => 'available_times', 'sort_order' => 5,
                 'options' => [
-                    ['value' => '平日午前', 'label' => '平日午前（10:00-12:00）'],
-                    ['value' => '平日午後', 'label' => '平日午後（12:00-18:00）'],
-                    ['value' => '平日夜間', 'label' => '平日夜間（18:00以降）'],
-                    ['value' => '土日午前', 'label' => '土日午前（10:00-12:00）'],
-                    ['value' => '土日午後', 'label' => '土日午後（12:00-18:00）'],
-                    ['value' => '土日夜間', 'label' => '土日夜間（18:00以降）'],
+                    ['value' => '10:00〜13:00', 'label' => '10:00〜13:00'],
+                    ['value' => '14:00〜17:00', 'label' => '14:00〜17:00'],
+                    ['value' => '18:00〜20:00', 'label' => '18:00〜20:00'],
+                    ['value' => '21:00〜24:00', 'label' => '21:00〜24:00'],
+                    ['value' => 'いつでもOK',   'label' => 'いつでもOK'],
                 ],
             ],
             [

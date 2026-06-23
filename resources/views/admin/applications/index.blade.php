@@ -3,7 +3,10 @@
 @section('title', '応募管理')
 
 @section('content')
-<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">応募管理</h1>
+<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">応募管理</h1>
+
+{{-- 案件タブ --}}
+@include('admin.applications._campaign_tabs', ['allCampaigns' => $campaigns, 'activeCampaignId' => null])
 
 {{-- フィルター --}}
 <form method="GET" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-end">

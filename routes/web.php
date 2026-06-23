@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\ApplicationController;
+use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\Admin\CampaignController;
+use App\Http\Controllers\Admin\CampaignDailySlotController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FormFieldController;
 use App\Http\Controllers\Admin\ImportController;
@@ -21,17 +23,37 @@ Route::get('/', function () {
     return redirect()->route('admin.login');
 });
 
+// 打診ページ（認証不要・トークンで保護）
+Route::prefix('proposals/{token}')->name('proposals.')->group(function () {
+    Route::get('/',        [ProposalController::class, 'confirm'])->name('confirm');
+    Route::post('/yes',    [ProposalController::class, 'acceptYes'])->name('yes');
+    Route::get('/no',      [ProposalController::class, 'declineNo'])->name('no');
+    Route::post('/slot',   [ProposalController::class, 'selectSlot'])->name('slot');
+    Route::post('/cancel', [ProposalController::class, 'cancel'])->name('cancel');
+    Route::get('/complete',[ProposalController::class, 'complete'])->name('complete');
+    Route::post('/revert', [ProposalController::class, 'revert'])->name('revert');
+});
+
 Route::prefix('admin')->name('admin.')->group(function () {
     require __DIR__.'/auth.php';
 
     Route::middleware('auth:web')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::resource('campaigns', CampaignController::class);
+        // 案件別応募管理
         Route::get('campaigns/{campaign}/applications', [ApplicationController::class, 'campaignIndex'])->name('campaigns.applications');
+        // 日別打診予定数管理
+        Route::get('campaigns/{campaign}/daily-slots', [CampaignDailySlotController::class, 'index'])->name('campaigns.daily_slots.index');
+        Route::post('campaigns/{campaign}/daily-slots', [CampaignDailySlotController::class, 'store'])->name('campaigns.daily_slots.store');
+        Route::patch('campaigns/{campaign}/daily-slots/{slot}', [CampaignDailySlotController::class, 'update'])->name('campaigns.daily_slots.update');
+        Route::delete('campaigns/{campaign}/daily-slots/{slot}', [CampaignDailySlotController::class, 'destroy'])->name('campaigns.daily_slots.destroy');
+        Route::post('campaigns/{campaign}/daily-slots/import', [CampaignDailySlotController::class, 'importCsv'])->name('campaigns.daily_slots.import');
+        // 応募管理
         Route::get('applications', [ApplicationController::class, 'index'])->name('applications.index');
         Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
         Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.status');
         Route::patch('applications/{application}/notes', [ApplicationController::class, 'updateNotes'])->name('applications.notes');
+        Route::patch('applications/{application}/invite-schedule', [ApplicationController::class, 'updateInviteSchedule'])->name('applications.invite_schedule');
         Route::post('applications/{application}/schedules', [ScheduleController::class, 'store'])->name('schedules.store');
         Route::patch('schedules/{schedule}/confirm', [ScheduleController::class, 'confirm'])->name('schedules.confirm');
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

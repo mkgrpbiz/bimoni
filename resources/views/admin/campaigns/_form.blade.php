@@ -131,9 +131,19 @@
                    class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm" min="0">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">男女比目標</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">男女比目標（テキスト）</label>
             <input type="text" name="target_gender_ratio" value="{{ old('target_gender_ratio', $campaign->target_gender_ratio ?? '') }}"
                    class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm" placeholder="例: 男:女=3:7">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">目標男性比率（%）</label>
+            <input type="number" name="target_male_ratio" value="{{ old('target_male_ratio', $campaign->target_male_ratio ?? '') }}"
+                   class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm" min="0" max="100">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">目標女性比率（%）</label>
+            <input type="number" name="target_female_ratio" value="{{ old('target_female_ratio', $campaign->target_female_ratio ?? '') }}"
+                   class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm" min="0" max="100">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">募集開始日</label>
@@ -164,6 +174,26 @@
         </div>
     </div>
     @endif
+</div>
+
+{{-- LINE自動送信設定 --}}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4">
+    <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">LINE自動送信設定</h2>
+    <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">予約中に移行したユーザーへ案内予定日時に自動送信されるメッセージです。</p>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">モニター案内文</label>
+        <textarea name="monitor_invite_message" rows="5"
+                  class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm"
+                  placeholder="例: ○○モニターのご案内です。&#10;実施時間になりましたらモニターを開始してください。">{{ old('monitor_invite_message', $campaign->monitor_invite_message ?? '') }}</textarea>
+        <p class="text-xs text-gray-400 mt-1">予約中ユーザーへ案内日時に自動送信されます</p>
+    </div>
+    <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">モニター終了案内文</label>
+        <textarea name="monitor_end_message" rows="5"
+                  class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm"
+                  placeholder="例: ○○モニターのご報告をお願いします。&#10;報告ページよりご提出ください。">{{ old('monitor_end_message', $campaign->monitor_end_message ?? '') }}</textarea>
+        <p class="text-xs text-gray-400 mt-1">案内終了日時にリマインドとして自動送信されます</p>
+    </div>
 </div>
 
 {{-- ボタン --}}
