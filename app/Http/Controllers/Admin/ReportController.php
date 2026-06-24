@@ -13,10 +13,17 @@ class ReportController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = MonitorReport::with(['user', 'campaign'])->latest();
+        $query = MonitorReport::with(['user', 'campaign', 'images'])->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->filled('q')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->q . '%')
+                  ->orWhere('name_kana', 'like', '%' . $request->q . '%');
+            });
         }
 
         $reports = $query->paginate(20)->withQueryString();

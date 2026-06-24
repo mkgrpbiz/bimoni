@@ -41,6 +41,8 @@
         @yield('content')
     </main>
 
+    @stack('scripts')
+
     @auth('liff')
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
         <div class="flex max-w-lg mx-auto">

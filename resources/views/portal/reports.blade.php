@@ -1,0 +1,68 @@
+@extends('layouts.portal')
+@section('title', '報告管理')
+@section('content')
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-lg font-bold text-gray-800">報告管理（承認済み）</h1>
+    <div class="flex gap-1">
+        <a href="?mode=all"
+           class="px-3 py-1.5 rounded text-sm {{ $mode === 'all' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border' }}">累計</a>
+        <a href="?mode=month"
+           class="px-3 py-1.5 rounded text-sm {{ $mode === 'month' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border' }}">月次</a>
+    </div>
+</div>
+
+@if($mode === 'month')
+<form method="GET" class="flex gap-2 items-center mb-4">
+    <input type="hidden" name="mode" value="month">
+    <input type="month" name="month" value="{{ $month->format('Y-m') }}"
+           class="border rounded px-2 py-1.5 text-sm flex-1">
+    <button type="submit" class="bg-gray-800 text-white px-4 py-1.5 rounded text-sm shrink-0">表示</button>
+</form>
+@endif
+
+{{-- PC: テーブル --}}
+<div class="hidden md:block bg-white rounded-lg shadow overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-700">
+            <tr>
+                <th class="px-4 py-3 text-left">報告日</th>
+                <th class="px-4 py-3 text-left">名前</th>
+                <th class="px-4 py-3 text-left">フリガナ</th>
+                <th class="px-4 py-3 text-left">案件名</th>
+                <th class="px-4 py-3 text-right">紹介単価</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y">
+            @forelse($reports as $r)
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-xs text-gray-500">{{ $r->created_at->format('Y/m/d') }}</td>
+                <td class="px-4 py-3 text-gray-800">{{ $r->user?->name ?? '-' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ $r->user?->name_kana ?? '-' }}</td>
+                <td class="px-4 py-3 text-gray-800">{{ $r->campaign?->title ?? '-' }}</td>
+                <td class="px-4 py-3 text-right font-medium text-gray-800">
+                    ¥{{ number_format($r->campaign?->referral_fee ?? 0) }}
+                </td>
+            </tr>
+            @empty
+            <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">報告がありません</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+
+{{-- スマホ: カード --}}
+<div class="md:hidden space-y-3">
+    @forelse($reports as $r)
+    <div class="bg-white rounded-lg shadow px-4 py-3">
+        <div class="flex items-start justify-between mb-1">
+            <p class="font-medium text-gray-800 text-sm">{{ $r->campaign?->title ?? '-' }}</p>
+            <span class="font-bold text-gray-800 text-sm ml-2 shrink-0">¥{{ number_format($r->campaign?->referral_fee ?? 0) }}</span>
+        </div>
+        <p class="text-xs text-gray-600">{{ $r->user?->name ?? '-' }}（{{ $r->user?->name_kana ?? '-' }}）</p>
+        <p class="text-xs text-gray-400 mt-1">{{ $r->created_at->format('Y/m/d') }}</p>
+    </div>
+    @empty
+    <div class="bg-white rounded-lg shadow p-8 text-center text-gray-400">報告がありません</div>
+    @endforelse
+</div>
+@endsection

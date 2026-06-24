@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'LINE通知')
 
@@ -21,7 +21,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         送信先モニター <span class="text-red-500">*</span>
                     </label>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-1">複数選択可（Ctrl/Cmdで選択）</p>
+                    <p class="text-xs text-gray-700 dark:text-gray-500 mb-1">複数選択可（Ctrl/Cmdで選択）</p>
                     <select name="user_ids[]" multiple required
                             class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm h-40">
                         @foreach($users as $user)
@@ -56,7 +56,7 @@
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">送信履歴</h2>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                     <tr>
                         <th class="px-4 py-3 text-left">送信日時</th>
                         <th class="px-4 py-3 text-left">モニター</th>
@@ -68,20 +68,20 @@
                 <tbody class="divide-y dark:divide-gray-700">
                     @forelse($logs as $log)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
-                        <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ $log->sent_at->format('m/d H:i') }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">{{ $log->sent_at->format('m/d H:i') }}</td>
                         <td class="px-4 py-3 dark:text-gray-200">{{ $log->user->name ?? '-' }}</td>
-                        <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ $log->notification_type }}</td>
-                        <td class="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-xs truncate">{{ $log->message }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">{{ $log->notification_type }}</td>
+                        <td class="px-4 py-3 text-gray-800 dark:text-gray-400 max-w-xs truncate">{{ $log->message }}</td>
                         <td class="px-4 py-3">
                             <span class="text-xs px-1.5 py-0.5 rounded
-                                {{ $log->status === 'sent' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300' }}">
+                                {{ $log->status === 'sent' ? 'bg-green-500 text-white' : 'bg-red-500 text-white' }}">
                                 {{ $log->status === 'sent' ? '送信済' : '失敗' }}
                             </span>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500">送信履歴がありません</td>
+                        <td colspan="5" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">送信履歴がありません</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -91,3 +91,4 @@
     </div>
 </div>
 @endsection
+

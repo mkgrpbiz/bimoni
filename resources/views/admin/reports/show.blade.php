@@ -1,10 +1,11 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', '報告詳細')
 
 @section('content')
 <div class="flex items-center gap-3 mb-6">
-    <a href="{{ route('admin.reports.index') }}" class="text-gray-400 hover:text-gray-600">← 報告一覧</a>
+    <a href="{{ route('admin.reports.index') }}"
+       class="bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600 text-sm">← 報告一覧</a>
     <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">報告詳細</h1>
     <span class="px-2 py-0.5 rounded text-xs {{ $report->getStatusColor() }}">{{ $report->getStatusLabel() }}</span>
 </div>
@@ -69,7 +70,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">協力金付与</h2>
             @if($report->application->status === 'approved')
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <p class="text-sm text-gray-800 dark:text-gray-400 mb-3">
                 付与金額：<span class="font-bold text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign->cooperation_fee) }}</span>
             </p>
             <form method="POST" action="{{ route('admin.points.grant', $report) }}"
@@ -97,26 +98,27 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 text-sm">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">応募情報</h2>
             <dl class="space-y-2">
-                <dt class="text-gray-500 dark:text-gray-400">モニター</dt>
+                <dt class="text-gray-700 dark:text-gray-400">モニター</dt>
                 <dd class="font-medium dark:text-gray-200">{{ $report->user->name ?? '-' }}</dd>
-                <dt class="text-gray-500 dark:text-gray-400">案件</dt>
+                <dt class="text-gray-700 dark:text-gray-400">案件</dt>
                 <dd class="dark:text-gray-200">{{ $report->campaign->title }}</dd>
-                <dt class="text-gray-500 dark:text-gray-400">種別</dt>
+                <dt class="text-gray-700 dark:text-gray-400">種別</dt>
                 <dd class="dark:text-gray-200">{{ $report->campaign->getTypeLabel() }}</dd>
-                <dt class="text-gray-500 dark:text-gray-400">協力金</dt>
+                <dt class="text-gray-700 dark:text-gray-400">協力金</dt>
                 <dd class="font-medium text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign->cooperation_fee) }}</dd>
-                <dt class="text-gray-500 dark:text-gray-400">報告日</dt>
+                <dt class="text-gray-700 dark:text-gray-400">報告日</dt>
                 <dd class="dark:text-gray-200">{{ $report->created_at->format('Y/m/d H:i') }}</dd>
                 @if($report->reviewed_at)
-                <dt class="text-gray-500 dark:text-gray-400">審査日</dt>
+                <dt class="text-gray-700 dark:text-gray-400">審査日</dt>
                 <dd class="dark:text-gray-200">{{ $report->reviewed_at->format('Y/m/d H:i') }}</dd>
                 @endif
             </dl>
             <div class="mt-3">
                 <a href="{{ route('admin.applications.show', $report->application) }}"
-                   class="text-xs text-pink-600 dark:text-pink-400 hover:underline">→ 応募詳細を見る</a>
+                   class="bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600 text-xs">→ 応募詳細を見る</a>
             </div>
         </div>
     </div>
 </div>
 @endsection
+

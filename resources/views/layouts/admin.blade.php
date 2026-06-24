@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BIMONI 管理画面 - @yield('title', 'ダッシュボード')</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
     <script>
         // ページ読み込み前にダークモードを適用（チカつき防止）
         if (localStorage.getItem('theme') === 'dark' ||
@@ -36,17 +38,25 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                     報告管理
                 </a>
+                <a href="{{ route('admin.approval_reflections.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+                    承認反映
+                </a>
+                <a href="{{ route('admin.users.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+                    ユーザー管理
+                </a>
                 <a href="{{ route('admin.points.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
-                    ポイント
+                    協力金管理
                 </a>
-                <a href="{{ route('admin.settlements.index') }}"
+                <a href="{{ route('admin.referrals.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
-                    月末締め
+                    紹介報酬
                 </a>
-                <a href="{{ route('admin.notifications.line') }}"
+                <a href="{{ route('admin.agents.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
-                    LINE通知
+                    代理店
                 </a>
                 <a href="{{ route('admin.import.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Category;
 use App\Models\Tag;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,7 @@ class CampaignController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Campaign::with('category')->latest();
+        $query = Campaign::with('category')->orderBy('sort_order')->orderBy('id');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -27,7 +28,7 @@ class CampaignController extends Controller
             $query->where('title', 'like', '%' . $request->q . '%');
         }
 
-        $campaigns = $query->paginate(20)->withQueryString();
+        $campaigns = $query->paginate(50)->withQueryString();
 
         return view('admin.campaigns.index', compact('campaigns'));
     }
@@ -41,47 +42,17 @@ class CampaignController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'title'                  => 'required|string|max:255',
-            'campaign_type'          => 'required|in:experience,product,recovery',
-            'status'                 => 'required|in:draft,published,closed',
-            'category_id'            => 'nullable|exists:categories,id',
-            'pr_media'               => 'nullable|string|max:255',
-            'description'            => 'nullable|string',
-            'requirements'           => 'nullable|string',
-            'notes'                   => 'nullable|string',
-            'monitor_invite_message'  => 'nullable|string',
-            'monitor_end_message'     => 'nullable|string',
-            'product_name'            => 'nullable|string|max:255',
-            'product_price'           => 'nullable|integer|min:0',
-            'cooperation_fee'         => 'required|integer|min:0',
-            'referral_fee'            => 'required|integer|min:0',
-            'campaign_unit_price'     => 'nullable|integer|min:0',
-            'initial_purchase_fee'    => 'nullable|integer|min:0',
-            'recurring_purchase_fee'  => 'nullable|integer|min:0',
-            'gross_profit'            => 'nullable|integer',
-            'continuation_rate'       => 'nullable|numeric|min:0|max:100',
-            'target_gender_ratio'     => 'nullable|string|max:50',
-            'target_male_ratio'       => 'nullable|integer|min:0|max:100',
-            'target_female_ratio'     => 'nullable|integer|min:0|max:100',
-            'capacity'                => 'required|integer|min:1',
-            'solicitation_target'     => 'nullable|integer|min:0',
-            'application_start_at'    => 'nullable|date',
-            'application_end_at'      => 'nullable|date|after_or_equal:application_start_at',
-            'tags'                    => 'nullable|array',
-            'tags.*'                  => 'exists:tags,id',
-        ]);
-
+        $validated = $request->validate($this->rules());
         $validated['created_by'] = Auth::guard('web')->id();
 
-        $campaign = Campaign::create($validated);
-
-        if (!empty($validated['tags'])) {
-            $campaign->tags()->sync($validated['tags']);
+        if ($request->hasFile('thumbnail')) {
+            $validated['thumbnail'] = $request->file('thumbnail')->store('campaigns', 'public');
         }
 
-        return redirect()->route('admin.campaigns.index')
-            ->with('success', '案件を登録しました。');
+        $campaign = Campaign::create($validated);
+        $campaign->tags()->sync($validated['tags'] ?? []);
+
+        return redirect()->route('admin.campaigns.index')->with('success', '案件を登録しました。');
     }
 
     public function show(Campaign $campaign): View
@@ -94,54 +65,105 @@ class CampaignController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         $tags = Tag::orderBy('name')->get();
-        $campaign->load('tags');
+        $campaign->load('tags', 'formFields');
         return view('admin.campaigns.edit', compact('campaign', 'categories', 'tags'));
     }
 
     public function update(Request $request, Campaign $campaign): RedirectResponse
     {
-        $validated = $request->validate([
-            'title'                  => 'required|string|max:255',
-            'campaign_type'          => 'required|in:experience,product,recovery',
-            'status'                 => 'required|in:draft,published,closed',
-            'category_id'            => 'nullable|exists:categories,id',
-            'pr_media'               => 'nullable|string|max:255',
-            'description'            => 'nullable|string',
-            'requirements'           => 'nullable|string',
-            'notes'                   => 'nullable|string',
-            'monitor_invite_message'  => 'nullable|string',
-            'monitor_end_message'     => 'nullable|string',
-            'product_name'            => 'nullable|string|max:255',
-            'product_price'           => 'nullable|integer|min:0',
-            'cooperation_fee'         => 'required|integer|min:0',
-            'referral_fee'            => 'required|integer|min:0',
-            'campaign_unit_price'     => 'nullable|integer|min:0',
-            'initial_purchase_fee'    => 'nullable|integer|min:0',
-            'recurring_purchase_fee'  => 'nullable|integer|min:0',
-            'gross_profit'            => 'nullable|integer',
-            'continuation_rate'       => 'nullable|numeric|min:0|max:100',
-            'target_gender_ratio'     => 'nullable|string|max:50',
-            'target_male_ratio'       => 'nullable|integer|min:0|max:100',
-            'target_female_ratio'     => 'nullable|integer|min:0|max:100',
-            'capacity'                => 'required|integer|min:1',
-            'solicitation_target'     => 'nullable|integer|min:0',
-            'application_start_at'    => 'nullable|date',
-            'application_end_at'      => 'nullable|date|after_or_equal:application_start_at',
-            'tags'                    => 'nullable|array',
-            'tags.*'                  => 'exists:tags,id',
-        ]);
+        $validated = $request->validate($this->rules());
+
+        if ($request->hasFile('thumbnail')) {
+            if ($campaign->thumbnail) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($campaign->thumbnail);
+            }
+            $validated['thumbnail'] = $request->file('thumbnail')->store('campaigns', 'public');
+        }
 
         $campaign->update($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
 
-        return redirect()->route('admin.campaigns.index')
-            ->with('success', '案件を更新しました。');
+        return redirect()->route('admin.campaigns.index')->with('success', '案件を更新しました。');
     }
 
     public function destroy(Campaign $campaign): RedirectResponse
     {
         $campaign->delete();
-        return redirect()->route('admin.campaigns.index')
-            ->with('success', '案件を削除しました。');
+        return redirect()->route('admin.campaigns.index')->with('success', '案件を削除しました。');
+    }
+
+    public function duplicate(Campaign $campaign): RedirectResponse
+    {
+        $new = $campaign->replicate();
+        $new->title      = $campaign->title . '（コピー）';
+        $new->status     = 'draft';
+        $new->sort_order = Campaign::max('sort_order') + 1;
+        $new->save();
+        $new->tags()->sync($campaign->tags->pluck('id'));
+
+        return redirect()->route('admin.campaigns.edit', $new)->with('success', '案件を複製しました。');
+    }
+
+    public function toggleVisible(Campaign $campaign): RedirectResponse
+    {
+        $campaign->update(['is_visible' => !$campaign->is_visible]);
+        return back()->with('success', '表示設定を変更しました。');
+    }
+
+    public function syncFormFields(Request $request, Campaign $campaign): RedirectResponse
+    {
+        $fieldIds = $request->input('form_field_ids', []);
+        $sync = [];
+        foreach ($fieldIds as $order => $id) {
+            $sync[$id] = ['sort_order' => $order];
+        }
+        $campaign->formFields()->sync($sync);
+        return back()->with('success', '応募フォームフィールドを更新しました。');
+    }
+
+    public function reorder(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+        foreach ($validated['ids'] as $order => $id) {
+            Campaign::where('id', $id)->update(['sort_order' => $order]);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    private function rules(): array
+    {
+        return [
+            'title'                  => 'required|string|max:255',
+            'campaign_type'          => 'required|in:experience,product,recovery',
+            'status'                 => 'required|in:draft,published,paused,closed',
+            'category_id'            => 'nullable|exists:categories,id',
+            'pr_media'               => 'nullable|in:AD,IF,LINE,monitor',
+            'description'            => 'nullable|string',
+            'requirements'           => 'nullable|string',
+            'notes'                  => 'nullable|string',
+            'monitor_invite_message' => 'nullable|string',
+            'monitor_end_message'    => 'nullable|string',
+            'product_name'           => 'nullable|string|max:255',
+            'product_price'          => 'nullable|integer|min:0',
+            'cooperation_fee'        => 'required|integer|min:0',
+            'referral_fee'           => 'required|integer|in:0,500,1000',
+            'campaign_unit_price'    => 'nullable|integer|min:0',
+            'initial_purchase_fee'   => 'nullable|integer|min:0',
+            'recurring_purchase_fee' => 'nullable|integer|min:0',
+            'gross_profit'           => 'nullable|integer',
+            'continuation_rate'      => 'nullable|numeric|min:0|max:100',
+            'closing_date'           => 'nullable|in:20日,25日,月末',
+            'payment_timing'         => 'nullable|in:翌月末,翌々月末',
+            'target_gender_ratio'    => 'nullable|string|max:50',
+            'target_male_ratio'      => 'nullable|integer|min:0|max:100',
+            'target_female_ratio'    => 'nullable|integer|min:0|max:100',
+            'capacity'               => 'required|integer|min:1',
+            'solicitation_target'    => 'nullable|integer|min:0',
+            'application_start_at'   => 'nullable|date',
+            'application_end_at'     => 'nullable|date|after_or_equal:application_start_at',
+            'tags'                   => 'nullable|array',
+            'tags.*'                 => 'exists:tags,id',
+            'thumbnail'              => 'nullable|image|max:5120',
+        ];
     }
 }

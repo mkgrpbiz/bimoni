@@ -87,10 +87,13 @@ class ImportService
                     continue;
                 }
 
+                $validStatuses = ['pending','line_contacted','scheduled','confirming','completed','reported','approved','point_granted','cancelled'];
+                $status = in_array($row['status'] ?? '', $validStatuses) ? $row['status'] : 'pending';
+
                 Application::create([
                     'user_id'       => $user->id,
                     'campaign_id'   => $campaign->id,
-                    'status'        => $row['status'] ?? 'pending',
+                    'status'        => $status,
                     'applied_at'    => $row['applied_at'] ?? now(),
                     'selected_at'   => $row['selected_at'] ?? null,
                     'completed_at'  => $row['completed_at'] ?? null,

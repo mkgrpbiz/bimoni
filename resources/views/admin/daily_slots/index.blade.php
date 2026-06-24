@@ -1,10 +1,11 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', $campaign->title . ' 日別件数管理')
 
 @section('content')
 <div class="flex items-center gap-3 mb-6">
-    <a href="{{ route('admin.campaigns.applications', $campaign) }}" class="text-gray-400 hover:text-gray-600">← 応募者一覧</a>
+    <a href="{{ route('admin.campaigns.applications', $campaign) }}"
+       class="bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600 text-sm">← 応募者一覧</a>
     <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{{ $campaign->title }} 日別件数管理</h1>
 </div>
 
@@ -17,7 +18,7 @@
     <div class="lg:col-span-2">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                     <tr>
                         <th class="px-4 py-3 text-left">日付</th>
                         <th class="px-4 py-3 text-center">目標</th>
@@ -36,22 +37,22 @@
                         <td class="px-4 py-2 text-center text-purple-600">{{ $slot->invited_count }}</td>
                         <td class="px-4 py-2 text-center text-indigo-600">{{ $slot->reserved_count }}</td>
                         <td class="px-4 py-2 text-center text-teal-600">{{ $slot->completed_count }}</td>
-                        <td class="px-4 py-2 text-gray-400 text-xs">{{ $slot->memo ?? '-' }}</td>
+                        <td class="px-4 py-2 text-gray-700 text-xs">{{ $slot->memo ?? '-' }}</td>
                         <td class="px-4 py-2">
                             <div class="flex gap-2">
                                 <button onclick="openEdit({{ $slot->id }}, '{{ $slot->target_date->format('Y-m-d') }}', {{ $slot->planned_count }}, '{{ addslashes($slot->memo ?? '') }}')"
-                                        class="text-xs text-blue-600 hover:underline">編集</button>
+                                        class="text-xs bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600">編集</button>
                                 <form method="POST" action="{{ route('admin.campaigns.daily_slots.destroy', [$campaign, $slot]) }}">
                                     @csrf @method('DELETE')
                                     <button type="submit" onclick="return confirm('削除しますか？')"
-                                            class="text-xs text-red-500 hover:underline">削除</button>
+                                            class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded hover:bg-red-600">削除</button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-400">登録がありません</td>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-700">登録がありません</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -68,33 +69,33 @@
             <form method="POST" action="{{ route('admin.campaigns.daily_slots.store', $campaign) }}" class="space-y-3">
                 @csrf
                 <div>
-                    <label class="block text-xs text-gray-500 mb-1">日付</label>
+                    <label class="block text-xs text-gray-700 mb-1">日付</label>
                     <input type="date" name="target_date" required
                            class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-500 mb-1">目標件数</label>
+                    <label class="block text-xs text-gray-700 mb-1">目標件数</label>
                     <input type="number" name="planned_count" min="0" value="0" required
                            class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-500 mb-1">メモ</label>
+                    <label class="block text-xs text-gray-700 mb-1">メモ</label>
                     <input type="text" name="memo"
                            class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-1.5 rounded text-sm hover:bg-blue-700">追加</button>
+                <button type="submit" class="w-full bg-pink-500 text-white py-1.5 rounded text-sm hover:bg-pink-600">追加</button>
             </form>
         </div>
 
         {{-- CSV インポート --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-2 text-sm">CSVインポート</h2>
-            <p class="text-xs text-gray-400 mb-3">形式: <code>6/24,10</code>（月/日,件数）<br>同じ日付は上書きされます。</p>
+            <p class="text-xs text-gray-700 mb-3">形式: <code>6/24,10</code>（月/日,件数）<br>同じ日付は上書きされます。</p>
             <form method="POST" action="{{ route('admin.campaigns.daily_slots.import', $campaign) }}" enctype="multipart/form-data" class="space-y-3">
                 @csrf
                 <div>
                     <input type="file" name="csv_file" accept=".csv,.txt" required
-                           class="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                           class="w-full text-sm text-gray-700 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
                 <button type="submit" class="w-full bg-green-600 text-white py-1.5 rounded text-sm hover:bg-green-700">インポート</button>
             </form>
@@ -109,23 +110,23 @@
         <form id="editForm" method="POST" class="space-y-3">
             @csrf @method('PATCH')
             <div>
-                <label class="block text-xs text-gray-500 mb-1">日付</label>
+                <label class="block text-xs text-gray-700 mb-1">日付</label>
                 <input id="editDate" type="text" readonly
                        class="w-full border rounded px-2 py-1 text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">目標件数</label>
+                <label class="block text-xs text-gray-700 mb-1">目標件数</label>
                 <input id="editCount" type="number" name="planned_count" min="0" required
                        class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm">
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">メモ</label>
+                <label class="block text-xs text-gray-700 mb-1">メモ</label>
                 <input id="editMemo" type="text" name="memo"
                        class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm">
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="flex-1 bg-blue-600 text-white py-1.5 rounded text-sm hover:bg-blue-700">保存</button>
-                <button type="button" onclick="closeEdit()" class="flex-1 bg-gray-200 text-gray-700 py-1.5 rounded text-sm hover:bg-gray-300">閉じる</button>
+                <button type="submit" class="flex-1 bg-pink-500 text-white py-1.5 rounded text-sm hover:bg-pink-600">保存</button>
+                <button type="button" onclick="closeEdit()" class="flex-1 bg-gray-500 text-white py-1.5 rounded text-sm hover:bg-gray-600">閉じる</button>
             </div>
         </form>
     </div>
@@ -144,3 +145,4 @@ function closeEdit() {
 }
 </script>
 @endsection
+

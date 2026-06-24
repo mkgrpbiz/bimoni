@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'データインポート')
 
@@ -32,7 +32,7 @@
     {{-- ユーザーインポート --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">ユーザーインポート</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <p class="text-xs text-gray-700 dark:text-gray-400 mb-3">
             CSVフォーマット：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">erme_respondent_id, name, name_kana, gender, birthdate, area, available_times, wants_continuation, point_balance</code>
         </p>
         <form method="POST" action="{{ route('admin.import.users') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
@@ -53,7 +53,7 @@
     {{-- 応募履歴インポート --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">応募履歴インポート</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <p class="text-xs text-gray-700 dark:text-gray-400 mb-3">
             CSVフォーマット：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">erme_respondent_id, campaign_name, status, applied_at, selected_at, completed_at, approved_at</code>
         </p>
         <p class="text-xs text-yellow-600 dark:text-yellow-400 mb-3">⚠ ユーザーインポートと案件登録が先に完了している必要があります。</p>
@@ -75,7 +75,7 @@
     {{-- ポイント履歴インポート --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">ポイント履歴インポート</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <p class="text-xs text-gray-700 dark:text-gray-400 mb-3">
             CSVフォーマット：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">erme_respondent_id, type, amount, reason, granted_at</code>
         </p>
         <form method="POST" action="{{ route('admin.import.points') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
@@ -95,3 +95,4 @@
 
 </div>
 @endsection
+

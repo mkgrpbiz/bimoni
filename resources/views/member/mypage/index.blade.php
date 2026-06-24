@@ -22,6 +22,18 @@
         </div>
     </div>
 
+    {{-- アクションボタン --}}
+    <div class="grid grid-cols-2 gap-3 mb-5">
+        <a href="{{ route('member.reports.create') }}"
+           class="bg-pink-500 text-white py-3 rounded-xl text-sm font-medium text-center">
+            📋 モニター報告
+        </a>
+        <a href="{{ route('member.profile.edit') }}"
+           class="bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium text-center">
+            ✏️ 情報変更
+        </a>
+    </div>
+
     {{-- ログアウト --}}
     <form method="POST" action="{{ route('member.logout') }}" class="mb-5">
         @csrf

@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias(['portal.auth' => \App\Http\Middleware\PortalAuth::class]);
         // member/* へのアクセスは member.login へリダイレクト
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('member/*') || $request->is('member')) {

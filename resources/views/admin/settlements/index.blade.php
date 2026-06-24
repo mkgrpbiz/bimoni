@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', '月末締め管理')
 
@@ -12,7 +12,7 @@
 {{-- 月末締め実行 --}}
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 mb-6">
     <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-2">月末締め処理</h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+    <p class="text-sm text-gray-700 dark:text-gray-400 mb-4">
         承認済みの応募（{{ $pendingCount }}件）を対象に当月分の締め処理を実行します。翌月10日が支払日になります。
     </p>
     <form method="POST" action="{{ route('admin.settlements.close') }}" onsubmit="return confirm('月末締めを実行しますか？この操作は取り消せません。')">
@@ -28,7 +28,7 @@
 {{-- 締め履歴 --}}
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
     <table class="w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
             <tr>
                 <th class="px-4 py-3 text-left">締め月</th>
                 <th class="px-4 py-3 text-left">ステータス</th>
@@ -45,29 +45,30 @@
                 <td class="px-4 py-3">
                     @php
                         $color = match($s->status) {
-                            'open'   => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-                            'closed' => 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-                            'paid'   => 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+                            'open'   => 'bg-yellow-500 text-white',
+                            'closed' => 'bg-blue-500 text-white',
+                            'paid'   => 'bg-green-500 text-white',
                         };
                     @endphp
                     <span class="px-2 py-0.5 rounded text-xs {{ $color }}">{{ $s->getStatusLabel() }}</span>
                 </td>
                 <td class="px-4 py-3 text-right font-medium dark:text-gray-200">¥{{ number_format($s->total_amount) }}</td>
-                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $s->payment_due_date->format('Y/m/d') }}</td>
-                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ $s->closed_at?->format('Y/m/d H:i') ?? '-' }}</td>
+                <td class="px-4 py-3 text-gray-700 dark:text-gray-400">{{ $s->payment_due_date->format('Y/m/d') }}</td>
+                <td class="px-4 py-3 text-gray-700 dark:text-gray-400 text-xs">{{ $s->closed_at?->format('Y/m/d H:i') ?? '-' }}</td>
                 <td class="px-4 py-3 text-right flex gap-2 justify-end">
-                    <a href="{{ route('admin.settlements.show', $s) }}" class="text-xs text-pink-600 dark:text-pink-400 hover:underline">詳細</a>
+                    <a href="{{ route('admin.settlements.show', $s) }}"
+                       class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">詳細</a>
                     @if($s->status === 'closed')
                     <form method="POST" action="{{ route('admin.settlements.paid', $s) }}">
                         @csrf @method('PATCH')
-                        <button type="submit" class="text-xs text-green-600 dark:text-green-400 hover:underline">支払済みにする</button>
+                        <button type="submit" class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">支払済みにする</button>
                     </form>
                     @endif
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500">締め履歴がありません</td>
+                <td colspan="6" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">締め履歴がありません</td>
             </tr>
             @endforelse
         </tbody>
@@ -75,3 +76,4 @@
 </div>
 <div class="mt-4">{{ $settlements->links() }}</div>
 @endsection
+

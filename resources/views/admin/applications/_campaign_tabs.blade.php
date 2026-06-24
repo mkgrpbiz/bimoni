@@ -1,10 +1,10 @@
-{{--
+﻿{{--
   $allCampaigns    : Campaign コレクション
   $activeCampaignId: 現在選択中の campaign ID（null = すべて）
 --}}
 @php
     $grouped = $allCampaigns->groupBy('status');
-    $statusLabels = ['published' => '公開中', 'draft' => '下書き', 'closed' => '終了'];
+    $statusLabels = ['draft' => '下書き', 'published' => '公開中', 'paused' => '一時停止', 'closed' => '終了'];
     // アクティブ案件のステータスを特定（初期表示フィルターに使う）
     $activeStatus = $activeCampaignId
         ? ($allCampaigns->firstWhere('id', $activeCampaignId)?->status ?? 'published')
@@ -20,9 +20,10 @@
                 onclick="filterTabs('{{ $status }}')"
                 id="btn-{{ $status }}"
                 class="px-3 py-1 rounded text-xs font-medium transition-colors
-                       {{ $status === 'published' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : '' }}
-                       {{ $status === 'draft'     ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : '' }}
-                       {{ $status === 'closed'    ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' : '' }}
+                       {{ $status === 'published' ? 'bg-green-500 text-white' : '' }}
+                       {{ $status === 'draft'     ? 'bg-yellow-500 text-white' : '' }}
+                       {{ $status === 'paused'    ? 'bg-orange-500 text-white' : '' }}
+                       {{ $status === 'closed'    ? 'bg-gray-500 text-white' : '' }}
                        opacity-40 hover:opacity-100">
                 {{ $label }}（{{ $grouped->get($status)->count() }}）
             </button>
@@ -39,7 +40,7 @@
                class="tab-item px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
                       {{ $activeCampaignId === null
                           ? 'border-pink-500 text-pink-600 dark:text-pink-400'
-                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                          : 'border-transparent text-gray-700 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
                 すべて
             </a>
 
@@ -50,7 +51,7 @@
                    class="tab-item px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
                           {{ $activeCampaignId === $c->id
                               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
-                              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                              : 'border-transparent text-gray-700 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
                     {{ $c->title }}
                 </a>
                 @endforeach
@@ -82,3 +83,4 @@
     filterTabs(saved);
 })();
 </script>
+

@@ -20,7 +20,7 @@ class ApplicationController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Application::with(['user', 'campaign'])->latest('applied_at');
+        $query = Application::with(['user', 'campaign', 'lineMessageJobs'])->latest('applied_at');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -29,10 +29,34 @@ class ApplicationController extends Controller
             $query->where('campaign_id', $request->campaign_id);
         }
         if ($request->filled('q')) {
-            $query->whereHas('user', fn($q) => $q->where('name', 'like', '%'.$request->q.'%'));
+            $query->whereHas('user', fn($q) =>
+                $q->where('name', 'like', '%'.$request->q.'%')
+                  ->orWhere('name_kana', 'like', '%'.$request->q.'%')
+            );
         }
 
         $applications = $query->paginate(30)->withQueryString();
+
+        // 他案件状況・48h制限の計算
+        $userIds      = $applications->pluck('user_id')->unique();
+        $pageAppIds   = $applications->pluck('id');
+        $lockStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed'];
+
+        $otherAppsMap = Application::with('campaign:id,title')
+            ->whereIn('user_id', $userIds)
+            ->whereIn('status', $lockStatuses)
+            ->whereNotIn('id', $pageAppIds)
+            ->get()
+            ->groupBy('user_id');
+
+        $applications->getCollection()->transform(function (Application $app) use ($otherAppsMap) {
+            $others = $otherAppsMap->get($app->user_id, collect());
+            $app->other_applications = $others;
+            $app->unlock_at = $app->getUnlockAt($others);
+            $app->is_locked = $app->isLocked($others);
+            return $app;
+        });
+
         $campaigns = Campaign::orderBy('title')->get();
 
         return view('admin.applications.index', compact('applications', 'campaigns'));
@@ -113,7 +137,7 @@ class ApplicationController extends Controller
     public function updateStatus(Request $request, Application $application): RedirectResponse
     {
         $request->validate([
-            'status'         => 'required|in:selected,rejected,line_contacted,scheduled,confirming,completed,reported,approved,point_granted,cancelled',
+            'status'         => 'required|in:line_contacted,scheduled,confirming,completed,reported,approved,point_granted,cancelled',
             'memo'           => 'nullable|string|max:500',
             'invited_at'     => 'nullable|date',
             'invited_end_at' => 'nullable|date|after_or_equal:invited_at',
@@ -178,7 +202,7 @@ class ApplicationController extends Controller
             ]);
         }
 
-        $adminId = auth('admin')->id();
+        $adminId = auth('web')->id();
         $application->changeStatus($request->status, $adminId, $request->memo);
 
         return back()->with('success', 'ステータスを更新しました。');

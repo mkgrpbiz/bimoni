@@ -49,11 +49,11 @@ class LineMessageJob extends Model
     public function getStatusColor(): string
     {
         return match($this->status) {
-            'pending'  => 'bg-yellow-100 text-yellow-700',
-            'sent'     => 'bg-green-100 text-green-700',
-            'failed'   => 'bg-red-100 text-red-600',
-            'canceled' => 'bg-gray-100 text-gray-400',
-            default    => 'bg-gray-100 text-gray-400',
+            'pending'  => 'bg-yellow-500 text-white',
+            'sent'     => 'bg-green-500 text-white',
+            'failed'   => 'bg-red-500 text-white',
+            'canceled' => 'bg-gray-500 text-white',
+            default    => 'bg-gray-500 text-white',
         };
     }
 }

@@ -9,11 +9,16 @@ class MonitorReport extends Model
     protected $fillable = [
         'application_id', 'user_id', 'campaign_id',
         'report_body', 'status', 'reviewed_by', 'reviewed_at', 'reject_reason',
+        'payment_status', 'paid_at',
+        'report_image',
     ];
 
     protected function casts(): array
     {
-        return ['reviewed_at' => 'datetime'];
+        return [
+            'reviewed_at' => 'datetime',
+            'paid_at'     => 'datetime',
+        ];
     }
 
     public function application() { return $this->belongsTo(Application::class); }
@@ -35,10 +40,10 @@ class MonitorReport extends Model
     public function getStatusColor(): string
     {
         return match($this->status) {
-            'pending'  => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-            'approved' => 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-            'rejected' => 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300',
-            default    => 'bg-gray-100 text-gray-500',
+            'pending'  => 'bg-yellow-500 text-white',
+            'approved' => 'bg-green-500 text-white',
+            'rejected' => 'bg-red-500 text-white',
+            default    => 'bg-gray-500 text-white',
         };
     }
 }

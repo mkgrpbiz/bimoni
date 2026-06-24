@@ -30,6 +30,11 @@ class AuthController extends Controller
         $request->validate(['line_user_id' => 'required|string']);
 
         $user = $this->findOrCreateUser($request->line_user_id);
+
+        if ($request->filled('line_display_name')) {
+            $user->update(['line_display_name' => $request->line_display_name]);
+        }
+
         Auth::guard('liff')->login($user);
 
         $redirect = $user->profile_completed_at
