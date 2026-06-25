@@ -271,7 +271,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">モニター案内メッセージ</label>
         <textarea name="monitor_invite_message" rows="6"
                   class="w-full border rounded px-3 py-2 text-sm font-mono"
-                  placeholder="例: {{商品名}}のモニターご案内です。&#10;{{モニター案内文}}&#10;詳細はこちら: {{リンク}}">{{ old('monitor_invite_message', $campaign->monitor_invite_message ?? '') }}</textarea>
+                  placeholder="例: @{{商品名}}のモニターご案内です。&#10;@{{モニター案内文}}&#10;詳細はこちら: @{{リンク}}">{{ old('monitor_invite_message', $campaign->monitor_invite_message ?? '') }}</textarea>
     </div>
 
     <div class="mt-4">
