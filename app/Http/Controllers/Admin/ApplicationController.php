@@ -64,7 +64,7 @@ class ApplicationController extends Controller
             ->groupBy('campaigns.status')
             ->pluck('count', 'campaign_status');
 
-        $campaigns = Campaign::where('status', $campaignStatus)->orderBy('title')->get();
+        $campaigns = Campaign::orderBy('title')->get();
 
         return view('admin.applications.index', compact('applications', 'campaigns', 'campaignStatus', 'tabCounts'));
     }

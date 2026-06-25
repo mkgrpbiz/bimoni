@@ -22,7 +22,7 @@ $tabs = [
     'draft'     => ['label' => '下書き',   'color' => 'bg-yellow-500'],
 ];
 @endphp
-<div class="flex border-b border-gray-200 mb-4">
+<div class="flex border-b border-gray-200 mb-0">
     @foreach($tabs as $key => $t)
     <a href="{{ route('admin.applications.index', array_merge(request()->except(['status', 'page']), ['status' => $key])) }}"
        class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
@@ -36,6 +36,12 @@ $tabs = [
     </a>
     @endforeach
 </div>
+
+@include('admin.applications._campaign_tabs', [
+    'allCampaigns'     => $campaigns,
+    'activeCampaignId' => null,
+    'currentStatus'    => $campaignStatus,
+])
 
 {{-- サブフィルター --}}
 <form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-end">
