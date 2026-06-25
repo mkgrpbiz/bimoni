@@ -65,9 +65,8 @@ class Campaign extends Model
             'AD'      => 'AD',
             'IF'      => 'IF',
             'LINE'    => 'LINE',
-            'monitor'   => 'モニター',
-            'instagram' => 'Instagram',
-            default     => $this->pr_media ?? '-',
+            'monitor' => 'モニター',
+            default   => $this->pr_media ?? '-',
         };
     }
 

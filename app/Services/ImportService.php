@@ -158,7 +158,7 @@ class ImportService
             '準備中'   => 'draft',
         ];
         $validStatuses = ['draft', 'published', 'paused', 'closed'];
-        $validMedia    = ['AD', 'IF', 'LINE', 'monitor', 'instagram'];
+        $validMedia    = ['AD', 'IF', 'LINE', 'monitor'];
         $validClosing  = ['20日', '25日', '月末'];
         $validPayment  = ['翌月末', '翌々月末'];
 
@@ -180,6 +180,7 @@ class ImportService
                 $status = $statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'draft');
 
                 $media = $row['pr_media'] ?? '';
+                if ($media === 'Instagram') $media = 'IF';
                 $media = in_array($media, $validMedia) ? $media : null;
 
                 $isVisible = strtoupper($row['_deny_all'] ?? 'FALSE') === 'TRUE' ? 0 : 1;

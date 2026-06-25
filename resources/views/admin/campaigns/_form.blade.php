@@ -48,8 +48,7 @@
                 <option value="AD"      @selected(old('pr_media', $campaign->pr_media ?? '') === 'AD')>AD</option>
                 <option value="IF"      @selected(old('pr_media', $campaign->pr_media ?? '') === 'IF')>IF</option>
                 <option value="LINE"    @selected(old('pr_media', $campaign->pr_media ?? '') === 'LINE')>LINE</option>
-                <option value="monitor"   @selected(old('pr_media', $campaign->pr_media ?? '') === 'monitor')>モニター</option>
-                <option value="instagram" @selected(old('pr_media', $campaign->pr_media ?? '') === 'instagram')>Instagram</option>
+                <option value="monitor" @selected(old('pr_media', $campaign->pr_media ?? '') === 'monitor')>モニター</option>
             </select>
         </div>
 
