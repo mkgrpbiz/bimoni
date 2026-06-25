@@ -12,7 +12,7 @@
 
 {{-- タブ --}}
 <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
-    @foreach(['registration' => '会員登録', 'application' => '応募', 'report' => '報告', 'legal' => '規約・PP'] as $key => $label)
+    @foreach(['application' => '応募', 'report' => '報告', 'legal' => '規約・PP'] as $key => $label)
     <a href="?tab={{ $key }}"
        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors
               {{ $tab === $key ? 'border-pink-500 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">

@@ -27,6 +27,8 @@
                 <th class="px-4 py-3 text-left">LINE表示名</th>
                 <th class="px-4 py-3 text-left">名前</th>
                 <th class="px-4 py-3 text-left">フリガナ</th>
+                <th class="px-4 py-3 text-center">性別</th>
+                <th class="px-4 py-3 text-center">年齢</th>
                 <th class="px-4 py-3 text-right">応募数</th>
                 <th class="px-4 py-3 text-right">実施数</th>
                 <th class="px-4 py-3 text-right">支払待ち合計</th>
@@ -47,13 +49,19 @@
                     {{ $user->referral_code ?? '-' }}
                 </td>
                 <td class="px-4 py-3 text-gray-800 dark:text-gray-200 max-w-32 truncate">
-                    {{ $user->name ?? '（未登録）' }}
+                    {{ $user->line_display_name ?? '-' }}
                 </td>
                 <td class="px-4 py-3 text-gray-800 dark:text-gray-200">
-                    {{ $user->name ?? '-' }}
+                    {{ $user->name ?? '（未登録）' }}
                 </td>
                 <td class="px-4 py-3 text-gray-700 dark:text-gray-400">
                     {{ $user->name_kana ?? '-' }}
+                </td>
+                <td class="px-4 py-3 text-center text-gray-700 dark:text-gray-400">
+                    {{ match($user->gender) { 'male' => '男', 'female' => '女', default => '-' } }}
+                </td>
+                <td class="px-4 py-3 text-center text-gray-700 dark:text-gray-400">
+                    {{ $user->birthdate ? \Carbon\Carbon::parse($user->birthdate)->age : '-' }}
                 </td>
                 <td class="px-4 py-3 text-right text-gray-800 dark:text-gray-200">
                     {{ $user->applications_count }}
@@ -74,7 +82,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="11" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">ユーザーがいません</td>
+                <td colspan="13" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">ユーザーがいません</td>
             </tr>
             @endforelse
         </tbody>

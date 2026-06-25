@@ -14,9 +14,68 @@
     <form method="POST" action="{{ route('member.profile.update') }}" class="space-y-5">
         @csrf @method('PATCH')
 
-        @foreach($fields as $field)
-        @include('member._form_field', ['field' => $field, 'currentVal' => $responses->get($field->field_key, $user->{$field->maps_to} ?? null)])
-        @endforeach
+        {{-- 名前 --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                お名前 <span class="text-red-500 text-xs ml-1">必須</span>
+            </label>
+            <input type="text" name="name" value="{{ old('name', $user->name) }}"
+                   placeholder="山田 太郎"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm @error('name') border-red-400 @enderror">
+            @error('name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+
+        {{-- ふりがな --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                ふりがな <span class="text-red-500 text-xs ml-1">必須</span>
+            </label>
+            <input type="text" name="name_kana" value="{{ old('name_kana', $user->name_kana) }}"
+                   placeholder="やまだ たろう"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm @error('name_kana') border-red-400 @enderror">
+            @error('name_kana')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+
+        {{-- 性別 --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                性別 <span class="text-red-500 text-xs ml-1">必須</span>
+            </label>
+            <div class="space-y-2">
+                <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3 cursor-pointer hover:border-pink-300">
+                    <input type="radio" name="gender" value="female"
+                           {{ old('gender', $user->gender) === 'female' ? 'checked' : '' }} class="accent-pink-500">
+                    <span class="text-sm text-gray-700">女性</span>
+                </label>
+                <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3 cursor-pointer hover:border-pink-300">
+                    <input type="radio" name="gender" value="male"
+                           {{ old('gender', $user->gender) === 'male' ? 'checked' : '' }} class="accent-pink-500">
+                    <span class="text-sm text-gray-700">男性</span>
+                </label>
+            </div>
+            @error('gender')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+
+        {{-- 生年月日 --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                生年月日 <span class="text-red-500 text-xs ml-1">必須</span>
+            </label>
+            <input type="date" name="birthdate" value="{{ old('birthdate', $user->birthdate?->format('Y-m-d')) }}"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm @error('birthdate') border-red-400 @enderror">
+            @error('birthdate')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+
+        {{-- メールアドレス --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                メールアドレス <span class="text-gray-400 text-xs">任意</span>
+            </label>
+            <input type="email" name="email" value="{{ old('email', $user->email) }}"
+                   placeholder="example@email.com"
+                   class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm @error('email') border-red-400 @enderror">
+            @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
 
         {{-- 銀行口座 --}}
         <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-4">

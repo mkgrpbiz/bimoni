@@ -13,7 +13,7 @@ class FormFieldController extends Controller
 {
     public function index(Request $request): View
     {
-        $tab    = $request->get('tab', 'registration');
+        $tab    = $request->get('tab', 'application');
         $fields = FormField::where('form_type', $tab)->orderBy('sort_order')->get();
         $terms   = LegalPage::terms();
         $privacy = LegalPage::privacy();
@@ -24,10 +24,10 @@ class FormFieldController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'form_type'   => 'required|in:registration,application,report',
+            'form_type'   => 'required|in:application,report',
             'label'       => 'required|string|max:100',
             'description' => 'nullable|string|max:500',
-            'type'        => 'required|in:text,textarea,date,radio,checkbox,select,tel,email,number',
+            'type'        => 'required|in:text,textarea,date,radio,checkbox,select,tel,email,number,image,campaign_thumbnail,campaign_description,campaign_requirements,campaign_notes,campaign_initial_fee,campaign_recurring_fee,campaign_cooperation_fee,application_available_times,application_wants_continuation',
             'options'     => 'nullable|string',
         ]);
 

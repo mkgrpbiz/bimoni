@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Models\FormField;
 use App\Models\LegalPage;
-use App\Models\UserFormResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,90 +18,72 @@ class RegisterController extends Controller
             return redirect()->route('member.campaigns.index');
         }
 
-        $fields  = FormField::forType('registration')->visible()->get();
         $terms   = LegalPage::terms();
         $privacy = LegalPage::privacy();
 
-        return view('member.register', compact('fields', 'user', 'terms', 'privacy'));
+        return view('member.register', compact('user', 'terms', 'privacy'));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $user   = Auth::guard('liff')->user();
-        $fields = FormField::forType('registration')->visible()->get();
+        $user = Auth::guard('liff')->user();
 
-        $rules = $this->buildRules($fields);
-        $rules['agree_terms'] = 'accepted';
+        $request->validate([
+            'name'                => 'required|string|max:50',
+            'name_kana'           => 'required|string|max:100',
+            'gender'              => 'required|in:male,female',
+            'birthdate'           => 'required|date',
+            'email'               => 'nullable|email|max:255',
+            'referred_by_code'    => 'nullable|string|max:10',
+            'bank_account_number' => 'nullable|digits_between:7,8',
+            'agree_terms'         => 'accepted',
+        ], ['agree_terms.accepted' => '利用規約とプライバシーポリシーへの同意が必要です。']);
 
-        // 銀行口座バリデーション（任意だが、入力した場合は必須セットで）
-        $rules['bank_account_number'] = 'nullable|digits_between:7,8';
+        $user->update([
+            'name'                => $request->name,
+            'name_kana'           => $request->name_kana,
+            'gender'              => $request->gender,
+            'birthdate'           => $request->birthdate,
+            'email'               => $request->email,
+            'referred_by_code'    => $request->referred_by_code ?: null,
+            'profile_completed_at' => now(),
+        ]);
 
-        $request->validate($rules, ['agree_terms.accepted' => '利用規約とプライバシーポリシーへの同意が必要です。']);
-
-        $this->saveFields($user, $fields, $request);
         $this->saveBank($user, $request);
-
-        $user->update(['profile_completed_at' => now()]);
 
         return redirect()->route('member.campaigns.index');
     }
 
     public function edit(): View
     {
-        $user    = Auth::guard('liff')->user();
-        $fields  = FormField::forType('registration')->visible()->get();
-        $responses = UserFormResponse::where('user_id', $user->id)->pluck('value', 'field_key');
-
-        return view('member.profile.edit', compact('user', 'fields', 'responses'));
+        $user = Auth::guard('liff')->user();
+        return view('member.profile.edit', compact('user'));
     }
 
     public function updateProfile(Request $request): RedirectResponse
     {
-        $user   = Auth::guard('liff')->user();
-        $fields = FormField::forType('registration')->visible()->get();
+        $user = Auth::guard('liff')->user();
 
-        $rules = $this->buildRules($fields);
-        $rules['bank_account_number'] = 'nullable|digits_between:7,8';
+        $request->validate([
+            'name'                => 'required|string|max:50',
+            'name_kana'           => 'required|string|max:100',
+            'gender'              => 'required|in:male,female',
+            'birthdate'           => 'required|date',
+            'email'               => 'nullable|email|max:255',
+            'bank_account_number' => 'nullable|digits_between:7,8',
+        ]);
 
-        $request->validate($rules);
+        $user->update([
+            'name'      => $request->name,
+            'name_kana' => $request->name_kana,
+            'gender'    => $request->gender,
+            'birthdate' => $request->birthdate,
+            'email'     => $request->email,
+        ]);
 
-        $this->saveFields($user, $fields, $request);
         $this->saveBank($user, $request);
 
         return back()->with('success', 'プロフィールを更新しました。');
-    }
-
-    private function buildRules($fields): array
-    {
-        $rules = [];
-        foreach ($fields as $field) {
-            $key = 'field_' . $field->field_key;
-            $rules[$key] = $field->is_required ? 'required' : 'nullable';
-            if ($field->type === 'email')    $rules[$key] .= '|email';
-            if ($field->type === 'tel')      $rules[$key] .= '|regex:/^[0-9\-\(\)\+]{7,15}$/';
-            if ($field->type === 'date')     $rules[$key] .= '|date';
-            if ($field->type === 'checkbox') $rules[$key] = $field->is_required ? 'required|array|min:1' : 'nullable|array';
-        }
-        return $rules;
-    }
-
-    private function saveFields($user, $fields, Request $request): void
-    {
-        $userColumns = [];
-        foreach ($fields as $field) {
-            $inputKey = 'field_' . $field->field_key;
-            $value    = $request->input($inputKey);
-
-            if ($field->maps_to) {
-                $userColumns[$field->maps_to] = is_array($value) ? implode(',', $value) : $value;
-            } else {
-                UserFormResponse::updateOrCreate(
-                    ['user_id' => $user->id, 'field_key' => $field->field_key],
-                    ['value' => is_array($value) ? implode(',', $value) : $value]
-                );
-            }
-        }
-        if ($userColumns) $user->update($userColumns);
     }
 
     private function saveBank($user, Request $request): void
