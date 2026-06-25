@@ -111,8 +111,22 @@ class CampaignDailySlotController extends Controller
 
         $msg = "{$imported}件インポートしました。";
         if ($skipped) {
-            $msg .= "\nマッチしない商品名（案件タイトルまたは商品名と一致させてください）:\n"
+            $msg .= "\n\n【マッチしない商品名（TSVの値）】\n"
                   . implode("\n", array_unique($skipped));
+        }
+
+        // デバッグ: DB側の案件名サンプル
+        $dbSample = $allCampaigns->take(5)->map(fn($c) =>
+            'title=' . $c->title . ' / product_name=' . ($c->product_name ?? 'null')
+        )->implode("\n");
+        $msg .= "\n\n【DB案件サンプル（先頭5件）】\n" . $dbSample;
+
+        // デバッグ: TSVから読み取った商品名サンプル
+        $tsvSample = array_slice(array_unique($skipped), 0, 5);
+        $msg .= "\n\n【TSV商品名サンプル（先頭5件、16進）】\n";
+        foreach ($tsvSample as $s) {
+            $hex = bin2hex(mb_substr($s, 0, 10));
+            $msg .= "{$s} [{$hex}]\n";
         }
 
         return back()->with('success', $msg);
