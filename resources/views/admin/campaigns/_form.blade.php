@@ -293,7 +293,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">モニター終了案内文</label>
         <textarea name="monitor_end_message" rows="5"
                   class="w-full border rounded px-3 py-2 text-sm font-mono"
-                  placeholder="例: ○○モニターのご報告をお願いします。&#10;報告ページよりご提出ください。">{{ old('monitor_end_message', $campaign->monitor_end_message ?? '') }}</textarea>
+                  placeholder="例: @{{商品名}}モニターへのご参加ありがとうございました。&#10;ご報告をお願いします。">{{ old('monitor_end_message', $campaign->monitor_end_message ?? '') }}</textarea>
     </div>
 </div>
 
