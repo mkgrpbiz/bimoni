@@ -9,6 +9,7 @@ use App\Models\Campaign;
 use App\Models\CampaignDailySlot;
 use App\Models\LineMessageJob;
 use App\Models\User;
+use App\Services\LineMessagingService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -232,6 +233,32 @@ class ApplicationController extends Controller
 
         $application->update($request->only(['invited_at', 'invited_end_at', 'continuation_invite_date']));
         return back()->with('success', '案内日時を保存しました。');
+    }
+
+    public function sendContinuationRequest(Application $application, LineMessagingService $lineService): RedirectResponse
+    {
+        if ($application->continuation_wish !== '希望') {
+            return back()->with('error', '継続希望が「希望」の応募者のみ送信できます。');
+        }
+
+        if (!$application->continuation_token) {
+            $application->update(['continuation_token' => Str::random(64)]);
+            $application->refresh();
+        }
+
+        $campaign = $application->campaign;
+        $acceptUrl  = route('continuation.accept', $application->continuation_token);
+        $declineUrl = route('continuation.decline', $application->continuation_token);
+
+        $msg = "【継続購入のご案内】\n"
+            . $campaign->title . "\n\n"
+            . "継続購入についてのご希望をお聞かせください。\n\n"
+            . "✅ 継続購入可能\n" . $acceptUrl . "\n\n"
+            . "❌ 継続購入不可\n" . $declineUrl;
+
+        $lineService->sendPush($application->user_id, $msg, 'continuation_request', $application->id);
+
+        return back()->with('success', '継続依頼LINEを送信しました。');
     }
 
     private function getTabCounts(): \Illuminate\Support\Collection

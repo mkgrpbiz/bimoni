@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CollectionReport;
+use App\Services\LineMessagingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,7 +46,7 @@ class CollectionReportController extends Controller
         return back()->with('success', '承認しました。');
     }
 
-    public function reject(Request $request, CollectionReport $collectionReport): RedirectResponse
+    public function reject(Request $request, CollectionReport $collectionReport, LineMessagingService $lineService): RedirectResponse
     {
         $request->validate(['rejection_reason' => 'required|string|max:500']);
 
@@ -56,8 +57,13 @@ class CollectionReportController extends Controller
             'reviewed_at'      => now(),
         ]);
 
-        // TODO: LINE通知送信
+        $msg = "【回収報告について】\n"
+            . "差戻しとなりました。\n\n"
+            . "理由：{$request->rejection_reason}\n\n"
+            . "お手数ですが、内容をご確認の上、再度報告フォームよりご報告ください。";
 
-        return back()->with('success', '差戻しました。');
+        $lineService->sendPush($collectionReport->user_id, $msg, 'collection_rejection');
+
+        return back()->with('success', '差戻し・LINE通知を送信しました。');
     }
 }

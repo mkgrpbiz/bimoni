@@ -90,7 +90,30 @@
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">実施可能時間帯</dt>
                 <dd class="dark:text-gray-200">{{ $user->available_times ? implode('、', $user->available_times) : '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">継続希望</dt>
-                <dd class="dark:text-gray-200">{{ $application->continuation_wish ?? '-' }}</dd>
+                <dd class="dark:text-gray-200 flex items-center gap-2">
+                    {{ $application->continuation_wish ?? '-' }}
+                    @if($application->continuation_wish === '希望' && in_array($application->status, ['completed','reported','approved']))
+                    <form method="POST" action="{{ route('admin.applications.continuation_line', $application) }}">
+                        @csrf
+                        <button type="submit"
+                                class="bg-green-500 text-white px-2 py-0.5 rounded text-xs hover:bg-green-600"
+                                onclick="return confirm('継続依頼LINEを送信しますか？')">
+                            LINE送信
+                        </button>
+                    </form>
+                    @endif
+                </dd>
+                @if($application->continuation_response)
+                <dt class="text-gray-700 dark:text-gray-400 mt-2">継続回答</dt>
+                <dd class="dark:text-gray-200">
+                    @if($application->continuation_response === 'possible')
+                        <span class="text-green-600 font-medium">継続購入可能</span>
+                    @else
+                        <span class="text-gray-500">継続購入不可</span>
+                    @endif
+                    <span class="text-xs text-gray-400 ml-1">{{ $application->continuation_responded_at?->format('m/d H:i') }}</span>
+                </dd>
+                @endif
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">購入可能時間</dt>
                 <dd class="dark:text-gray-200 text-xs">{{ $application->purchase_available_times ? implode('・', $application->purchase_available_times) : '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">保有ポイント</dt>

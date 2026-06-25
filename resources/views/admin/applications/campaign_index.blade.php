@@ -302,6 +302,17 @@ $statusTabs = [
                                     onclick="return confirm('キャンセルしますか？')">取消</button>
                         </form>
                         @endif
+                        @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']))
+                        <form method="POST" action="{{ route('admin.applications.continuation_line', $app) }}">
+                            @csrf
+                            <button type="submit"
+                                    class="bg-green-500 text-white px-1.5 py-0.5 rounded hover:bg-green-600 text-xs"
+                                    onclick="return confirm('継続依頼LINEを送信しますか？')"
+                                    title="{{ $app->continuation_response ? '回答済: '.($app->continuation_response === 'possible' ? '可能' : '不可') : '未回答' }}">
+                                継続LINE{{ $app->continuation_response ? '✓' : '' }}
+                            </button>
+                        </form>
+                        @endif
                         <a href="{{ route('admin.applications.show', $app) }}"
                            class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">詳細</a>
                     </div>

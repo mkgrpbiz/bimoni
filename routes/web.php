@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ApplicationController;
+use App\Http\Controllers\ContinuationController;
 use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\Admin\ApprovalReflectionController;
 use App\Http\Controllers\Admin\CampaignBonusController;
@@ -33,6 +34,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
+});
+
+// 継続依頼応答ページ（認証不要・トークンで保護）
+Route::prefix('continuation/{token}')->name('continuation.')->group(function () {
+    Route::get('/',        [ContinuationController::class, 'confirm'])->name('confirm');
+    Route::post('/accept', [ContinuationController::class, 'accept'])->name('accept');
+    Route::post('/decline',[ContinuationController::class, 'decline'])->name('decline');
 });
 
 // 打診ページ（認証不要・トークンで保護）
@@ -77,6 +85,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.status');
         Route::patch('applications/{application}/notes', [ApplicationController::class, 'updateNotes'])->name('applications.notes');
         Route::patch('applications/{application}/invite-schedule', [ApplicationController::class, 'updateInviteSchedule'])->name('applications.invite_schedule');
+        Route::post('applications/{application}/continuation-line', [ApplicationController::class, 'sendContinuationRequest'])->name('applications.continuation_line');
         Route::post('applications/{application}/schedules', [ScheduleController::class, 'store'])->name('schedules.store');
         Route::patch('schedules/{schedule}/confirm', [ScheduleController::class, 'confirm'])->name('schedules.confirm');
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

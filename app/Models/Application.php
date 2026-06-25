@@ -16,6 +16,7 @@ class Application extends Model
         'proposal_token', 'proposal_answered_at', 'proposal_answer', 'proposal_sent_at',
         'notes', 'imported_from',
         'continuation_wish', 'purchase_available_times',
+        'continuation_token', 'continuation_response', 'continuation_responded_at',
         'form_image',
         'bonus_amount',
     ];

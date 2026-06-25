@@ -134,7 +134,7 @@
                    oninput="calcProductCost(); calcGross()">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">継続率（%）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">目標継続率（%）</label>
             <input type="number" name="continuation_rate" id="f-rate"
                    value="{{ old('continuation_rate', $campaign->continuation_rate ?? '') }}"
                    class="w-full border rounded px-3 py-2 text-sm" min="0" max="100" step="0.01"
