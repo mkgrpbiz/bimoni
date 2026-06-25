@@ -132,6 +132,22 @@ class CampaignDailySlotController extends Controller
                 }
             }
 
+            // 類似度マッチ（similar_text >= 75%）
+            if (!$campaign) {
+                $bestMatch   = null;
+                $bestPercent = 0;
+                foreach ($exactMap as $dbKey => $c) {
+                    similar_text($key, $dbKey, $pct);
+                    if ($pct > $bestPercent) {
+                        $bestPercent = $pct;
+                        $bestMatch   = $c;
+                    }
+                }
+                if ($bestPercent >= 75) {
+                    $campaign = $bestMatch;
+                }
+            }
+
             if (!$campaign) {
                 $skipped[] = $productName;
                 continue;
