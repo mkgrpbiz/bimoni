@@ -16,16 +16,16 @@
 
 {{-- TSVインポート --}}
 <div class="bg-white rounded-lg shadow p-4 mb-5">
-    <h2 class="font-bold text-gray-700 mb-3 text-sm">一括インポート（TSV）</h2>
+    <h2 class="font-bold text-gray-700 mb-3 text-sm">CSV一括インポート</h2>
     <p class="text-xs text-gray-500 mb-3">
-        1行目: <code class="bg-gray-100 px-1 rounded">商品名&lt;TAB&gt;6/1&lt;TAB&gt;6/2&lt;TAB&gt;…</code>
-        2行目以降: 商品名（案件の商品名またはタイトルと一致）＋日別件数
+        1行目にヘッダー（商品名・日付列）、2行目以降に商品名と日別件数が入ったCSVファイルをアップロードしてください。<br>
+        商品名は案件のタイトルと一致（または前方一致）する必要があります。
     </p>
     <form method="POST" action="{{ route('admin.daily_slots.import') }}" enctype="multipart/form-data"
           class="flex items-center gap-3">
         @csrf
         <input type="hidden" name="status" value="{{ $status }}">
-        <input type="file" name="tsv_file" accept=".tsv,.txt,.csv" required
+        <input type="file" name="tsv_file" accept=".csv,.txt" required
                class="border rounded px-2 py-1.5 text-sm">
         <button type="submit"
                 class="bg-pink-500 text-white px-4 py-1.5 rounded text-sm hover:bg-pink-600">

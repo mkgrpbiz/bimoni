@@ -58,11 +58,22 @@ class CampaignDailySlotController extends Controller
             return back()->withErrors(['tsv_file' => 'ファイルが空です']);
         }
 
-        $headers  = str_getcsv($lines[0], "\t");
+        // 区切り文字を自動判定（タブ優先、なければカンマ）
+        $delimiter = str_contains($lines[0], "\t") ? "\t" : ",";
+
+        $headers = str_getcsv($lines[0], $delimiter);
+        $headers = array_map('trim', $headers);
+
+        // 「商品名」列のインデックスを探す
+        $nameColIdx = array_search('商品名', $headers);
+        if ($nameColIdx === false) {
+            return back()->withErrors(['tsv_file' => '「商品名」列が見つかりません（1行目のヘッダーを確認してください）']);
+        }
+
+        // 日付列を動的に検出
         $yearNow  = now()->year;
         $dateCols = [];
-        for ($i = 1; $i < count($headers); $i++) {
-            $col = trim($headers[$i]);
+        foreach ($headers as $i => $col) {
             if (preg_match('/^(\d{1,2})\/(\d{1,2})$/', $col, $m)) {
                 $dateCols[$i] = sprintf('%04d-%02d-%02d', $yearNow, (int)$m[1], (int)$m[2]);
             }
@@ -71,27 +82,40 @@ class CampaignDailySlotController extends Controller
         $imported = 0;
         $skipped  = [];
 
-        // 全案件を取得してメモリでマッチング（大文字小文字・全角スペース無視）
+        // 全案件をメモリに読み込んでマッチング（スペース・大文字小文字無視）
         $allCampaigns = Campaign::whereNotNull('title')->get(['id', 'title', 'product_name']);
 
         $normalize = fn(string $s): string =>
             mb_strtolower(preg_replace('/[\s\x{3000}　]+/u', '', trim($s)));
 
-        $campaignMap = [];
+        // 完全一致マップ
+        $exactMap = [];
         foreach ($allCampaigns as $c) {
             if ($c->product_name) {
-                $campaignMap[$normalize($c->product_name)] = $c;
+                $exactMap[$normalize($c->product_name)] = $c;
             }
-            $campaignMap[$normalize($c->title)] = $c;
+            $exactMap[$normalize($c->title)] = $c;
         }
 
         for ($r = 1; $r < count($lines); $r++) {
-            $cols        = str_getcsv($lines[$r], "\t");
-            $productName = trim($cols[0] ?? '');
+            $cols        = str_getcsv($lines[$r], $delimiter);
+            $productName = trim($cols[$nameColIdx] ?? '');
             if ($productName === '') continue;
 
-            $key      = $normalize($productName);
-            $campaign = $campaignMap[$key] ?? null;
+            $key = $normalize($productName);
+
+            // 完全一致
+            $campaign = $exactMap[$key] ?? null;
+
+            // 部分一致フォールバック（DB側のキーがTSV名に含まれる）
+            if (!$campaign) {
+                foreach ($exactMap as $dbKey => $c) {
+                    if (mb_strlen($dbKey) >= 3 && str_contains($key, $dbKey)) {
+                        $campaign = $c;
+                        break;
+                    }
+                }
+            }
 
             if (!$campaign) {
                 $skipped[] = $productName;
@@ -100,7 +124,7 @@ class CampaignDailySlotController extends Controller
 
             foreach ($dateCols as $colIdx => $date) {
                 $val = isset($cols[$colIdx]) ? trim($cols[$colIdx]) : '';
-                if ($val === '') continue;
+                if ($val === '' || !is_numeric($val)) continue;
                 CampaignDailySlot::updateOrCreate(
                     ['campaign_id' => $campaign->id, 'target_date' => $date],
                     ['planned_count' => max(0, (int) $val)]
@@ -111,22 +135,8 @@ class CampaignDailySlotController extends Controller
 
         $msg = "{$imported}件インポートしました。";
         if ($skipped) {
-            $msg .= "\n\n【マッチしない商品名（TSVの値）】\n"
+            $msg .= "\n\nマッチしない商品名（案件タイトルと一致しません）:\n"
                   . implode("\n", array_unique($skipped));
-        }
-
-        // デバッグ: DB側の案件名サンプル
-        $dbSample = $allCampaigns->take(5)->map(fn($c) =>
-            'title=' . $c->title . ' / product_name=' . ($c->product_name ?? 'null')
-        )->implode("\n");
-        $msg .= "\n\n【DB案件サンプル（先頭5件）】\n" . $dbSample;
-
-        // デバッグ: TSVから読み取った商品名サンプル
-        $tsvSample = array_slice(array_unique($skipped), 0, 5);
-        $msg .= "\n\n【TSV商品名サンプル（先頭5件、16進）】\n";
-        foreach ($tsvSample as $s) {
-            $hex = bin2hex(mb_substr($s, 0, 10));
-            $msg .= "{$s} [{$hex}]\n";
         }
 
         return back()->with('success', $msg);
