@@ -79,7 +79,7 @@ $statusTabs = [
         $targetMale   = $summary['target_male_ratio']   ?? null;
         $targetFemale = $summary['target_female_ratio'] ?? null;
         $targetCont  = $campaign->continuation_rate;
-        $actualCont  = $totalC > 0 ? round($summary['continuation_wish_count'] / $totalC * 100) : null;
+        $actualCont  = $totalC > 0 ? round($summary['continuation_ok_count'] / $totalC * 100) : null;
     @endphp
     {{-- 男性比 --}}
     <div class="text-center">
@@ -105,7 +105,7 @@ $statusTabs = [
         <div class="text-xs text-gray-500 mb-0.5">継続依頼OK率</div>
         <div class="font-bold text-green-600 text-base">{{ $actualCont !== null ? $actualCont.'%' : '-' }}</div>
         <div class="text-xs text-gray-400">目標 {{ $targetCont !== null ? $targetCont.'%' : '-' }}</div>
-        <div class="text-xs text-gray-500">{{ $summary['continuation_wish_count'] }}件 / 完了{{ $totalC }}件</div>
+        <div class="text-xs text-gray-500">{{ $summary['continuation_ok_count'] }}件 / 完了{{ $totalC }}件</div>
     </div>
 </div>
 

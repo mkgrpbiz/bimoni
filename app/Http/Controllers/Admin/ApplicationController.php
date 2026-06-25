@@ -114,7 +114,7 @@ class ApplicationController extends Controller
             'total_completed'  => $completedApps->count(),
             'target_male_ratio'   => $campaign->target_male_ratio,
             'target_female_ratio' => $campaign->target_female_ratio,
-            'continuation_wish_count' => $completedApps->where('continuation_wish', '希望')->count(),
+            'continuation_ok_count' => $completedApps->where('continuation_response', 'possible')->count(),
         ];
 
         $allCampaigns   = Campaign::orderBy('title')->get(['id', 'title', 'status']);
