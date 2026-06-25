@@ -58,12 +58,7 @@ class ApplicationController extends Controller
             return $app;
         });
 
-        // タブごとの件数（案件ステータス別）
-        $tabCounts = Application::join('campaigns', 'campaigns.id', '=', 'applications.campaign_id')
-            ->selectRaw('campaigns.status as campaign_status, count(*) as count')
-            ->groupBy('campaigns.status')
-            ->pluck('count', 'campaign_status');
-
+        $tabCounts = $this->getTabCounts();
         $campaigns = Campaign::orderBy('title')->get();
 
         return view('admin.applications.index', compact('applications', 'campaigns', 'campaignStatus', 'tabCounts'));
@@ -120,9 +115,11 @@ class ApplicationController extends Controller
             'target_female_ratio' => $campaign->target_female_ratio,
         ];
 
-        $allCampaigns = Campaign::orderBy('title')->get(['id', 'title', 'status']);
+        $allCampaigns   = Campaign::orderBy('title')->get(['id', 'title', 'status']);
+        $tabCounts      = $this->getTabCounts();
+        $campaignStatus = $campaign->status;
 
-        return view('admin.applications.campaign_index', compact('campaign', 'applications', 'summary', 'allCampaigns'));
+        return view('admin.applications.campaign_index', compact('campaign', 'applications', 'summary', 'allCampaigns', 'tabCounts', 'campaignStatus'));
     }
 
     public function show(Application $application): View
@@ -232,6 +229,16 @@ class ApplicationController extends Controller
 
         $application->update($request->only(['invited_at', 'invited_end_at', 'continuation_invite_date']));
         return back()->with('success', '案内日時を保存しました。');
+    }
+
+    private function getTabCounts(): \Illuminate\Support\Collection
+    {
+        return collect([
+            'published' => Application::whereHas('campaign', fn($q) => $q->where('status', 'published'))->count(),
+            'paused'    => Application::whereHas('campaign', fn($q) => $q->where('status', 'paused'))->count(),
+            'closed'    => Application::whereHas('campaign', fn($q) => $q->where('status', 'closed'))->count(),
+            'draft'     => Application::whereHas('campaign', fn($q) => $q->where('status', 'draft'))->count(),
+        ]);
     }
 
     // ユーザーIDリストに対して、指定案件以外の進行中応募を一括取得

@@ -11,6 +11,30 @@
     </a>
 </div>
 
+{{-- 案件ステータスタブ --}}
+@php
+$statusTabs = [
+    'published' => ['label' => '公開中',   'color' => 'bg-green-500'],
+    'paused'    => ['label' => '一時停止', 'color' => 'bg-orange-500'],
+    'closed'    => ['label' => '終了',     'color' => 'bg-gray-500'],
+    'draft'     => ['label' => '下書き',   'color' => 'bg-yellow-500'],
+];
+@endphp
+<div class="flex border-b border-gray-200 mb-0">
+    @foreach($statusTabs as $key => $t)
+    <a href="{{ route('admin.applications.index', ['status' => $key]) }}"
+       class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
+              {{ $campaignStatus === $key
+                  ? 'border-pink-500 text-pink-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+        {{ $t['label'] }}
+        <span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white {{ $t['color'] }}">
+            {{ $tabCounts->get($key, 0) }}
+        </span>
+    </a>
+    @endforeach
+</div>
+
 {{-- 案件タブ --}}
 @include('admin.applications._campaign_tabs', ['allCampaigns' => $allCampaigns, 'activeCampaignId' => $campaign->id])
 
