@@ -64,10 +64,20 @@ class CampaignDailySlotController extends Controller
         $headers = str_getcsv($lines[0], $delimiter);
         $headers = array_map('trim', $headers);
 
-        // 「商品名」列のインデックスを探す
-        $nameColIdx = array_search('商品名', $headers);
-        if ($nameColIdx === false) {
-            return back()->withErrors(['tsv_file' => '「商品名」列が見つかりません（1行目のヘッダーを確認してください）']);
+        // 「商品名」列のインデックスを探す（部分一致も含む）
+        $nameColIdx = null;
+        foreach ($headers as $i => $h) {
+            if (str_contains($h, '商品名')) {
+                $nameColIdx = $i;
+                break;
+            }
+        }
+        if ($nameColIdx === null) {
+            $preview = implode(' | ', array_slice($headers, 0, 6));
+            $hex     = bin2hex(mb_substr($lines[0], 0, 20));
+            return back()->withErrors(['tsv_file' =>
+                "「商品名」列が見つかりません\n区切り文字:{$delimiter}\nヘッダー先頭:{$preview}\nHEX:{$hex}"
+            ]);
         }
 
         // 日付列を動的に検出
