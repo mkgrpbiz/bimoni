@@ -122,10 +122,10 @@ class CampaignDailySlotController extends Controller
             // 完全一致
             $campaign = $exactMap[$key] ?? null;
 
-            // 部分一致フォールバック（DB側のキーがTSV名に含まれる）
+            // 部分一致フォールバック（どちらか一方がもう一方に含まれる）
             if (!$campaign) {
                 foreach ($exactMap as $dbKey => $c) {
-                    if (mb_strlen($dbKey) >= 3 && str_contains($key, $dbKey)) {
+                    if (mb_strlen($dbKey) >= 3 && (str_contains($key, $dbKey) || str_contains($dbKey, $key))) {
                         $campaign = $c;
                         break;
                     }
@@ -166,11 +166,8 @@ class CampaignDailySlotController extends Controller
 
         $msg = "{$imported}件インポートしました。";
         if ($skipped) {
-            $msg .= "\n\n【マッチしない商品名】（案件管理のタイトルと一致しません）\n"
+            $msg .= "\n\n【スキップ】案件タイトルと一致しない商品名:\n"
                   . implode("\n", array_unique($skipped));
-
-            $dbTitles = $allCampaigns->pluck('title')->sort()->values()->implode("\n");
-            $msg .= "\n\n【DB登録済み案件タイトル一覧】\n" . $dbTitles;
         }
 
         return back()->with('success', $msg);
