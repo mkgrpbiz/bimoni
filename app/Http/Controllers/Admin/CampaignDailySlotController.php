@@ -71,13 +71,27 @@ class CampaignDailySlotController extends Controller
         $imported = 0;
         $skipped  = [];
 
+        // 全案件を取得してメモリでマッチング（大文字小文字・全角スペース無視）
+        $allCampaigns = Campaign::whereNotNull('title')->get(['id', 'title', 'product_name']);
+
+        $normalize = fn(string $s): string =>
+            mb_strtolower(preg_replace('/[\s\x{3000}　]+/u', '', trim($s)));
+
+        $campaignMap = [];
+        foreach ($allCampaigns as $c) {
+            if ($c->product_name) {
+                $campaignMap[$normalize($c->product_name)] = $c;
+            }
+            $campaignMap[$normalize($c->title)] = $c;
+        }
+
         for ($r = 1; $r < count($lines); $r++) {
             $cols        = str_getcsv($lines[$r], "\t");
             $productName = trim($cols[0] ?? '');
             if ($productName === '') continue;
 
-            $campaign = Campaign::where('product_name', $productName)->first()
-                     ?? Campaign::where('title', $productName)->first();
+            $key      = $normalize($productName);
+            $campaign = $campaignMap[$key] ?? null;
 
             if (!$campaign) {
                 $skipped[] = $productName;
@@ -97,7 +111,8 @@ class CampaignDailySlotController extends Controller
 
         $msg = "{$imported}件インポートしました。";
         if ($skipped) {
-            $msg .= ' マッチしない商品名: ' . implode('、', array_unique($skipped));
+            $msg .= "\nマッチしない商品名（案件タイトルまたは商品名と一致させてください）:\n"
+                  . implode("\n", array_unique($skipped));
         }
 
         return back()->with('success', $msg);
