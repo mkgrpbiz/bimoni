@@ -14,7 +14,35 @@
     <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4 text-sm">{{ session('error') }}</div>
 @endif
 
+{{-- ステータスタブ --}}
+@php
+$tabs = [
+    'applying'  => ['label' => '応募中',   'color' => 'bg-yellow-500'],
+    'contacted' => ['label' => '打診・予約', 'color' => 'bg-purple-500'],
+    'completed' => ['label' => '実施完了', 'color' => 'bg-teal-500'],
+    'reported'  => ['label' => '報告済',   'color' => 'bg-blue-500'],
+    'approved'  => ['label' => '承認済',   'color' => 'bg-green-500'],
+    'cancelled' => ['label' => 'キャンセル', 'color' => 'bg-gray-500'],
+];
+@endphp
+<div class="flex border-b border-gray-200 mb-4 overflow-x-auto">
+    @foreach($tabs as $key => $t)
+    <a href="{{ route('admin.applications.index', array_merge(request()->except(['tab', 'page']), ['tab' => $key])) }}"
+       class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+              {{ $tab === $key
+                  ? 'border-pink-500 text-pink-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+        {{ $t['label'] }}
+        <span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white {{ $t['color'] }}">
+            {{ $tabCounts->get($key, 0) }}
+        </span>
+    </a>
+    @endforeach
+</div>
+
+{{-- サブフィルター --}}
 <form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-end">
+    <input type="hidden" name="tab" value="{{ $tab }}">
     <div>
         <label class="block text-xs text-gray-700 mb-1">名前検索</label>
         <input type="text" name="q" value="{{ request('q') }}" placeholder="名前・フリガナ"
@@ -29,24 +57,9 @@
             @endforeach
         </select>
     </div>
-    <div>
-        <label class="block text-xs text-gray-700 mb-1">ステータス</label>
-        <select name="status" class="border rounded px-2 py-1 text-sm">
-            <option value="">すべて</option>
-            @foreach([
-                'pending'        => '応募',
-                'line_contacted' => '打診中',
-                'scheduled'      => '予約中',
-                'confirming'     => '実施確認中',
-                'completed'      => '実施完了',
-                'cancelled'      => 'キャンセル',
-            ] as $val => $label)
-                <option value="{{ $val }}" @selected(request('status') === $val)>{{ $label }}</option>
-            @endforeach
-        </select>
-    </div>
     <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">絞り込み</button>
-    <a href="{{ route('admin.applications.index') }}" class="bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600 text-sm">リセット</a>
+    <a href="{{ route('admin.applications.index', ['tab' => $tab]) }}"
+       class="text-sm text-gray-500 hover:text-gray-700 py-1.5">リセット</a>
 </form>
 
 <div class="bg-white rounded-lg shadow overflow-x-auto">

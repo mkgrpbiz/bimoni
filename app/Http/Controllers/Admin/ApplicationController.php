@@ -18,13 +18,25 @@ use Illuminate\View\View;
 
 class ApplicationController extends Controller
 {
+    // タブ定義: tab名 => 対応するstatusの配列
+    private array $tabStatuses = [
+        'applying'  => ['pending', 'selected'],
+        'contacted' => ['line_contacted', 'scheduled', 'confirming'],
+        'completed' => ['completed'],
+        'reported'  => ['reported'],
+        'approved'  => ['approved', 'point_granted'],
+        'cancelled' => ['rejected', 'cancelled'],
+    ];
+
     public function index(Request $request): View
     {
-        $query = Application::with(['user', 'campaign', 'lineMessageJobs'])->latest('applied_at');
+        $tab      = $request->input('tab', 'applying');
+        $statuses = $this->tabStatuses[$tab] ?? $this->tabStatuses['applying'];
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        $query = Application::with(['user', 'campaign', 'lineMessageJobs'])
+            ->whereIn('status', $statuses)
+            ->latest('applied_at');
+
         if ($request->filled('campaign_id')) {
             $query->where('campaign_id', $request->campaign_id);
         }
@@ -57,9 +69,18 @@ class ApplicationController extends Controller
             return $app;
         });
 
+        // タブごとの件数
+        $statusCounts = Application::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $tabCounts = collect($this->tabStatuses)->map(
+            fn($sts) => $statusCounts->only($sts)->sum()
+        );
+
         $campaigns = Campaign::orderBy('title')->get();
 
-        return view('admin.applications.index', compact('applications', 'campaigns'));
+        return view('admin.applications.index', compact('applications', 'campaigns', 'tab', 'tabCounts'));
     }
 
     public function campaignIndex(Campaign $campaign, Request $request): View
