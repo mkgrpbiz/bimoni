@@ -20,8 +20,11 @@ class CampaignController extends Controller
         $user      = Auth::guard('liff')->user();
         $campaigns = Campaign::where('status', 'published')
             ->with('category')
+            ->orderBy('sort_order')
             ->latest()
             ->get();
+
+        $campaignsByType = $campaigns->groupBy('campaign_type');
 
         $appliedIds = Application::where('user_id', $user->id)
             ->whereIn('campaign_id', $campaigns->pluck('id'))
@@ -34,7 +37,7 @@ class CampaignController extends Controller
             ->get()
             ->keyBy('campaign_id');
 
-        return view('member.campaigns.index', compact('campaigns', 'appliedIds', 'activeBonuses'));
+        return view('member.campaigns.index', compact('campaigns', 'campaignsByType', 'appliedIds', 'activeBonuses'));
     }
 
     public function show(Campaign $campaign): View|RedirectResponse
@@ -132,6 +135,14 @@ class CampaignController extends Controller
 
         if (!empty($userUpdates)) {
             $user->update($userUpdates);
+        }
+
+        // 応募上限チェック → 上限到達で自動一時停止
+        if ($campaign->capacity !== null) {
+            $appCount = Application::where('campaign_id', $campaign->id)->count();
+            if ($appCount >= $campaign->capacity) {
+                $campaign->update(['status' => 'paused']);
+            }
         }
 
         return redirect()->route('member.campaigns.show', $campaign)

@@ -17,7 +17,7 @@
             <select name="campaign_type" class="w-full border rounded px-3 py-2 text-sm">
                 <option value="experience" @selected(old('campaign_type', $campaign->campaign_type ?? '') === 'experience')>体験モニター</option>
                 <option value="product"    @selected(old('campaign_type', $campaign->campaign_type ?? '') === 'product')>商品モニター</option>
-                <option value="recovery"   @selected(old('campaign_type', $campaign->campaign_type ?? '') === 'recovery')>回収サービス</option>
+                <option value="pr"         @selected(old('campaign_type', $campaign->campaign_type ?? '') === 'pr')>PRモニター</option>
             </select>
         </div>
 
@@ -83,6 +83,26 @@
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">注意事項</label>
             <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2 text-sm">{{ old('notes', $campaign->notes ?? '') }}</textarea>
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">解約について</label>
+            <textarea name="cancellation_info" rows="3" class="w-full border rounded px-3 py-2 text-sm"
+                      placeholder="解約手続きの方法・タイミング等">{{ old('cancellation_info', $campaign->cancellation_info ?? '') }}</textarea>
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">モニター案内文</label>
+            <textarea name="monitor_guide" rows="4" class="w-full border rounded px-3 py-2 text-sm"
+                      placeholder="モニター参加者への案内・手順">{{ old('monitor_guide', $campaign->monitor_guide ?? '') }}</textarea>
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">リンク</label>
+            <input type="url" name="link" value="{{ old('link', $campaign->link ?? '') }}"
+                   placeholder="https://..."
+                   class="w-full border rounded px-3 py-2 text-sm @error('link') border-red-400 @enderror">
+            @error('link')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
 </div>
@@ -189,9 +209,10 @@
                    class="w-full border rounded px-3 py-2 text-sm" min="0" max="100">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">募集人数 <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">応募上限人数 <span class="text-gray-400 text-xs">任意・上限到達で自動一時停止</span></label>
             <input type="number" name="capacity"
-                   value="{{ old('capacity', $campaign->capacity ?? 1) }}"
+                   value="{{ old('capacity', $campaign->capacity ?? '') }}"
+                   placeholder="上限なし"
                    class="w-full border rounded px-3 py-2 text-sm" min="1">
         </div>
         <div>
@@ -232,17 +253,46 @@
 {{-- LINE自動送信設定 --}}
 <div class="bg-white rounded-lg shadow p-6 mb-4">
     <h2 class="font-bold text-gray-700 mb-1">LINE自動送信設定</h2>
-    <p class="text-xs text-gray-700 mb-4">予約中に移行したユーザーへ案内予定日時に自動送信されるメッセージです。</p>
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">モニター案内文</label>
-        <textarea name="monitor_invite_message" rows="5"
-                  class="w-full border rounded px-3 py-2 text-sm"
-                  placeholder="例: ○○モニターのご案内です。&#10;実施時間になりましたらモニターを開始してください。">{{ old('monitor_invite_message', $campaign->monitor_invite_message ?? '') }}</textarea>
+    <p class="text-xs text-gray-700 mb-2">予約中に移行したユーザーへ案内予定日時に自動送信されるメッセージです。</p>
+
+    <div class="bg-gray-50 border border-gray-200 rounded p-3 mb-4 text-xs text-gray-600">
+        <p class="font-medium text-gray-700 mb-1">使用できるコード（自動で値に置換されます）</p>
+        <div class="grid grid-cols-2 gap-1 font-mono">
+            <span>{{商品名}}</span><span class="text-gray-400">→ 商品名</span>
+            <span>{{初回購入費}}</span><span class="text-gray-400">→ 初回購入費（円）</span>
+            <span>{{モニター協力金}}</span><span class="text-gray-400">→ モニター協力金（円）</span>
+            <span>{{解約について}}</span><span class="text-gray-400">→ 解約についての内容</span>
+            <span>{{モニター案内文}}</span><span class="text-gray-400">→ モニター案内文の内容</span>
+            <span>{{リンク}}</span><span class="text-gray-400">→ リンクURL</span>
+        </div>
     </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">モニター案内メッセージ</label>
+        <textarea name="monitor_invite_message" rows="6"
+                  class="w-full border rounded px-3 py-2 text-sm font-mono"
+                  placeholder="例: {{商品名}}のモニターご案内です。&#10;{{モニター案内文}}&#10;詳細はこちら: {{リンク}}">{{ old('monitor_invite_message', $campaign->monitor_invite_message ?? '') }}</textarea>
+    </div>
+
+    <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">案内動画</label>
+        @if($isEdit && $campaign->monitor_video)
+        <div class="mb-2 flex items-center gap-3">
+            <video src="{{ asset('storage/' . $campaign->monitor_video) }}"
+                   controls class="w-48 rounded border"></video>
+            <p class="text-xs text-gray-500">新しい動画を選択すると置き換わります</p>
+        </div>
+        @endif
+        <input type="file" name="monitor_video" accept="video/mp4,video/quicktime,video/avi,video/webm"
+               class="w-full border rounded px-3 py-2 text-sm">
+        <p class="text-xs text-gray-400 mt-0.5">MP4・MOV・AVI・WebM、最大200MB</p>
+        @error('monitor_video')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+    </div>
+
     <div class="mt-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">モニター終了案内文</label>
         <textarea name="monitor_end_message" rows="5"
-                  class="w-full border rounded px-3 py-2 text-sm"
+                  class="w-full border rounded px-3 py-2 text-sm font-mono"
                   placeholder="例: ○○モニターのご報告をお願いします。&#10;報告ページよりご提出ください。">{{ old('monitor_end_message', $campaign->monitor_end_message ?? '') }}</textarea>
     </div>
 </div>

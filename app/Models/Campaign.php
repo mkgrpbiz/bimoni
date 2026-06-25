@@ -8,7 +8,9 @@ class Campaign extends Model
 {
     protected $fillable = [
         'category_id', 'title', 'campaign_type', 'status', 'pr_media',
-        'description', 'requirements', 'notes', 'monitor_invite_message', 'monitor_end_message',
+        'description', 'requirements', 'notes',
+        'cancellation_info', 'monitor_guide', 'link', 'monitor_video',
+        'monitor_invite_message', 'monitor_end_message',
         'product_name', 'product_price',
         'cooperation_fee', 'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
@@ -45,6 +47,7 @@ class Campaign extends Model
         return match($this->campaign_type) {
             'experience' => '体験モニター',
             'product'    => '商品モニター',
+            'pr'         => 'PRモニター',
             'recovery'   => '回収サービス',
             default      => $this->campaign_type,
         };
@@ -70,6 +73,23 @@ class Campaign extends Model
             'monitor' => 'モニター',
             default   => $this->pr_media ?? '-',
         };
+    }
+
+    // メッセージテンプレートの{{変数}}を実際の値に置換
+    public function resolveTemplate(string $template): string
+    {
+        return str_replace(
+            ['{{商品名}}', '{{初回購入費}}', '{{モニター協力金}}', '{{解約について}}', '{{モニター案内文}}', '{{リンク}}'],
+            [
+                $this->product_name ?? '',
+                $this->initial_purchase_fee ? number_format($this->initial_purchase_fee) . '円' : '',
+                number_format($this->cooperation_fee) . '円',
+                $this->cancellation_info ?? '',
+                $this->monitor_guide ?? '',
+                $this->link ?? '',
+            ],
+            $template
+        );
     }
 
     // 商品金額 = 初回購入費 + 継続購入費 × 継続率

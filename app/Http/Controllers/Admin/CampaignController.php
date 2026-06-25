@@ -48,6 +48,9 @@ class CampaignController extends Controller
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $request->file('thumbnail')->store('campaigns', 'public');
         }
+        if ($request->hasFile('monitor_video')) {
+            $validated['monitor_video'] = $request->file('monitor_video')->store('campaigns/videos', 'public');
+        }
 
         $campaign = Campaign::create($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
@@ -78,6 +81,12 @@ class CampaignController extends Controller
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($campaign->thumbnail);
             }
             $validated['thumbnail'] = $request->file('thumbnail')->store('campaigns', 'public');
+        }
+        if ($request->hasFile('monitor_video')) {
+            if ($campaign->monitor_video) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($campaign->monitor_video);
+            }
+            $validated['monitor_video'] = $request->file('monitor_video')->store('campaigns/videos', 'public');
         }
 
         $campaign->update($validated);
@@ -134,15 +143,19 @@ class CampaignController extends Controller
     {
         return [
             'title'                  => 'required|string|max:255',
-            'campaign_type'          => 'required|in:experience,product,recovery',
+            'campaign_type'          => 'required|in:experience,product,pr',
             'status'                 => 'required|in:draft,published,paused,closed',
             'category_id'            => 'nullable|exists:categories,id',
             'pr_media'               => 'nullable|in:AD,IF,LINE,monitor',
             'description'            => 'nullable|string',
             'requirements'           => 'nullable|string',
             'notes'                  => 'nullable|string',
+            'cancellation_info'      => 'nullable|string',
+            'monitor_guide'          => 'nullable|string',
+            'link'                   => 'nullable|url|max:500',
             'monitor_invite_message' => 'nullable|string',
             'monitor_end_message'    => 'nullable|string',
+            'monitor_video'          => 'nullable|mimes:mp4,mov,avi,webm|max:204800',
             'product_name'           => 'nullable|string|max:255',
             'product_price'          => 'nullable|integer|min:0',
             'cooperation_fee'        => 'required|integer|min:0',
@@ -157,7 +170,7 @@ class CampaignController extends Controller
             'target_gender_ratio'    => 'nullable|string|max:50',
             'target_male_ratio'      => 'nullable|integer|min:0|max:100',
             'target_female_ratio'    => 'nullable|integer|min:0|max:100',
-            'capacity'               => 'required|integer|min:1',
+            'capacity'               => 'nullable|integer|min:1',
             'solicitation_target'    => 'nullable|integer|min:0',
             'application_start_at'   => 'nullable|date',
             'application_end_at'     => 'nullable|date|after_or_equal:application_start_at',
