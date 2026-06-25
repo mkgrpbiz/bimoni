@@ -27,6 +27,10 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     日別件数管理
                 </a>
+                <a href="{{ route('admin.approval_reflections.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
+                    承認反映
+                </a>
                 <a href="{{ route('admin.campaign_bonuses.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     キャンペーン
@@ -39,9 +43,9 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     報告管理
                 </a>
-                <a href="{{ route('admin.approval_reflections.index') }}"
+                <a href="{{ route('admin.collection_reports.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
-                    承認反映
+                    回収管理
                 </a>
                 <a href="{{ route('admin.users.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
@@ -65,7 +69,7 @@
                 </a>
                 <a href="{{ route('admin.form_fields.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
-                    フォーム設定
+                    ページ編集
                 </a>
 
                 <form method="POST" action="{{ route('admin.logout') }}" class="inline ml-2">

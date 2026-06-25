@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\CollectionReport;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+
+class CollectionReportController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $status = $request->input('status', 'pending');
+
+        $reports = CollectionReport::with('user')
+            ->where('status', $status)
+            ->latest()
+            ->paginate(30);
+
+        $counts = CollectionReport::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        return view('admin.collection_reports.index', compact('reports', 'status', 'counts'));
+    }
+
+    public function show(CollectionReport $collectionReport): View
+    {
+        $collectionReport->load('user', 'reviewer');
+        $campaigns = $collectionReport->campaigns();
+        return view('admin.collection_reports.show', compact('collectionReport', 'campaigns'));
+    }
+
+    public function approve(CollectionReport $collectionReport): RedirectResponse
+    {
+        $collectionReport->update([
+            'status'      => 'approved',
+            'reviewed_by' => Auth::id(),
+            'reviewed_at' => now(),
+        ]);
+
+        return back()->with('success', '承認しました。');
+    }
+
+    public function reject(Request $request, CollectionReport $collectionReport): RedirectResponse
+    {
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
+
+        $collectionReport->update([
+            'status'           => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+            'reviewed_by'      => Auth::id(),
+            'reviewed_at'      => now(),
+        ]);
+
+        // TODO: LINE通知送信
+
+        return back()->with('success', '差戻しました。');
+    }
+}

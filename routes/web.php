@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ApprovalReflectionController;
 use App\Http\Controllers\Admin\CampaignBonusController;
 use App\Http\Controllers\Admin\CampaignController;
 use App\Http\Controllers\Admin\CampaignDailySlotController;
+use App\Http\Controllers\Admin\CollectionReportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FormFieldController;
 use App\Http\Controllers\Admin\ImportController;
@@ -113,7 +114,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('campaign-bonuses', [CampaignBonusController::class, 'store'])->name('campaign_bonuses.store');
         Route::delete('campaign-bonuses/{campaignBonus}', [CampaignBonusController::class, 'destroy'])->name('campaign_bonuses.destroy');
 
-        // フォーム項目管理
+        // 回収管理
+        Route::get('collection-reports', [CollectionReportController::class, 'index'])->name('collection_reports.index');
+        Route::get('collection-reports/{collectionReport}', [CollectionReportController::class, 'show'])->name('collection_reports.show');
+        Route::patch('collection-reports/{collectionReport}/approve', [CollectionReportController::class, 'approve'])->name('collection_reports.approve');
+        Route::patch('collection-reports/{collectionReport}/reject', [CollectionReportController::class, 'reject'])->name('collection_reports.reject');
+
+        // フォーム項目管理（ページ編集）
         Route::get('form-fields', [FormFieldController::class, 'index'])->name('form_fields.index');
         Route::post('form-fields', [FormFieldController::class, 'store'])->name('form_fields.store');
         Route::patch('form-fields/{formField}', [FormFieldController::class, 'update'])->name('form_fields.update');
@@ -151,6 +158,7 @@ Route::prefix('member')->name('member.')->group(function () {
             Route::patch('profile', [MemberRegister::class, 'updateProfile'])->name('profile.update');
             Route::get('reports/create', [\App\Http\Controllers\Member\ReportController::class, 'create'])->name('reports.create');
             Route::post('reports', [\App\Http\Controllers\Member\ReportController::class, 'store'])->name('reports.store');
+            Route::post('reports/collection', [\App\Http\Controllers\Member\ReportController::class, 'storeCollection'])->name('reports.store_collection');
         });
     });
 });

@@ -8,7 +8,8 @@ class MonitorReport extends Model
 {
     protected $fillable = [
         'application_id', 'user_id', 'campaign_id',
-        'report_body', 'status', 'reviewed_by', 'reviewed_at', 'reject_reason',
+        'report_body', 'purchase_type', 'payment_method', 'payment_method_other',
+        'status', 'reviewed_by', 'reviewed_at', 'reject_reason',
         'payment_status', 'paid_at',
         'report_image',
     ];

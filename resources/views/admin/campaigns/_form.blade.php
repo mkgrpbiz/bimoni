@@ -90,6 +90,11 @@
             <textarea name="cancellation_info" rows="3" class="w-full border rounded px-3 py-2 text-sm"
                       placeholder="解約手続きの方法・タイミング等">{{ old('cancellation_info', $campaign->cancellation_info ?? '') }}</textarea>
         </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">回収について</label>
+            <textarea name="collection_info" rows="3" class="w-full border rounded px-3 py-2 text-sm"
+                      placeholder="回収サービスについての説明">{{ old('collection_info', $campaign->collection_info ?? '') }}</textarea>
+        </div>
 
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">モニター案内文</label>
@@ -153,6 +158,12 @@
                    class="w-full border rounded px-3 py-2 text-sm @error('cooperation_fee') border-red-400 @enderror" min="0"
                    oninput="calcGross()">
             @error('cooperation_fee')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">継続モニター協力金（円）</label>
+            <input type="number" name="continuation_cooperation_fee"
+                   value="{{ old('continuation_cooperation_fee', $campaign->continuation_cooperation_fee ?? '') }}"
+                   class="w-full border rounded px-3 py-2 text-sm" min="0" placeholder="継続購入時の協力金">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">紹介単価（円）</label>

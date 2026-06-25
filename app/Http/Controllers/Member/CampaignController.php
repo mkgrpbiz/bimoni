@@ -73,17 +73,14 @@ class CampaignController extends Controller
                 ->with('error', 'すでに応募済みです。');
         }
 
-        // グローバル応募フォームフィールドでバリデーション（campaign_* 表示用は除外）
-        $appFields = FormField::forType('application')->visible()->get()
-            ->reject(fn($f) => str_starts_with($f->type, 'campaign_'));
+        $hasContinuation = $campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee;
 
-        $userUpdates = [];
-
-        $rules = [];
-        foreach ($appFields as $field) {
-            $key = 'field_' . $field->field_key;
-            $rules[$key] = ($field->is_required ? 'required' : 'nullable')
-                . ($field->type === 'image' ? '|image|max:10240' : '');
+        $rules = [
+            'purchase_available_times'   => 'required|array|min:1',
+            'purchase_available_times.*' => 'string|max:50',
+        ];
+        if ($hasContinuation) {
+            $rules['continuation_wish'] = 'required|in:希望,不可';
         }
         $request->validate($rules);
 
@@ -94,48 +91,14 @@ class CampaignController extends Controller
             ->first();
 
         $application = Application::create([
-            'user_id'      => $user->id,
-            'campaign_id'  => $campaign->id,
-            'status'       => 'pending',
-            'applied_at'   => $now,
-            'bonus_amount' => $activeBonus?->bonus_amount,
+            'user_id'                 => $user->id,
+            'campaign_id'             => $campaign->id,
+            'status'                  => 'pending',
+            'applied_at'              => $now,
+            'bonus_amount'            => $activeBonus?->bonus_amount,
+            'continuation_wish'       => $hasContinuation ? $request->continuation_wish : null,
+            'purchase_available_times' => $request->purchase_available_times,
         ]);
-
-        // 回答保存
-        foreach ($appFields as $field) {
-            $key = 'field_' . $field->field_key;
-            if ($field->type === 'image') {
-                if ($request->hasFile($key)) {
-                    $path = $request->file($key)->store('form_images', 'public');
-                    ApplicationFormResponse::create([
-                        'application_id' => $application->id,
-                        'field_key'      => $field->field_key,
-                        'value'          => $path,
-                    ]);
-                }
-            } else {
-                $value = $request->input($key);
-                if ($value !== null) {
-                    $storedValue = is_array($value) ? implode(',', $value) : $value;
-                    ApplicationFormResponse::create([
-                        'application_id' => $application->id,
-                        'field_key'      => $field->field_key,
-                        'value'          => $storedValue,
-                    ]);
-                    // application_* タイプはユーザープロファイルにも反映
-                    if ($field->type === 'application_wants_continuation') {
-                        $userUpdates['wants_continuation'] = (bool) $storedValue;
-                    }
-                    if ($field->type === 'application_available_times') {
-                        $userUpdates['available_times'] = is_array($value) ? $value : explode(',', $storedValue);
-                    }
-                }
-            }
-        }
-
-        if (!empty($userUpdates)) {
-            $user->update($userUpdates);
-        }
 
         // 応募上限チェック → 上限到達で自動一時停止
         if ($campaign->capacity !== null) {

@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
-use App\Models\FormField;
+use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\MonitorReportImage;
-use App\Models\ReportFormResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,19 +18,16 @@ class ReportController extends Controller
     {
         $user = Auth::guard('liff')->user();
 
-        $applications = Application::where('user_id', $user->id)
-            ->whereIn('status', ['implementing', 'approved', 'completed'])
+        // 実施完了済みの応募（completed/reported/approved は未報告分も含む）
+        $completedApplications = Application::where('user_id', $user->id)
+            ->whereIn('status', ['completed', 'reported', 'approved'])
             ->with('campaign')
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
 
-        $selectedAppId = $request->input('application_id');
-        $selectedApp   = $selectedAppId ? $applications->firstWhere('id', $selectedAppId) : null;
-        $reportFields  = $selectedApp
-            ? FormField::forType('report')->visible()->get()
-            : collect();
+        $reportType = $request->input('report_type', 'monitor');
 
-        return view('member.reports.create', compact('applications', 'selectedApp', 'reportFields'));
+        return view('member.reports.create', compact('completedApplications', 'reportType'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -39,9 +35,13 @@ class ReportController extends Controller
         $user = Auth::guard('liff')->user();
 
         $request->validate([
-            'application_id'  => 'required|exists:applications,id',
-            'report_images'   => 'nullable|array|max:3',
-            'report_images.*' => 'image|max:10240',
+            'application_id'   => 'required|exists:applications,id',
+            'purchase_type'    => 'required|in:initial,continuation',
+            'payment_method'   => 'required|string|max:50',
+            'payment_method_other' => 'nullable|string|max:100',
+            'report_image_1'   => 'required|image|max:10240',
+            'report_image_2'   => 'required|image|max:10240',
+            'report_image_3'   => 'nullable|image|max:10240',
         ]);
 
         $application = Application::where('id', $request->application_id)
@@ -53,51 +53,67 @@ class ReportController extends Controller
         }
 
         $report = MonitorReport::create([
-            'user_id'        => $user->id,
-            'campaign_id'    => $application->campaign_id,
-            'application_id' => $application->id,
-            'status'         => 'pending',
+            'user_id'              => $user->id,
+            'campaign_id'          => $application->campaign_id,
+            'application_id'       => $application->id,
+            'purchase_type'        => $request->purchase_type,
+            'payment_method'       => $request->payment_method === 'other'
+                                        ? 'other:' . $request->payment_method_other
+                                        : $request->payment_method,
+            'status'               => 'pending',
         ]);
 
-        // 複数画像保存
-        if ($request->hasFile('report_images')) {
-            foreach ($request->file('report_images') as $i => $file) {
-                if ($file->isValid()) {
-                    $path = $file->store('reports', 'public');
-                    MonitorReportImage::create([
-                        'monitor_report_id' => $report->id,
-                        'image_path'        => $path,
-                        'sort_order'        => $i,
-                    ]);
-                }
+        foreach (['report_image_1', 'report_image_2', 'report_image_3'] as $i => $key) {
+            if ($request->hasFile($key) && $request->file($key)->isValid()) {
+                $path = $request->file($key)->store('reports', 'public');
+                MonitorReportImage::create([
+                    'monitor_report_id' => $report->id,
+                    'image_path'        => $path,
+                    'sort_order'        => $i,
+                ]);
             }
         }
 
-        // 動的フィールド保存
-        $reportFields = FormField::forType('report')->visible()->get();
-        foreach ($reportFields as $field) {
-            $key = 'field_' . $field->field_key;
-            if ($field->type === 'image') {
-                if ($request->hasFile($key)) {
-                    $path = $request->file($key)->store('form_images', 'public');
-                    ReportFormResponse::create([
-                        'monitor_report_id' => $report->id,
-                        'field_key'         => $field->field_key,
-                        'value'             => $path,
-                    ]);
-                }
-            } else {
-                $value = $request->input($key);
-                if ($value !== null) {
-                    ReportFormResponse::create([
-                        'monitor_report_id' => $report->id,
-                        'field_key'         => $field->field_key,
-                        'value'             => is_array($value) ? implode(',', $value) : $value,
-                    ]);
-                }
-            }
-        }
+        $application->update(['status' => 'reported', 'reported_at' => now()]);
 
         return redirect()->route('member.mypage')->with('success', '報告を送信しました。審査をお待ちください。');
+    }
+
+    public function storeCollection(Request $request): RedirectResponse
+    {
+        $user = Auth::guard('liff')->user();
+
+        $request->validate([
+            'collection_campaign_ids'   => 'required|array|min:1',
+            'collection_campaign_ids.*' => 'integer|exists:campaigns,id',
+            'box_image'                 => 'required|image|max:10240',
+            'label_image'               => 'required|image|max:10240',
+            'estimated_arrival_date'    => 'required|date|after:today',
+            'tracking_number'           => 'required|digits_between:1,30',
+            'shipping_fee'              => 'required|integer|min:0',
+        ]);
+
+        $campaignIds = $request->collection_campaign_ids;
+        $itemCount   = count($campaignIds);
+        $shippingFee = (int) $request->shipping_fee;
+        $fee         = CollectionReport::calcFee($itemCount, $shippingFee);
+
+        $boxPath   = $request->file('box_image')->store('collection', 'public');
+        $labelPath = $request->file('label_image')->store('collection', 'public');
+
+        CollectionReport::create([
+            'user_id'                => $user->id,
+            'campaign_ids'           => $campaignIds,
+            'box_image'              => $boxPath,
+            'label_image'            => $labelPath,
+            'tracking_number'        => $request->tracking_number,
+            'shipping_fee'           => $shippingFee,
+            'estimated_arrival_date' => $request->estimated_arrival_date,
+            'item_count'             => $itemCount,
+            'cooperation_fee'        => $fee,
+            'status'                 => 'pending',
+        ]);
+
+        return redirect()->route('member.mypage')->with('success', '回収サービスの報告を送信しました。確認後、協力金に反映されます。');
     }
 }

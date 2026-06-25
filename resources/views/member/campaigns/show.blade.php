@@ -1,37 +1,151 @@
 @extends('layouts.member')
-
 @section('title', $campaign->title)
-
 @section('content')
 <div class="py-2">
 
-    {{-- 案件名（常に表示） --}}
+    {{-- 案件名 --}}
     <h1 class="text-base font-bold text-gray-800 mb-4">{{ $campaign->title }}</h1>
 
-    {{-- フォーム設定に従って案件情報 + 入力フィールドを表示 --}}
-    @if($application)
-        {{-- 応募済み：案件情報のみ表示 --}}
-        <div class="space-y-4 mb-6">
-            @foreach($appFields as $field)
-                @if(str_starts_with($field->type, 'campaign_'))
-                    @include('member._form_field', ['field' => $field, 'campaign' => $campaign])
-                @endif
-            @endforeach
+    {{-- 案件画像 --}}
+    @if($campaign->thumbnail)
+    <div class="mb-4 rounded-xl overflow-hidden">
+        <img src="{{ asset('storage/' . $campaign->thumbnail) }}"
+             class="w-full object-contain max-h-72" alt="{{ $campaign->title }}">
+    </div>
+    @endif
+
+    {{-- 案件情報 --}}
+    <div class="space-y-3 mb-5">
+
+        @if($campaign->description)
+        <div class="bg-white rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-bold text-gray-500 mb-2">案件案内説明</p>
+            <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $campaign->description }}</div>
         </div>
+        @endif
+
+        {{-- 料金情報 --}}
+        <div class="bg-white rounded-xl border border-gray-100 p-4 space-y-2">
+            @if($campaign->initial_purchase_fee)
+            <div class="flex justify-between items-center py-1 border-b border-gray-50">
+                <span class="text-sm text-gray-600">初回購入費</span>
+                <div class="text-right">
+                    <span class="font-bold text-gray-800">¥{{ number_format($campaign->initial_purchase_fee) }}</span>
+                    <p class="text-xs text-gray-400">※支払い方法などで多少前後する場合があります。</p>
+                </div>
+            </div>
+            @endif
+            @if($campaign->cooperation_fee)
+            <div class="flex justify-between items-center py-1 border-b border-gray-50">
+                <span class="text-sm text-gray-600">モニター協力金</span>
+                <span class="font-bold text-pink-600">¥{{ number_format($campaign->cooperation_fee) }}</span>
+            </div>
+            @endif
+            @if($campaign->recurring_purchase_fee)
+            <div class="flex justify-between items-center py-1 border-b border-gray-50">
+                <span class="text-sm text-gray-600">継続購入費</span>
+                <div class="text-right">
+                    <span class="font-bold text-gray-800">¥{{ number_format($campaign->recurring_purchase_fee) }}</span>
+                    <p class="text-xs text-gray-400">※支払い方法などで多少前後する場合があります。</p>
+                </div>
+            </div>
+            @endif
+            @if($campaign->continuation_cooperation_fee)
+            <div class="flex justify-between items-center py-1">
+                <span class="text-sm text-gray-600">継続モニター協力金</span>
+                <span class="font-bold text-pink-600">¥{{ number_format($campaign->continuation_cooperation_fee) }}</span>
+            </div>
+            @endif
+        </div>
+
+        @if($campaign->cancellation_info)
+        <div class="bg-white rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-bold text-gray-500 mb-2">解約について</p>
+            <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $campaign->cancellation_info }}</div>
+        </div>
+        @endif
+
+        @if($campaign->collection_info)
+        <div class="bg-white rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-bold text-gray-500 mb-2">回収について</p>
+            <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $campaign->collection_info }}</div>
+        </div>
+        @endif
+
+        @if($campaign->notes)
+        <div class="bg-amber-50 rounded-xl border border-amber-100 p-4">
+            <p class="text-xs font-bold text-amber-600 mb-2">注意事項</p>
+            <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $campaign->notes }}</div>
+        </div>
+        @endif
+
+    </div>
+
+    @if($application)
+        {{-- 応募済み --}}
         <div class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl text-center font-bold mb-2">
             応募済みです
         </div>
-        <p class="text-xs text-gray-400 text-center">ステータス：{{ $application->status }}</p>
+        <p class="text-xs text-gray-400 text-center">ステータス：{{ $application->getStatusLabel() }}</p>
 
     @else
-        {{-- 未応募：全フィールド + 応募フォーム --}}
+        {{-- 応募フォーム --}}
         <form method="POST" action="{{ route('member.campaigns.apply', $campaign) }}"
-              enctype="multipart/form-data" class="space-y-4">
+              enctype="multipart/form-data" class="space-y-5">
             @csrf
 
-            @foreach($appFields as $field)
-                @include('member._form_field', ['field' => $field, 'campaign' => $campaign])
-            @endforeach
+            @if($errors->any())
+            <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                @foreach($errors->all() as $e)<p>{{ $e }}</p>@endforeach
+            </div>
+            @endif
+
+            {{-- 購入可能時間 --}}
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">
+                    購入が可能な時間をすべて選択してください <span class="text-red-500 text-xs">必須</span>
+                </p>
+                <p class="text-xs text-gray-500 mb-2">複数選択可</p>
+                @php
+                $timeOptions = ['いつでもOK', '10:00〜13:00', '14:00〜17:00', '18:00〜20:00', '21:00〜24:00'];
+                $oldTimes = old('purchase_available_times', []);
+                @endphp
+                <div class="space-y-2">
+                    @foreach($timeOptions as $time)
+                    <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
+                        <input type="checkbox" name="purchase_available_times[]" value="{{ $time }}"
+                               {{ in_array($time, $oldTimes) ? 'checked' : '' }}
+                               class="rounded border-gray-300 text-pink-500">
+                        <span class="text-sm text-gray-800">{{ $time }}</span>
+                    </label>
+                    @endforeach
+                </div>
+                @error('purchase_available_times')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- 継続希望 --}}
+            @if($campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee)
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">
+                    モニターで継続依頼がある場合、継続してモニター希望されますか？ <span class="text-red-500 text-xs">必須</span>
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                    @foreach(['希望' => '継続希望', '不可' => '継続不可'] as $val => $lbl)
+                    <label class="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
+                        <input type="radio" name="continuation_wish" value="{{ $val }}" required
+                               {{ old('continuation_wish') === $val ? 'checked' : '' }}
+                               class="text-pink-500">
+                        <span class="text-sm font-medium">{{ $lbl }}</span>
+                    </label>
+                    @endforeach
+                </div>
+                @error('continuation_wish')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            @endif
 
             <div class="pb-8">
                 <button type="submit"

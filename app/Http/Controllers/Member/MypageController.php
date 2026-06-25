@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\CollectionReport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -46,8 +47,12 @@ class MypageController extends Controller
             'キャンセル' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'cancelled'])),
         ];
 
+        $collectionReports = CollectionReport::where('user_id', $user->id)
+            ->latest()
+            ->get();
+
         return view('member.mypage.index', compact(
-            'user', 'groups',
+            'user', 'groups', 'collectionReports',
             'payCurrentMonth', 'payNextMonth',
             'payCurrentDate', 'payNextDate'
         ));

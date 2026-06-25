@@ -68,9 +68,23 @@
                 </span>
             </button>
             @endforeach
+            {{-- 回収タブ --}}
+            <button
+                @click="tab = '回収'"
+                :class="tab === '回収'
+                    ? 'border-b-2 border-pink-500 text-pink-600 font-semibold'
+                    : 'text-gray-500'"
+                class="flex-1 min-w-0 py-2.5 px-1 text-xs whitespace-nowrap flex flex-col items-center gap-0.5 transition-colors">
+                <span>回収</span>
+                <span
+                    :class="tab === '回収' ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'"
+                    class="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none transition-colors">
+                    {{ $collectionReports->count() }}
+                </span>
+            </button>
         </div>
 
-        {{-- タブコンテンツ --}}
+        {{-- モニター履歴タブコンテンツ --}}
         @foreach($groups as $label => $apps)
         <div x-show="tab === '{{ $label }}'" x-cloak>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -125,6 +139,53 @@
             </div>
         </div>
         @endforeach
+
+        {{-- 回収タブコンテンツ --}}
+        <div x-show="tab === '回収'" x-cloak>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                @if($collectionReports->isEmpty())
+                    <p class="text-xs text-gray-400 text-center py-8">回収申請がありません</p>
+                @else
+                    <div class="divide-y divide-gray-50">
+                        @foreach($collectionReports as $cr)
+                        @php
+                            $campaigns = $cr->campaigns();
+                            $statusBadge = match($cr->status) {
+                                'pending'  => ['label' => '承認待ち', 'color' => 'bg-yellow-100 text-yellow-700'],
+                                'approved' => ['label' => '承認',     'color' => 'bg-green-100 text-green-700'],
+                                'rejected' => ['label' => '差戻し',   'color' => 'bg-red-100 text-red-700'],
+                                default    => ['label' => $cr->status, 'color' => 'bg-gray-100 text-gray-700'],
+                            };
+                        @endphp
+                        <div class="px-4 py-3">
+                            <div class="flex items-center gap-3 mb-1">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex-shrink-0 flex items-center justify-center text-xl">📦</div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-800">
+                                        回収サービス（{{ $cr->item_count }}点）
+                                    </p>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <p class="text-xs text-gray-400">{{ $cr->created_at->format('Y/m/d') }}申請</p>
+                                        <span class="text-xs px-1.5 py-0.5 rounded-full {{ $statusBadge['color'] }}">
+                                            {{ $statusBadge['label'] }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <p class="text-sm font-bold text-pink-600">¥{{ number_format($cr->cooperation_fee) }}</p>
+                                </div>
+                            </div>
+                            <div class="ml-13 pl-1">
+                                @foreach($campaigns as $c)
+                                <p class="text-xs text-gray-500">・{{ $c->title }}</p>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
 
     </div>
 </div>

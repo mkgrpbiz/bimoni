@@ -15,6 +15,7 @@ class Application extends Model
         'invited_at', 'invited_end_at', 'continuation_invite_date',
         'proposal_token', 'proposal_answered_at', 'proposal_answer', 'proposal_sent_at',
         'notes', 'imported_from',
+        'continuation_wish', 'purchase_available_times',
         'form_image',
         'bonus_amount',
     ];
@@ -35,8 +36,9 @@ class Application extends Model
             'invited_at'              => 'datetime',
             'invited_end_at'          => 'datetime',
             'continuation_invite_date' => 'date',
-            'proposal_answered_at'    => 'datetime',
-            'proposal_sent_at'        => 'datetime',
+            'proposal_answered_at'      => 'datetime',
+            'proposal_sent_at'          => 'datetime',
+            'purchase_available_times'  => 'array',
         ];
     }
 
