@@ -76,11 +76,6 @@
         </div>
 
         <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">応募条件</label>
-            <textarea name="requirements" rows="3" class="w-full border rounded px-3 py-2 text-sm">{{ old('requirements', $campaign->requirements ?? '') }}</textarea>
-        </div>
-
-        <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">注意事項</label>
             <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2 text-sm">{{ old('notes', $campaign->notes ?? '') }}</textarea>
         </div>

@@ -17,6 +17,7 @@
     <div><span class="text-gray-700">カテゴリ：</span>{{ $campaign->category?->name ?? '未設定' }}</div>
     <div><span class="text-gray-700">PR媒体：</span>{{ $campaign->pr_media ?? '未設定' }}</div>
     <div><span class="text-gray-700">モニター協力金：</span>¥{{ number_format($campaign->cooperation_fee) }}</div>
+    <div><span class="text-gray-700">継続モニター協力金：</span>{{ $campaign->continuation_cooperation_fee ? '¥'.number_format($campaign->continuation_cooperation_fee) : '-' }}</div>
     <div><span class="text-gray-700">募集人数：</span>{{ $campaign->capacity }}名</div>
     <div><span class="text-gray-700">打診予定数：</span>{{ $campaign->solicitation_target ?? '-' }}名</div>
     <div><span class="text-gray-700">粗利：</span>{{ $campaign->gross_profit !== null ? '¥'.number_format($campaign->gross_profit) : '-' }}</div>
@@ -36,6 +37,18 @@
     <div class="md:col-span-2">
         <p class="text-gray-700 mb-1">案件内容：</p>
         <p class="whitespace-pre-wrap">{{ $campaign->description }}</p>
+    </div>
+    @endif
+    @if($campaign->cancellation_info)
+    <div class="md:col-span-2">
+        <p class="text-gray-700 mb-1">解約について：</p>
+        <p class="whitespace-pre-wrap">{{ $campaign->cancellation_info }}</p>
+    </div>
+    @endif
+    @if($campaign->collection_info)
+    <div class="md:col-span-2">
+        <p class="text-gray-700 mb-1">回収について：</p>
+        <p class="whitespace-pre-wrap">{{ $campaign->collection_info }}</p>
     </div>
     @endif
     @if($campaign->notes)

@@ -11,14 +11,12 @@ use Illuminate\View\View;
 
 class FormFieldController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): View
     {
-        $tab    = $request->get('tab', 'application');
-        $fields = FormField::where('form_type', $tab)->orderBy('sort_order')->get();
         $terms   = LegalPage::terms();
         $privacy = LegalPage::privacy();
 
-        return view('admin.form_fields.index', compact('fields', 'tab', 'terms', 'privacy'));
+        return view('admin.form_fields.index', compact('terms', 'privacy'));
     }
 
     public function store(Request $request): RedirectResponse

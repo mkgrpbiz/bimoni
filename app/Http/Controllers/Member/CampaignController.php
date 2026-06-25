@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
-use App\Models\ApplicationFormResponse;
 use App\Models\Campaign;
 use App\Models\CampaignBonus;
-use App\Models\FormField;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,9 +48,8 @@ class CampaignController extends Controller
         $application = Application::where('user_id', $user->id)
             ->where('campaign_id', $campaign->id)
             ->first();
-        $appFields = FormField::forType('application')->visible()->get();
 
-        return view('member.campaigns.show', compact('campaign', 'application', 'appFields'));
+        return view('member.campaigns.show', compact('campaign', 'application'));
     }
 
     public function apply(Request $request, Campaign $campaign): RedirectResponse

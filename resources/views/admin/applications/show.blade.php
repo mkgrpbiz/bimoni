@@ -90,7 +90,9 @@
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">実施可能時間帯</dt>
                 <dd class="dark:text-gray-200">{{ $user->available_times ? implode('、', $user->available_times) : '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">継続希望</dt>
-                <dd class="dark:text-gray-200">{{ $user->wants_continuation ? 'あり' : 'なし' }}</dd>
+                <dd class="dark:text-gray-200">{{ $application->continuation_wish ?? '-' }}</dd>
+                <dt class="text-gray-700 dark:text-gray-400 mt-2">購入可能時間</dt>
+                <dd class="dark:text-gray-200 text-xs">{{ $application->purchase_available_times ? implode('・', $application->purchase_available_times) : '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">保有ポイント</dt>
                 <dd class="font-medium text-pink-600 dark:text-pink-400">{{ number_format($user->point_balance) }} pt</dd>
             </dl>

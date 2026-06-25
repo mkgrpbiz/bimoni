@@ -71,7 +71,7 @@ $statusTabs = [
 </div>
 
 {{-- 実施完了サマリー --}}
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 mb-4 text-sm flex gap-6 items-center">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 mb-4 text-sm flex gap-6 items-center flex-wrap">
     <div>
         <span class="text-gray-700">目標男女比: </span>
         <span class="font-bold">{{ $summary['target_male_ratio'] ?? '-' }}%男 / {{ $summary['target_female_ratio'] ?? '-' }}%女</span>
@@ -80,6 +80,18 @@ $statusTabs = [
         <span class="text-gray-700">実施完了: </span>
         <span class="font-bold text-teal-600">{{ $summary['total_completed'] }}件</span>
         （男 {{ $summary['completed_male'] }} / 女 {{ $summary['completed_female'] }}）
+    </div>
+    <div>
+        <span class="text-gray-700">目標継続率: </span>
+        <span class="font-bold">{{ $campaign->continuation_rate !== null ? $campaign->continuation_rate.'%' : '-' }}</span>
+    </div>
+    <div>
+        <span class="text-gray-700">継続依頼OK: </span>
+        <span class="font-bold text-pink-600">{{ $summary['continuation_wish_count'] }}件</span>
+        <span class="text-gray-500">/ {{ $summary['total_applied'] }}件</span>
+        @if($summary['total_applied'] > 0)
+        <span class="text-gray-500">（{{ round($summary['continuation_wish_count'] / $summary['total_applied'] * 100) }}%）</span>
+        @endif
     </div>
 </div>
 
@@ -122,7 +134,7 @@ $statusTabs = [
                 <th class="px-3 py-2 text-left whitespace-nowrap">フリガナ</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">年齢</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">性別</th>
-                <th class="px-3 py-2 text-left whitespace-nowrap">継続可否</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">継続希望</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">実施可能時間</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">ステータス</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">案内日時</th>
@@ -155,15 +167,19 @@ $statusTabs = [
                 <td class="px-3 py-2 text-gray-700">{{ $user?->name_kana ?? '-' }}</td>
                 <td class="px-3 py-2 text-center">{{ $age }}</td>
                 <td class="px-3 py-2 text-center">{{ $genderLabel }}</td>
-                <td class="px-3 py-2 text-center">
-                    @if($user?->wants_continuation)
-                        <span class="text-green-600">○</span>
+                <td class="px-3 py-2 text-center whitespace-nowrap">
+                    @if($app->continuation_wish === '希望')
+                        <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">希望</span>
+                    @elseif($app->continuation_wish === '不可')
+                        <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">不可</span>
                     @else
-                        <span class="text-gray-800">-</span>
+                        <span class="text-gray-400">-</span>
                     @endif
                 </td>
-                <td class="px-3 py-2 text-gray-700">
-                    @if($user?->available_times)
+                <td class="px-3 py-2 text-gray-700 text-xs">
+                    @if($app->purchase_available_times)
+                        {{ implode('・', $app->purchase_available_times) }}
+                    @elseif($user?->available_times)
                         {{ implode('・', $user->available_times) }}
                     @else
                         -
