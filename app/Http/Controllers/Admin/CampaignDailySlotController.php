@@ -61,23 +61,28 @@ class CampaignDailySlotController extends Controller
         // 区切り文字を自動判定（タブ優先、なければカンマ）
         $delimiter = str_contains($lines[0], "\t") ? "\t" : ",";
 
-        $headers = str_getcsv($lines[0], $delimiter);
+        // 「商品名」を含む行をヘッダー行として探す
+        $headerRowIdx = null;
+        foreach ($lines as $idx => $line) {
+            if (str_contains($line, '商品名')) {
+                $headerRowIdx = $idx;
+                break;
+            }
+        }
+        if ($headerRowIdx === null) {
+            return back()->withErrors(['tsv_file' => '「商品名」を含むヘッダー行が見つかりません']);
+        }
+
+        $headers = str_getcsv($lines[$headerRowIdx], $delimiter);
         $headers = array_map('trim', $headers);
 
-        // 「商品名」列のインデックスを探す（部分一致も含む）
+        // 「商品名」列のインデックスを探す
         $nameColIdx = null;
         foreach ($headers as $i => $h) {
             if (str_contains($h, '商品名')) {
                 $nameColIdx = $i;
                 break;
             }
-        }
-        if ($nameColIdx === null) {
-            $preview = implode(' | ', array_slice($headers, 0, 6));
-            $hex     = bin2hex(mb_substr($lines[0], 0, 20));
-            return back()->withErrors(['tsv_file' =>
-                "「商品名」列が見つかりません\n区切り文字:{$delimiter}\nヘッダー先頭:{$preview}\nHEX:{$hex}"
-            ]);
         }
 
         // 日付列を動的に検出
@@ -107,7 +112,7 @@ class CampaignDailySlotController extends Controller
             $exactMap[$normalize($c->title)] = $c;
         }
 
-        for ($r = 1; $r < count($lines); $r++) {
+        for ($r = $headerRowIdx + 1; $r < count($lines); $r++) {
             $cols        = str_getcsv($lines[$r], $delimiter);
             $productName = trim($cols[$nameColIdx] ?? '');
             if ($productName === '') continue;
