@@ -166,8 +166,11 @@ class CampaignDailySlotController extends Controller
 
         $msg = "{$imported}件インポートしました。";
         if ($skipped) {
-            $msg .= "\n\nマッチしない商品名（案件タイトルと一致しません）:\n"
+            $msg .= "\n\n【マッチしない商品名】（案件管理のタイトルと一致しません）\n"
                   . implode("\n", array_unique($skipped));
+
+            $dbTitles = $allCampaigns->pluck('title')->sort()->values()->implode("\n");
+            $msg .= "\n\n【DB登録済み案件タイトル一覧】\n" . $dbTitles;
         }
 
         return back()->with('success', $msg);
