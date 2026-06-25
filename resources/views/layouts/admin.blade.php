@@ -27,6 +27,10 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     日別件数管理
                 </a>
+                <a href="{{ route('admin.campaign_bonuses.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
+                    キャンペーン
+                </a>
                 <a href="{{ route('admin.applications.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     応募管理
@@ -54,10 +58,6 @@
                 <a href="{{ route('admin.agents.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     代理店
-                </a>
-                <a href="{{ route('admin.campaign_bonuses.index') }}"
-                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
-                    キャンペーン
                 </a>
                 <a href="{{ route('admin.import.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
