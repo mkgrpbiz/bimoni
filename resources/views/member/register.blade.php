@@ -2,7 +2,7 @@
 @section('title', '会員登録')
 @section('content')
 <div class="py-4">
-    <h1 class="text-xl font-bold text-gray-800 mb-1">会員情報の登録</h1>
+    <h1 class="text-xl font-bold text-gray-800 mb-1">BIMONI会員登録フォーム</h1>
     <p class="text-sm text-gray-500 mb-6">以下の情報をご入力ください。</p>
 
     <form method="POST" action="{{ route('member.register.store') }}" class="space-y-5">
