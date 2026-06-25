@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Application;
 use App\Models\Campaign;
+use App\Models\Category;
 use App\Models\Point;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -134,6 +135,63 @@ class ImportService
                     'reason'        => $row['reason'] ?? null,
                     'imported_from' => 'spreadsheet',
                     'created_at'    => $row['granted_at'],
+                ]);
+
+                $result['success']++;
+            }
+        });
+
+        return $result;
+    }
+
+    public function importCampaigns(array $rows): array
+    {
+        $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
+
+        $validTypes    = ['experience', 'product', 'recovery'];
+        $validStatuses = ['draft', 'published', 'paused', 'closed'];
+        $validMedia    = ['AD', 'IF', 'LINE', 'monitor'];
+
+        DB::transaction(function () use ($rows, &$result, $validTypes, $validStatuses, $validMedia) {
+            foreach ($rows as $i => $row) {
+                $line = $i + 2;
+
+                if (empty($row['title'])) {
+                    $result['errors'][] = "{$line}行目: タイトルが空です";
+                    continue;
+                }
+
+                if (!in_array($row['campaign_type'] ?? '', $validTypes)) {
+                    $result['errors'][] = "{$line}行目: campaign_typeが不正です（experience/product/recoveryのいずれか）";
+                    continue;
+                }
+
+                if (Campaign::where('title', $row['title'])->exists()) {
+                    $result['skipped']++;
+                    continue;
+                }
+
+                $categoryId = null;
+                if (!empty($row['category_name'])) {
+                    $category   = Category::firstOrCreate(['name' => $row['category_name']]);
+                    $categoryId = $category->id;
+                }
+
+                Campaign::create([
+                    'title'               => $row['title'],
+                    'campaign_type'       => $row['campaign_type'],
+                    'status'              => in_array($row['status'] ?? '', $validStatuses) ? $row['status'] : 'draft',
+                    'pr_media'            => in_array($row['pr_media'] ?? '', $validMedia) ? $row['pr_media'] : null,
+                    'category_id'         => $categoryId,
+                    'product_name'        => $row['product_name'] ?? null,
+                    'product_price'       => isset($row['product_price']) && $row['product_price'] !== '' ? (int) $row['product_price'] : null,
+                    'cooperation_fee'     => isset($row['cooperation_fee']) && $row['cooperation_fee'] !== '' ? (int) $row['cooperation_fee'] : null,
+                    'referral_fee'        => isset($row['referral_fee']) && $row['referral_fee'] !== '' ? (int) $row['referral_fee'] : null,
+                    'capacity'            => isset($row['capacity']) && $row['capacity'] !== '' ? (int) $row['capacity'] : null,
+                    'description'         => $row['description'] ?? null,
+                    'application_start_at' => !empty($row['application_start_at']) ? $row['application_start_at'] : null,
+                    'application_end_at'  => !empty($row['application_end_at']) ? $row['application_end_at'] : null,
+                    'is_visible'          => 1,
                 ]);
 
                 $result['success']++;

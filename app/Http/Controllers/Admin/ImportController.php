@@ -64,4 +64,20 @@ class ImportController extends Controller
 
         return back()->with('import_result', $result)->with('import_type', 'ポイント履歴');
     }
+
+    public function importCampaigns(Request $request): RedirectResponse
+    {
+        $request->validate(['csv_file' => 'required|file|mimes:csv,txt|max:5120']);
+
+        $content = file_get_contents($request->file('csv_file')->getRealPath());
+        $rows    = $this->importer->parseCsv($content);
+
+        if (empty($rows)) {
+            return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
+        }
+
+        $result = $this->importer->importCampaigns($rows);
+
+        return back()->with('import_result', $result)->with('import_type', '案件');
+    }
 }

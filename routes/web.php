@@ -101,6 +101,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('import/users', [ImportController::class, 'importUsers'])->name('import.users');
         Route::post('import/applications', [ImportController::class, 'importApplications'])->name('import.applications');
         Route::post('import/points', [ImportController::class, 'importPoints'])->name('import.points');
+        Route::post('import/campaigns', [ImportController::class, 'importCampaigns'])->name('import.campaigns');
 
         // フォーム項目管理
         Route::get('form-fields', [FormFieldController::class, 'index'])->name('form_fields.index');
