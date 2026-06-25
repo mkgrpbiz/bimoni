@@ -32,15 +32,14 @@
     {{-- 案件インポート --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">案件インポート</h2>
-        <p class="text-xs text-gray-700 dark:text-gray-400 mb-1">
-            CSVフォーマット：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">title, campaign_type, status, pr_media, category_name, product_name, product_price, cooperation_fee, referral_fee, capacity, description, application_start_at, application_end_at</code>
-        </p>
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 space-y-0.5">
-            <p>・<strong>campaign_type</strong>: experience（体験）/ product（商品）/ recovery（回収）</p>
-            <p>・<strong>status</strong>: draft（下書き）/ published（公開）/ paused（停止）/ closed（終了）　※省略時: draft</p>
-            <p>・<strong>pr_media</strong>: AD / IF / LINE / monitor</p>
-            <p>・<strong>application_start_at / end_at</strong>: YYYY-MM-DD形式</p>
-            <p>・同一タイトルの案件は重複スキップされます</p>
+            <p class="font-medium text-gray-700 dark:text-gray-300">Googleスプレッドシートから「ファイル → ダウンロード → CSV」でそのまま出力してインポートできます。</p>
+            <p>・ヘッダー行：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">全否認, 案件名, シート名, ステータス, PR媒体, 開始, 終了, 締め日, 支払日, 報酬単価, 初回, 継続, 協力金, 紹介単価, 継続率, 粗利, 男性比, 女性比, モニター注意事項</code></p>
+            <p>・ステータス：実施中 / 募集中 / 一時停止 / 終了 / 準備中　をそのまま使えます</p>
+            <p>・PR媒体：AD / LINE / Instagram　をそのまま使えます</p>
+            <p>・金額の¥・カンマ、比率の%は自動で除去します</p>
+            <p>・全否認がTRUEの案件は非表示で登録されます</p>
+            <p>・同一案件名は重複スキップされます</p>
         </div>
         <form method="POST" action="{{ route('admin.import.campaigns') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
             @csrf

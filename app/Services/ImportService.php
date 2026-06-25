@@ -148,50 +148,62 @@ class ImportService
     {
         $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
 
-        $validTypes    = ['experience', 'product', 'recovery'];
-        $validStatuses = ['draft', 'published', 'paused', 'closed'];
-        $validMedia    = ['AD', 'IF', 'LINE', 'monitor'];
+        $rows = $this->normalizeCampaignRows($rows);
 
-        DB::transaction(function () use ($rows, &$result, $validTypes, $validStatuses, $validMedia) {
+        $statusMap = [
+            '実施中'   => 'published',
+            '募集中'   => 'published',
+            '一時停止' => 'paused',
+            '終了'     => 'closed',
+            '準備中'   => 'draft',
+        ];
+        $validStatuses = ['draft', 'published', 'paused', 'closed'];
+        $validMedia    = ['AD', 'IF', 'LINE', 'monitor', 'instagram'];
+        $validClosing  = ['20日', '25日', '月末'];
+        $validPayment  = ['翌月末', '翌々月末'];
+
+        DB::transaction(function () use ($rows, &$result, $statusMap, $validStatuses, $validMedia, $validClosing, $validPayment) {
             foreach ($rows as $i => $row) {
                 $line = $i + 2;
 
-                if (empty($row['title'])) {
-                    $result['errors'][] = "{$line}行目: タイトルが空です";
+                $title = $row['title'] ?? '';
+                if (empty($title) || $title === '関数用') {
                     continue;
                 }
 
-                if (!in_array($row['campaign_type'] ?? '', $validTypes)) {
-                    $result['errors'][] = "{$line}行目: campaign_typeが不正です（experience/product/recoveryのいずれか）";
-                    continue;
-                }
-
-                if (Campaign::where('title', $row['title'])->exists()) {
+                if (Campaign::where('title', $title)->exists()) {
                     $result['skipped']++;
                     continue;
                 }
 
-                $categoryId = null;
-                if (!empty($row['category_name'])) {
-                    $category   = Category::firstOrCreate(['name' => $row['category_name']]);
-                    $categoryId = $category->id;
-                }
+                $rawStatus = $row['status'] ?? '';
+                $status = $statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'draft');
+
+                $media = $row['pr_media'] ?? '';
+                $media = in_array($media, $validMedia) ? $media : null;
+
+                $isVisible = strtoupper($row['_deny_all'] ?? 'FALSE') === 'TRUE' ? 0 : 1;
 
                 Campaign::create([
-                    'title'               => $row['title'],
-                    'campaign_type'       => $row['campaign_type'],
-                    'status'              => in_array($row['status'] ?? '', $validStatuses) ? $row['status'] : 'draft',
-                    'pr_media'            => in_array($row['pr_media'] ?? '', $validMedia) ? $row['pr_media'] : null,
-                    'category_id'         => $categoryId,
-                    'product_name'        => $row['product_name'] ?? null,
-                    'product_price'       => isset($row['product_price']) && $row['product_price'] !== '' ? (int) $row['product_price'] : null,
-                    'cooperation_fee'     => isset($row['cooperation_fee']) && $row['cooperation_fee'] !== '' ? (int) $row['cooperation_fee'] : null,
-                    'referral_fee'        => isset($row['referral_fee']) && $row['referral_fee'] !== '' ? (int) $row['referral_fee'] : null,
-                    'capacity'            => isset($row['capacity']) && $row['capacity'] !== '' ? (int) $row['capacity'] : null,
-                    'description'         => $row['description'] ?? null,
-                    'application_start_at' => !empty($row['application_start_at']) ? $row['application_start_at'] : null,
-                    'application_end_at'  => !empty($row['application_end_at']) ? $row['application_end_at'] : null,
-                    'is_visible'          => 1,
+                    'title'                => $title,
+                    'campaign_type'        => 'product',
+                    'status'               => $status,
+                    'pr_media'             => $media,
+                    'campaign_unit_price'  => $this->parseAmount($row['campaign_unit_price'] ?? ''),
+                    'initial_purchase_fee' => $this->parseAmount($row['initial_purchase_fee'] ?? ''),
+                    'recurring_purchase_fee' => $this->parseAmount($row['recurring_purchase_fee'] ?? ''),
+                    'cooperation_fee'      => $this->parseAmount($row['cooperation_fee'] ?? ''),
+                    'referral_fee'         => $this->parseAmount($row['referral_fee'] ?? ''),
+                    'continuation_rate'    => $this->parsePercent($row['continuation_rate'] ?? ''),
+                    'gross_profit'         => $this->parseAmount($row['gross_profit'] ?? ''),
+                    'target_male_ratio'    => $this->parsePercent($row['target_male_ratio'] ?? ''),
+                    'target_female_ratio'  => $this->parsePercent($row['target_female_ratio'] ?? ''),
+                    'closing_date'         => in_array($row['closing_date'] ?? '', $validClosing) ? $row['closing_date'] : null,
+                    'payment_timing'       => in_array($row['payment_timing'] ?? '', $validPayment) ? $row['payment_timing'] : null,
+                    'requirements'         => $row['requirements'] ?? null,
+                    'application_start_at' => $this->parseDate($row['application_start_at'] ?? ''),
+                    'application_end_at'   => $this->parseDate($row['application_end_at'] ?? ''),
+                    'is_visible'           => $isVisible,
                 ]);
 
                 $result['success']++;
@@ -199,6 +211,71 @@ class ImportService
         });
 
         return $result;
+    }
+
+    private function normalizeCampaignRows(array $rows): array
+    {
+        if (empty($rows)) return $rows;
+
+        $headerMap = [
+            '案件名'           => 'title',
+            'ステータス'       => 'status',
+            'PR媒体'           => 'pr_media',
+            '開始'             => 'application_start_at',
+            '終了'             => 'application_end_at',
+            '締め日'           => 'closing_date',
+            '支払日'           => 'payment_timing',
+            '報酬単価'         => 'campaign_unit_price',
+            '初回'             => 'initial_purchase_fee',
+            '継続'             => 'recurring_purchase_fee',
+            '協力金'           => 'cooperation_fee',
+            '紹介単価'         => 'referral_fee',
+            '継続率'           => 'continuation_rate',
+            '粗利'             => 'gross_profit',
+            '男性比'           => 'target_male_ratio',
+            '女性比'           => 'target_female_ratio',
+            'モニター注意事項' => 'requirements',
+            '全否認'           => '_deny_all',
+            'シート名'         => '_sheet_name',
+        ];
+
+        $firstKeys = array_keys($rows[0]);
+        $hasJapanese = collect($firstKeys)->contains(fn($k) => isset($headerMap[$k]));
+        if (!$hasJapanese) return $rows;
+
+        return array_map(function ($row) use ($headerMap) {
+            $normalized = [];
+            foreach ($row as $key => $value) {
+                $normalized[$headerMap[$key] ?? $key] = $value;
+            }
+            return $normalized;
+        }, $rows);
+    }
+
+    private function parseAmount(string $value): ?int
+    {
+        $value = trim($value);
+        if ($value === '' || $value === '-') return null;
+        $cleaned = str_replace(['¥', ',', ' '], '', $value);
+        return is_numeric($cleaned) ? (int) $cleaned : null;
+    }
+
+    private function parsePercent(string $value): ?int
+    {
+        $value = trim($value);
+        if ($value === '') return null;
+        $cleaned = str_replace('%', '', $value);
+        return is_numeric($cleaned) ? (int) $cleaned : null;
+    }
+
+    private function parseDate(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '') return null;
+        if (preg_match('/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $value, $m)) {
+            return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
+        }
+        return $value;
     }
 
     public function parseCsv(string $content): array
