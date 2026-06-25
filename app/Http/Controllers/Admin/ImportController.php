@@ -35,7 +35,10 @@ class ImportController extends Controller
 
     public function importApplications(Request $request): RedirectResponse
     {
-        $request->validate(['csv_file' => 'required|file|mimes:csv,txt|max:5120']);
+        $request->validate([
+            'csv_file'      => 'required|file|mimes:csv,txt|max:5120',
+            'campaign_name' => 'nullable|string|max:255',
+        ]);
 
         $content = file_get_contents($request->file('csv_file')->getRealPath());
         $rows    = $this->importer->parseCsv($content);
@@ -44,7 +47,7 @@ class ImportController extends Controller
             return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
-        $result = $this->importer->importApplications($rows);
+        $result = $this->importer->importApplications($rows, $request->input('campaign_name'));
 
         return back()->with('import_result', $result)->with('import_type', '応募履歴');
     }

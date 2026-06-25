@@ -80,12 +80,19 @@
     {{-- 応募履歴インポート --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">応募履歴インポート</h2>
-        <p class="text-xs text-gray-700 dark:text-gray-400 mb-3">
-            CSVフォーマット：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">erme_respondent_id, campaign_name, status, applied_at, selected_at, completed_at, approved_at</code>
-        </p>
-        <p class="text-xs text-yellow-600 dark:text-yellow-400 mb-3">⚠ ユーザーインポートと案件登録が先に完了している必要があります。</p>
-        <form method="POST" action="{{ route('admin.import.applications') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 space-y-0.5">
+            <p>・1シート（1案件）ずつCSVでダウンロードしてインポートしてください</p>
+            <p>・「案件名」欄に案件名を正確に入力してください（例: スマイルゼミ　資料請求）</p>
+            <p>・ユーザーが未登録の場合は自動で作成されます</p>
+            <p>・ステータス：実施完了 / キャンセル / 予約中 / 打診中 をそのまま使えます</p>
+        </div>
+        <form method="POST" action="{{ route('admin.import.applications') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
             @csrf
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">案件名 <span class="text-red-500">*</span></label>
+                <input type="text" name="campaign_name" placeholder="スマイルゼミ　資料請求" required
+                       class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm w-72">
+            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSVファイル</label>
                 <input type="file" name="csv_file" accept=".csv,.txt" required

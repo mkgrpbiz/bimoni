@@ -58,29 +58,70 @@ class ImportService
         return $result;
     }
 
-    public function importApplications(array $rows): array
+    public function importApplications(array $rows, ?string $campaignName = null): array
     {
         $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
 
-        DB::transaction(function () use ($rows, &$result) {
+        $rows = $this->normalizeApplicationRows($rows);
+
+        $statusMap = [
+            '実施完了'     => 'completed',
+            '実施確認中'   => 'confirming',
+            'キャンセル'   => 'cancelled',
+            '予約中'       => 'scheduled',
+            '打診中'       => 'line_contacted',
+            '選考中'       => 'pending',
+        ];
+        $validStatuses = ['pending','line_contacted','scheduled','confirming','completed','reported','approved','point_granted','cancelled'];
+
+        DB::transaction(function () use ($rows, $campaignName, &$result, $statusMap, $validStatuses) {
             foreach ($rows as $i => $row) {
                 $line = $i + 2;
 
-                if (empty($row['erme_respondent_id']) || empty($row['campaign_name'])) {
-                    $result['errors'][] = "{$line}行目: 必須項目が不足しています";
+                $ermeId = $row['erme_respondent_id'] ?? '';
+                if (empty($ermeId)) {
                     continue;
                 }
 
-                $user = User::where('erme_respondent_id', $row['erme_respondent_id'])->first();
-                if (!$user) {
-                    $result['errors'][] = "{$line}行目: エルメID「{$row['erme_respondent_id']}」のユーザーが見つかりません";
+                $targetCampaignName = $campaignName ?: ($row['campaign_name'] ?? '');
+                if (empty($targetCampaignName)) {
+                    $result['errors'][] = "{$line}行目: 案件名が指定されていません";
                     continue;
                 }
 
-                $campaign = Campaign::where('title', $row['campaign_name'])->first();
+                $campaign = Campaign::where('title', $targetCampaignName)->first();
                 if (!$campaign) {
-                    $result['errors'][] = "{$line}行目: 案件「{$row['campaign_name']}」が見つかりません";
+                    $result['errors'][] = "{$line}行目: 案件「{$targetCampaignName}」が見つかりません";
                     continue;
+                }
+
+                $user = User::where('erme_respondent_id', $ermeId)->first();
+                if (!$user) {
+                    $gender = match($row['gender'] ?? '') {
+                        '女性' => 'female',
+                        '男性' => 'male',
+                        default => null,
+                    };
+                    $wantsCont = match($row['wants_continuation'] ?? '') {
+                        'はい' => 1,
+                        'いいえ' => 0,
+                        default => null,
+                    };
+                    $times = null;
+                    if (!empty($row['available_times']) && $row['available_times'] !== 'いつでもOK') {
+                        $times = array_values(array_filter(array_map('trim', explode(',', $row['available_times']))));
+                    }
+                    $user = User::create([
+                        'line_user_id'       => 'IMPORT_' . uniqid(),
+                        'erme_respondent_id' => $ermeId,
+                        'name'               => $row['name'] ?? ($row['name_kana'] ?? ''),
+                        'name_kana'          => $row['name_kana'] ?? null,
+                        'gender'             => $gender,
+                        'birthdate'          => $this->parseDate($row['birthdate'] ?? ''),
+                        'available_times'    => $times ?: null,
+                        'wants_continuation' => $wantsCont,
+                        'imported_from'      => 'spreadsheet',
+                    ]);
                 }
 
                 if (Application::where('user_id', $user->id)->where('campaign_id', $campaign->id)->exists()) {
@@ -88,17 +129,16 @@ class ImportService
                     continue;
                 }
 
-                $validStatuses = ['pending','line_contacted','scheduled','confirming','completed','reported','approved','point_granted','cancelled'];
-                $status = in_array($row['status'] ?? '', $validStatuses) ? $row['status'] : 'pending';
+                $rawStatus = $row['status'] ?? '';
+                $status = $statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'pending');
 
                 Application::create([
                     'user_id'       => $user->id,
                     'campaign_id'   => $campaign->id,
                     'status'        => $status,
-                    'applied_at'    => $row['applied_at'] ?? now(),
-                    'selected_at'   => $row['selected_at'] ?? null,
-                    'completed_at'  => $row['completed_at'] ?? null,
-                    'approved_at'   => $row['approved_at'] ?? null,
+                    'applied_at'    => $this->parseDateTime($row['applied_at'] ?? '') ?? now(),
+                    'selected_at'   => $this->parseDate($row['selected_at'] ?? ''),
+                    'completed_at'  => $status === 'completed' ? ($this->parseDate($row['selected_at'] ?? '') ?? now()) : null,
                     'imported_from' => 'spreadsheet',
                 ]);
 
@@ -107,6 +147,47 @@ class ImportService
         });
 
         return $result;
+    }
+
+    private function normalizeApplicationRows(array $rows): array
+    {
+        if (empty($rows)) return $rows;
+
+        $headerMap = [
+            '回答日時'                          => 'applied_at',
+            '回答者ID'                          => 'erme_respondent_id',
+            'お名前(漢字フルネーム)'            => 'name',
+            'フリガナ'                          => 'name_kana',
+            '生年月日をご入力ください'          => 'birthdate',
+            '性別を選択してください'            => 'gender',
+            '購入可能時間を選択して下さい'      => 'available_times',
+            '継続購入がある場合、複数回の購入を希望されますか？' => 'wants_continuation',
+            'ステータス'                        => 'status',
+            '案内日'                            => 'selected_at',
+            'ｷｬﾝﾍﾟｰﾝ'                          => 'campaign_name',
+        ];
+
+        $firstKeys = array_keys($rows[0]);
+        $hasJapanese = collect($firstKeys)->contains(fn($k) => isset($headerMap[$k]));
+        if (!$hasJapanese) return $rows;
+
+        return array_map(function ($row) use ($headerMap) {
+            $normalized = [];
+            foreach ($row as $key => $value) {
+                $normalized[$headerMap[$key] ?? $key] = $value;
+            }
+            return $normalized;
+        }, $rows);
+    }
+
+    private function parseDateTime(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '') return null;
+        if (preg_match('/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/', $value, $m)) {
+            return sprintf('%04d-%02d-%02d %02d:%02d:00', $m[1], $m[2], $m[3], $m[4], $m[5]);
+        }
+        return $value;
     }
 
     public function importPoints(array $rows): array
