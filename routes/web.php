@@ -49,6 +49,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     require __DIR__.'/auth.php';
 
     Route::middleware('auth:web')->group(function () {
+        Route::get('/', fn() => redirect()->route('admin.dashboard'));
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::resource('campaigns', CampaignController::class);
         Route::post('campaigns/{campaign}/duplicate', [CampaignController::class, 'duplicate'])->name('campaigns.duplicate');
