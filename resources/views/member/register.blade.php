@@ -8,16 +8,13 @@
     <form method="POST" action="{{ route('member.register.store') }}" class="space-y-5">
         @csrf
 
-        {{-- 紹介コード --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                紹介コード <span class="text-gray-400 text-xs">任意</span>
-            </label>
+        {{-- 紹介コード（URLパラメータがある場合のみ表示） --}}
+        <div id="ref_code_wrap" class="hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-1">紹介コード</label>
             <input type="text" name="referred_by_code" id="referred_by_code"
                    value="{{ old('referred_by_code') }}"
-                   placeholder="例: ABC123"
-                   class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm @error('referred_by_code') border-red-400 @enderror">
-            @error('referred_by_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                   readonly
+                   class="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-3 text-sm text-gray-500 cursor-not-allowed">
         </div>
 
         {{-- 名前 --}}
@@ -178,13 +175,15 @@
 </div>
 
 <script>
-// URLパラメータから紹介コード自動入力
+// URLパラメータから紹介コード自動入力（あれば表示・なければ非表示）
 (function() {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
+    const wrap = document.getElementById('ref_code_wrap');
+    const el = document.getElementById('referred_by_code');
     if (ref) {
-        const el = document.getElementById('referred_by_code');
-        if (el && !el.value) el.value = ref;
+        if (el) el.value = ref;
+        if (wrap) wrap.classList.remove('hidden');
     }
 
     // 口座名義スペース自動除去
