@@ -258,12 +258,12 @@
     <div class="bg-gray-50 border border-gray-200 rounded p-3 mb-4 text-xs text-gray-600">
         <p class="font-medium text-gray-700 mb-1">使用できるコード（自動で値に置換されます）</p>
         <div class="grid grid-cols-2 gap-1 font-mono">
-            <span>{{商品名}}</span><span class="text-gray-400">→ 商品名</span>
-            <span>{{初回購入費}}</span><span class="text-gray-400">→ 初回購入費（円）</span>
-            <span>{{モニター協力金}}</span><span class="text-gray-400">→ モニター協力金（円）</span>
-            <span>{{解約について}}</span><span class="text-gray-400">→ 解約についての内容</span>
-            <span>{{モニター案内文}}</span><span class="text-gray-400">→ モニター案内文の内容</span>
-            <span>{{リンク}}</span><span class="text-gray-400">→ リンクURL</span>
+            <span>@{{商品名}}</span><span class="text-gray-400">→ 商品名</span>
+            <span>@{{初回購入費}}</span><span class="text-gray-400">→ 初回購入費（円）</span>
+            <span>@{{モニター協力金}}</span><span class="text-gray-400">→ モニター協力金（円）</span>
+            <span>@{{解約について}}</span><span class="text-gray-400">→ 解約についての内容</span>
+            <span>@{{モニター案内文}}</span><span class="text-gray-400">→ モニター案内文の内容</span>
+            <span>@{{リンク}}</span><span class="text-gray-400">→ リンクURL</span>
         </div>
     </div>
 
