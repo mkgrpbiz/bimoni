@@ -14,22 +14,20 @@
     <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4 text-sm">{{ session('error') }}</div>
 @endif
 
-{{-- ステータスタブ --}}
+{{-- 案件ステータスタブ --}}
 @php
 $tabs = [
-    'applying'  => ['label' => '応募中',   'color' => 'bg-yellow-500'],
-    'contacted' => ['label' => '打診・予約', 'color' => 'bg-purple-500'],
-    'completed' => ['label' => '実施完了', 'color' => 'bg-teal-500'],
-    'reported'  => ['label' => '報告済',   'color' => 'bg-blue-500'],
-    'approved'  => ['label' => '承認済',   'color' => 'bg-green-500'],
-    'cancelled' => ['label' => 'キャンセル', 'color' => 'bg-gray-500'],
+    'published' => ['label' => '公開中',   'color' => 'bg-green-500'],
+    'paused'    => ['label' => '一時停止', 'color' => 'bg-orange-500'],
+    'closed'    => ['label' => '終了',     'color' => 'bg-gray-500'],
+    'draft'     => ['label' => '下書き',   'color' => 'bg-yellow-500'],
 ];
 @endphp
-<div class="flex border-b border-gray-200 mb-4 overflow-x-auto">
+<div class="flex border-b border-gray-200 mb-4">
     @foreach($tabs as $key => $t)
-    <a href="{{ route('admin.applications.index', array_merge(request()->except(['tab', 'page']), ['tab' => $key])) }}"
-       class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-              {{ $tab === $key
+    <a href="{{ route('admin.applications.index', array_merge(request()->except(['status', 'page']), ['status' => $key])) }}"
+       class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
+              {{ $campaignStatus === $key
                   ? 'border-pink-500 text-pink-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700' }}">
         {{ $t['label'] }}
@@ -42,7 +40,7 @@ $tabs = [
 
 {{-- サブフィルター --}}
 <form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-end">
-    <input type="hidden" name="tab" value="{{ $tab }}">
+    <input type="hidden" name="status" value="{{ $campaignStatus }}">
     <div>
         <label class="block text-xs text-gray-700 mb-1">名前検索</label>
         <input type="text" name="q" value="{{ request('q') }}" placeholder="名前・フリガナ"
@@ -58,7 +56,7 @@ $tabs = [
         </select>
     </div>
     <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">絞り込み</button>
-    <a href="{{ route('admin.applications.index', ['tab' => $tab]) }}"
+    <a href="{{ route('admin.applications.index', ['status' => $campaignStatus]) }}"
        class="text-sm text-gray-500 hover:text-gray-700 py-1.5">リセット</a>
 </form>
 

@@ -18,23 +18,12 @@ use Illuminate\View\View;
 
 class ApplicationController extends Controller
 {
-    // タブ定義: tab名 => 対応するstatusの配列
-    private array $tabStatuses = [
-        'applying'  => ['pending', 'selected'],
-        'contacted' => ['line_contacted', 'scheduled', 'confirming'],
-        'completed' => ['completed'],
-        'reported'  => ['reported'],
-        'approved'  => ['approved', 'point_granted'],
-        'cancelled' => ['rejected', 'cancelled'],
-    ];
-
     public function index(Request $request): View
     {
-        $tab      = $request->input('tab', 'applying');
-        $statuses = $this->tabStatuses[$tab] ?? $this->tabStatuses['applying'];
+        $campaignStatus = $request->input('status', 'published');
 
         $query = Application::with(['user', 'campaign', 'lineMessageJobs'])
-            ->whereIn('status', $statuses)
+            ->whereHas('campaign', fn($q) => $q->where('status', $campaignStatus))
             ->latest('applied_at');
 
         if ($request->filled('campaign_id')) {
@@ -69,18 +58,15 @@ class ApplicationController extends Controller
             return $app;
         });
 
-        // タブごとの件数
-        $statusCounts = Application::selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        // タブごとの件数（案件ステータス別）
+        $tabCounts = Application::join('campaigns', 'campaigns.id', '=', 'applications.campaign_id')
+            ->selectRaw('campaigns.status as campaign_status, count(*) as count')
+            ->groupBy('campaigns.status')
+            ->pluck('count', 'campaign_status');
 
-        $tabCounts = collect($this->tabStatuses)->map(
-            fn($sts) => $statusCounts->only($sts)->sum()
-        );
+        $campaigns = Campaign::where('status', $campaignStatus)->orderBy('title')->get();
 
-        $campaigns = Campaign::orderBy('title')->get();
-
-        return view('admin.applications.index', compact('applications', 'campaigns', 'tab', 'tabCounts'));
+        return view('admin.applications.index', compact('applications', 'campaigns', 'campaignStatus', 'tabCounts'));
     }
 
     public function campaignIndex(Campaign $campaign, Request $request): View
