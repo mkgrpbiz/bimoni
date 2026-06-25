@@ -16,11 +16,11 @@ class CampaignController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Campaign::with('category')->orderBy('sort_order')->orderBy('id');
+        $status = $request->input('status', 'published');
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        $query = Campaign::with('category')->orderBy('sort_order')->orderBy('id')
+            ->where('status', $status);
+
         if ($request->filled('campaign_type')) {
             $query->where('campaign_type', $request->campaign_type);
         }
@@ -30,7 +30,11 @@ class CampaignController extends Controller
 
         $campaigns = $query->paginate(50)->withQueryString();
 
-        return view('admin.campaigns.index', compact('campaigns'));
+        $statusCounts = Campaign::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        return view('admin.campaigns.index', compact('campaigns', 'status', 'statusCounts'));
     }
 
     public function create(): View
