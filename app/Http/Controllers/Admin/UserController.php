@@ -13,6 +13,7 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $query = User::withCount(['applications'])
+            ->whereNotNull('profile_completed_at')
             ->orderByDesc('created_at');
 
         if ($request->filled('q')) {
