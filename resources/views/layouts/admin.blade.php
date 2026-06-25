@@ -58,6 +58,10 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                     代理店
                 </a>
+                <a href="{{ route('admin.campaign_bonuses.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+                    キャンペーン
+                </a>
                 <a href="{{ route('admin.import.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                     インポート

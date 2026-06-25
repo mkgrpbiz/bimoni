@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Campaign;
 use App\Services\ImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,10 @@ class ImportController extends Controller
 
     public function index(): View
     {
-        return view('admin.import.index');
+        $campaigns = Campaign::whereIn('status', ['published', 'paused'])
+            ->orderBy('title')
+            ->get();
+        return view('admin.import.index', compact('campaigns'));
     }
 
     public function importUsers(Request $request): RedirectResponse

@@ -63,6 +63,7 @@
                 <th class="px-3 py-2 text-left whitespace-nowrap">継続可否</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">実施可能時間</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">案件名</th>
+                <th class="px-3 py-2 text-center whitespace-nowrap">CP</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">ステータス</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">案内日時</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">打診回答</th>
@@ -109,6 +110,13 @@
                     @endif
                 </td>
                 <td class="px-3 py-2 text-gray-700 whitespace-nowrap">{{ $app->campaign?->title ?? '-' }}</td>
+                <td class="px-3 py-2 text-center whitespace-nowrap">
+                    @if($app->bonus_amount)
+                        <span class="bg-red-100 text-red-600 text-xs px-1.5 py-0.5 rounded font-bold">+{{ number_format($app->bonus_amount) }}円</span>
+                    @else
+                        <span class="text-gray-300">-</span>
+                    @endif
+                </td>
                 <td class="px-3 py-2 whitespace-nowrap">
                     <span class="px-1.5 py-0.5 rounded text-xs {{ $app->getStatusColor() }}">
                         {{ $app->getStatusLabel() }}

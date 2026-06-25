@@ -90,8 +90,13 @@
             @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">案件名 <span class="text-red-500">*</span></label>
-                <input type="text" name="campaign_name" placeholder="スマイルゼミ　資料請求" required
-                       class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm w-72">
+                <select name="campaign_name" required
+                        class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm w-72">
+                    <option value="">選択してください</option>
+                    @foreach($campaigns as $c)
+                        <option value="{{ $c->title }}">{{ $c->title }}</option>
+                    @endforeach
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSVファイル</label>

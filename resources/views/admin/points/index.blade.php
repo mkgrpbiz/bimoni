@@ -97,6 +97,8 @@
                 <th class="px-4 py-3 text-left">ステータス</th>
                 <th class="px-4 py-3 text-left">モニター名</th>
                 <th class="px-4 py-3 text-right">協力金</th>
+                <th class="px-4 py-3 text-right">CP</th>
+                <th class="px-4 py-3 text-right">合計</th>
             </tr>
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
@@ -119,10 +121,20 @@
                 <td class="px-4 py-3 text-right font-medium text-gray-800 dark:text-gray-200">
                     ¥{{ number_format($report->campaign?->cooperation_fee ?? 0) }}
                 </td>
+                <td class="px-4 py-3 text-right text-red-500 font-medium">
+                    @if($report->application?->bonus_amount)
+                        +¥{{ number_format($report->application->bonus_amount) }}
+                    @else
+                        <span class="text-gray-300">-</span>
+                    @endif
+                </td>
+                <td class="px-4 py-3 text-right font-bold text-gray-800 dark:text-gray-200">
+                    ¥{{ number_format(($report->campaign?->cooperation_fee ?? 0) + ($report->application?->bonus_amount ?? 0)) }}
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">
+                <td colspan="8" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">
                     {{ $month->format('Y年n月') }}の承認済み報告はありません
                 </td>
             </tr>

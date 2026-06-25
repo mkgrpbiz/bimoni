@@ -16,6 +16,7 @@ class Application extends Model
         'proposal_token', 'proposal_answered_at', 'proposal_answer', 'proposal_sent_at',
         'notes', 'imported_from',
         'form_image',
+        'bonus_amount',
     ];
 
     protected function casts(): array

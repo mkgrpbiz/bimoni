@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ApplicationController;
 use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\Admin\ApprovalReflectionController;
+use App\Http\Controllers\Admin\CampaignBonusController;
 use App\Http\Controllers\Admin\CampaignController;
 use App\Http\Controllers\Admin\CampaignDailySlotController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -102,6 +103,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('import/applications', [ImportController::class, 'importApplications'])->name('import.applications');
         Route::post('import/points', [ImportController::class, 'importPoints'])->name('import.points');
         Route::post('import/campaigns', [ImportController::class, 'importCampaigns'])->name('import.campaigns');
+
+        // キャンペーン管理（協力金ボーナス）
+        Route::get('campaign-bonuses', [CampaignBonusController::class, 'index'])->name('campaign_bonuses.index');
+        Route::post('campaign-bonuses', [CampaignBonusController::class, 'store'])->name('campaign_bonuses.store');
+        Route::delete('campaign-bonuses/{campaignBonus}', [CampaignBonusController::class, 'destroy'])->name('campaign_bonuses.destroy');
 
         // フォーム項目管理
         Route::get('form-fields', [FormFieldController::class, 'index'])->name('form_fields.index');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\ApplicationFormResponse;
 use App\Models\Campaign;
+use App\Models\CampaignBonus;
 use App\Models\FormField;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,14 @@ class CampaignController extends Controller
             ->whereIn('campaign_id', $campaigns->pluck('id'))
             ->pluck('status', 'campaign_id');
 
-        return view('member.campaigns.index', compact('campaigns', 'appliedIds'));
+        $now = now();
+        $activeBonuses = CampaignBonus::with('campaign')
+            ->where('start_at', '<=', $now)
+            ->where('end_at', '>=', $now)
+            ->get()
+            ->keyBy('campaign_id');
+
+        return view('member.campaigns.index', compact('campaigns', 'appliedIds', 'activeBonuses'));
     }
 
     public function show(Campaign $campaign): View|RedirectResponse
@@ -76,11 +84,18 @@ class CampaignController extends Controller
         }
         $request->validate($rules);
 
+        $now         = now();
+        $activeBonus = CampaignBonus::where('campaign_id', $campaign->id)
+            ->where('start_at', '<=', $now)
+            ->where('end_at', '>=', $now)
+            ->first();
+
         $application = Application::create([
-            'user_id'     => $user->id,
-            'campaign_id' => $campaign->id,
-            'status'      => 'pending',
-            'applied_at'  => now(),
+            'user_id'      => $user->id,
+            'campaign_id'  => $campaign->id,
+            'status'       => 'pending',
+            'applied_at'   => $now,
+            'bonus_amount' => $activeBonus?->bonus_amount,
         ]);
 
         // 回答保存

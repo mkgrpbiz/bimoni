@@ -19,7 +19,7 @@ class PointController extends Controller
             ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
             : Carbon::now()->startOfMonth();
 
-        $query = MonitorReport::with(['user', 'campaign'])
+        $query = MonitorReport::with(['user', 'campaign', 'application'])
             ->where('status', 'approved')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
 
@@ -30,8 +30,8 @@ class PointController extends Controller
 
         $reports = $query->orderBy('created_at')->get();
 
-        $totalAmount  = $reports->sum(fn($r) => $r->campaign?->cooperation_fee ?? 0);
-        $pendingAmount = $reports->where('payment_status', 'pending')->sum(fn($r) => $r->campaign?->cooperation_fee ?? 0);
+        $totalAmount   = $reports->sum(fn($r) => ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0));
+        $pendingAmount = $reports->where('payment_status', 'pending')->sum(fn($r) => ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0));
 
         return view('admin.points.index', compact('reports', 'month', 'totalAmount', 'pendingAmount'));
     }

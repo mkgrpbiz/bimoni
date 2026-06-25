@@ -36,6 +36,8 @@ class Campaign extends Model
     public function dailySlots()          { return $this->hasMany(CampaignDailySlot::class)->orderBy('target_date'); }
     public function createdBy()           { return $this->belongsTo(Admin::class, 'created_by'); }
     public function approvalReflections() { return $this->hasMany(CampaignApprovalReflection::class); }
+    public function bonuses()             { return $this->hasMany(CampaignBonus::class); }
+    public function activeBonus()         { return $this->bonuses()->where('start_at', '<=', now())->where('end_at', '>=', now())->latest('start_at'); }
     public function formFields()          { return $this->belongsToMany(FormField::class, 'campaign_form_fields')->withPivot('sort_order')->orderByPivot('sort_order'); }
 
     public function getTypeLabel(): string
