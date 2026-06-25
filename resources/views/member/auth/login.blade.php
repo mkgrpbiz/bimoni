@@ -78,7 +78,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 },
-                body: JSON.stringify({ line_user_id: profile.userId }),
+                body: JSON.stringify({ line_user_id: profile.userId, line_display_name: profile.displayName }),
             });
         })
         .then(r => r ? r.json() : null)
