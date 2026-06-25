@@ -52,10 +52,21 @@ export function initBankAutocomplete() {
     let selectedBankCode = bankCodeEl?.value || null;
     let branchCache = {};
 
-    // 銀行名オートコンプリート
+    // 銀行名オートコンプリート（「銀行」「信金」など末尾の一般語を除去して検索）
+    function normQuery(q) {
+        return q.replace(/銀行|信用金庫|信金|信組|農協|漁協|労金/g, '').trim();
+    }
     createSuggest(
         bankNameEl,
-        q => bankList.filter(b => b.name.includes(q) || (b.hira && b.hira.includes(q)) || (b.kana && b.kana.includes(q))),
+        q => {
+            const nq = normQuery(q);
+            if (!nq) return [];
+            return bankList.filter(b =>
+                b.name.includes(nq) ||
+                (b.hira && b.hira.includes(nq)) ||
+                (b.kana && b.kana.includes(nq))
+            );
+        },
         b => b.name,
         b => {
             bankNameEl.value = b.name;
