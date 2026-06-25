@@ -9,7 +9,7 @@
     </div>
 
     <div class="bg-white rounded-xl border border-gray-100 p-5 mb-4 text-sm text-gray-700 leading-relaxed space-y-2">
-        <p>順に案内していますので、案内まで時間がかかる場合があります。</p>
+        <p>案内まで時間がかかる場合があります。</p>
         <p class="text-gray-500 text-xs">※途中で終了する場合もあり、応募=確定ではございません。</p>
     </div>
 
