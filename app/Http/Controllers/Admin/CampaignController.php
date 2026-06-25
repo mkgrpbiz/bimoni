@@ -93,6 +93,8 @@ class CampaignController extends Controller
             $validated['monitor_video'] = $request->file('monitor_video')->store('campaigns/videos', 'public');
         }
 
+        $validated['capacity'] = $request->filled('capacity') ? (int) $request->capacity : null;
+
         $campaign->update($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
 

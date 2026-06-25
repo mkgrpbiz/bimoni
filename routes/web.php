@@ -160,6 +160,7 @@ Route::prefix('member')->name('member.')->group(function () {
         // プロフィール登録済みユーザー用
         Route::middleware(EnsureProfileCompleted::class)->group(function () {
             Route::get('campaigns', [MemberCampaign::class, 'index'])->name('campaigns.index');
+            Route::get('campaigns/complete', [MemberCampaign::class, 'complete'])->name('campaigns.complete');
             Route::get('campaigns/{campaign}', [MemberCampaign::class, 'show'])->name('campaigns.show');
             Route::post('campaigns/{campaign}/apply', [MemberCampaign::class, 'apply'])->name('campaigns.apply');
             Route::get('mypage', [MemberMypage::class, 'index'])->name('mypage');

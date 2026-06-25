@@ -30,6 +30,7 @@ class CampaignController extends Controller
 
         $now = now();
         $activeBonuses = CampaignBonus::with('campaign')
+            ->whereHas('campaign', fn($q) => $q->where('status', 'published'))
             ->where('start_at', '<=', $now)
             ->where('end_at', '>=', $now)
             ->get()
@@ -105,7 +106,11 @@ class CampaignController extends Controller
             }
         }
 
-        return redirect()->route('member.campaigns.show', $campaign)
-            ->with('success', '応募が完了しました！');
+        return redirect()->route('member.campaigns.complete');
+    }
+
+    public function complete(): \Illuminate\View\View
+    {
+        return view('member.campaigns.complete');
     }
 }
