@@ -105,7 +105,6 @@ class ApplicationController extends Controller
             ->keyBy(fn($s) => $s->target_date->toDateString());
 
         $completedApps = $campaign->applications()->where('status', 'completed')->with('user')->get();
-        $allApps       = $campaign->applications()->get();
         $summary = [
             'today'    => $slots->get($today->toDateString()),
             'tomorrow' => $slots->get($tomorrow->toDateString()),
@@ -115,8 +114,7 @@ class ApplicationController extends Controller
             'total_completed'  => $completedApps->count(),
             'target_male_ratio'   => $campaign->target_male_ratio,
             'target_female_ratio' => $campaign->target_female_ratio,
-            'continuation_wish_count' => $allApps->where('continuation_wish', '希望')->count(),
-            'total_applied'           => $allApps->count(),
+            'continuation_wish_count' => $completedApps->where('continuation_wish', '希望')->count(),
         ];
 
         $allCampaigns   = Campaign::orderBy('title')->get(['id', 'title', 'status']);

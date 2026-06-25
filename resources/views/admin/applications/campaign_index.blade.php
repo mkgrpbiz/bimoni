@@ -72,35 +72,40 @@ $statusTabs = [
 
 {{-- 実施完了サマリー --}}
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 mb-4 text-sm flex gap-6 items-center flex-wrap">
-    <div>
-        <span class="text-gray-700">目標男女比: </span>
-        <span class="font-bold">{{ $summary['target_male_ratio'] ?? '-' }}%男 / {{ $summary['target_female_ratio'] ?? '-' }}%女</span>
+    @php
+        $totalC      = $summary['total_completed'];
+        $maleRatio   = $totalC > 0 ? round($summary['completed_male']   / $totalC * 100) : null;
+        $femaleRatio = $totalC > 0 ? round($summary['completed_female'] / $totalC * 100) : null;
+        $targetMale   = $summary['target_male_ratio']   ?? null;
+        $targetFemale = $summary['target_female_ratio'] ?? null;
+        $targetCont  = $campaign->continuation_rate;
+        $actualCont  = $totalC > 0 ? round($summary['continuation_wish_count'] / $totalC * 100) : null;
+    @endphp
+    {{-- 男性比 --}}
+    <div class="text-center">
+        <div class="text-xs text-gray-500 mb-0.5">男性比</div>
+        <div class="font-bold text-blue-600 text-base">{{ $maleRatio !== null ? $maleRatio.'%' : '-' }}</div>
+        <div class="text-xs text-gray-400">目標 {{ $targetMale !== null ? $targetMale.'%' : '-' }}</div>
+        <div class="text-xs text-gray-500">{{ $summary['completed_male'] }}件</div>
     </div>
-    <div>
-        <span class="text-gray-700">実施完了: </span>
-        <span class="font-bold text-teal-600">{{ $summary['total_completed'] }}件</span>
-        @if($summary['total_completed'] > 0)
-        @php
-            $maleRatio   = round($summary['completed_male']   / $summary['total_completed'] * 100);
-            $femaleRatio = round($summary['completed_female'] / $summary['total_completed'] * 100);
-        @endphp
-        （男 {{ $summary['completed_male'] }}件 <span class="text-blue-600 font-bold">{{ $maleRatio }}%</span>
-         / 女 {{ $summary['completed_female'] }}件 <span class="text-pink-600 font-bold">{{ $femaleRatio }}%</span>）
-        @else
-        （男 0 / 女 0）
-        @endif
+    {{-- 女性比 --}}
+    <div class="text-center">
+        <div class="text-xs text-gray-500 mb-0.5">女性比</div>
+        <div class="font-bold text-pink-500 text-base">{{ $femaleRatio !== null ? $femaleRatio.'%' : '-' }}</div>
+        <div class="text-xs text-gray-400">目標 {{ $targetFemale !== null ? $targetFemale.'%' : '-' }}</div>
+        <div class="text-xs text-gray-500">{{ $summary['completed_female'] }}件</div>
     </div>
-    <div>
-        <span class="text-gray-700">目標継続率: </span>
-        <span class="font-bold">{{ $campaign->continuation_rate !== null ? $campaign->continuation_rate.'%' : '-' }}</span>
+    {{-- 実施完了 --}}
+    <div class="text-center">
+        <div class="text-xs text-gray-500 mb-0.5">実施完了</div>
+        <div class="font-bold text-teal-600 text-base">{{ $totalC }}件</div>
     </div>
-    <div>
-        <span class="text-gray-700">継続依頼OK: </span>
-        <span class="font-bold text-pink-600">{{ $summary['continuation_wish_count'] }}件</span>
-        <span class="text-gray-500">/ {{ $summary['total_applied'] }}件</span>
-        @if($summary['total_applied'] > 0)
-        <span class="text-gray-500">（{{ round($summary['continuation_wish_count'] / $summary['total_applied'] * 100) }}%）</span>
-        @endif
+    {{-- 継続依頼OK率 --}}
+    <div class="text-center">
+        <div class="text-xs text-gray-500 mb-0.5">継続依頼OK率</div>
+        <div class="font-bold text-green-600 text-base">{{ $actualCont !== null ? $actualCont.'%' : '-' }}</div>
+        <div class="text-xs text-gray-400">目標 {{ $targetCont !== null ? $targetCont.'%' : '-' }}</div>
+        <div class="text-xs text-gray-500">{{ $summary['continuation_wish_count'] }}件 / 完了{{ $totalC }}件</div>
     </div>
 </div>
 
