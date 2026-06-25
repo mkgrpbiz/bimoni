@@ -18,15 +18,38 @@ class MypageController extends Controller
             ->latest('applied_at')
             ->get();
 
+        $now = now();
+        $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
+        $lastMonthEnd   = $now->copy()->subMonth()->endOfMonth();
+        $thisMonthStart = $now->copy()->startOfMonth();
+        $thisMonthEnd   = $now->copy()->endOfMonth();
+
+        // 先月承認 → 今月10日支払い
+        $payCurrentMonth = $applications
+            ->whereIn('status', ['approved'])
+            ->filter(fn($a) => $a->approved_at?->between($lastMonthStart, $lastMonthEnd))
+            ->sum(fn($a) => ($a->campaign->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+
+        // 今月承認 → 来月10日支払い
+        $payNextMonth = $applications
+            ->whereIn('status', ['approved'])
+            ->filter(fn($a) => $a->approved_at?->between($thisMonthStart, $thisMonthEnd))
+            ->sum(fn($a) => ($a->campaign->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+
+        $payCurrentDate = $now->copy()->day(10)->format('n月j日');
+        $payNextDate    = $now->copy()->addMonth()->day(10)->format('n月j日');
+
         $groups = [
-            '応募中'         => $applications->whereIn('status', ['pending']),
-            '打診・日程調整中' => $applications->whereIn('status', ['selected', 'line_contacted', 'scheduled']),
-            '実施待ち'        => $applications->whereIn('status', ['completed']),
-            '報告待ち'        => $applications->whereIn('status', ['reported']),
-            '承認済み'        => $applications->whereIn('status', ['approved', 'point_granted']),
-            '否認・キャンセル' => $applications->whereIn('status', ['rejected', 'cancelled']),
+            '応募中'   => $applications->filter(fn($a) => in_array($a->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming'])),
+            '実施完了' => $applications->filter(fn($a) => in_array($a->status, ['completed', 'reported'])),
+            '報告済'   => $applications->filter(fn($a) => in_array($a->status, ['approved', 'point_granted'])),
+            'キャンセル' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'cancelled'])),
         ];
 
-        return view('member.mypage.index', compact('user', 'groups'));
+        return view('member.mypage.index', compact(
+            'user', 'groups',
+            'payCurrentMonth', 'payNextMonth',
+            'payCurrentDate', 'payNextDate'
+        ));
     }
 }

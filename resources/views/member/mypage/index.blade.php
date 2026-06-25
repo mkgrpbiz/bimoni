@@ -5,7 +5,7 @@
 @section('content')
 <div class="py-2">
 
-    {{-- プロフィール & 残高 --}}
+    {{-- プロフィール & 支払い予定 --}}
     <div class="bg-gradient-to-r from-pink-500 to-pink-400 text-white rounded-2xl p-5 mb-5 shadow-md">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center text-xl">
@@ -16,9 +16,17 @@
                 <p class="text-pink-100 text-xs">{{ $user->name_kana ?? '' }}</p>
             </div>
         </div>
-        <div class="bg-white/20 rounded-xl px-4 py-3 text-center">
-            <p class="text-pink-100 text-xs mb-1">モニター協力金残高</p>
-            <p class="text-3xl font-bold">¥{{ number_format($user->point_balance) }}</p>
+
+        <p class="text-pink-100 text-xs mb-2 text-center">モニター協力金 支払い予定</p>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="bg-white/20 rounded-xl px-3 py-3 text-center">
+                <p class="text-pink-100 text-xs mb-1">{{ $payCurrentDate }}支払い</p>
+                <p class="text-2xl font-bold">¥{{ number_format($payCurrentMonth) }}</p>
+            </div>
+            <div class="bg-white/20 rounded-xl px-3 py-3 text-center">
+                <p class="text-pink-100 text-xs mb-1">{{ $payNextDate }}支払い</p>
+                <p class="text-2xl font-bold">¥{{ number_format($payNextMonth) }}</p>
+            </div>
         </div>
     </div>
 
@@ -34,16 +42,8 @@
         </a>
     </div>
 
-    {{-- ログアウト --}}
-    <form method="POST" action="{{ route('member.logout') }}" class="mb-5">
-        @csrf
-        <button type="submit" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl text-sm font-medium">
-            ログアウト
-        </button>
-    </form>
-
-    {{-- 応募一覧 --}}
-    <h2 class="font-bold text-gray-700 mb-3">応募履歴</h2>
+    {{-- モニター履歴 --}}
+    <h2 class="font-bold text-gray-700 mb-3">モニター履歴</h2>
 
     @php
         $totalApplications = collect($groups)->sum(fn($g) => $g->count());
@@ -72,6 +72,15 @@
 
                     <div class="divide-y divide-gray-50">
                         @foreach($apps as $app)
+                        @php
+                            $subStatus = match($app->status) {
+                                'completed'     => ['label' => '未報告',   'color' => 'bg-orange-100 text-orange-600'],
+                                'reported'      => ['label' => '報告済',   'color' => 'bg-green-100 text-green-600'],
+                                'approved'      => ['label' => '支払い待ち', 'color' => 'bg-yellow-100 text-yellow-700'],
+                                'point_granted' => ['label' => '支払い済',  'color' => 'bg-teal-100 text-teal-700'],
+                                default         => null,
+                            };
+                        @endphp
                         <div class="px-4 py-3 flex items-center gap-3">
                             <div class="w-10 h-10 bg-pink-50 rounded-lg flex-shrink-0 overflow-hidden">
                                 @if($app->campaign && $app->campaign->thumbnail)
@@ -85,9 +94,16 @@
                                 <p class="text-sm font-medium text-gray-800 truncate">
                                     {{ $app->campaign->title ?? '削除済み案件' }}
                                 </p>
-                                <p class="text-xs text-gray-400 mt-0.5">
-                                    応募：{{ $app->applied_at->format('Y/m/d') }}
-                                </p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <p class="text-xs text-gray-400">
+                                        応募：{{ $app->applied_at->format('Y/m/d') }}
+                                    </p>
+                                    @if($subStatus)
+                                        <span class="text-xs px-1.5 py-0.5 rounded-full {{ $subStatus['color'] }}">
+                                            {{ $subStatus['label'] }}
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                             @if($app->campaign)
                             <a href="{{ route('member.campaigns.show', $app->campaign) }}"
