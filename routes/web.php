@@ -61,7 +61,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('approval-reflections/{campaign}/toggle-denied', [ApprovalReflectionController::class, 'toggleAllDenied'])->name('approval_reflections.toggle_denied');
         // 案件別応募管理
         Route::get('campaigns/{campaign}/applications', [ApplicationController::class, 'campaignIndex'])->name('campaigns.applications');
-        // 日別打診予定数管理
+        // 日別件数管理（全案件一覧）
+        Route::get('daily-slots', [CampaignDailySlotController::class, 'listAll'])->name('daily_slots.index');
+        Route::post('daily-slots/import', [CampaignDailySlotController::class, 'importBulkTsv'])->name('daily_slots.import');
+        // 日別打診予定数管理（案件別）
         Route::get('campaigns/{campaign}/daily-slots', [CampaignDailySlotController::class, 'index'])->name('campaigns.daily_slots.index');
         Route::post('campaigns/{campaign}/daily-slots', [CampaignDailySlotController::class, 'store'])->name('campaigns.daily_slots.store');
         Route::patch('campaigns/{campaign}/daily-slots/{slot}', [CampaignDailySlotController::class, 'update'])->name('campaigns.daily_slots.update');

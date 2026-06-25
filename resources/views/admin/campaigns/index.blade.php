@@ -94,8 +94,7 @@ $tabs = [
                     <div class="flex gap-1 justify-center flex-wrap">
                         <a href="{{ route('admin.campaigns.applications', $campaign) }}"
                            class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">応募者</a>
-                        <a href="{{ route('admin.campaigns.daily_slots.index', $campaign) }}"
-                           class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">日別</a>
+
                         <a href="{{ route('admin.campaigns.edit', $campaign) }}"
                            class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">編集</a>
                         <form method="POST" action="{{ route('admin.campaigns.duplicate', $campaign) }}" class="inline">

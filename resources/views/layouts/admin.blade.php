@@ -30,6 +30,10 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                     案件管理
                 </a>
+                <a href="{{ route('admin.daily_slots.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+                    日別件数管理
+                </a>
                 <a href="{{ route('admin.applications.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                     応募管理

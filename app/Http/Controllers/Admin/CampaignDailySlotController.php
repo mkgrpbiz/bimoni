@@ -12,6 +12,97 @@ use Illuminate\View\View;
 
 class CampaignDailySlotController extends Controller
 {
+    public function listAll(Request $request): View
+    {
+        $status = $request->input('status', 'published');
+        $now    = now();
+        $today    = $now->toDateString();
+        $tomorrow = $now->copy()->addDay()->toDateString();
+        $dayAfter = $now->copy()->addDays(2)->toDateString();
+
+        $campaigns = Campaign::where('status', $status)
+            ->orderBy('sort_order')->orderBy('id')->get();
+
+        $campaignIds = $campaigns->pluck('id');
+
+        $slots = CampaignDailySlot::whereIn('campaign_id', $campaignIds)
+            ->whereBetween('target_date', [
+                $now->copy()->startOfMonth()->toDateString(),
+                $now->copy()->endOfMonth()->toDateString(),
+            ])
+            ->get()
+            ->groupBy('campaign_id');
+
+        $statusCounts = Campaign::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        return view('admin.daily_slots.list', compact(
+            'campaigns', 'slots', 'status', 'statusCounts',
+            'today', 'tomorrow', 'dayAfter'
+        ));
+    }
+
+    public function importBulkTsv(Request $request): RedirectResponse
+    {
+        $request->validate(['tsv_file' => 'required|file|mimes:csv,txt|max:10240']);
+
+        $content = file_get_contents($request->file('tsv_file')->getRealPath());
+        $content = ltrim($content, "\xEF\xBB\xBF"); // BOM除去
+        $lines   = array_values(array_filter(
+            explode("\n", str_replace(["\r\n", "\r"], "\n", $content)),
+            fn($l) => trim($l) !== ''
+        ));
+
+        if (empty($lines)) {
+            return back()->withErrors(['tsv_file' => 'ファイルが空です']);
+        }
+
+        $headers  = str_getcsv($lines[0], "\t");
+        $yearNow  = now()->year;
+        $dateCols = [];
+        for ($i = 1; $i < count($headers); $i++) {
+            $col = trim($headers[$i]);
+            if (preg_match('/^(\d{1,2})\/(\d{1,2})$/', $col, $m)) {
+                $dateCols[$i] = sprintf('%04d-%02d-%02d', $yearNow, (int)$m[1], (int)$m[2]);
+            }
+        }
+
+        $imported = 0;
+        $skipped  = [];
+
+        for ($r = 1; $r < count($lines); $r++) {
+            $cols        = str_getcsv($lines[$r], "\t");
+            $productName = trim($cols[0] ?? '');
+            if ($productName === '') continue;
+
+            $campaign = Campaign::where('product_name', $productName)->first()
+                     ?? Campaign::where('title', $productName)->first();
+
+            if (!$campaign) {
+                $skipped[] = $productName;
+                continue;
+            }
+
+            foreach ($dateCols as $colIdx => $date) {
+                $val = isset($cols[$colIdx]) ? trim($cols[$colIdx]) : '';
+                if ($val === '') continue;
+                CampaignDailySlot::updateOrCreate(
+                    ['campaign_id' => $campaign->id, 'target_date' => $date],
+                    ['planned_count' => max(0, (int) $val)]
+                );
+                $imported++;
+            }
+        }
+
+        $msg = "{$imported}件インポートしました。";
+        if ($skipped) {
+            $msg .= ' マッチしない商品名: ' . implode('、', array_unique($skipped));
+        }
+
+        return back()->with('success', $msg);
+    }
+
     public function index(Campaign $campaign): View
     {
         $slots = $campaign->dailySlots()->paginate(30);
