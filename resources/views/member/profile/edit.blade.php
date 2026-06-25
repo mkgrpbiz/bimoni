@@ -69,7 +69,7 @@
         {{-- メールアドレス --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-                メールアドレス <span class="text-gray-400 text-xs">任意</span>
+                メールアドレス <span class="text-red-500 text-xs ml-1">必須</span>
             </label>
             <input type="email" name="email" value="{{ old('email', $user->email) }}"
                    placeholder="example@email.com"
@@ -79,34 +79,35 @@
 
         {{-- 銀行口座 --}}
         <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-4">
-            <h2 class="text-sm font-bold text-gray-700">銀行口座情報</h2>
+            <div>
+                <h2 class="text-sm font-bold text-gray-700">銀行口座情報</h2>
+                <p class="text-xs text-red-500 mt-0.5">※協力金支払いに必要な為、必須項目</p>
+            </div>
+
+            {{-- 銀行名 --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">銀行名 <span class="text-red-500 text-xs">必須</span></label>
+                <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name', $user->bank_name) }}"
+                       placeholder="銀行名を入力（例：みずほ）" autocomplete="off"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm @error('bank_name') border-red-400 @enderror">
+                <input type="hidden" id="bank_code" name="bank_code" value="{{ old('bank_code', $user->bank_code) }}">
+                @error('bank_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+
+            {{-- 支店名 --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">支店名 <span class="text-red-500 text-xs">必須</span></label>
+                <input type="text" id="bank_branch_name" name="bank_branch_name" value="{{ old('bank_branch_name', $user->bank_branch_name) }}"
+                       placeholder="支店名を入力" autocomplete="off"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm @error('bank_branch_name') border-red-400 @enderror">
+                <input type="hidden" id="bank_branch_code" name="bank_branch_code" value="{{ old('bank_branch_code', $user->bank_branch_code) }}">
+                @error('bank_branch_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+
+            {{-- 口座種別・口座番号 --}}
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">銀行名</label>
-                    <input type="text" name="bank_name" value="{{ old('bank_name', $user->bank_name) }}"
-                           placeholder="○○銀行"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">銀行コード</label>
-                    <input type="text" name="bank_code" value="{{ old('bank_code', $user->bank_code) }}"
-                           placeholder="0123" maxlength="4"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">支店名</label>
-                    <input type="text" name="bank_branch_name" value="{{ old('bank_branch_name', $user->bank_branch_name) }}"
-                           placeholder="○○支店"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">支店コード</label>
-                    <input type="text" name="bank_branch_code" value="{{ old('bank_branch_code', $user->bank_branch_code) }}"
-                           placeholder="012" maxlength="3"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">口座種別</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">口座種別 <span class="text-red-500 text-xs">必須</span></label>
                     <select name="bank_account_type" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm">
                         <option value="">選択</option>
                         <option value="普通" {{ old('bank_account_type', $user->bank_account_type) === '普通' ? 'selected' : '' }}>普通</option>
@@ -114,18 +115,23 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">口座番号</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">口座番号 <span class="text-red-500 text-xs">必須</span></label>
                     <input type="text" name="bank_account_number" value="{{ old('bank_account_number', $user->bank_account_number) }}"
-                           placeholder="1234567" maxlength="8"
+                           placeholder="1234567" maxlength="8" inputmode="numeric"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm @error('bank_account_number') border-red-400 @enderror">
                     @error('bank_account_number')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
+
+            {{-- 口座名義（一番下） --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">口座名義（カナ）</label>
-                <input type="text" name="bank_account_name" value="{{ old('bank_account_name', $user->bank_account_name) }}"
-                       placeholder="ヤマダ タロウ"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1">口座名義（カナ） <span class="text-red-500 text-xs">必須</span></label>
+                <input type="text" name="bank_account_name" id="bank_account_name"
+                       value="{{ old('bank_account_name', $user->bank_account_name) }}"
+                       placeholder="ヤマダタロウ"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm @error('bank_account_name') border-red-400 @enderror">
+                <p class="text-xs text-gray-400 mt-1">スペースなし・カタカナで入力</p>
+                @error('bank_account_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
         </div>
 
@@ -137,4 +143,15 @@
         </div>
     </form>
 </div>
+
+<script>
+(function() {
+    const nameEl = document.getElementById('bank_account_name');
+    if (nameEl) {
+        nameEl.addEventListener('blur', () => {
+            nameEl.value = nameEl.value.replace(/\s+/g, '');
+        });
+    }
+})();
+</script>
 @endsection

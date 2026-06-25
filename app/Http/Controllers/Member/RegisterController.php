@@ -33,11 +33,19 @@ class RegisterController extends Controller
             'name_kana'           => 'required|string|max:100',
             'gender'              => 'required|in:male,female',
             'birthdate'           => 'required|date',
-            'email'               => 'nullable|email|max:255',
+            'email'               => 'required|email|max:255',
             'referred_by_code'    => 'nullable|string|max:10',
-            'bank_account_number' => 'nullable|digits_between:7,8',
+            'bank_name'           => 'required|string|max:100',
+            'bank_branch_name'    => 'required|string|max:100',
+            'bank_account_type'   => 'required|in:普通,当座',
+            'bank_account_number' => 'required|digits_between:7,8',
+            'bank_account_name'   => 'required|string|max:100|regex:/^\S+$/',
             'agree_terms'         => 'accepted',
-        ], ['agree_terms.accepted' => '利用規約とプライバシーポリシーへの同意が必要です。']);
+        ], [
+            'agree_terms.accepted'       => '利用規約とプライバシーポリシーへの同意が必要です。',
+            'bank_account_name.regex'    => '口座名義にスペースは使用できません。',
+            'bank_account_number.digits_between' => '口座番号は7〜8桁で入力してください。',
+        ]);
 
         $user->update([
             'name'                => $request->name,
@@ -69,8 +77,15 @@ class RegisterController extends Controller
             'name_kana'           => 'required|string|max:100',
             'gender'              => 'required|in:male,female',
             'birthdate'           => 'required|date',
-            'email'               => 'nullable|email|max:255',
-            'bank_account_number' => 'nullable|digits_between:7,8',
+            'email'               => 'required|email|max:255',
+            'bank_name'           => 'required|string|max:100',
+            'bank_branch_name'    => 'required|string|max:100',
+            'bank_account_type'   => 'required|in:普通,当座',
+            'bank_account_number' => 'required|digits_between:7,8',
+            'bank_account_name'   => 'required|string|max:100|regex:/^\S+$/',
+        ], [
+            'bank_account_name.regex'    => '口座名義にスペースは使用できません。',
+            'bank_account_number.digits_between' => '口座番号は7〜8桁で入力してください。',
         ]);
 
         $user->update([
@@ -90,12 +105,12 @@ class RegisterController extends Controller
     {
         $user->update([
             'bank_name'           => $request->input('bank_name'),
-            'bank_code'           => $request->input('bank_code'),
+            'bank_code'           => $request->input('bank_code') ?: null,
             'bank_branch_name'    => $request->input('bank_branch_name'),
-            'bank_branch_code'    => $request->input('bank_branch_code'),
+            'bank_branch_code'    => $request->input('bank_branch_code') ?: null,
             'bank_account_type'   => $request->input('bank_account_type'),
             'bank_account_number' => $request->input('bank_account_number'),
-            'bank_account_name'   => $request->input('bank_account_name'),
+            'bank_account_name'   => preg_replace('/\s+/', '', $request->input('bank_account_name', '')),
         ]);
     }
 }

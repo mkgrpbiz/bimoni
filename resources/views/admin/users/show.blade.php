@@ -55,6 +55,41 @@
         </dl>
     </div>
 
+    {{-- 銀行口座（内部） --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+        <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">銀行口座情報</h2>
+        <dl class="text-sm space-y-1.5">
+            <div class="flex gap-2">
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">銀行名</dt>
+                <dd class="text-gray-800 dark:text-gray-200">{{ $user->bank_name ?? '-' }}</dd>
+            </div>
+            <div class="flex gap-2">
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">銀行コード</dt>
+                <dd class="font-mono text-gray-800 dark:text-gray-200">{{ $user->bank_code ?? '-' }}</dd>
+            </div>
+            <div class="flex gap-2">
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">支店名</dt>
+                <dd class="text-gray-800 dark:text-gray-200">{{ $user->bank_branch_name ?? '-' }}</dd>
+            </div>
+            <div class="flex gap-2">
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">支店コード</dt>
+                <dd class="font-mono text-gray-800 dark:text-gray-200">{{ $user->bank_branch_code ?? '-' }}</dd>
+            </div>
+            <div class="flex gap-2">
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">口座種別</dt>
+                <dd class="text-gray-800 dark:text-gray-200">{{ $user->bank_account_type ?? '-' }}</dd>
+            </div>
+            <div class="flex gap-2">
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">口座番号</dt>
+                <dd class="font-mono text-gray-800 dark:text-gray-200">{{ $user->bank_account_number ?? '-' }}</dd>
+            </div>
+            <div class="flex gap-2">
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">口座名義</dt>
+                <dd class="text-gray-800 dark:text-gray-200">{{ $user->bank_account_name ?? '-' }}</dd>
+            </div>
+        </dl>
+    </div>
+
     {{-- 統計 --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">実績サマリー</h2>
