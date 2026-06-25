@@ -79,7 +79,16 @@ $statusTabs = [
     <div>
         <span class="text-gray-700">実施完了: </span>
         <span class="font-bold text-teal-600">{{ $summary['total_completed'] }}件</span>
-        （男 {{ $summary['completed_male'] }} / 女 {{ $summary['completed_female'] }}）
+        @if($summary['total_completed'] > 0)
+        @php
+            $maleRatio   = round($summary['completed_male']   / $summary['total_completed'] * 100);
+            $femaleRatio = round($summary['completed_female'] / $summary['total_completed'] * 100);
+        @endphp
+        （男 {{ $summary['completed_male'] }}件 <span class="text-blue-600 font-bold">{{ $maleRatio }}%</span>
+         / 女 {{ $summary['completed_female'] }}件 <span class="text-pink-600 font-bold">{{ $femaleRatio }}%</span>）
+        @else
+        （男 0 / 女 0）
+        @endif
     </div>
     <div>
         <span class="text-gray-700">目標継続率: </span>
