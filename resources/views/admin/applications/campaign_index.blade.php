@@ -78,34 +78,32 @@ $statusTabs = [
         $femaleRatio = $totalC > 0 ? round($summary['completed_female'] / $totalC * 100) : null;
         $targetMale   = $summary['target_male_ratio']   ?? null;
         $targetFemale = $summary['target_female_ratio'] ?? null;
-        $targetCont  = $campaign->continuation_rate;
-        $actualCont  = $totalC > 0 ? round($summary['continuation_ok_count'] / $totalC * 100) : null;
+        $targetCont   = $campaign->continuation_rate;
+        $actualCont   = $totalC > 0 ? round($summary['continuation_ok_count'] / $totalC * 100) : null;
     @endphp
-    {{-- 男性比 --}}
-    <div class="text-center">
-        <div class="text-xs text-gray-500 mb-0.5">男性比</div>
-        <div class="font-bold text-blue-600 text-base">{{ $maleRatio !== null ? $maleRatio.'%' : '-' }}</div>
-        <div class="text-xs text-gray-400">目標 {{ $targetMale !== null ? $targetMale.'%' : '-' }}</div>
-        <div class="text-xs text-gray-500">{{ $summary['completed_male'] }}件</div>
-    </div>
-    {{-- 女性比 --}}
-    <div class="text-center">
-        <div class="text-xs text-gray-500 mb-0.5">女性比</div>
-        <div class="font-bold text-pink-500 text-base">{{ $femaleRatio !== null ? $femaleRatio.'%' : '-' }}</div>
-        <div class="text-xs text-gray-400">目標 {{ $targetFemale !== null ? $targetFemale.'%' : '-' }}</div>
-        <div class="text-xs text-gray-500">{{ $summary['completed_female'] }}件</div>
-    </div>
-    {{-- 実施完了 --}}
-    <div class="text-center">
-        <div class="text-xs text-gray-500 mb-0.5">実施完了</div>
-        <div class="font-bold text-teal-600 text-base">{{ $totalC }}件</div>
-    </div>
-    {{-- 継続依頼OK率 --}}
-    <div class="text-center">
-        <div class="text-xs text-gray-500 mb-0.5">継続依頼OK率</div>
-        <div class="font-bold text-green-600 text-base">{{ $actualCont !== null ? $actualCont.'%' : '-' }}</div>
-        <div class="text-xs text-gray-400">目標 {{ $targetCont !== null ? $targetCont.'%' : '-' }}</div>
-        <div class="text-xs text-gray-500">{{ $summary['continuation_ok_count'] }}件 / 完了{{ $totalC }}件</div>
+    <div class="flex gap-6 items-center flex-wrap text-sm">
+        <div>
+            <span class="text-gray-500">実施完了</span>
+            <span class="font-bold text-teal-600 ml-1">{{ $totalC }}件</span>
+        </div>
+        <div>
+            <span class="text-gray-500">男性比</span>
+            <span class="text-gray-400 text-xs ml-1">目標 {{ $targetMale !== null ? $targetMale.'%' : '-' }}</span>
+            <span class="font-bold text-blue-600 ml-1">/ 完了 {{ $maleRatio !== null ? $maleRatio.'%' : '-' }}</span>
+            <span class="text-gray-400 text-xs">（{{ $summary['completed_male'] }}件）</span>
+        </div>
+        <div>
+            <span class="text-gray-500">女性比</span>
+            <span class="text-gray-400 text-xs ml-1">目標 {{ $targetFemale !== null ? $targetFemale.'%' : '-' }}</span>
+            <span class="font-bold text-pink-500 ml-1">/ 完了 {{ $femaleRatio !== null ? $femaleRatio.'%' : '-' }}</span>
+            <span class="text-gray-400 text-xs">（{{ $summary['completed_female'] }}件）</span>
+        </div>
+        <div>
+            <span class="text-gray-500">継続率</span>
+            <span class="text-gray-400 text-xs ml-1">目標 {{ $targetCont !== null ? $targetCont.'%' : '-' }}</span>
+            <span class="font-bold text-green-600 ml-1">/ 完了 {{ $actualCont !== null ? $actualCont.'%' : '-' }}</span>
+            <span class="text-gray-400 text-xs">（{{ $summary['continuation_ok_count'] }}件）</span>
+        </div>
     </div>
 </div>
 
