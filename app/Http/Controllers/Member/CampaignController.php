@@ -52,7 +52,13 @@ class CampaignController extends Controller
             ->whereNotIn('status', ['cancelled'])
             ->first();
 
-        return view('member.campaigns.show', compact('campaign', 'application'));
+        $now = now();
+        $activeBonus = \App\Models\CampaignBonus::where('campaign_id', $campaign->id)
+            ->where('start_at', '<=', $now)
+            ->where('end_at', '>=', $now)
+            ->first();
+
+        return view('member.campaigns.show', compact('campaign', 'application', 'activeBonus'));
     }
 
     public function apply(Request $request, Campaign $campaign): RedirectResponse

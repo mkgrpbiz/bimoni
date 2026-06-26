@@ -32,11 +32,9 @@
                 </div>
                 <div class="p-3">
                     <p class="text-xs font-medium text-gray-800 leading-snug line-clamp-2 mb-2">{{ $campaign->title }}</p>
-                    <p class="text-pink-600 font-bold text-sm">
-                        ¥{{ number_format($campaign->cooperation_fee) }}
-                        <span class="text-red-500 text-xs font-bold ml-1">+{{ number_format($bonus->bonus_amount) }}円</span>
-                    </p>
-                    <p class="text-gray-400 text-xs">モニター協力金</p>
+                    @php $totalFee = ($campaign->initial_purchase_fee ?? 0) + ($campaign->cooperation_fee ?? 0) + $bonus->bonus_amount; @endphp
+                    <p class="text-pink-600 font-bold text-sm">¥{{ number_format($totalFee) }}</p>
+                    <p class="text-gray-400 text-xs">モニター協力金合計</p>
                     <p class="text-red-400 text-xs mt-1">対象期間 {{ $bonus->start_at->format('n/j') }}〜{{ $bonus->end_at->format('n/j') }}</p>
                     <div class="mt-2.5">
                         @if($appliedStatus)
@@ -97,13 +95,9 @@
                     </div>
                     <div class="p-3">
                         <p class="text-xs font-medium text-gray-800 leading-snug line-clamp-2 mb-2">{{ $campaign->title }}</p>
-                        <p class="text-pink-600 font-bold text-sm">
-                            ¥{{ number_format($campaign->cooperation_fee) }}
-                            @if($bonus)
-                                <span class="text-red-500 text-xs font-bold ml-1">+{{ number_format($bonus->bonus_amount) }}円</span>
-                            @endif
-                        </p>
-                        <p class="text-gray-400 text-xs">モニター協力金</p>
+                        @php $totalFee = ($campaign->initial_purchase_fee ?? 0) + ($campaign->cooperation_fee ?? 0) + ($bonus?->bonus_amount ?? 0); @endphp
+                        <p class="text-pink-600 font-bold text-sm">¥{{ number_format($totalFee) }}</p>
+                        <p class="text-gray-400 text-xs">モニター協力金合計</p>
                         <div class="mt-2.5">
                             @if($appliedStatus)
                                 <div class="w-full bg-gray-100 text-gray-500 text-xs py-2 rounded-lg text-center font-medium">応募済み</div>

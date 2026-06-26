@@ -178,11 +178,8 @@
                         @foreach($completedApplications as $app)
                         <option value="{{ $app->id }}"
                                 data-fee="{{ $app->campaign->cooperation_fee ?? 0 }}"
-                                data-fee-formula="{{ $app->campaign->cooperation_fee_formula ?? '' }}"
-                                data-fee-extra="{{ $app->campaign->cooperation_extra ?? '' }}"
                                 data-cont-fee="{{ $app->campaign->continuation_cooperation_fee ?? 0 }}"
-                                data-cont-fee-formula="{{ $app->campaign->continuation_cooperation_fee_formula ?? '' }}"
-                                data-cont-fee-extra="{{ $app->campaign->continuation_cooperation_extra ?? '' }}"
+                                data-bonus="{{ $app->bonus_amount ?? 0 }}"
                                 {{ old('application_id') == $app->id ? 'selected' : '' }}>
                             {{ $app->campaign->title }}
                         </option>
@@ -216,11 +213,15 @@
                         <span class="font-medium text-gray-800" id="display-expense">¥0</span>
                     </div>
                     <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">＋ モニター協力金（+○円分）</span>
+                        <span class="text-gray-600">＋ モニター協力金</span>
                         <span class="font-medium text-gray-800" id="display-extra">¥-</span>
                     </div>
+                    <div class="flex justify-between items-center text-sm" id="display-bonus-row" style="display:none!important">
+                        <span class="text-gray-600">＋ キャンペーン</span>
+                        <span class="font-medium text-red-500" id="display-bonus">¥0</span>
+                    </div>
                     <div class="border-t border-pink-200 pt-2 flex justify-between items-center">
-                        <span class="text-sm font-bold text-gray-700" id="monitor-fee-label">合計（モニター協力金）</span>
+                        <span class="text-sm font-bold text-gray-700">合計（モニター協力金）</span>
                         <span class="font-bold text-pink-600 text-lg" id="monitor-fee-display">-</span>
                     </div>
                 </div>
@@ -338,13 +339,22 @@ function updateMonitorFeeByApp(sel) {
     const purchaseType = document.querySelector('input[name="purchase_type"]:checked')?.value;
     const isCont = purchaseType === 'continuation';
 
-    // cooperation_fee は +○円部分のみ（整数）
     const extraBonus = parseInt(isCont ? (opt.dataset.contFee || opt.dataset.fee || 0) : (opt.dataset.fee || 0));
+    const campaignBonus = parseInt(opt.dataset.bonus || 0);
     const purchaseAmt = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
-    const totalFee = purchaseAmt + extraBonus;
+    const totalFee = purchaseAmt + extraBonus + campaignBonus;
 
     document.getElementById('display-expense').textContent = '¥' + purchaseAmt.toLocaleString();
-    document.getElementById('display-extra').textContent   = '¥' + extraBonus.toLocaleString();
+    document.getElementById('display-extra').textContent   = '+¥' + extraBonus.toLocaleString();
+
+    const bonusRow = document.getElementById('display-bonus-row');
+    if (campaignBonus > 0) {
+        document.getElementById('display-bonus').textContent = '+¥' + campaignBonus.toLocaleString();
+        bonusRow.style.removeProperty('display');
+    } else {
+        bonusRow.style.setProperty('display', 'none', 'important');
+    }
+
     document.getElementById('monitor-fee-display').textContent = '¥' + totalFee.toLocaleString();
 }
 
