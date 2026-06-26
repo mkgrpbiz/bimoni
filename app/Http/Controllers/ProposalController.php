@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\ApplicationStatusLog;
+use App\Models\CampaignDailySlot;
 use App\Models\LineMessageJob;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ProposalController extends Controller
@@ -79,7 +81,7 @@ class ProposalController extends Controller
             $minStart = $otherApp->invited_end_at->copy()->addHours(48);
         }
 
-        $slots = $this->generateTimeSlots($application->user, $minStart);
+        $slots = $this->generateTimeSlots($application->user, $minStart, $application);
 
         return view('proposals.no_options', compact('application', 'slots', 'minStart'));
     }
@@ -246,8 +248,8 @@ class ProposalController extends Controller
         }
     }
 
-    // available_times から候補スロットを生成（$minStart 以降3日分の全スロット）
-    private function generateTimeSlots(\App\Models\User $user, ?Carbon $minStart = null): array
+    // available_times から候補スロットを生成（$minStart 以降3日分・枠かぶりチェック付き）
+    private function generateTimeSlots(\App\Models\User $user, ?Carbon $minStart = null, ?Application $application = null): array
     {
         $slotMap = [
             '10:00〜13:00' => ['10:00', '13:00'],
@@ -269,27 +271,82 @@ class ProposalController extends Controller
             $startDate = $minStart->copy()->startOfDay();
         }
 
+        $campaignId = $application?->campaign_id;
+
+        // 枠かぶりチェック用データを事前取得
+        $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+
+        // 3日分の日付を収集
+        $dates = [];
+        for ($d = 0; $d < 3; $d++) {
+            $dates[] = $startDate->copy()->addDays($d)->toDateString();
+        }
+
+        // 同案件・同日の既存予約を一括取得（同じ invited_at の件数チェック用）
+        $bookedSlots = collect();
+        // 同日の合計件数チェック用
+        $dailyBookedCounts = [];
+        // 日次目標を取得
+        $dailyPlannedCounts = [];
+
+        if ($campaignId) {
+            $existingApps = Application::where('campaign_id', $campaignId)
+                ->where('id', '!=', ($application?->id ?? 0))
+                ->whereIn('status', $activeStatuses)
+                ->whereNotNull('invited_at')
+                ->whereIn(DB::raw('DATE(invited_at)'), $dates)
+                ->get(['id', 'invited_at', 'invited_end_at', 'status']);
+
+            // invited_at ごとの件数（同一スロット重複チェック用）
+            $bookedSlots = $existingApps->groupBy(fn($a) => $a->invited_at->format('Y-m-d H:i'));
+
+            // 日付ごとの合計（daily target チェック用）
+            foreach ($existingApps as $a) {
+                $dk = $a->invited_at->toDateString();
+                $dailyBookedCounts[$dk] = ($dailyBookedCounts[$dk] ?? 0) + 1;
+            }
+
+            // CampaignDailySlot の planned_count を取得
+            $dailySlots = CampaignDailySlot::where('campaign_id', $campaignId)
+                ->whereIn('target_date', $dates)
+                ->get();
+            foreach ($dailySlots as $ds) {
+                $dailyPlannedCounts[$ds->target_date->toDateString()] = $ds->planned_count;
+            }
+        }
+
         $slots = [];
 
-        // 3日分全スロットを列挙
         for ($d = 0; $d < 3; $d++) {
             $date = $startDate->copy()->addDays($d);
+            $dateStr = $date->toDateString();
             $dayLabel = $date->format('m/d') . '(' . $dayNames[$date->dayOfWeek] . ')';
+
+            // 日次目標チェック：planned_count が設定されていてすでに上限に達している場合は日ごとスキップ
+            $plannedCount = $dailyPlannedCounts[$dateStr] ?? null;
+            $dailyBooked  = $dailyBookedCounts[$dateStr] ?? 0;
+            if ($plannedCount !== null && $dailyBooked >= $plannedCount) {
+                continue;
+            }
 
             foreach ($availableTimes as $timeValue) {
                 $range = $slotMap[$timeValue] ?? null;
                 if (!$range) continue;
 
-                $slotStart = Carbon::parse($date->format('Y-m-d') . ' ' . $range[0] . ':00');
+                $slotStart = Carbon::parse($dateStr . ' ' . $range[0] . ':00');
 
-                // minStart より前のスロットはスキップ
+                // 48h制限チェック
                 if ($minStart && $slotStart->lt($minStart)) continue;
+
+                // 同一スロット重複チェック（同じ案件・同じ開始時間が既に埋まっている）
+                $slotKey = $slotStart->format('Y-m-d H:i');
+                if ($bookedSlots->has($slotKey)) continue;
 
                 $endHour = $range[1] === '24:00' ? '23:59' : $range[1];
                 $slots[] = [
                     'label' => "{$dayLabel} {$timeValue}",
-                    'start' => $date->format('Y-m-d') . ' ' . $range[0] . ':00',
-                    'end'   => $date->format('Y-m-d') . ' ' . $endHour . ':00',
+                    'start' => $dateStr . ' ' . $range[0] . ':00',
+                    'end'   => $dateStr . ' ' . $endHour . ':00',
                 ];
             }
         }
