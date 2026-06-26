@@ -21,17 +21,19 @@
                 <span class="text-gray-400 w-24 shrink-0">【商品名】</span>
                 <span class="font-medium text-gray-800">{{ $application->campaign->title }}</span>
             </div>
-            @if($application->invited_at)
             <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-2">
                 <p class="text-xs text-pink-400 mb-1">【実施予定日時】</p>
+                @if($application->invited_at)
                 <p class="text-lg font-bold text-pink-700">
                     {{ $application->invited_at->format('m月d日(') }}{{ ['日','月','火','水','木','金','土'][$application->invited_at->dayOfWeek] }}{{ $application->invited_at->format(') H:i') }}
                     @if($application->invited_end_at)
                         〜{{ $application->invited_end_at->format('H:i') }}
                     @endif
                 </p>
+                @else
+                <p class="text-sm text-pink-500">別途ご連絡します</p>
+                @endif
             </div>
-            @endif
             @if($application->campaign->notes)
             <div>
                 <span class="text-gray-400 text-xs block mb-1">【注意事項】</span>

@@ -30,17 +30,28 @@
 
         <p class="text-sm text-gray-600">実施可能な日程をお選びください。</p>
 
+        @php $prevDate = null; @endphp
         @foreach($slots as $slot)
-        <form method="POST" action="{{ route('proposals.slot', $application->proposal_token) }}">
-            @csrf
-            <input type="hidden" name="slot_start" value="{{ $slot['start'] }}">
-            <input type="hidden" name="slot_end" value="{{ $slot['end'] }}">
-            <button type="submit"
-                    class="w-full border-2 border-indigo-300 text-indigo-700 py-3 rounded-xl font-medium text-sm hover:bg-indigo-50 active:scale-95 transition-all">
-                {{ $slot['label'] }}
-            </button>
-        </form>
+            @php $slotDate = \Carbon\Carbon::parse($slot['start'])->format('m/d'); @endphp
+            @if($slotDate !== $prevDate)
+                @if($prevDate !== null)<div class="pt-1"></div>@endif
+                <p class="text-xs font-semibold text-gray-500 pt-1">{{ $slotDate }}</p>
+                @php $prevDate = $slotDate; @endphp
+            @endif
+            <form method="POST" action="{{ route('proposals.slot', $application->proposal_token) }}">
+                @csrf
+                <input type="hidden" name="slot_start" value="{{ $slot['start'] }}">
+                <input type="hidden" name="slot_end" value="{{ $slot['end'] }}">
+                <button type="submit"
+                        class="w-full border-2 border-indigo-300 text-indigo-700 py-3 rounded-xl font-medium text-sm hover:bg-indigo-50 active:scale-95 transition-all">
+                    {{ $slot['label'] }}
+                </button>
+            </form>
         @endforeach
+
+        @if(empty($slots))
+        <p class="text-sm text-gray-400 text-center py-4">現在選択可能な日程がありません。</p>
+        @endif
 
         <hr class="border-gray-200 my-2">
 

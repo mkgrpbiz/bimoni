@@ -246,7 +246,7 @@ class ProposalController extends Controller
         }
     }
 
-    // available_times から候補スロットを生成（$minStart がある場合はそれ以降のみ）
+    // available_times から候補スロットを生成（$minStart 以降3日分の全スロット）
     private function generateTimeSlots(\App\Models\User $user, ?Carbon $minStart = null): array
     {
         $slotMap = [
@@ -257,32 +257,33 @@ class ProposalController extends Controller
         ];
 
         $availableTimes = $user->available_times ?? [];
-
-        if (in_array('いつでもOK', $availableTimes)) {
+        if (empty($availableTimes) || in_array('いつでもOK', $availableTimes)) {
             $availableTimes = array_keys($slotMap);
         }
 
-        $slots = [];
         $dayNames = ['日', '月', '火', '水', '木', '金', '土'];
 
-        // $minStart がある場合は最大7日先まで探す、なければ3日先まで
-        $maxDays = $minStart ? 14 : 3;
+        // 開始日：minStart の日付 or 明日、どちらか遅い方
+        $startDate = Carbon::tomorrow()->startOfDay();
+        if ($minStart && $minStart->copy()->startOfDay()->gt($startDate)) {
+            $startDate = $minStart->copy()->startOfDay();
+        }
 
-        for ($d = 1; $d <= $maxDays && count($slots) < 4; $d++) {
-            $date = Carbon::today()->addDays($d);
+        $slots = [];
+
+        // 3日分全スロットを列挙
+        for ($d = 0; $d < 3; $d++) {
+            $date = $startDate->copy()->addDays($d);
             $dayLabel = $date->format('m/d') . '(' . $dayNames[$date->dayOfWeek] . ')';
 
             foreach ($availableTimes as $timeValue) {
-                if (count($slots) >= 4) break;
                 $range = $slotMap[$timeValue] ?? null;
                 if (!$range) continue;
 
                 $slotStart = Carbon::parse($date->format('Y-m-d') . ' ' . $range[0] . ':00');
 
-                // 48h制限：minStart より前のスロットはスキップ
-                if ($minStart && $slotStart->lt($minStart)) {
-                    continue;
-                }
+                // minStart より前のスロットはスキップ
+                if ($minStart && $slotStart->lt($minStart)) continue;
 
                 $endHour = $range[1] === '24:00' ? '23:59' : $range[1];
                 $slots[] = [
@@ -293,23 +294,6 @@ class ProposalController extends Controller
             }
         }
 
-        // available_times が未設定/マッチなしの場合のフォールバック
-        if (empty($slots)) {
-            $startDay = $minStart ? max(1, (int)Carbon::today()->diffInDays($minStart->copy()->startOfDay(), false)) : 1;
-            for ($d = $startDay; $d <= $startDay + 3 && count($slots) < 4; $d++) {
-                $date = Carbon::today()->addDays($d);
-                $slotStart = Carbon::parse($date->format('Y-m-d') . ' 10:00:00');
-                if ($minStart && $slotStart->lt($minStart)) continue;
-
-                $dayLabel = $date->format('m/d') . '(' . $dayNames[$date->dayOfWeek] . ')';
-                $slots[] = [
-                    'label' => "{$dayLabel} 10:00〜13:00",
-                    'start' => $date->format('Y-m-d') . ' 10:00:00',
-                    'end'   => $date->format('Y-m-d') . ' 13:00:00',
-                ];
-            }
-        }
-
-        return array_slice($slots, 0, 4);
+        return $slots;
     }
 }
