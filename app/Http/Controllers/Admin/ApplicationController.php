@@ -40,19 +40,21 @@ class ApplicationController extends Controller
         $applications = $query->paginate(30)->withQueryString();
 
         // 他案件状況・48h制限の計算
-        $userIds      = $applications->pluck('user_id')->unique();
-        $pageAppIds   = $applications->pluck('id');
-        $lockStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed'];
+        $userIds = $applications->pluck('user_id')->unique();
 
-        $otherAppsMap = Application::with('campaign:id,title')
+        // 同ユーザーの全関連応募を取得（打診中/予約中/確認中 + 直近48h以内に終了した案件）
+        $allUserApps = Application::with('campaign:id,title')
             ->whereIn('user_id', $userIds)
-            ->whereIn('status', $lockStatuses)
-            ->whereNotIn('id', $pageAppIds)
+            ->where(function ($q) {
+                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
+            })
             ->get()
             ->groupBy('user_id');
 
-        $applications->getCollection()->transform(function (Application $app) use ($otherAppsMap) {
-            $others = $otherAppsMap->get($app->user_id, collect());
+        $applications->getCollection()->transform(function (Application $app) use ($allUserApps) {
+            // 自分自身は除いた他案件
+            $others = $allUserApps->get($app->user_id, collect())->filter(fn($o) => $o->id !== $app->id);
             $app->other_applications = $others;
             $app->unlock_at = $app->getUnlockAt($others);
             $app->is_locked = $app->isLocked($others);
@@ -272,12 +274,13 @@ class ApplicationController extends Controller
     // ユーザーIDリストに対して、指定案件以外の進行中応募を一括取得
     private function getOtherApplicationsMap(Collection $userIds, int $currentCampaignId): Collection
     {
-        $lockStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed'];
-
         return Application::with('campaign:id,title')
             ->whereIn('user_id', $userIds)
             ->where('campaign_id', '!=', $currentCampaignId)
-            ->whereIn('status', $lockStatuses)
+            ->where(function ($q) {
+                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
+            })
             ->get()
             ->groupBy('user_id');
     }

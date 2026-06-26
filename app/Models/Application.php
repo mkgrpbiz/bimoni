@@ -78,24 +78,24 @@ class Application extends Model
         ]);
     }
 
-    // 48時間制限チェック（他案件のcompleted_at から計算）
-    // 引数: 同一ユーザーの他案件応募コレクション
+    // 48時間制限チェック（案内終了時間 invited_end_at から計算）
     public function getUnlockAt(?\Illuminate\Support\Collection $otherApplications = null): ?Carbon
     {
         if ($otherApplications === null) {
             return null;
         }
+        // invited_end_at 基準（最優先）
         $latest = $otherApplications
-            ->whereNotNull('completed_at')
-            ->sortByDesc('completed_at')
+            ->whereNotNull('invited_end_at')
+            ->sortByDesc('invited_end_at')
             ->first();
 
-        if (!$latest || !$latest->completed_at) {
-            return null;
+        if ($latest?->invited_end_at) {
+            $unlock = $latest->invited_end_at->addHours(48);
+            if ($unlock->isFuture()) return $unlock;
         }
 
-        $unlock = $latest->completed_at->addHours(48);
-        return $unlock->isFuture() ? $unlock : null;
+        return null;
     }
 
     // ロック状態（打診不可）かどうか
@@ -111,7 +111,8 @@ class Application extends Model
                 if (in_array($other->status, ['line_contacted', 'scheduled', 'confirming'])) {
                     return true;
                 }
-                if ($other->completed_at && $other->completed_at->diffInHours(now()) < 48) {
+                // 案内終了時刻から48時間以内はロック
+                if ($other->invited_end_at && $other->invited_end_at->diffInHours(now()) < 48) {
                     return true;
                 }
             }
