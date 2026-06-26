@@ -16,7 +16,7 @@
             <span class="text-white text-2xl font-black">B</span>
         </div>
         <h1 class="text-xl font-black text-gray-800 tracking-wide">BIMONI</h1>
-        <p class="text-xs text-gray-400 mt-0.5">ビューティーモニター</p>
+        <p class="text-xs text-gray-400 mt-0.5">招待制モニター</p>
     </div>
 
     {{-- エージェント紹介バッジ --}}
@@ -31,13 +31,13 @@
     {{-- メインコピー --}}
     <div class="text-center mb-8">
         <p class="text-2xl font-black text-gray-800 leading-tight mb-2">
-            美容商品を<br>
+            美容商品や<br>サービスを<br>
             <span class="text-pink-500">モニターして</span><br>
             協力金をもらおう
         </p>
         <p class="text-sm text-gray-500 leading-relaxed">
-            実際に商品を購入・体験し、報告するだけ。<br>
-            協力金として購入費用＋αをお支払いします。
+            実際に購入や体験し、報告するだけ。<br>
+            モニター協力金をお支払いします。
         </p>
     </div>
 
@@ -48,6 +48,13 @@
             <div>
                 <p class="text-sm font-bold text-gray-800">美容商品のモニター</p>
                 <p class="text-xs text-gray-500">スキンケア・コスメ・サプリなど多数</p>
+            </div>
+        </div>
+        <div class="flex items-start gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
+            <span class="text-xl shrink-0">💻</span>
+            <div>
+                <p class="text-sm font-bold text-gray-800">サービスの体験モニター</p>
+                <p class="text-xs text-gray-500">資料請求・口座開設・面談など</p>
             </div>
         </div>
         <div class="flex items-start gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
