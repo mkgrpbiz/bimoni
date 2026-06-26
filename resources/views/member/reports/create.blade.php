@@ -67,7 +67,7 @@
                     <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-3" id="collection-fee-box">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">回収サービス協力金</span>
-                            <span class="font-bold text-pink-600 text-base" id="collection-fee-display">¥0</span>
+                            <span class="font-bold text-pink-600 text-base" id="collection-fee-display">0円</span>
                         </div>
                         <p class="text-xs text-gray-500 mt-1" id="collection-fee-note"></p>
                     </div>
@@ -210,15 +210,15 @@
                 <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-4 space-y-2" id="monitor-fee-box">
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-gray-600">モニター経費</span>
-                        <span class="font-medium text-gray-800" id="display-expense">¥0</span>
+                        <span class="font-medium text-gray-800" id="display-expense">0円</span>
                     </div>
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-gray-600">＋ モニター協力金</span>
-                        <span class="font-medium text-gray-800" id="display-extra">¥-</span>
+                        <span class="font-medium text-gray-800" id="display-extra">-</span>
                     </div>
                     <div class="flex justify-between items-center text-sm" id="display-bonus-row" style="display:none!important">
                         <span class="text-gray-600">＋ キャンペーン</span>
-                        <span class="font-medium text-red-500" id="display-bonus">¥0</span>
+                        <span class="font-medium text-red-500" id="display-bonus">0円</span>
                     </div>
                     <div class="border-t border-pink-200 pt-2 flex justify-between items-center">
                         <span class="text-sm font-bold text-gray-700">合計（モニター協力金）</span>
@@ -320,13 +320,13 @@ function updateCollectionFee() {
     const gross = count * 800;
     const fee = count <= 5 ? gross - shippingFee : gross;
 
-    document.getElementById('collection-fee-display').textContent = '¥' + fee.toLocaleString();
+    document.getElementById('collection-fee-display').textContent = fee.toLocaleString() + '円';
 
     if (count <= 5 && count > 0) {
         document.getElementById('collection-fee-note').textContent =
-            count + '点×800円 - 送料¥' + shippingFee.toLocaleString() + ' = ¥' + fee.toLocaleString();
+            count + '点×800円 - 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + '円';
     } else if (count > 0) {
-        document.getElementById('collection-fee-note').textContent = count + '点×800円 = ¥' + fee.toLocaleString();
+        document.getElementById('collection-fee-note').textContent = count + '点×800円 = ' + fee.toLocaleString() + '円';
     } else {
         document.getElementById('collection-fee-note').textContent = '';
     }
@@ -344,18 +344,18 @@ function updateMonitorFeeByApp(sel) {
     const purchaseAmt = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
     const totalFee = purchaseAmt + extraBonus + campaignBonus;
 
-    document.getElementById('display-expense').textContent = '¥' + purchaseAmt.toLocaleString();
-    document.getElementById('display-extra').textContent   = '+¥' + extraBonus.toLocaleString();
+    document.getElementById('display-expense').textContent = purchaseAmt.toLocaleString() + '円';
+    document.getElementById('display-extra').textContent   = '+' + extraBonus.toLocaleString() + '円';
 
     const bonusRow = document.getElementById('display-bonus-row');
     if (campaignBonus > 0) {
-        document.getElementById('display-bonus').textContent = '+¥' + campaignBonus.toLocaleString();
+        document.getElementById('display-bonus').textContent = '+' + campaignBonus.toLocaleString() + '円';
         bonusRow.style.removeProperty('display');
     } else {
         bonusRow.style.setProperty('display', 'none', 'important');
     }
 
-    document.getElementById('monitor-fee-display').textContent = '¥' + totalFee.toLocaleString();
+    document.getElementById('monitor-fee-display').textContent = totalFee.toLocaleString() + '円';
 }
 
 function updateMonitorFee(radio) {

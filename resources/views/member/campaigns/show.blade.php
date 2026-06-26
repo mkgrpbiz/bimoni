@@ -30,7 +30,7 @@
             <div class="flex justify-between items-center py-1 border-b border-gray-50">
                 <span class="text-sm text-gray-600">初回購入費</span>
                 <div class="text-right">
-                    <span class="font-bold text-gray-800">¥{{ number_format($campaign->initial_purchase_fee) }}</span>
+                    <span class="font-bold text-gray-800">{{ number_format($campaign->initial_purchase_fee) }}円</span>
                     <p class="text-xs text-gray-400">※支払い方法などで多少前後する場合があります。</p>
                 </div>
             </div>
@@ -127,7 +127,7 @@
                     @if($campaign->recurring_purchase_fee)
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-gray-500">継続購入費</span>
-                        <span class="text-gray-700 font-medium">¥{{ number_format($campaign->recurring_purchase_fee) }}</span>
+                        <span class="text-gray-700 font-medium">{{ number_format($campaign->recurring_purchase_fee) }}円</span>
                     </div>
                     @endif
                     <div class="flex justify-between items-center text-sm">
