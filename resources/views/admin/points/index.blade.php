@@ -70,9 +70,19 @@
         <span class="text-xs text-gray-700 dark:text-gray-400">支払待ち</span>
         <p class="text-xl font-bold text-red-500">¥{{ number_format($pendingAmount) }}</p>
     </div>
-    <div class="ml-auto flex gap-2 flex-wrap">
+    <div class="ml-auto flex gap-2 flex-wrap items-end">
         <a href="{{ route('admin.points.csv', ['month' => $month->format('Y-m')]) }}"
            class="bg-pink-500 text-white px-4 py-2 rounded text-sm hover:bg-pink-600">CSV出力</a>
+        <form method="GET" action="{{ route('admin.points.zengin') }}" class="flex items-end gap-2">
+            <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">振込日</label>
+                <input type="date" name="transfer_date" required
+                       value="{{ now()->format('Y-m-d') }}"
+                       class="border rounded px-2 py-1.5 text-sm">
+            </div>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">全銀出力</button>
+        </form>
         @if($pendingAmount > 0)
         <form method="POST" action="{{ route('admin.points.mark_paid') }}"
               onsubmit="return confirm('{{ $month->format('Y年n月') }}の未払いをすべて支払済みにしますか？')">

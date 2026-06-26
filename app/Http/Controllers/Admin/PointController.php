@@ -90,6 +90,95 @@ class PointController extends Controller
         ]);
     }
 
+    public function exportZengin(Request $request): Response
+    {
+        $request->validate([
+            'month'         => 'required|date_format:Y-m',
+            'transfer_date' => 'required|date',
+        ]);
+
+        $month        = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        $transferDate = Carbon::parse($request->transfer_date)->format('md'); // MMDD
+
+        $reports = MonitorReport::with(['user', 'campaign', 'application'])
+            ->where('status', 'approved')
+            ->where('payment_status', 'pending')
+            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->get();
+
+        // ユーザーごとに協力金を合計
+        $userTotals = [];
+        foreach ($reports as $r) {
+            $uid = $r->user_id;
+            if (!isset($userTotals[$uid])) {
+                $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
+            }
+            $userTotals[$uid]['amount'] += ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
+        }
+
+        // 口座情報未登録・金額ゼロを除外
+        $userTotals = array_filter($userTotals, fn($u) =>
+            $u['user']?->bank_code &&
+            $u['user']?->bank_account_number &&
+            $u['amount'] > 0
+        );
+
+        $totalCount  = count($userTotals);
+        $totalAmount = array_sum(array_column($userTotals, 'amount'));
+
+        $lines = [];
+
+        // ヘッダーレコード
+        $lines[] = implode(',', [
+            '1', '21', '0',
+            env('ZENGIN_CLIENT_CODE', '2017496001'),
+            env('ZENGIN_CLIENT_NAME', 'BIMONI'),
+            $transferDate,
+            env('ZENGIN_BANK_CODE', '0038'), '',
+            env('ZENGIN_BRANCH_CODE', '106'), '',
+            env('ZENGIN_ACCOUNT_TYPE', '1'),
+            env('ZENGIN_ACCOUNT_NUMBER', '2965755'),
+        ]);
+
+        // データレコード
+        foreach ($userTotals as $data) {
+            $user = $data['user'];
+            // 全角カナ→半角カナ変換
+            $name = mb_convert_kana($user->bank_account_name ?? '', 'k', 'UTF-8');
+
+            $lines[] = implode(',', [
+                '2',
+                $user->bank_code ?? '',
+                '',
+                $user->bank_branch_code ?? '',
+                '',
+                '0000',
+                $user->bank_account_type ?? '1',
+                $user->bank_account_number ?? '',
+                $name,
+                $data['amount'],
+                '', '',
+                '7',
+                '',
+            ]);
+        }
+
+        // トレーラーレコード
+        $lines[] = implode(',', ['8', $totalCount, $totalAmount]);
+
+        // エンドレコード
+        $lines[] = '9';
+
+        $content  = implode("\r\n", $lines);
+        $content  = mb_convert_encoding($content, 'SJIS-win', 'UTF-8');
+        $filename = 'bimoni_' . $transferDate . '.csv';
+
+        return response($content, 200, [
+            'Content-Type'        => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
     public function adjust(Request $request): RedirectResponse
     {
         $request->validate([
