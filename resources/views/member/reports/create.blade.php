@@ -178,12 +178,37 @@
                         @foreach($completedApplications as $app)
                         <option value="{{ $app->id }}"
                                 data-fee="{{ $app->campaign->cooperation_fee ?? 0 }}"
+                                data-fee-formula="{{ $app->campaign->cooperation_fee_formula ?? '' }}"
+                                data-fee-extra="{{ $app->campaign->cooperation_extra ?? '' }}"
                                 data-cont-fee="{{ $app->campaign->continuation_cooperation_fee ?? 0 }}"
+                                data-cont-fee-formula="{{ $app->campaign->continuation_cooperation_fee_formula ?? '' }}"
+                                data-cont-fee-extra="{{ $app->campaign->continuation_cooperation_extra ?? '' }}"
                                 {{ old('application_id') == $app->id ? 'selected' : '' }}>
                             {{ $app->campaign->title }}
                         </option>
                         @endforeach
                     </select>
+                </div>
+
+                {{-- 商品金額 --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        商品金額 <span class="text-red-500 text-xs">必須</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mb-2 leading-relaxed">
+                        商品金額（送料・返送費など）かかった費用のみを足した合計金額を記入してください。<br>
+                        ※モニター協力金の＋分は入れないでください。<br>
+                        ※体験モニターは【 ０ 】となります。<br>
+                        ※キャンペーンの＋分は入れないでください。
+                    </p>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">¥</span>
+                        <input type="number" name="purchase_amount" id="purchase-amount-input"
+                               inputmode="numeric" min="0"
+                               value="{{ old('purchase_amount', 0) }}" required
+                               oninput="updateMonitorFeeByApp(document.getElementById('monitor-app-select'))"
+                               class="w-full border border-gray-300 rounded-xl pl-7 pr-3 py-3 text-sm">
+                    </div>
                 </div>
 
                 {{-- モニター協力金表示 --}}
@@ -192,6 +217,7 @@
                         <span class="text-sm text-gray-600" id="monitor-fee-label">モニター協力金</span>
                         <span class="font-bold text-pink-600 text-base" id="monitor-fee-display">-</span>
                     </div>
+                    <p class="text-xs text-gray-400 mt-1" id="monitor-fee-formula-display"></p>
                 </div>
 
                 {{-- 支払い方法 --}}
@@ -302,13 +328,36 @@ function updateCollectionFee() {
 
 function updateMonitorFeeByApp(sel) {
     const opt = sel.options[sel.selectedIndex];
-    const fee = parseInt(opt.dataset.fee || 0);
-    const contFee = parseInt(opt.dataset.contFee || 0);
     const purchaseType = document.querySelector('input[name="purchase_type"]:checked')?.value;
-    const displayFee = (purchaseType === 'continuation' && contFee > 0) ? contFee : fee;
-    document.getElementById('monitor-fee-display').textContent = displayFee > 0 ? '¥' + displayFee.toLocaleString() : '-';
-    const label = purchaseType === 'continuation' ? '継続モニター協力金' : 'モニター協力金';
+    const isCont = purchaseType === 'continuation';
+
+    const fee      = parseInt(opt.dataset.fee || 0);
+    const contFee  = parseInt(opt.dataset.contFee || 0);
+    const formula  = isCont ? (opt.dataset.contFeeFormula || '') : (opt.dataset.feeFormula || '');
+    const extra    = isCont ? (opt.dataset.contFeeExtra || '') : (opt.dataset.feeExtra || '');
+    const totalFee = (isCont && contFee > 0) ? contFee : fee;
+
+    const label = isCont ? '継続モニター協力金' : 'モニター協力金';
     document.getElementById('monitor-fee-label').textContent = label;
+
+    const purchaseAmt = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
+
+    let displayText = '-';
+    let formulaText = '';
+
+    if (totalFee > 0) {
+        if (formula && formula.includes('+') && extra !== '') {
+            // "3000+500=3500円" 形式（フォーミュラあり）
+            displayText = '¥' + totalFee.toLocaleString();
+            formulaText = '¥' + purchaseAmt.toLocaleString() + '（商品金額）+ ¥' + parseInt(extra).toLocaleString() + '（協力金）= ¥' + totalFee.toLocaleString();
+        } else {
+            displayText = '¥' + totalFee.toLocaleString();
+        }
+    }
+
+    document.getElementById('monitor-fee-display').textContent = displayText;
+    const formulaEl = document.getElementById('monitor-fee-formula-display');
+    if (formulaEl) formulaEl.textContent = formulaText;
 }
 
 function updateMonitorFee(radio) {

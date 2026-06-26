@@ -16,8 +16,24 @@
     <div><span class="text-gray-700">ステータス：</span>{{ $campaign->getStatusLabel() }}</div>
     <div><span class="text-gray-700">カテゴリ：</span>{{ $campaign->category?->name ?? '未設定' }}</div>
     <div><span class="text-gray-700">PR媒体：</span>{{ $campaign->pr_media ?? '未設定' }}</div>
-    <div><span class="text-gray-700">モニター協力金：</span>¥{{ number_format($campaign->cooperation_fee) }}</div>
-    <div><span class="text-gray-700">継続モニター協力金：</span>{{ $campaign->continuation_cooperation_fee ? '¥'.number_format($campaign->continuation_cooperation_fee) : '-' }}</div>
+    <div>
+        <span class="text-gray-700">モニター協力金：</span>
+        @if($campaign->cooperation_fee_formula)
+            {{ $campaign->cooperation_fee_formula }} = ¥{{ number_format($campaign->cooperation_fee) }}
+        @else
+            ¥{{ number_format($campaign->cooperation_fee) }}
+        @endif
+    </div>
+    <div>
+        <span class="text-gray-700">継続モニター協力金：</span>
+        @if($campaign->continuation_cooperation_fee_formula)
+            {{ $campaign->continuation_cooperation_fee_formula }} = ¥{{ number_format($campaign->continuation_cooperation_fee) }}
+        @elseif($campaign->continuation_cooperation_fee)
+            ¥{{ number_format($campaign->continuation_cooperation_fee) }}
+        @else
+            -
+        @endif
+    </div>
     <div><span class="text-gray-700">募集人数：</span>{{ $campaign->capacity }}名</div>
     <div><span class="text-gray-700">打診予定数：</span>{{ $campaign->solicitation_target ?? '-' }}名</div>
     <div><span class="text-gray-700">粗利：</span>{{ $campaign->gross_profit !== null ? '¥'.number_format($campaign->gross_profit) : '-' }}</div>

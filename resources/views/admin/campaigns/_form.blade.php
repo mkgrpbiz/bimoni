@@ -141,24 +141,28 @@
                    oninput="calcProductCost(); calcGross()">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">商品金額（初回+継続×率）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">商品平均単価（初回+継続×率）</label>
             <input type="text" id="f-product-cost" readonly
                    class="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-700"
                    value="{{ number_format(($campaign->initial_purchase_fee ?? 0) + ($campaign->recurring_purchase_fee ?? 0) * (($campaign->continuation_rate ?? 0) / 100)) }}円">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金（円） <span class="text-red-500">*</span></label>
-            <input type="number" name="cooperation_fee" id="f-coop"
-                   value="{{ old('cooperation_fee', $campaign->cooperation_fee ?? 0) }}"
-                   class="w-full border rounded px-3 py-2 text-sm @error('cooperation_fee') border-red-400 @enderror" min="0"
+            <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金 <span class="text-red-500">*</span></label>
+            <input type="text" name="cooperation_fee" id="f-coop"
+                   value="{{ old('cooperation_fee', $campaign->cooperation_fee_formula ?? $campaign->cooperation_fee ?? 0) }}"
+                   placeholder="例: 3000+500 または 3500"
+                   class="w-full border rounded px-3 py-2 text-sm @error('cooperation_fee') border-red-400 @enderror"
                    oninput="calcGross()">
+            <p class="text-xs text-gray-400 mt-0.5">「商品金額+○円」または数字のみ入力可</p>
             @error('cooperation_fee')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">継続モニター協力金（円）</label>
-            <input type="number" name="continuation_cooperation_fee"
-                   value="{{ old('continuation_cooperation_fee', $campaign->continuation_cooperation_fee ?? '') }}"
-                   class="w-full border rounded px-3 py-2 text-sm" min="0" placeholder="継続購入時の協力金">
+            <label class="block text-sm font-medium text-gray-700 mb-1">継続モニター協力金</label>
+            <input type="text" name="continuation_cooperation_fee"
+                   value="{{ old('continuation_cooperation_fee', $campaign->continuation_cooperation_fee_formula ?? $campaign->continuation_cooperation_fee ?? '') }}"
+                   placeholder="例: 3000+500 または 3500"
+                   class="w-full border rounded px-3 py-2 text-sm">
+            <p class="text-xs text-gray-400 mt-0.5">継続購入時の協力金</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">紹介単価（円）</label>

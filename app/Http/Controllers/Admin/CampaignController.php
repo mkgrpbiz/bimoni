@@ -56,6 +56,7 @@ class CampaignController extends Controller
             $validated['monitor_video'] = $request->file('monitor_video')->store('campaigns/videos', 'public');
         }
 
+        $this->applyCooperationFormula($validated, $request);
         $campaign = Campaign::create($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
 
@@ -94,6 +95,7 @@ class CampaignController extends Controller
         }
 
         $validated['capacity'] = $request->filled('capacity') ? (int) $request->capacity : null;
+        $this->applyCooperationFormula($validated, $request);
 
         $campaign->update($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
@@ -145,6 +147,22 @@ class CampaignController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    private function applyCooperationFormula(array &$validated, $request): void
+    {
+        foreach (['cooperation_fee' => 'cooperation_fee_formula', 'continuation_cooperation_fee' => 'continuation_cooperation_fee_formula'] as $feeKey => $formulaKey) {
+            $raw = trim($request->input($feeKey, ''));
+            if ($raw === '') continue;
+            $raw = str_replace(' ', '', $raw);
+            if (str_contains($raw, '+')) {
+                $validated[$formulaKey] = $raw;
+                $validated[$feeKey]     = Campaign::parseCooperationFormula($raw);
+            } else {
+                $validated[$formulaKey] = null;
+                $validated[$feeKey]     = (int) $raw;
+            }
+        }
+    }
+
     private function rules(): array
     {
         return [
@@ -164,7 +182,8 @@ class CampaignController extends Controller
             'monitor_video'          => 'nullable|mimes:mp4,mov,avi,webm|max:204800',
             'product_name'           => 'nullable|string|max:255',
             'product_price'          => 'nullable|integer|min:0',
-            'cooperation_fee'        => 'required|integer|min:0',
+            'cooperation_fee'        => 'required|string|regex:/^\d+(\+\d+)?$/|max:20',
+            'continuation_cooperation_fee' => 'nullable|string|regex:/^\d+(\+\d+)?$/|max:20',
             'referral_fee'           => 'required|integer|in:0,500,1000',
             'campaign_unit_price'    => 'nullable|integer|min:0',
             'initial_purchase_fee'   => 'nullable|integer|min:0',

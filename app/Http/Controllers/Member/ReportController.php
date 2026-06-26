@@ -37,6 +37,7 @@ class ReportController extends Controller
         $request->validate([
             'application_id'   => 'required|exists:applications,id',
             'purchase_type'    => 'required|in:initial,continuation',
+            'purchase_amount'  => 'required|integer|min:0',
             'payment_method'   => 'required|string|max:50',
             'payment_method_other' => 'nullable|string|max:100',
             'report_image_1'   => 'required|image|max:10240',
@@ -57,6 +58,7 @@ class ReportController extends Controller
             'campaign_id'          => $application->campaign_id,
             'application_id'       => $application->id,
             'purchase_type'        => $request->purchase_type,
+            'purchase_amount'      => $request->purchase_amount,
             'payment_method'       => $request->payment_method === 'other'
                                         ? 'other:' . $request->payment_method_other
                                         : $request->payment_method,

@@ -12,7 +12,9 @@ class Campaign extends Model
         'cancellation_info', 'monitor_guide', 'link', 'monitor_video',
         'monitor_invite_message', 'monitor_end_message',
         'product_name', 'product_price',
-        'cooperation_fee', 'continuation_cooperation_fee', 'referral_fee', 'campaign_unit_price',
+        'cooperation_fee', 'cooperation_fee_formula',
+        'continuation_cooperation_fee', 'continuation_cooperation_fee_formula',
+        'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
         'continuation_rate', 'closing_date', 'payment_timing',
         'collection_info',
@@ -91,6 +93,34 @@ class Campaign extends Model
             ],
             $template
         );
+    }
+
+    // フォーミュラから数値合計を返す（"3000+500" → 3500, "500" → 500）
+    public static function parseCooperationFormula(string $formula): int
+    {
+        if (str_contains($formula, '+')) {
+            return array_sum(array_map('intval', explode('+', $formula)));
+        }
+        return (int) $formula;
+    }
+
+    // 協力金の "extra" 部分（フォーミュラの + 以降）を返す
+    public function getCooperationExtraAttribute(): ?int
+    {
+        if (!$this->cooperation_fee_formula || !str_contains($this->cooperation_fee_formula, '+')) {
+            return null;
+        }
+        $parts = explode('+', $this->cooperation_fee_formula);
+        return (int) trim(end($parts));
+    }
+
+    public function getContinuationCooperationExtraAttribute(): ?int
+    {
+        if (!$this->continuation_cooperation_fee_formula || !str_contains($this->continuation_cooperation_fee_formula, '+')) {
+            return null;
+        }
+        $parts = explode('+', $this->continuation_cooperation_fee_formula);
+        return (int) trim(end($parts));
     }
 
     // 商品金額 = 初回購入費 + 継続購入費 × 継続率
