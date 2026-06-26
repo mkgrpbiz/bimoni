@@ -79,7 +79,7 @@
         <div class="space-y-3">
             <div class="flex items-center gap-3">
                 <div class="w-6 h-6 rounded-full bg-pink-500 text-white text-xs font-bold flex items-center justify-center shrink-0">1</div>
-                <p class="text-sm text-gray-700">「LINEで登録する」から登録＆LINE追加</p>
+                <p class="text-sm text-gray-700">「LINEで登録する」から登録</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="w-6 h-6 rounded-full bg-pink-500 text-white text-xs font-bold flex items-center justify-center shrink-0">2</div>
