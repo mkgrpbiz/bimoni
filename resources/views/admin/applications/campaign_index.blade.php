@@ -258,9 +258,14 @@ $statusTabs = [
                                     'completed'      => '実施完了',
                                     default          => $other->getStatusLabel(),
                                 };
+                                $otherTime = $other->invited_at
+                                    ? $other->invited_at->format('m/d H:i')
+                                      . ($other->invited_end_at ? '〜'.$other->invited_end_at->format('H:i') : '')
+                                    : null;
                             @endphp
-                            <div class="text-orange-600 whitespace-nowrap">
-                                他案件で{{ $otherLabel }}（{{ $other->campaign?->title ?? '不明' }}）
+                            <div class="text-orange-600 whitespace-nowrap text-xs">
+                                {{ $other->campaign?->title ?? '不明' }}で{{ $otherLabel }}
+                                @if($otherTime) / {{ $otherTime }} @endif
                             </div>
                         @endforeach
                     @endif
