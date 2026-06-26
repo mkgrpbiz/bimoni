@@ -51,6 +51,10 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     ユーザー管理
                 </a>
+                <a href="{{ route('admin.line_links.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
+                    LINE紐付け
+                </a>
                 <a href="{{ route('admin.points.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     協力金管理

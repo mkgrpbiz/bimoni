@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\LegalPage;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,6 +47,14 @@ class RegisterController extends Controller
             'bank_account_name.regex'    => '口座名義にスペースは使用できません。',
             'bank_account_number.digits_between' => '口座番号は7〜8桁で入力してください。',
         ]);
+
+        // 既存インポートユーザーとの自動紐付け
+        $linked = $this->tryLinkExistingUser($user, $request);
+        if ($linked) {
+            // 紐付け成功: 既存ユーザーとして再ログイン
+            Auth::guard('liff')->login($linked);
+            return redirect()->route('member.campaigns.index');
+        }
 
         $user->update([
             'name'                => $request->name,
@@ -99,6 +108,49 @@ class RegisterController extends Controller
         $this->saveBank($user, $request);
 
         return back()->with('success', 'プロフィールを更新しました。');
+    }
+
+    private function tryLinkExistingUser(User $liffUser, Request $request): ?User
+    {
+        // インポート済みでまだLINE未紐付けのユーザーを検索
+        $query = User::whereNull('line_user_id')
+            ->where('imported_from', 'spreadsheet')
+            ->where('name', $request->name)
+            ->where('name_kana', $request->name_kana);
+
+        // 3点一致（名前+フリガナ+生年月日）
+        $matched = (clone $query)->where('birthdate', $request->birthdate)->get();
+
+        // 3点一致が0件 → 2点一致（名前+フリガナのみ）にフォールバック
+        if ($matched->count() === 0) {
+            $matched = $query->get();
+        }
+
+        // 一意に特定できない場合は自動紐付けしない
+        if ($matched->count() !== 1) {
+            return null;
+        }
+
+        $existing = $matched->first();
+
+        // 既存ユーザーに LINE情報・プロフィール・銀行情報をマージ
+        $existing->update([
+            'line_user_id'        => $liffUser->line_user_id,
+            'line_display_name'   => $liffUser->line_display_name,
+            'name'                => $request->name,
+            'name_kana'           => $request->name_kana,
+            'gender'              => $request->gender,
+            'birthdate'           => $request->birthdate,
+            'email'               => $request->email,
+            'referred_by_code'    => $request->referred_by_code ?: $existing->referred_by_code,
+            'profile_completed_at' => now(),
+        ]);
+        $this->saveBank($existing, $request);
+
+        // LINEログイン時に作られた空ユーザーを削除
+        $liffUser->delete();
+
+        return $existing;
     }
 
     private function saveBank($user, Request $request): void

@@ -18,6 +18,7 @@ use App\Http\Controllers\Member\MypageController as MemberMypage;
 use App\Http\Controllers\Member\RegisterController as MemberRegister;
 use App\Http\Middleware\EnsureProfileCompleted;
 use App\Http\Controllers\Admin\AgentController;
+use App\Http\Controllers\Admin\LineLinkController;
 use App\Http\Controllers\Admin\PointController;
 use App\Http\Controllers\Admin\ReferralController;
 use App\Http\Controllers\Portal\AuthController as PortalAuth;
@@ -100,6 +101,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('agents/{agent}', [AgentController::class, 'destroy'])->name('agents.destroy');
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('line-links', [LineLinkController::class, 'index'])->name('line_links.index');
+        Route::get('line-links/search', [LineLinkController::class, 'searchLiff'])->name('line_links.search');
+        Route::post('line-links/link', [LineLinkController::class, 'link'])->name('line_links.link');
+        Route::post('line-links/skip', [LineLinkController::class, 'skip'])->name('line_links.skip');
         Route::get('referrals', [ReferralController::class, 'index'])->name('referrals.index');
         Route::patch('referrals/mark-done', [ReferralController::class, 'markDone'])->name('referrals.mark_done');
         Route::patch('referrals/mark-pending', [ReferralController::class, 'markPending'])->name('referrals.mark_pending');
