@@ -72,13 +72,19 @@
         })
         .then(profile => {
             if (!profile) return;
+            const params = new URLSearchParams(window.location.search);
+            const referralCode = params.get('referral_code') || '';
             return fetch('{{ route("member.auth.liff") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 },
-                body: JSON.stringify({ line_user_id: profile.userId, line_display_name: profile.displayName }),
+                body: JSON.stringify({
+                    line_user_id: profile.userId,
+                    line_display_name: profile.displayName,
+                    referral_code: referralCode,
+                }),
             });
         })
         .then(r => r ? r.json() : null)

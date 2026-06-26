@@ -8,11 +8,12 @@
     <form method="POST" action="{{ route('member.register.store') }}" class="space-y-5">
         @csrf
 
-        {{-- 紹介コード（URLパラメータがある場合のみ表示） --}}
-        <div id="ref_code_wrap" class="hidden">
+        {{-- 紹介コード（セッションまたはURL経由で自動セット） --}}
+        @php $refCode = old('referred_by_code', $referralCode ?? ''); @endphp
+        <div id="ref_code_wrap" class="{{ $refCode ? '' : 'hidden' }}">
             <label class="block text-sm font-medium text-gray-700 mb-1">紹介コード</label>
             <input type="text" name="referred_by_code" id="referred_by_code"
-                   value="{{ old('referred_by_code') }}"
+                   value="{{ $refCode }}"
                    readonly
                    class="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-3 text-sm text-gray-500 cursor-not-allowed">
         </div>
@@ -175,14 +176,14 @@
 </div>
 
 <script>
-// URLパラメータから紹介コード自動入力（あれば表示・なければ非表示）
+// URLパラメータからも紹介コードを補完（サーバーから渡されなかった場合のフォールバック）
 (function() {
     const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref');
+    const ref = params.get('ref') || params.get('referral_code');
     const wrap = document.getElementById('ref_code_wrap');
     const el = document.getElementById('referred_by_code');
-    if (ref) {
-        if (el) el.value = ref;
+    if (ref && el && !el.value) {
+        el.value = ref;
         if (wrap) wrap.classList.remove('hidden');
     }
 

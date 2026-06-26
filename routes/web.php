@@ -29,6 +29,7 @@ use App\Http\Controllers\Portal\ChildController as PortalChild;
 use App\Http\Controllers\Portal\SettingsController as PortalSettings;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\Admin\SettlementController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('admin.login');
 });
+
+// 招待ページ（認証不要・代理店コード別）
+Route::get('/invite/{code}', [InviteController::class, 'show'])->name('invite');
 
 // 継続依頼応答ページ（認証不要・トークンで保護）
 Route::prefix('continuation/{token}')->name('continuation.')->group(function () {

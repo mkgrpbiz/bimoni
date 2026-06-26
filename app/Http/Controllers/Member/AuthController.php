@@ -35,6 +35,11 @@ class AuthController extends Controller
             $user->update(['line_display_name' => $request->line_display_name]);
         }
 
+        // URLパラメータから紹介コードをセッションに保存
+        if ($request->filled('referral_code') && !$user->referred_by_code) {
+            $request->session()->put('referral_code', strtoupper($request->referral_code));
+        }
+
         Auth::guard('liff')->login($user);
 
         $redirect = $user->profile_completed_at

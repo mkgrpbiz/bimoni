@@ -12,7 +12,7 @@ use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
-    public function show(): View|RedirectResponse
+    public function show(Request $request): View|RedirectResponse
     {
         $user = Auth::guard('liff')->user();
         if ($user->profile_completed_at) {
@@ -22,7 +22,11 @@ class RegisterController extends Controller
         $terms   = LegalPage::terms();
         $privacy = LegalPage::privacy();
 
-        return view('member.register', compact('user', 'terms', 'privacy'));
+        // 既存紹介コード → セッション紹介コード → null の優先順
+        $referralCode = $user->referred_by_code
+            ?? $request->session()->get('referral_code');
+
+        return view('member.register', compact('user', 'terms', 'privacy', 'referralCode'));
     }
 
     public function store(Request $request): RedirectResponse

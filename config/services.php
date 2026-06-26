@@ -40,6 +40,7 @@ return [
         'channel_secret'       => env('LINE_CHANNEL_SECRET'),
         'channel_access_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
         'liff_id'              => env('LIFF_ID'),
+        'official_account_id'  => env('LINE_OFFICIAL_ACCOUNT_ID'),
     ],
 
 ];

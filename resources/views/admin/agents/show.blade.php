@@ -26,11 +26,17 @@
     {{-- 紹介コード一覧 --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">紹介コード</h2>
-        <div class="space-y-1 mb-4">
+        <div class="space-y-2 mb-4">
             @foreach($agent->codes as $code)
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3 flex-wrap">
                 <span class="font-mono font-bold text-pink-600 dark:text-pink-400">{{ $code->code }}</span>
                 <span class="text-xs text-gray-500">{{ $code->label ?? '' }}</span>
+                <a href="{{ route('invite', $code->code) }}" target="_blank"
+                   class="text-xs text-blue-500 hover:underline font-mono truncate max-w-xs">
+                    {{ route('invite', $code->code) }}
+                </a>
+                <button type="button" onclick="copyUrl('{{ route('invite', $code->code) }}')"
+                        class="text-xs text-gray-400 hover:text-gray-600 border rounded px-1.5 py-0.5">コピー</button>
             </div>
             @endforeach
         </div>
@@ -91,4 +97,13 @@
         </tbody>
     </table>
 </div>
+@push('scripts')
+<script>
+function copyUrl(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        alert('コピーしました');
+    });
+}
+</script>
+@endpush
 @endsection
