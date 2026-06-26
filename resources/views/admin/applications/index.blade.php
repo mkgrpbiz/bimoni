@@ -304,8 +304,9 @@ $tabs = [
                 <label class="block text-xs text-gray-700 mb-1">メモ</label>
                 <input type="text" name="memo" class="w-full border rounded px-3 py-2 text-sm">
             </div>
+            <p id="slotError" class="hidden text-xs text-red-500">時間帯を選択してください</p>
             <div class="flex gap-2 pt-1">
-                <button type="submit" class="flex-1 bg-pink-500 text-white py-2 rounded text-sm hover:bg-pink-600 font-medium">打診送信</button>
+                <button type="button" onclick="submitProposal()" class="flex-1 bg-pink-500 text-white py-2 rounded text-sm hover:bg-pink-600 font-medium">打診送信</button>
                 <button type="button" onclick="closeProposalModal()"
                         class="flex-1 bg-gray-500 text-white py-2 rounded text-sm hover:bg-gray-600">キャンセル</button>
             </div>
@@ -346,6 +347,14 @@ function openProposalModal(appId, userName, actionUrl) {
 }
 function closeProposalModal() {
     document.getElementById('proposalModal').classList.add('hidden');
+}
+function submitProposal() {
+    if (!_selectedSlotStart) {
+        document.getElementById('slotError').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('slotError').classList.add('hidden');
+    document.getElementById('proposalForm').submit();
 }
 </script>
 
