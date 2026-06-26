@@ -101,19 +101,24 @@ class Application extends Model
     // ロック状態（打診不可）かどうか
     public function isLocked(?\Illuminate\Support\Collection $otherApplications = null): bool
     {
-        // 自身が打診中・予約中・実施確認中
+        // 自身が打診中・予約中・実施確認中（invited_end_atが設定されていても自案件はロック）
         if (in_array($this->status, ['line_contacted', 'scheduled', 'confirming'])) {
             return true;
         }
         // 他案件でのロック
         if ($otherApplications) {
             foreach ($otherApplications as $other) {
-                if (in_array($other->status, ['line_contacted', 'scheduled', 'confirming'])) {
-                    return true;
-                }
-                // 案内終了時刻+48時間を過ぎていなければロック
-                if ($other->invited_end_at && now()->lt($other->invited_end_at->addHours(48))) {
-                    return true;
+                if ($other->invited_end_at) {
+                    // 案内終了時刻が設定されている → 時刻基準（+48h以内ならロック）
+                    if (now()->lt($other->invited_end_at->addHours(48))) {
+                        return true;
+                    }
+                    // 48h過ぎていればステータスに関わらずロック解除
+                } else {
+                    // 案内終了時刻未設定 → ステータス基準
+                    if (in_array($other->status, ['line_contacted', 'scheduled', 'confirming'])) {
+                        return true;
+                    }
                 }
             }
         }

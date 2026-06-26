@@ -42,12 +42,16 @@ class ApplicationController extends Controller
         // 他案件状況・48h制限の計算
         $userIds = $applications->pluck('user_id')->unique();
 
-        // 同ユーザーの全関連応募を取得（打診中/予約中/確認中 + 直近48h以内に終了した案件）
+        // 同ユーザーの全関連応募を取得
         $allUserApps = Application::with('campaign:id,title')
             ->whereIn('user_id', $userIds)
             ->where(function ($q) {
-                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
-                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
+                // invited_end_at未設定の進行中ステータス
+                $q->where(function ($q2) {
+                    $q2->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                       ->whereNull('invited_end_at');
+                // invited_end_at設定済み → 48h以内のものだけ
+                })->orWhere('invited_end_at', '>=', now()->subHours(48));
             })
             ->get()
             ->groupBy('user_id');
@@ -278,8 +282,12 @@ class ApplicationController extends Controller
             ->whereIn('user_id', $userIds)
             ->where('campaign_id', '!=', $currentCampaignId)
             ->where(function ($q) {
-                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
-                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
+                // invited_end_at未設定の進行中ステータス
+                $q->where(function ($q2) {
+                    $q2->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                       ->whereNull('invited_end_at');
+                // invited_end_at設定済み → 48h以内のものだけ
+                })->orWhere('invited_end_at', '>=', now()->subHours(48));
             })
             ->get()
             ->groupBy('user_id');
