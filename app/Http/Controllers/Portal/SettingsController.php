@@ -16,8 +16,8 @@ class SettingsController extends Controller
     public function update(\Illuminate\Http\Request $request)
     {
         $agent = \App\Services\PortalService::agent();
-        $request->validate(['name' => 'required|string|max:100']);
-        $agent->update(['name' => $request->name]);
+        $request->validate(['invite_display_name' => 'nullable|string|max:100']);
+        $agent->update(['invite_display_name' => $request->invite_display_name ?: null]);
         return back()->with('success', '情報を更新しました。');
     }
 }

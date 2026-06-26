@@ -18,9 +18,9 @@ class InviteController extends Controller
         $agentName = null;
         if ($referralCode) {
             $agent = $referralCode->agent;
-            $agentName = $agent?->parent
-                ? $agent->parent->name
-                : $agent?->name;
+            $base = $agent?->parent ?? $agent;
+            // invite_display_name が設定されていればそちらを優先
+            $agentName = $base?->invite_display_name ?: $base?->name;
         }
 
         $liffId        = config('services.line.liff_id');

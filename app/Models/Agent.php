@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Agent extends Model
 {
     protected $fillable = [
-        'parent_id', 'name', 'access_token',
+        'parent_id', 'name', 'invite_display_name', 'access_token',
         'child_reward_500', 'child_reward_1000',
     ];
 
