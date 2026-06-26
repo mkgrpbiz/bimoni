@@ -153,7 +153,7 @@ $statusTabs = [
                 <th class="px-3 py-2 text-left whitespace-nowrap">打診回答</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">LINE送信</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">他案件状況</th>
-                <th class="px-3 py-2 text-left whitespace-nowrap">48h制限</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">次回案内可能</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">操作</th>
             </tr>
         </thead>

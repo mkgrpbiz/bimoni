@@ -78,47 +78,42 @@ class Application extends Model
         ]);
     }
 
-    // 48時間制限チェック（案内終了時間 invited_end_at から計算）
-    public function getUnlockAt(?\Illuminate\Support\Collection $otherApplications = null): ?Carbon
+    // 次回案内可能日時（案内終了時間+48h）※表示用・案内時間バリデーション用
+    public function getEarliestNextInviteAt(?\Illuminate\Support\Collection $otherApplications = null): ?Carbon
     {
         if ($otherApplications === null) {
             return null;
         }
-        // invited_end_at 基準（最優先）
         $latest = $otherApplications
             ->whereNotNull('invited_end_at')
             ->sortByDesc('invited_end_at')
             ->first();
 
         if ($latest?->invited_end_at) {
-            $unlock = $latest->invited_end_at->addHours(48);
-            if ($unlock->isFuture()) return $unlock;
+            $earliest = $latest->invited_end_at->addHours(48);
+            if ($earliest->isFuture()) return $earliest;
         }
-
         return null;
     }
 
-    // ロック状態（打診不可）かどうか
+    // 後方互換エイリアス
+    public function getUnlockAt(?\Illuminate\Support\Collection $otherApplications = null): ?Carbon
+    {
+        return $this->getEarliestNextInviteAt($otherApplications);
+    }
+
+    // ロック状態（打診不可）= 他案件が進行中のときのみ。48h制限は打診ではなく案内時間に適用
     public function isLocked(?\Illuminate\Support\Collection $otherApplications = null): bool
     {
-        // 自身が打診中・予約中・実施確認中（invited_end_atが設定されていても自案件はロック）
+        // 自身が打診中・予約中・実施確認中
         if (in_array($this->status, ['line_contacted', 'scheduled', 'confirming'])) {
             return true;
         }
-        // 他案件でのロック
+        // 他案件でステータスが進行中ならロック
         if ($otherApplications) {
             foreach ($otherApplications as $other) {
-                if ($other->invited_end_at) {
-                    // 案内終了時刻が設定されている → 時刻基準（+48h以内ならロック）
-                    if (now()->lt($other->invited_end_at->addHours(48))) {
-                        return true;
-                    }
-                    // 48h過ぎていればステータスに関わらずロック解除
-                } else {
-                    // 案内終了時刻未設定 → ステータス基準
-                    if (in_array($other->status, ['line_contacted', 'scheduled', 'confirming'])) {
-                        return true;
-                    }
+                if (in_array($other->status, ['line_contacted', 'scheduled', 'confirming'])) {
+                    return true;
                 }
             }
         }

@@ -42,16 +42,12 @@ class ApplicationController extends Controller
         // 他案件状況・48h制限の計算
         $userIds = $applications->pluck('user_id')->unique();
 
-        // 同ユーザーの全関連応募を取得
+        // 同ユーザーの全関連応募を取得（進行中ステータス + 直近invited_end_at※案内時間制限表示用）
         $allUserApps = Application::with('campaign:id,title')
             ->whereIn('user_id', $userIds)
             ->where(function ($q) {
-                // invited_end_at未設定の進行中ステータス
-                $q->where(function ($q2) {
-                    $q2->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
-                       ->whereNull('invited_end_at');
-                // invited_end_at設定済み → 48h以内のものだけ
-                })->orWhere('invited_end_at', '>=', now()->subHours(48));
+                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
             })
             ->get()
             ->groupBy('user_id');
@@ -164,11 +160,15 @@ class ApplicationController extends Controller
             )->get($application->user_id, collect());
 
             if ($application->isLocked($others)) {
-                return back()->with('error', 'このユーザーは現在打診不可の状態です（他案件対応中または48時間制限）。');
+                return back()->with('error', 'このユーザーは現在打診不可の状態です（他案件対応中）。');
             }
 
-            // invited_at を保存（打診時に設定）
+            // 案内時間の48h制限チェック
             if ($request->filled('invited_at')) {
+                $earliest = $application->getEarliestNextInviteAt($others);
+                if ($earliest && Carbon::parse($request->invited_at)->lt($earliest)) {
+                    return back()->with('error', '案内時間が48時間制限内です。' . $earliest->format('m/d H:i') . ' 以降の時間を設定してください。');
+                }
                 $application->update([
                     'invited_at'     => $request->invited_at,
                     'invited_end_at' => $request->invited_end_at,
@@ -275,19 +275,16 @@ class ApplicationController extends Controller
         ]);
     }
 
-    // ユーザーIDリストに対して、指定案件以外の進行中応募を一括取得
+    // ユーザーIDリストに対して、指定案件以外の関連応募を一括取得
     private function getOtherApplicationsMap(Collection $userIds, int $currentCampaignId): Collection
     {
         return Application::with('campaign:id,title')
             ->whereIn('user_id', $userIds)
             ->where('campaign_id', '!=', $currentCampaignId)
             ->where(function ($q) {
-                // invited_end_at未設定の進行中ステータス
-                $q->where(function ($q2) {
-                    $q2->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
-                       ->whereNull('invited_end_at');
-                // invited_end_at設定済み → 48h以内のものだけ
-                })->orWhere('invited_end_at', '>=', now()->subHours(48));
+                // 進行中ステータス（打診ロック判定用）+ 直近invited_end_at（案内時間制限表示用）
+                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
             })
             ->get()
             ->groupBy('user_id');
