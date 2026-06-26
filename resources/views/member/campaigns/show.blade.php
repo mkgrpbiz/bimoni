@@ -35,10 +35,12 @@
                 </div>
             </div>
             @endif
-            @if($campaign->cooperation_fee)
+            @if($campaign->initial_purchase_fee !== null)
             <div class="flex justify-between items-center py-1 border-b border-gray-50">
                 <span class="text-sm text-gray-600">モニター協力金</span>
-                <span class="font-bold text-pink-600">¥{{ number_format($campaign->cooperation_fee) }}</span>
+                <span class="font-bold text-pink-600">
+                    初回購入費({{ number_format($campaign->initial_purchase_fee) }}円)+{{ number_format($campaign->cooperation_fee ?? 0) }}円
+                </span>
             </div>
             @endif
             @if($campaign->recurring_purchase_fee)
@@ -49,11 +51,15 @@
                     <p class="text-xs text-gray-400">※支払い方法などで多少前後する場合があります。</p>
                 </div>
             </div>
-            @endif
-            @if($campaign->continuation_cooperation_fee)
             <div class="flex justify-between items-center py-1">
                 <span class="text-sm text-gray-600">継続モニター協力金</span>
-                <span class="font-bold text-pink-600">¥{{ number_format($campaign->continuation_cooperation_fee) }}</span>
+                <span class="font-bold text-pink-600">
+                    @if($campaign->continuation_cooperation_fee)
+                        継続購入費({{ number_format($campaign->recurring_purchase_fee) }}円)+{{ number_format($campaign->continuation_cooperation_fee) }}円
+                    @else
+                        継続購入費({{ number_format($campaign->recurring_purchase_fee) }}円)
+                    @endif
+                </span>
             </div>
             @endif
         </div>

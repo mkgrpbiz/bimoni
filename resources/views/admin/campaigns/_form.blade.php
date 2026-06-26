@@ -124,46 +124,52 @@
             <input type="number" name="initial_purchase_fee" id="f-initial"
                    value="{{ old('initial_purchase_fee', $campaign->initial_purchase_fee ?? '') }}"
                    class="w-full border rounded px-3 py-2 text-sm" min="0"
-                   oninput="calcProductCost(); calcGross()">
+                   oninput="updateCoopLabels(); calcGross()">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">継続購入費（円）</label>
             <input type="number" name="recurring_purchase_fee" id="f-recurring"
                    value="{{ old('recurring_purchase_fee', $campaign->recurring_purchase_fee ?? '') }}"
                    class="w-full border rounded px-3 py-2 text-sm" min="0"
-                   oninput="calcProductCost(); calcGross()">
+                   oninput="updateCoopLabels(); calcGross()">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">目標継続率（%）</label>
             <input type="number" name="continuation_rate" id="f-rate"
                    value="{{ old('continuation_rate', $campaign->continuation_rate ?? '') }}"
                    class="w-full border rounded px-3 py-2 text-sm" min="0" max="100" step="0.01"
-                   oninput="calcProductCost(); calcGross()">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">商品平均単価（初回+継続×率）</label>
-            <input type="text" id="f-product-cost" readonly
-                   class="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-700"
-                   value="{{ number_format(($campaign->initial_purchase_fee ?? 0) + ($campaign->recurring_purchase_fee ?? 0) * (($campaign->continuation_rate ?? 0) / 100)) }}円">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金 <span class="text-red-500">*</span></label>
-            <input type="text" name="cooperation_fee" id="f-coop"
-                   value="{{ old('cooperation_fee', $campaign->cooperation_fee_formula ?? $campaign->cooperation_fee ?? 0) }}"
-                   placeholder="例: 3000+500 または 3500"
-                   class="w-full border rounded px-3 py-2 text-sm @error('cooperation_fee') border-red-400 @enderror"
                    oninput="calcGross()">
-            <p class="text-xs text-gray-400 mt-0.5">「商品金額+○円」または数字のみ入力可</p>
+        </div>
+
+        {{-- モニター協力金 --}}
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金（+○円部分） <span class="text-red-500">*</span></label>
+            <div class="flex items-center gap-1">
+                <span class="text-sm text-gray-500 whitespace-nowrap">初回購入費(<span id="lbl-initial">{{ number_format($campaign->initial_purchase_fee ?? 0) }}</span>円)+</span>
+                <input type="number" name="cooperation_fee" id="f-coop"
+                       value="{{ old('cooperation_fee', $campaign->cooperation_fee ?? 0) }}"
+                       class="flex-1 border rounded px-3 py-2 text-sm @error('cooperation_fee') border-red-400 @enderror"
+                       min="0" oninput="calcGross()">
+                <span class="text-sm text-gray-500">円</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">表示例：初回購入費(5,000円)+200円</p>
             @error('cooperation_fee')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">継続モニター協力金</label>
-            <input type="text" name="continuation_cooperation_fee"
-                   value="{{ old('continuation_cooperation_fee', $campaign->continuation_cooperation_fee_formula ?? $campaign->continuation_cooperation_fee ?? '') }}"
-                   placeholder="例: 3000+500 または 3500"
-                   class="w-full border rounded px-3 py-2 text-sm">
-            <p class="text-xs text-gray-400 mt-0.5">継続購入時の協力金</p>
+
+        {{-- 継続モニター協力金 --}}
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">継続モニター協力金（+○円部分）</label>
+            <div class="flex items-center gap-1">
+                <span class="text-sm text-gray-500 whitespace-nowrap">継続購入費(<span id="lbl-recurring">{{ number_format($campaign->recurring_purchase_fee ?? 0) }}</span>円)+</span>
+                <input type="number" name="continuation_cooperation_fee" id="f-cont-coop"
+                       value="{{ old('continuation_cooperation_fee', $campaign->continuation_cooperation_fee ?? '') }}"
+                       class="flex-1 border rounded px-3 py-2 text-sm"
+                       min="0" oninput="calcGross()" placeholder="空欄=継続購入費のみ表示">
+                <span class="text-sm text-gray-500">円</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">空欄の場合「継続購入費(○円)」のみ表示</p>
         </div>
+
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">紹介単価（円）</label>
             <select name="referral_fee" id="f-referral" onchange="calcGross()"
@@ -175,12 +181,23 @@
                 @endforeach
             </select>
         </div>
+
+        {{-- モニターコスト（自動計算） --}}
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">粗利（円）</label>
-            <input type="number" name="gross_profit" id="f-gross"
+            <label class="block text-sm font-medium text-gray-700 mb-1">モニターコスト（自動計算）</label>
+            <input type="text" id="f-monitor-cost" readonly
+                   class="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-700"
+                   value="{{ number_format(($campaign->initial_purchase_fee ?? 0) + ($campaign->recurring_purchase_fee ?? 0) * (($campaign->continuation_rate ?? 0) / 100) + ($campaign->cooperation_fee ?? 0) + ($campaign->referral_fee ?? 0)) }}円">
+            <p class="text-xs text-gray-400 mt-0.5">初回+継続×継続率+協力金+紹介単価</p>
+        </div>
+
+        {{-- 粗利（自動計算） --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">粗利（自動計算）</label>
+            <input type="number" name="gross_profit" id="f-gross" readonly
                    value="{{ old('gross_profit', $campaign->gross_profit ?? '') }}"
                    class="w-full border rounded px-3 py-2 text-sm bg-gray-50">
-            <p class="text-xs text-gray-700 mt-0.5">案件単価 − (商品金額 + 協力金 + 紹介単価)</p>
+            <p class="text-xs text-gray-400 mt-0.5">案件単価 − モニターコスト</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">締日</label>
@@ -326,22 +343,31 @@ function previewThumbnail(input) {
     }
 }
 
-function calcProductCost() {
+function updateCoopLabels() {
+    const initial   = parseFloat(document.getElementById('f-initial')?.value)   || 0;
+    const recurring = parseFloat(document.getElementById('f-recurring')?.value) || 0;
+    const lblInit = document.getElementById('lbl-initial');
+    const lblRec  = document.getElementById('lbl-recurring');
+    if (lblInit) lblInit.textContent = Math.round(initial).toLocaleString();
+    if (lblRec)  lblRec.textContent  = Math.round(recurring).toLocaleString();
+}
+
+function calcMonitorCost() {
     const initial   = parseFloat(document.getElementById('f-initial')?.value)   || 0;
     const recurring = parseFloat(document.getElementById('f-recurring')?.value) || 0;
     const rate      = parseFloat(document.getElementById('f-rate')?.value)      || 0;
-    const cost      = initial + recurring * (rate / 100);
-    const el = document.getElementById('f-product-cost');
+    const coop      = parseFloat(document.getElementById('f-coop')?.value)      || 0;
+    const referral  = parseFloat(document.getElementById('f-referral')?.value)  || 0;
+    const cost      = initial + recurring * (rate / 100) + coop + referral;
+    const el = document.getElementById('f-monitor-cost');
     if (el) el.value = Math.round(cost).toLocaleString() + '円';
     return cost;
 }
 
 function calcGross() {
-    const unitPrice = parseFloat(document.querySelector('[name="campaign_unit_price"]')?.value) || 0;
-    const productCost = calcProductCost();
-    const coop     = parseFloat(document.getElementById('f-coop')?.value)    || 0;
-    const referral = parseFloat(document.getElementById('f-referral')?.value) || 0;
-    const gross    = unitPrice - productCost - coop - referral;
+    const unitPrice   = parseFloat(document.querySelector('[name="campaign_unit_price"]')?.value) || 0;
+    const monitorCost = calcMonitorCost();
+    const gross       = unitPrice - monitorCost;
     const el = document.getElementById('f-gross');
     if (el) el.value = Math.round(gross);
 }

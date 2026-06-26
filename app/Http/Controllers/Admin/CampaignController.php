@@ -149,18 +149,31 @@ class CampaignController extends Controller
 
     private function applyCooperationFormula(array &$validated, $request): void
     {
-        foreach (['cooperation_fee' => 'cooperation_fee_formula', 'continuation_cooperation_fee' => 'continuation_cooperation_fee_formula'] as $feeKey => $formulaKey) {
-            $raw = trim($request->input($feeKey, ''));
-            if ($raw === '') continue;
-            $raw = str_replace(' ', '', $raw);
-            if (str_contains($raw, '+')) {
-                $validated[$formulaKey] = $raw;
-                $validated[$feeKey]     = Campaign::parseCooperationFormula($raw);
-            } else {
-                $validated[$formulaKey] = null;
-                $validated[$feeKey]     = (int) $raw;
-            }
+        // 初回協力金: 入力値は「+○円」部分のみ
+        $extra = (int) $request->input('cooperation_fee', 0);
+        $validated['cooperation_fee']         = $extra;
+        $validated['cooperation_fee_formula'] = '初回購入費+' . $extra . '円';
+
+        // 継続協力金: 空欄 or 数値
+        $rawCont = trim($request->input('continuation_cooperation_fee', ''));
+        if ($rawCont !== '') {
+            $extraCont = (int) $rawCont;
+            $validated['continuation_cooperation_fee']         = $extraCont;
+            $validated['continuation_cooperation_fee_formula'] = '継続購入費+' . $extraCont . '円';
+        } else {
+            $validated['continuation_cooperation_fee']         = null;
+            $validated['continuation_cooperation_fee_formula'] = null;
         }
+
+        // 粗利を自動計算して保存
+        $initial   = (float) ($validated['initial_purchase_fee']   ?? 0);
+        $recurring = (float) ($validated['recurring_purchase_fee'] ?? 0);
+        $rate      = (float) ($validated['continuation_rate']      ?? 0);
+        $coop      = (float) $validated['cooperation_fee'];
+        $referral  = (float) ($validated['referral_fee']           ?? 0);
+        $unitPrice = (float) ($validated['campaign_unit_price']    ?? 0);
+        $monitorCost = $initial + $recurring * ($rate / 100) + $coop + $referral;
+        $validated['gross_profit'] = (int) round($unitPrice - $monitorCost);
     }
 
     private function rules(): array
@@ -182,8 +195,8 @@ class CampaignController extends Controller
             'monitor_video'          => 'nullable|mimes:mp4,mov,avi,webm|max:204800',
             'product_name'           => 'nullable|string|max:255',
             'product_price'          => 'nullable|integer|min:0',
-            'cooperation_fee'        => ['required', 'string', 'max:30', 'regex:/^(\d+(\+\d+)?|商品金額\+\d+円?)$/u'],
-            'continuation_cooperation_fee' => ['nullable', 'string', 'max:30', 'regex:/^(\d+(\+\d+)?|商品金額\+\d+円?)$/u'],
+            'cooperation_fee'              => 'required|integer|min:0',
+            'continuation_cooperation_fee' => 'nullable|integer|min:0',
             'referral_fee'           => 'required|integer|in:0,500,1000',
             'campaign_unit_price'    => 'nullable|integer|min:0',
             'initial_purchase_fee'   => 'nullable|integer|min:0',
