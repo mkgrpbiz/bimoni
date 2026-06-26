@@ -167,7 +167,7 @@ class ApplicationController extends Controller
             if ($request->filled('invited_at')) {
                 $earliest = $application->getEarliestNextInviteAt($others);
                 if ($earliest && Carbon::parse($request->invited_at)->lt($earliest)) {
-                    return back()->with('error', '案内時間が48時間制限内です。' . $earliest->format('m/d H:i') . ' 以降の時間を設定してください。');
+                    return back()->with('error', $earliest->format('m/d H:i') . '〜打診可能です。');
                 }
                 $application->update([
                     'invited_at'     => $request->invited_at,
