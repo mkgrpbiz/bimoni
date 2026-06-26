@@ -21,6 +21,26 @@ class ProposalController extends Controller
             ->with(['campaign', 'user'])
             ->firstOrFail();
 
+        // 実施案内日時が過ぎていたら自動キャンセル
+        if ($application->status === 'line_contacted'
+            && $application->invited_at
+            && now()->gte($application->invited_at)
+        ) {
+            $application->update([
+                'status'               => 'cancelled',
+                'proposal_answered_at' => now(),
+                'proposal_answer'      => 'expired',
+            ]);
+            ApplicationStatusLog::create([
+                'application_id' => $application->id,
+                'from_status'    => 'line_contacted',
+                'to_status'      => 'cancelled',
+                'changed_by'     => null,
+                'memo'           => '実施案内日時までに回答なし・自動キャンセル',
+            ]);
+            return response()->view('proposals.expired', compact('application'), 410);
+        }
+
         if (!in_array($application->status, ['line_contacted', 'scheduled'])) {
             return response()->view('proposals.expired', compact('application'), 410);
         }

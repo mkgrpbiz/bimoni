@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // LINE メッセージジョブを毎分実行
 Schedule::command('line:send-messages')->everyMinute();
+
+// 実施案内日時切れの打診を自動キャンセル（毎5分）
+Schedule::command('proposals:auto-cancel')->everyFiveMinutes();

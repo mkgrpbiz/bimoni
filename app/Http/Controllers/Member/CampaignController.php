@@ -26,6 +26,7 @@ class CampaignController extends Controller
 
         $appliedIds = Application::where('user_id', $user->id)
             ->whereIn('campaign_id', $campaigns->pluck('id'))
+            ->whereNotIn('status', ['cancelled'])
             ->pluck('status', 'campaign_id');
 
         $now = now();
@@ -48,6 +49,7 @@ class CampaignController extends Controller
         $user        = Auth::guard('liff')->user();
         $application = Application::where('user_id', $user->id)
             ->where('campaign_id', $campaign->id)
+            ->whereNotIn('status', ['cancelled'])
             ->first();
 
         return view('member.campaigns.show', compact('campaign', 'application'));
@@ -61,9 +63,10 @@ class CampaignController extends Controller
 
         $user = Auth::guard('liff')->user();
 
-        // 重複応募チェック
+        // 重複応募チェック（キャンセルは再応募可）
         $exists = Application::where('user_id', $user->id)
             ->where('campaign_id', $campaign->id)
+            ->whereNotIn('status', ['cancelled'])
             ->exists();
 
         if ($exists) {

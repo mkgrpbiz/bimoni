@@ -190,9 +190,11 @@ class ApplicationController extends Controller
 
             $proposalMsg = "【モニターご案内】\n"
                 . $application->campaign->title . "\n\n"
-                . "実施予定日時: {$invitedLabel}\n\n"
+                . "実施案内日時: {$invitedLabel}\n\n"
                 . "以下のURLよりご回答をお願いします。\n"
-                . $proposalUrl;
+                . $proposalUrl . "\n\n"
+                . "※こちら受信時間から実施案内日時までに回答がない場合、自動キャンセルになり再度応募していただく必要があります。\n"
+                . "上記の時間が難しい場合、別日程調整より都合の良い時間に予約お願いいたします。";
 
             LineMessageJob::create([
                 'application_id' => $application->id,
