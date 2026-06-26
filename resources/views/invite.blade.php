@@ -31,7 +31,7 @@
     {{-- メインコピー --}}
     <div class="text-center mb-8">
         <p class="text-2xl font-black text-gray-800 leading-tight mb-2">
-            美容商品や<br>サービスを<br>
+            美容商品やサービスを<br>
             <span class="text-pink-500">モニターして</span><br>
             協力金をもらおう
         </p>
