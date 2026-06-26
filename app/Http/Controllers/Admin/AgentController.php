@@ -26,12 +26,16 @@ class AgentController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:100',
+            'code' => 'nullable|string|max:20|unique:agent_referral_codes,code',
         ]);
 
         $agent = Agent::create(['name' => $request->name]);
 
-        // 初期コードを1つ発行
-        AgentReferralCode::create(['agent_id' => $agent->id]);
+        $codeData = ['agent_id' => $agent->id, 'label' => $request->label ?? null];
+        if ($request->filled('code')) {
+            $codeData['code'] = strtoupper($request->code);
+        }
+        AgentReferralCode::create($codeData);
 
         return redirect()->route('admin.agents.index')->with('success', "{$agent->name} を作成しました。ポータルURL: {$agent->portalUrl()}");
     }
@@ -42,9 +46,19 @@ class AgentController extends Controller
         return view('admin.agents.show', compact('agent'));
     }
 
-    public function addCode(Agent $agent): RedirectResponse
+    public function addCode(Agent $agent, Request $request): RedirectResponse
     {
-        AgentReferralCode::create(['agent_id' => $agent->id]);
+        $request->validate([
+            'code'  => 'nullable|string|max:20|unique:agent_referral_codes,code',
+            'label' => 'nullable|string|max:100',
+        ]);
+
+        $data = ['agent_id' => $agent->id, 'label' => $request->label ?? null];
+        if ($request->filled('code')) {
+            $data['code'] = strtoupper($request->code);
+        }
+        AgentReferralCode::create($data);
+
         return back()->with('success', '紹介コードを追加しました。');
     }
 

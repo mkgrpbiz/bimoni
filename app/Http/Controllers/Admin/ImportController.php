@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agent;
+use App\Models\AgentReferralCode;
 use App\Models\Campaign;
 use App\Services\ImportService;
 use Illuminate\Http\RedirectResponse;
@@ -18,12 +20,24 @@ class ImportController extends Controller
         $campaigns = Campaign::whereIn('status', ['published', 'paused'])
             ->orderBy('title')
             ->get();
-        return view('admin.import.index', compact('campaigns'));
+
+        // 紹介コード一覧（代理店名付き）
+        $referralCodes = AgentReferralCode::with('agent.parent')->get()->map(function ($arc) {
+            $agentName = $arc->agent?->parent
+                ? $arc->agent->parent->name . ' > ' . $arc->agent->name
+                : ($arc->agent?->name ?? '');
+            return ['code' => $arc->code, 'label' => $agentName . '（' . $arc->code . '）'];
+        })->sortBy('label');
+
+        return view('admin.import.index', compact('campaigns', 'referralCodes'));
     }
 
     public function importUsers(Request $request): RedirectResponse
     {
-        $request->validate(['csv_file' => 'required|file|mimes:csv,txt|max:5120']);
+        $request->validate([
+            'csv_file'      => 'required|file|mimes:csv,txt|max:5120',
+            'referral_code' => 'nullable|string|exists:agent_referral_codes,code',
+        ]);
 
         $content = file_get_contents($request->file('csv_file')->getRealPath());
         $rows    = $this->importer->parseCsv($content);
@@ -32,7 +46,7 @@ class ImportController extends Controller
             return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
-        $result = $this->importer->importUsers($rows);
+        $result = $this->importer->importUsers($rows, $request->referral_code);
 
         return back()->with('import_result', $result)->with('import_type', 'ユーザー');
     }

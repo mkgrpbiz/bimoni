@@ -11,43 +11,63 @@ use Illuminate\Support\Facades\DB;
 
 class ImportService
 {
-    public function importUsers(array $rows): array
+    public function importUsers(array $rows, ?string $defaultReferralCode = null): array
     {
         $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
 
-        DB::transaction(function () use ($rows, &$result) {
+        DB::transaction(function () use ($rows, $defaultReferralCode, &$result) {
             foreach ($rows as $i => $row) {
                 $line = $i + 2;
 
-                if (empty($row['name'])) {
+                $name = $row['name'] ?? $row['名前'] ?? '';
+                if (empty($name)) {
                     $result['errors'][] = "{$line}行目: 氏名が空です";
                     continue;
                 }
 
-                // erme_respondent_id 重複チェック
-                if (!empty($row['erme_respondent_id'])) {
-                    if (User::where('erme_respondent_id', $row['erme_respondent_id'])->exists()) {
+                // erme_respondent_id / 回答者ID 重複チェック
+                $ermeId = $row['erme_respondent_id'] ?? $row['回答者ID'] ?? $row['respondent_id'] ?? null;
+                if (!empty($ermeId)) {
+                    if (User::where('erme_respondent_id', $ermeId)->exists()) {
                         $result['skipped']++;
                         continue;
                     }
                 }
 
-                $availableTimes = null;
-                if (!empty($row['available_times'])) {
-                    $availableTimes = array_filter(explode(';', $row['available_times']));
+                // メールアドレス重複チェック
+                $email = $row['email'] ?? $row['メールアドレス'] ?? null;
+                if ($email && User::where('email', $email)->exists()) {
+                    $result['skipped']++;
+                    continue;
                 }
+
+                // 紹介コード（行内指定 > フォーム選択 > なし）
+                $referralCode = $row['referred_by_code'] ?? $row['紹介コード'] ?? $defaultReferralCode ?? null;
+
+                // 性別マッピング
+                $genderRaw = $row['gender'] ?? $row['性別'] ?? '';
+                $gender = match($genderRaw) {
+                    '男性', 'male'   => 'male',
+                    '女性', 'female' => 'female',
+                    default          => in_array($genderRaw, ['male', 'female', 'other']) ? $genderRaw : null,
+                };
+
+                // 生年月日
+                $birthdate = !empty($row['birthdate'] ?? $row['生年月日'] ?? '')
+                    ? $this->parseDate($row['birthdate'] ?? $row['生年月日'] ?? '')
+                    : null;
+
+                $nameKana = $row['name_kana'] ?? $row['フリガナ'] ?? null;
 
                 User::create([
                     'line_user_id'       => 'IMPORT_' . uniqid(),
-                    'erme_respondent_id' => $row['erme_respondent_id'] ?? null,
-                    'name'               => $row['name'],
-                    'name_kana'          => $row['name_kana'] ?? null,
-                    'gender'             => in_array($row['gender'] ?? '', ['male', 'female', 'other']) ? $row['gender'] : null,
-                    'birthdate'          => !empty($row['birthdate']) ? $row['birthdate'] : null,
-                    'area'               => $row['area'] ?? null,
-                    'available_times'    => $availableTimes ?: null,
-                    'wants_continuation' => isset($row['wants_continuation']) ? (int) $row['wants_continuation'] : null,
-                    'point_balance'      => (int) ($row['point_balance'] ?? 0),
+                    'erme_respondent_id' => $ermeId ?: null,
+                    'name'               => $name,
+                    'name_kana'          => $nameKana,
+                    'gender'             => $gender,
+                    'birthdate'          => $birthdate,
+                    'email'              => $email ?: null,
+                    'referred_by_code'   => $referralCode,
                     'imported_from'      => 'spreadsheet',
                 ]);
 

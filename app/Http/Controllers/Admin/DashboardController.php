@@ -3,10 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agent;
 use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\CampaignApprovalReflection;
+use App\Models\LineNotification;
+use App\Models\MonitorReport;
+use App\Models\ReferralPaymentStatus;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -24,6 +29,9 @@ class DashboardController extends Controller
             ->get();
         $pendingReportsCount  = $pendingReports->count();
         $pendingReportsAmount = $pendingReports->sum(fn($a) => $a->campaign?->cooperation_fee ?? 0);
+
+        // ダッシュボードアラート
+        $alerts = $this->buildAlerts();
 
         // メイン指標
         $metrics = $this->calcMetrics($year, $month, $mode);
@@ -48,7 +56,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact(
             'pendingReportsCount', 'pendingReportsAmount',
             'metrics', 'prevMetrics', 'chartData',
-            'year', 'month', 'mode', 'months'
+            'year', 'month', 'mode', 'months', 'alerts'
         ));
     }
 
@@ -116,6 +124,65 @@ class DashboardController extends Controller
             'members', 'applied', 'completed', 'reported',
             'approvedCount', 'cooperationFee', 'sales', 'leakCost', 'allDenied', 'grossProfit'
         );
+    }
+
+    private function buildAlerts(): array
+    {
+        $alerts = [];
+        $today  = Carbon::today();
+
+        // LINEエラー: 過去24時間以内に failed な通知がある
+        $lineErrors = LineNotification::where('status', 'failed')
+            ->where('sent_at', '>=', $today->copy()->subDay())
+            ->count();
+        if ($lineErrors > 0) {
+            $alerts[] = [
+                'level'   => 'error',
+                'message' => "LINEの自動送信でエラーが発生しています（{$lineErrors}件）。",
+                'link'    => route('admin.notifications.line'),
+                'label'   => 'LINE通知管理',
+            ];
+        }
+
+        // 協力金: 毎月5日以降で前月分にpendingが残っている場合
+        if ($today->day >= 5) {
+            $prevMonth = $today->copy()->subMonth()->startOfMonth();
+            $unpaidCount = MonitorReport::where('status', 'approved')
+                ->where('payment_status', 'pending')
+                ->whereBetween('created_at', [$prevMonth, $prevMonth->copy()->endOfMonth()])
+                ->count();
+            if ($unpaidCount > 0) {
+                $alerts[] = [
+                    'level'   => 'warning',
+                    'message' => "前月（{$prevMonth->format('Y年n月')}）の協力金 {$unpaidCount}件 が予約済みになっていません（毎月5日までに対応してください）。",
+                    'link'    => route('admin.points.index', ['month' => $prevMonth->format('Y-m')]),
+                    'label'   => '協力金管理',
+                ];
+            }
+        }
+
+        // 紹介報酬: 毎月25日以降で前月分に処理済みでない代理店がある場合
+        if ($today->day >= 25) {
+            $prevMonth = $today->copy()->subMonth()->startOfMonth();
+            $py = (int) $prevMonth->format('Y');
+            $pm = (int) $prevMonth->format('n');
+
+            $agents       = Agent::whereNull('parent_id')->pluck('id');
+            $doneAgentIds = ReferralPaymentStatus::where('year', $py)->where('month', $pm)
+                ->where('status', 'done')->pluck('agent_id');
+            $undoneCount  = $agents->diff($doneAgentIds)->count();
+
+            if ($undoneCount > 0) {
+                $alerts[] = [
+                    'level'   => 'warning',
+                    'message' => "前月（{$prevMonth->format('Y年n月')}）の紹介報酬 {$undoneCount}代理店 が処理済みになっていません（毎月25日までに対応してください）。",
+                    'link'    => route('admin.referrals.index', ['month' => $prevMonth->format('Y-m')]),
+                    'label'   => '紹介報酬管理',
+                ];
+            }
+        }
+
+        return $alerts;
     }
 
     private function getChartData(): array

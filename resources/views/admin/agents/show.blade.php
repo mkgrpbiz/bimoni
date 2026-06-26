@@ -25,14 +25,8 @@
 
     {{-- 紹介コード一覧 --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="font-bold text-gray-700 dark:text-gray-200">紹介コード</h2>
-            <form method="POST" action="{{ route('admin.agents.add_code', $agent) }}">
-                @csrf
-                <button type="submit" class="bg-pink-500 text-white text-xs px-3 py-1 rounded hover:bg-pink-600">＋ コード追加</button>
-            </form>
-        </div>
-        <div class="space-y-1">
+        <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">紹介コード</h2>
+        <div class="space-y-1 mb-4">
             @foreach($agent->codes as $code)
             <div class="flex items-center gap-2">
                 <span class="font-mono font-bold text-pink-600 dark:text-pink-400">{{ $code->code }}</span>
@@ -40,6 +34,20 @@
             </div>
             @endforeach
         </div>
+        <form method="POST" action="{{ route('admin.agents.add_code', $agent) }}" class="flex items-end gap-2">
+            @csrf
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">コード（空欄=自動生成）</label>
+                <input type="text" name="code" maxlength="20" placeholder="例: ABC123"
+                       class="border rounded px-2 py-1 text-sm font-mono w-36">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">ラベル</label>
+                <input type="text" name="label" maxlength="100" placeholder="任意"
+                       class="border rounded px-2 py-1 text-sm w-32">
+            </div>
+            <button type="submit" class="bg-pink-500 text-white text-xs px-3 py-2 rounded hover:bg-pink-600">＋ 追加</button>
+        </form>
     </div>
 </div>
 

@@ -61,14 +61,22 @@
 </form>
 
 {{-- サマリー & アクション --}}
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4 flex flex-wrap items-center gap-6">
+<div class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap items-center gap-6">
     <div>
-        <span class="text-xs text-gray-700 dark:text-gray-400">{{ $month->format('Y年n月') }} 合計</span>
-        <p class="text-xl font-bold text-gray-800 dark:text-gray-100">¥{{ number_format($totalAmount) }}</p>
+        <span class="text-xs text-gray-500">{{ $month->format('Y年n月') }} 合計</span>
+        <p class="text-xl font-bold text-gray-800">¥{{ number_format($totalAmount) }}</p>
     </div>
     <div>
-        <span class="text-xs text-gray-700 dark:text-gray-400">支払待ち</span>
+        <span class="text-xs text-gray-500">支払待ち</span>
         <p class="text-xl font-bold text-red-500">¥{{ number_format($pendingAmount) }}</p>
+    </div>
+    <div>
+        <span class="text-xs text-gray-500">予約済</span>
+        <p class="text-xl font-bold text-yellow-600">¥{{ number_format($reservedAmount) }}</p>
+    </div>
+    <div>
+        <span class="text-xs text-gray-500">支払済</span>
+        <p class="text-xl font-bold text-green-600">¥{{ number_format($paidAmount) }}</p>
     </div>
     <div class="ml-auto flex gap-2 flex-wrap items-end">
         <a href="{{ route('admin.points.csv', ['month' => $month->format('Y-m')]) }}"
@@ -77,19 +85,28 @@
             <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">振込日</label>
-                <input type="date" name="transfer_date" required
-                       value="{{ now()->format('Y-m-d') }}"
+                <input type="date" name="transfer_date" required value="{{ now()->format('Y-m-d') }}"
                        class="border rounded px-2 py-1.5 text-sm">
             </div>
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">全銀出力</button>
         </form>
         @if($pendingAmount > 0)
+        <form method="POST" action="{{ route('admin.points.mark_reserved') }}"
+              onsubmit="return confirm('{{ $month->format('Y年n月') }}の支払待ちをすべて予約済みにしますか？')">
+            @csrf @method('PATCH')
+            <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+            <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded text-sm hover:bg-yellow-600">
+                → 予約済みにする
+            </button>
+        </form>
+        @endif
+        @if($reservedAmount > 0 || $pendingAmount > 0)
         <form method="POST" action="{{ route('admin.points.mark_paid') }}"
               onsubmit="return confirm('{{ $month->format('Y年n月') }}の未払いをすべて支払済みにしますか？')">
             @csrf @method('PATCH')
             <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
-            <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600">
-                今月分を支払済みにする
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">
+                → 支払済みにする
             </button>
         </form>
         @endif

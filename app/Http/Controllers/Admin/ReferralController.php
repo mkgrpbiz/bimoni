@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agent;
+use App\Models\AgentReferralCode;
+use App\Models\Application;
 use App\Models\MonitorReport;
+use App\Models\ReferralPaymentStatus;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class ReferralController extends Controller
@@ -18,65 +22,109 @@ class ReferralController extends Controller
             ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
             : Carbon::now()->startOfMonth();
 
-        // 月内の承認済み報告を取得
-        $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referral_code,referred_by_code', 'campaign:id,title,referral_fee'])
+        $year  = (int) $month->format('Y');
+        $mon   = (int) $month->format('n');
+
+        // 全代理店（親のみ）とそのコードを取得
+        $agents = Agent::with(['children.codes', 'codes'])->whereNull('parent_id')->get();
+
+        // 全AgentReferralCodeを取得してマッピング
+        $allCodes = AgentReferralCode::with('agent.parent')->get()->keyBy('code');
+
+        // 月内の承認済み報告
+        $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referred_by_code', 'campaign:id,title,referral_fee,cooperation_fee'])
             ->where('status', 'approved')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->get();
 
-        // 紹介コード別に紹介者ユーザーを取得
-        $referrers = User::whereNotNull('referral_code')
-            ->whereHas('referrals')
-            ->get()
-            ->keyBy('referral_code');
-
-        if ($request->filled('code')) {
-            $searchCode = strtoupper($request->code);
-            $referrers = $referrers->filter(fn($u) => str_contains($u->referral_code, $searchCode));
-        }
-
-        // 紹介コード別の集計
+        // 全被紹介ユーザー
         $allReferredUsers = User::whereNotNull('referred_by_code')->get()->groupBy('referred_by_code');
-        $allApplications  = \App\Models\Application::whereHas('user', fn($q) => $q->whereNotNull('referred_by_code'))->with('user:id,referred_by_code')->get();
 
-        $summary = $referrers->map(function (User $referrer) use ($reports, $allReferredUsers, $allApplications, $month) {
-            $code = $referrer->referral_code;
+        // 全応募
+        $allApplications = Application::whereHas('user', fn($q) => $q->whereNotNull('referred_by_code'))
+            ->with('user:id,referred_by_code,name')
+            ->get();
 
-            // この紹介コードで登録したユーザー
-            $referredUsers = $allReferredUsers->get($code, collect());
-            $referredUserIds = $referredUsers->pluck('id');
+        // 代理店別集計（親代理店単位）
+        $summary = $agents->map(function (Agent $agent) use ($reports, $allReferredUsers, $allApplications, $allCodes, $year, $mon) {
+            $codeStrings = $agent->getAllCodeStrings();
 
-            // 当月の承認報告（被紹介者のもの）
+            $referredUsers   = collect();
+            $referredUserIds = collect();
+            foreach ($codeStrings as $code) {
+                $users = $allReferredUsers->get($code, collect());
+                $referredUsers   = $referredUsers->concat($users);
+                $referredUserIds = $referredUserIds->concat($users->pluck('id'));
+            }
+
             $monthReports = $reports->filter(fn($r) => $referredUserIds->contains($r->user_id));
 
-            // 全否認ユーザー数（当月報告が全て rejected の被紹介者）
+            // 報告数・応募数を単価別
+            $reportsByFee = $monthReports->where('status', 'approved')
+                ->groupBy(fn($r) => $r->campaign?->referral_fee ?? 0);
+            $appsByFee = $allApplications
+                ->filter(fn($a) => $referredUserIds->contains($a->user_id))
+                ->groupBy(fn($a) => 0); // 単価は案件が必要なので件数のみ
+
+            $totalApps = $allApplications->filter(fn($a) => $referredUserIds->contains($a->user_id))->count();
+
             $allDenied = $monthReports->groupBy('user_id')
                 ->filter(fn($userReports) => $userReports->every(fn($r) => $r->status === 'rejected'))
                 ->count();
 
-            // 支払い対象ユーザー（少なくとも1件承認）
-            $eligibleUserIds = $monthReports
-                ->where('status', 'approved')
-                ->pluck('user_id')
-                ->unique();
-
-            $expectedPay = $monthReports
-                ->where('status', 'approved')
-                ->whereIn('user_id', $eligibleUserIds->all())
+            $expectedPay = $monthReports->where('status', 'approved')
                 ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
 
+            $payStatus = ReferralPaymentStatus::getStatus($agent->id, $year, $mon);
+
             return [
-                'referrer'       => $referrer,
-                'code'           => $code,
+                'agent'          => $agent,
+                'codes'          => $codeStrings,
                 'registered'     => $referredUsers->count(),
-                'applications'   => $allApplications->filter(fn($a) => $referredUserIds->contains($a->user_id))->count(),
-                'reports'        => $monthReports->where('status', 'approved')->count(),
+                'applications'   => $totalApps,
+                'reports_by_fee' => $reportsByFee,
+                'reports_total'  => $monthReports->where('status', 'approved')->count(),
                 'all_denied'     => $allDenied,
                 'expected_pay'   => $expectedPay,
+                'pay_status'     => $payStatus,
             ];
-        })->filter(fn($s) => $s['registered'] > 0)->values();
+        })->filter(fn($s) => $s['registered'] > 0 || $s['expected_pay'] > 0)->values();
 
         return view('admin.referrals.index', compact('summary', 'month'));
+    }
+
+    public function markDone(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'agent_id' => 'required|exists:agents,id',
+            'month'    => 'required|date_format:Y-m',
+        ]);
+
+        $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        ReferralPaymentStatus::markDone(
+            (int) $request->agent_id,
+            (int) $month->format('Y'),
+            (int) $month->format('n')
+        );
+
+        return back()->with('success', '処理済みにしました。');
+    }
+
+    public function markPending(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'agent_id' => 'required|exists:agents,id',
+            'month'    => 'required|date_format:Y-m',
+        ]);
+
+        $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        ReferralPaymentStatus::markPending(
+            (int) $request->agent_id,
+            (int) $month->format('Y'),
+            (int) $month->format('n')
+        );
+
+        return back()->with('success', '処理待ちに戻しました。');
     }
 
     public function show(Request $request, string $code): View
@@ -88,7 +136,7 @@ class ReferralController extends Controller
             ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
             : Carbon::now()->startOfMonth();
 
-        $referredUsers = User::where('referred_by_code', $code)->orderBy('created_at')->get();
+        $referredUsers   = User::where('referred_by_code', $code)->orderBy('created_at')->get();
         $referredUserIds = $referredUsers->pluck('id');
 
         $reports = MonitorReport::with(['user:id,name,bimoni_user_id', 'campaign:id,title,cooperation_fee,referral_fee'])

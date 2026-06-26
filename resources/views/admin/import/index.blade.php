@@ -57,17 +57,30 @@
     </div>
 
     {{-- ユーザーインポート --}}
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
-        <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">ユーザーインポート</h2>
-        <p class="text-xs text-gray-700 dark:text-gray-400 mb-3">
-            CSVフォーマット：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">erme_respondent_id, name, name_kana, gender, birthdate, area, available_times, wants_continuation, point_balance</code>
-        </p>
-        <form method="POST" action="{{ route('admin.import.users') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
+    <div class="bg-white rounded-lg shadow p-5">
+        <h2 class="font-bold text-gray-700 mb-1">ユーザーインポート</h2>
+        <div class="text-xs text-gray-500 mb-3 space-y-0.5">
+            <p>CSVヘッダー（日本語列名も対応）：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名（任意）, 名前, フリガナ, 性別, 生年月日, 紹介コード, メールアドレス</code></p>
+            <p>・英語ヘッダーも可：<code class="bg-gray-100 px-1 rounded">erme_respondent_id, name, name_kana, gender, birthdate, referred_by_code, email</code></p>
+            <p>・性別：男性/女性 または male/female</p>
+            <p>・紹介コードはCSV列・下のプルダウン両方から設定可（CSV列が優先）</p>
+            <p>・エルメID・メールアドレスが重複する行はスキップされます</p>
+        </div>
+        <form method="POST" action="{{ route('admin.import.users') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
             @csrf
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSVファイル</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">紹介コード（一括適用）</label>
+                <select name="referral_code" class="border rounded px-3 py-1.5 text-sm w-64">
+                    <option value="">紹介なし</option>
+                    @foreach($referralCodes as $rc)
+                        <option value="{{ $rc['code'] }}">{{ $rc['label'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CSVファイル <span class="text-red-500">*</span></label>
                 <input type="file" name="csv_file" accept=".csv,.txt" required
-                       class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm">
+                       class="border rounded px-3 py-1.5 text-sm">
             </div>
             <button type="submit"
                     onclick="return confirm('ユーザーCSVをインポートしますか？')"
