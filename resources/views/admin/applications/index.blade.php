@@ -119,7 +119,9 @@ $tabs = [
                     @endif
                 </td>
                 <td class="px-3 py-2 text-gray-700">
-                    @if($user?->available_times)
+                    @if($app->purchase_available_times)
+                        {{ implode('・', $app->purchase_available_times) }}
+                    @elseif($user?->available_times)
                         {{ implode('・', $user->available_times) }}
                     @else
                         -
