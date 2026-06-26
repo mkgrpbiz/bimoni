@@ -30,10 +30,11 @@ class PointController extends Controller
 
         $reports = $query->orderBy('created_at')->get();
 
-        $totalAmount    = $reports->sum(fn($r) => ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0));
-        $pendingAmount  = $reports->where('payment_status', 'pending')->sum(fn($r) => ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0));
-        $reservedAmount = $reports->where('payment_status', 'reserved')->sum(fn($r) => ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0));
-        $paidAmount     = $reports->where('payment_status', 'paid')->sum(fn($r) => ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0));
+        $calcFee        = fn($r) => ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
+        $totalAmount    = $reports->sum($calcFee);
+        $pendingAmount  = $reports->where('payment_status', 'pending')->sum($calcFee);
+        $reservedAmount = $reports->where('payment_status', 'reserved')->sum($calcFee);
+        $paidAmount     = $reports->where('payment_status', 'paid')->sum($calcFee);
 
         return view('admin.points.index', compact('reports', 'month', 'totalAmount', 'pendingAmount', 'reservedAmount', 'paidAmount'));
     }
@@ -88,7 +89,7 @@ class PointController extends Controller
                 $r->user?->name ?? '',
                 $r->payment_status === 'paid' ? '支払済' : '支払待ち',
                 $r->campaign?->title ?? '',
-                $r->campaign?->cooperation_fee ?? 0,
+                ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0),
             ];
         }
 
@@ -128,7 +129,7 @@ class PointController extends Controller
             if (!isset($userTotals[$uid])) {
                 $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
             }
-            $userTotals[$uid]['amount'] += ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
+            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
         }
 
         // 口座情報未登録・金額ゼロを除外

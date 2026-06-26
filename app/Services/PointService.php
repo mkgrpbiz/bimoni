@@ -16,18 +16,21 @@ class PointService
         $campaign    = $application->campaign;
         $user        = $application->user;
 
-        DB::transaction(function () use ($application, $campaign, $user) {
+        // 実際の支払い額 = モニター経費 + 協力金(+○円部分)
+        $amount = ($report->purchase_amount ?? 0) + ($campaign->cooperation_fee ?? 0);
+
+        DB::transaction(function () use ($application, $campaign, $user, $amount) {
             Point::create([
                 'user_id'        => $user->id,
                 'type'           => 'earn',
-                'amount'         => $campaign->cooperation_fee,
+                'amount'         => $amount,
                 'reason'         => "案件「{$campaign->title}」モニター協力金",
                 'application_id' => $application->id,
                 'granted_by'     => Auth::guard('web')->id(),
                 'created_at'     => now(),
             ]);
 
-            $user->increment('point_balance', $campaign->cooperation_fee);
+            $user->increment('point_balance', $amount);
 
             $application->update([
                 'status'      => 'point_granted',

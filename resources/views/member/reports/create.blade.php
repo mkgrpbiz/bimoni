@@ -190,16 +190,14 @@
                     </select>
                 </div>
 
-                {{-- 商品金額 --}}
+                {{-- モニター経費 --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
-                        商品金額 <span class="text-red-500 text-xs">必須</span>
+                        モニター経費 <span class="text-red-500 text-xs">必須</span>
                     </label>
                     <p class="text-xs text-gray-500 mb-2 leading-relaxed">
-                        商品金額（送料・返送費など）かかった費用のみを足した合計金額を記入してください。<br>
-                        ※モニター協力金の＋分は入れないでください。<br>
-                        ※体験モニターは【 ０ 】となります。<br>
-                        ※キャンペーンの＋分は入れないでください。
+                        商品代金・送料・返送費など実際にかかった費用の合計を記入してください。<br>
+                        ※体験モニターは【 ０ 】となります。
                     </p>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">¥</span>
@@ -211,13 +209,20 @@
                     </div>
                 </div>
 
-                {{-- モニター協力金表示 --}}
-                <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3" id="monitor-fee-box">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600" id="monitor-fee-label">モニター協力金</span>
-                        <span class="font-bold text-pink-600 text-base" id="monitor-fee-display">-</span>
+                {{-- モニター協力金（自動計算） --}}
+                <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-4 space-y-2" id="monitor-fee-box">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">モニター経費</span>
+                        <span class="font-medium text-gray-800" id="display-expense">¥0</span>
                     </div>
-                    <p class="text-xs text-gray-400 mt-1" id="monitor-fee-formula-display"></p>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">＋ モニター協力金（+○円分）</span>
+                        <span class="font-medium text-gray-800" id="display-extra">¥-</span>
+                    </div>
+                    <div class="border-t border-pink-200 pt-2 flex justify-between items-center">
+                        <span class="text-sm font-bold text-gray-700" id="monitor-fee-label">合計（モニター協力金）</span>
+                        <span class="font-bold text-pink-600 text-lg" id="monitor-fee-display">-</span>
+                    </div>
                 </div>
 
                 {{-- 支払い方法 --}}
@@ -328,36 +333,19 @@ function updateCollectionFee() {
 
 function updateMonitorFeeByApp(sel) {
     const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+
     const purchaseType = document.querySelector('input[name="purchase_type"]:checked')?.value;
     const isCont = purchaseType === 'continuation';
 
-    const fee      = parseInt(opt.dataset.fee || 0);
-    const contFee  = parseInt(opt.dataset.contFee || 0);
-    const formula  = isCont ? (opt.dataset.contFeeFormula || '') : (opt.dataset.feeFormula || '');
-    const extra    = isCont ? (opt.dataset.contFeeExtra || '') : (opt.dataset.feeExtra || '');
-    const totalFee = (isCont && contFee > 0) ? contFee : fee;
-
-    const label = isCont ? '継続モニター協力金' : 'モニター協力金';
-    document.getElementById('monitor-fee-label').textContent = label;
-
+    // cooperation_fee は +○円部分のみ（整数）
+    const extraBonus = parseInt(isCont ? (opt.dataset.contFee || opt.dataset.fee || 0) : (opt.dataset.fee || 0));
     const purchaseAmt = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
+    const totalFee = purchaseAmt + extraBonus;
 
-    let displayText = '-';
-    let formulaText = '';
-
-    if (totalFee > 0) {
-        if (formula && formula.includes('+') && extra !== '') {
-            // "3000+500=3500円" 形式（フォーミュラあり）
-            displayText = '¥' + totalFee.toLocaleString();
-            formulaText = '¥' + purchaseAmt.toLocaleString() + '（商品金額）+ ¥' + parseInt(extra).toLocaleString() + '（協力金）= ¥' + totalFee.toLocaleString();
-        } else {
-            displayText = '¥' + totalFee.toLocaleString();
-        }
-    }
-
-    document.getElementById('monitor-fee-display').textContent = displayText;
-    const formulaEl = document.getElementById('monitor-fee-formula-display');
-    if (formulaEl) formulaEl.textContent = formulaText;
+    document.getElementById('display-expense').textContent = '¥' + purchaseAmt.toLocaleString();
+    document.getElementById('display-extra').textContent   = '¥' + extraBonus.toLocaleString();
+    document.getElementById('monitor-fee-display').textContent = '¥' + totalFee.toLocaleString();
 }
 
 function updateMonitorFee(radio) {

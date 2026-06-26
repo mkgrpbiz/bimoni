@@ -37,13 +37,15 @@ class UserController extends Controller
         $completedMap = $reportRows->groupBy('user_id')
             ->map(fn($r) => $r->count());
 
+        $calcFee = fn($row) => ($row->purchase_amount ?? 0) + ($row->campaign?->cooperation_fee ?? 0);
+
         $pendingMap = $reportRows->where('payment_status', 'pending')
             ->groupBy('user_id')
-            ->map(fn($r) => $r->sum(fn($row) => $row->campaign?->cooperation_fee ?? 0));
+            ->map(fn($r) => $r->sum($calcFee));
 
         $paidMap = $reportRows->where('payment_status', 'paid')
             ->groupBy('user_id')
-            ->map(fn($r) => $r->sum(fn($row) => $row->campaign?->cooperation_fee ?? 0));
+            ->map(fn($r) => $r->sum($calcFee));
 
         return view('admin.users.index', compact('users', 'completedMap', 'pendingMap', 'paidMap'));
     }
