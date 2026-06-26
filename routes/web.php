@@ -123,8 +123,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('notifications/line', [LineNotificationController::class, 'send'])->name('notifications.line.send');
         Route::get('import', [ImportController::class, 'index'])->name('import.index');
         Route::post('import/users', [ImportController::class, 'importUsers'])->name('import.users');
-        Route::post('import/applications', [ImportController::class, 'importApplications'])->name('import.applications');
-        Route::post('import/points', [ImportController::class, 'importPoints'])->name('import.points');
+        Route::post('import/reports', [ImportController::class, 'importReports'])->name('import.reports');
         Route::post('import/campaigns', [ImportController::class, 'importCampaigns'])->name('import.campaigns');
 
         // キャンペーン管理（協力金ボーナス）

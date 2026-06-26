@@ -90,55 +90,25 @@
         </form>
     </div>
 
-    {{-- 応募履歴インポート --}}
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
-        <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">応募履歴インポート</h2>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 space-y-0.5">
-            <p>・1シート（1案件）ずつCSVでダウンロードしてインポートしてください</p>
-            <p>・「案件名」欄に案件名を正確に入力してください（例: スマイルゼミ　資料請求）</p>
-            <p>・ユーザーが未登録の場合は自動で作成されます</p>
-            <p>・ステータス：実施完了 / キャンセル / 予約中 / 打診中 をそのまま使えます</p>
+    {{-- 報告インポート --}}
+    <div class="bg-white rounded-lg shadow p-5">
+        <h2 class="font-bold text-gray-700 mb-1">報告インポート</h2>
+        <div class="text-xs text-gray-500 mb-3 space-y-0.5">
+            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名, 名前, フリガナ, 案件名, 初回か継続, 紹介コード, ステータス</code></p>
+            <p>・初回か継続：<code class="bg-gray-100 px-1 rounded">初回</code> または <code class="bg-gray-100 px-1 rounded">継続</code>（英語: initial / continuation も可）</p>
+            <p>・ステータス：<code class="bg-gray-100 px-1 rounded">承認済</code> / <code class="bg-gray-100 px-1 rounded">否認</code> / 空欄=承認済</p>
+            <p>・回答者IDでユーザーを検索、未登録なら名前・フリガナで新規作成します</p>
+            <p>・紹介コードはユーザーに設定されます（既存ユーザーは上書きなし）</p>
         </div>
-        <form method="POST" action="{{ route('admin.import.applications') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
+        <form method="POST" action="{{ route('admin.import.reports') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
             @csrf
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">案件名 <span class="text-red-500">*</span></label>
-                <select name="campaign_name" required
-                        class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm w-72">
-                    <option value="">選択してください</option>
-                    @foreach($campaigns as $c)
-                        <option value="{{ $c->title }}">{{ $c->title }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSVファイル</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CSVファイル <span class="text-red-500">*</span></label>
                 <input type="file" name="csv_file" accept=".csv,.txt" required
-                       class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm">
+                       class="border rounded px-3 py-1.5 text-sm">
             </div>
             <button type="submit"
-                    onclick="return confirm('応募履歴CSVをインポートしますか？')"
-                    class="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 text-sm">
-                インポート実行
-            </button>
-        </form>
-    </div>
-
-    {{-- ポイント履歴インポート --}}
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
-        <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">ポイント履歴インポート</h2>
-        <p class="text-xs text-gray-700 dark:text-gray-400 mb-3">
-            CSVフォーマット：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">erme_respondent_id, type, amount, reason, granted_at</code>
-        </p>
-        <form method="POST" action="{{ route('admin.import.points') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
-            @csrf
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSVファイル</label>
-                <input type="file" name="csv_file" accept=".csv,.txt" required
-                       class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm">
-            </div>
-            <button type="submit"
-                    onclick="return confirm('ポイント履歴CSVをインポートしますか？')"
+                    onclick="return confirm('報告CSVをインポートしますか？')"
                     class="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 text-sm">
                 インポート実行
             </button>

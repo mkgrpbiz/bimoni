@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Models\MonitorReport;
 use App\Models\Point;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -236,6 +237,105 @@ class ImportService
                     'reason'        => $row['reason'] ?? null,
                     'imported_from' => 'spreadsheet',
                     'created_at'    => $row['granted_at'],
+                ]);
+
+                $result['success']++;
+            }
+        });
+
+        return $result;
+    }
+
+    public function importReports(array $rows): array
+    {
+        $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
+
+        DB::transaction(function () use ($rows, &$result) {
+            foreach ($rows as $i => $row) {
+                $line = $i + 2;
+
+                // 案件名は必須
+                $campaignName = $row['案件名'] ?? $row['campaign_name'] ?? '';
+                if (empty($campaignName)) {
+                    $result['errors'][] = "{$line}行目: 案件名が空です";
+                    continue;
+                }
+
+                $campaign = Campaign::where('title', $campaignName)->first();
+                if (!$campaign) {
+                    $result['errors'][] = "{$line}行目: 案件「{$campaignName}」が見つかりません";
+                    continue;
+                }
+
+                // ユーザー特定: 回答者IDで検索 → なければ名前で検索 → なければ新規作成
+                $ermeId = $row['回答者ID'] ?? $row['erme_respondent_id'] ?? null;
+                $name   = $row['名前'] ?? $row['name'] ?? $row['回答者名'] ?? null;
+                $kana   = $row['フリガナ'] ?? $row['name_kana'] ?? null;
+                $refCode = $row['紹介コード'] ?? $row['referred_by_code'] ?? null;
+
+                $user = null;
+                if ($ermeId) {
+                    $user = User::where('erme_respondent_id', $ermeId)->first();
+                }
+                if (!$user && $name) {
+                    $q = User::where('name', $name);
+                    if ($kana) $q->where('name_kana', $kana);
+                    $found = $q->get();
+                    if ($found->count() === 1) {
+                        $user = $found->first();
+                    }
+                }
+                if (!$user) {
+                    if (empty($name)) {
+                        $result['errors'][] = "{$line}行目: ユーザーが特定できません（回答者IDまたは名前が必要）";
+                        continue;
+                    }
+                    $user = User::create([
+                        'line_user_id'       => 'IMPORT_' . uniqid(),
+                        'erme_respondent_id' => $ermeId ?: null,
+                        'name'               => $name,
+                        'name_kana'          => $kana,
+                        'referred_by_code'   => $refCode ?: null,
+                        'imported_from'      => 'spreadsheet',
+                    ]);
+                } elseif ($refCode && !$user->referred_by_code) {
+                    $user->update(['referred_by_code' => $refCode]);
+                }
+
+                // 応募レコードを確保（なければ作成）
+                $application = Application::firstOrCreate(
+                    ['user_id' => $user->id, 'campaign_id' => $campaign->id],
+                    ['status' => 'completed', 'applied_at' => now(), 'completed_at' => now(), 'imported_from' => 'spreadsheet']
+                );
+
+                // 同一ユーザー×案件の報告が既にあればスキップ
+                if (MonitorReport::where('user_id', $user->id)->where('campaign_id', $campaign->id)->exists()) {
+                    $result['skipped']++;
+                    continue;
+                }
+
+                // 初回か継続
+                $purchaseRaw  = $row['初回か継続'] ?? $row['purchase_type'] ?? '';
+                $purchaseType = match($purchaseRaw) {
+                    '継続', 'continuation' => 'continuation',
+                    default                => 'initial',
+                };
+
+                // ステータス
+                $statusRaw = $row['ステータス'] ?? $row['status'] ?? '';
+                $status    = match($statusRaw) {
+                    '否認', 'rejected'              => 'rejected',
+                    '保留', 'pending_review'         => 'pending_review',
+                    default                          => 'approved',
+                };
+
+                MonitorReport::create([
+                    'user_id'        => $user->id,
+                    'campaign_id'    => $campaign->id,
+                    'application_id' => $application->id,
+                    'status'         => $status,
+                    'purchase_type'  => $purchaseType,
+                    'payment_status' => 'pending',
                 ]);
 
                 $result['success']++;
