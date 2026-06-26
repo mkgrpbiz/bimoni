@@ -79,11 +79,11 @@
         <div class="space-y-3">
             <div class="flex items-center gap-3">
                 <div class="w-6 h-6 rounded-full bg-pink-500 text-white text-xs font-bold flex items-center justify-center shrink-0">1</div>
-                <p class="text-sm text-gray-700">下のボタンからLINEで登録</p>
+                <p class="text-sm text-gray-700">「LINEで登録する」ボタンからLINE追加</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="w-6 h-6 rounded-full bg-pink-500 text-white text-xs font-bold flex items-center justify-center shrink-0">2</div>
-                <p class="text-sm text-gray-700">「LINEで登録する」ボタンから会員登録</p>
+                <p class="text-sm text-gray-700">会員登録フォームから登録</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="w-6 h-6 rounded-full bg-pink-500 text-white text-xs font-bold flex items-center justify-center shrink-0">3</div>
@@ -106,12 +106,6 @@
         </a>
 
     </div>
-
-    {{-- 注意文 --}}
-    <p class="text-xs text-gray-400 text-center mt-6 leading-relaxed">
-        ※「LINEで登録する」ボタンからの登録で紹介が正しく反映されます。<br>
-        ※18歳以上の方が対象です。
-    </p>
 
     {{-- 招待コード表示 --}}
     <div class="mt-8 text-center">
