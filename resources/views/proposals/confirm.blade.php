@@ -22,14 +22,14 @@
                 <span class="font-medium text-gray-800">{{ $application->campaign->title }}</span>
             </div>
             @if($application->invited_at)
-            <div class="flex gap-2">
-                <span class="text-gray-400 w-24 shrink-0">【案内日時】</span>
-                <span class="font-medium text-gray-800">
+            <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-2">
+                <p class="text-xs text-pink-400 mb-1">【実施予定日時】</p>
+                <p class="text-lg font-bold text-pink-700">
                     {{ $application->invited_at->format('m月d日(') }}{{ ['日','月','火','水','木','金','土'][$application->invited_at->dayOfWeek] }}{{ $application->invited_at->format(') H:i') }}
                     @if($application->invited_end_at)
                         〜{{ $application->invited_end_at->format('H:i') }}
                     @endif
-                </span>
+                </p>
             </div>
             @endif
             @if($application->campaign->notes)

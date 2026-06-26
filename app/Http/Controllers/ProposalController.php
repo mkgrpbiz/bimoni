@@ -67,9 +67,21 @@ class ProposalController extends Controller
             ->with(['campaign', 'user'])
             ->firstOrFail();
 
-        $slots = $this->generateTimeSlots($application->user);
+        // 他案件の直近 invited_end_at から48h制限を計算
+        $otherApp = Application::where('user_id', $application->user_id)
+            ->where('id', '!=', $application->id)
+            ->whereNotNull('invited_end_at')
+            ->orderByDesc('invited_end_at')
+            ->first();
 
-        return view('proposals.no_options', compact('application', 'slots'));
+        $minStart = null;
+        if ($otherApp?->invited_end_at && $otherApp->invited_end_at->addHours(48)->isFuture()) {
+            $minStart = $otherApp->invited_end_at->copy()->addHours(48);
+        }
+
+        $slots = $this->generateTimeSlots($application->user, $minStart);
+
+        return view('proposals.no_options', compact('application', 'slots', 'minStart'));
     }
 
     // いいえ → 候補日時を選択
@@ -86,6 +98,21 @@ class ProposalController extends Controller
 
         if ($application->status !== 'line_contacted') {
             return redirect()->route('proposals.confirm', $token);
+        }
+
+        // 48h制限チェック
+        $otherApp = Application::where('user_id', $application->user_id)
+            ->where('id', '!=', $application->id)
+            ->whereNotNull('invited_end_at')
+            ->orderByDesc('invited_end_at')
+            ->first();
+
+        if ($otherApp?->invited_end_at) {
+            $earliest = $otherApp->invited_end_at->copy()->addHours(48);
+            if ($earliest->isFuture() && Carbon::parse($request->slot_start)->lt($earliest)) {
+                return redirect()->route('proposals.no', $token)
+                    ->with('error', $earliest->format('m/d H:i') . '〜から選択できます。');
+            }
         }
 
         $application->update([
@@ -219,10 +246,9 @@ class ProposalController extends Controller
         }
     }
 
-    // available_times から直近の候補スロットを生成
-    private function generateTimeSlots(\App\Models\User $user): array
+    // available_times から候補スロットを生成（$minStart がある場合はそれ以降のみ）
+    private function generateTimeSlots(\App\Models\User $user, ?Carbon $minStart = null): array
     {
-        // 固定の時間帯定義（value => [start, end]）
         $slotMap = [
             '10:00〜13:00' => ['10:00', '13:00'],
             '14:00〜17:00' => ['14:00', '17:00'],
@@ -232,7 +258,6 @@ class ProposalController extends Controller
 
         $availableTimes = $user->available_times ?? [];
 
-        // いつでもOK の場合は全スロットを対象に
         if (in_array('いつでもOK', $availableTimes)) {
             $availableTimes = array_keys($slotMap);
         }
@@ -240,7 +265,10 @@ class ProposalController extends Controller
         $slots = [];
         $dayNames = ['日', '月', '火', '水', '木', '金', '土'];
 
-        for ($d = 1; $d <= 3 && count($slots) < 4; $d++) {
+        // $minStart がある場合は最大7日先まで探す、なければ3日先まで
+        $maxDays = $minStart ? 14 : 3;
+
+        for ($d = 1; $d <= $maxDays && count($slots) < 4; $d++) {
             $date = Carbon::today()->addDays($d);
             $dayLabel = $date->format('m/d') . '(' . $dayNames[$date->dayOfWeek] . ')';
 
@@ -248,6 +276,13 @@ class ProposalController extends Controller
                 if (count($slots) >= 4) break;
                 $range = $slotMap[$timeValue] ?? null;
                 if (!$range) continue;
+
+                $slotStart = Carbon::parse($date->format('Y-m-d') . ' ' . $range[0] . ':00');
+
+                // 48h制限：minStart より前のスロットはスキップ
+                if ($minStart && $slotStart->lt($minStart)) {
+                    continue;
+                }
 
                 $endHour = $range[1] === '24:00' ? '23:59' : $range[1];
                 $slots[] = [
@@ -258,10 +293,14 @@ class ProposalController extends Controller
             }
         }
 
-        // available_times が未設定/マッチなしの場合は翌2日分で10:00〜13:00
+        // available_times が未設定/マッチなしの場合のフォールバック
         if (empty($slots)) {
-            for ($d = 1; $d <= 2; $d++) {
+            $startDay = $minStart ? max(1, (int)Carbon::today()->diffInDays($minStart->copy()->startOfDay(), false)) : 1;
+            for ($d = $startDay; $d <= $startDay + 3 && count($slots) < 4; $d++) {
                 $date = Carbon::today()->addDays($d);
+                $slotStart = Carbon::parse($date->format('Y-m-d') . ' 10:00:00');
+                if ($minStart && $slotStart->lt($minStart)) continue;
+
                 $dayLabel = $date->format('m/d') . '(' . $dayNames[$date->dayOfWeek] . ')';
                 $slots[] = [
                     'label' => "{$dayLabel} 10:00〜13:00",
