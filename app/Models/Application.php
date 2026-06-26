@@ -111,8 +111,8 @@ class Application extends Model
                 if (in_array($other->status, ['line_contacted', 'scheduled', 'confirming'])) {
                     return true;
                 }
-                // 案内終了時刻から48時間以内はロック
-                if ($other->invited_end_at && $other->invited_end_at->diffInHours(now()) < 48) {
+                // 案内終了時刻+48時間を過ぎていなければロック
+                if ($other->invited_end_at && now()->lt($other->invited_end_at->addHours(48))) {
                     return true;
                 }
             }
