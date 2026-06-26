@@ -35,32 +35,17 @@
                 </div>
             </div>
             @endif
-            @if($campaign->cooperation_fee)
-            <div class="flex justify-between items-center py-1 border-b border-gray-50">
+            <div class="flex justify-between items-center py-1 {{ $activeBonus ? 'border-b border-gray-50' : '' }}">
                 <span class="text-sm text-gray-600">モニター協力金</span>
-                <span class="font-bold text-pink-600">+{{ number_format($campaign->cooperation_fee) }}円</span>
+                <span class="font-bold text-pink-600">
+                    {{ number_format($campaign->initial_purchase_fee ?? 0) }}+{{ number_format($campaign->cooperation_fee ?? 0) }}円
+                </span>
             </div>
-            @endif
             @if($activeBonus)
-            <div class="flex justify-between items-center py-1 border-b border-gray-50">
+            <div class="flex justify-between items-center py-1">
                 <span class="text-sm text-gray-600">キャンペーン</span>
                 <span class="font-bold text-red-500">+{{ number_format($activeBonus->bonus_amount) }}円</span>
             </div>
-            @endif
-            @if($campaign->recurring_purchase_fee)
-            <div class="flex justify-between items-center py-1 border-b border-gray-50">
-                <span class="text-sm text-gray-600">継続購入費</span>
-                <div class="text-right">
-                    <span class="font-bold text-gray-800">¥{{ number_format($campaign->recurring_purchase_fee) }}</span>
-                    <p class="text-xs text-gray-400">※支払い方法などで多少前後する場合があります。</p>
-                </div>
-            </div>
-            @if($campaign->continuation_cooperation_fee)
-            <div class="flex justify-between items-center py-1">
-                <span class="text-sm text-gray-600">継続モニター協力金</span>
-                <span class="font-bold text-pink-600">+{{ number_format($campaign->continuation_cooperation_fee) }}円</span>
-            </div>
-            @endif
             @endif
         </div>
 
@@ -137,6 +122,25 @@
                 <p class="text-sm font-medium text-gray-700 mb-2">
                     モニターで継続依頼がある場合、継続してモニター希望されますか？ <span class="text-red-500 text-xs">必須</span>
                 </p>
+                {{-- 継続費用情報 --}}
+                <div class="bg-gray-50 rounded-xl border border-gray-100 p-3 mb-3 space-y-1.5">
+                    @if($campaign->recurring_purchase_fee)
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">継続購入費</span>
+                        <span class="text-gray-700 font-medium">¥{{ number_format($campaign->recurring_purchase_fee) }}</span>
+                    </div>
+                    @endif
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">継続モニター協力金</span>
+                        <span class="text-pink-600 font-bold">
+                            @if($campaign->continuation_cooperation_fee)
+                                {{ number_format($campaign->recurring_purchase_fee ?? 0) }}+{{ number_format($campaign->continuation_cooperation_fee) }}円
+                            @else
+                                {{ number_format($campaign->recurring_purchase_fee ?? 0) }}円
+                            @endif
+                        </span>
+                    </div>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     @foreach(['希望' => '継続希望', '不可' => '継続不可'] as $val => $lbl)
                     <label class="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
