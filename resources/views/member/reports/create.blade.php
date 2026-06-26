@@ -22,19 +22,19 @@
         <div class="bg-white rounded-xl border border-gray-200 p-4 mb-5">
             <p class="text-sm font-medium text-gray-700 mb-3">報告の種類を選択してください</p>
             <div class="grid grid-cols-2 gap-3">
-                <label :class="reportType === 'collection' ? 'border-pink-500 bg-pink-50' : 'border-gray-200 bg-white'"
-                       class="border-2 rounded-xl p-4 cursor-pointer text-center transition-all">
-                    <input type="radio" name="report_type_select" value="collection" x-model="reportType" class="hidden">
-                    <div class="text-2xl mb-1">📦</div>
-                    <div class="font-bold text-sm text-gray-800">回収サービス</div>
-                    <div class="text-xs text-gray-500 mt-1">商品を返送する</div>
-                </label>
                 <label :class="reportType === 'monitor' ? 'border-pink-500 bg-pink-50' : 'border-gray-200 bg-white'"
                        class="border-2 rounded-xl p-4 cursor-pointer text-center transition-all">
                     <input type="radio" name="report_type_select" value="monitor" x-model="reportType" class="hidden">
                     <div class="text-2xl mb-1">📋</div>
                     <div class="font-bold text-sm text-gray-800">モニター報告</div>
                     <div class="text-xs text-gray-500 mt-1">購入を報告する</div>
+                </label>
+                <label :class="reportType === 'collection' ? 'border-pink-500 bg-pink-50' : 'border-gray-200 bg-white'"
+                       class="border-2 rounded-xl p-4 cursor-pointer text-center transition-all">
+                    <input type="radio" name="report_type_select" value="collection" x-model="reportType" class="hidden">
+                    <div class="text-2xl mb-1">📦</div>
+                    <div class="font-bold text-sm text-gray-800">回収サービス</div>
+                    <div class="text-xs text-gray-500 mt-1">商品を返送する</div>
                 </label>
             </div>
         </div>
