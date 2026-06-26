@@ -18,7 +18,7 @@
             <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 px-3 py-2 rounded flex-1 break-all">
                 {{ $agent->portalUrl() }}
             </code>
-            <button onclick="navigator.clipboard.writeText('{{ $agent->portalUrl() }}')"
+            <button type="button" onclick="copyUrl('{{ $agent->portalUrl() }}')"
                     class="bg-pink-500 text-white text-xs px-3 py-1.5 rounded hover:bg-pink-600 shrink-0">コピー</button>
         </div>
     </div>
@@ -26,17 +26,26 @@
     {{-- 紹介コード一覧 --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">紹介コード</h2>
+        @if(session('error'))
+            <div class="bg-red-100 text-red-700 px-3 py-2 rounded text-xs mb-3">{{ session('error') }}</div>
+        @endif
         <div class="space-y-2 mb-4">
             @foreach($agent->codes as $code)
-            <div class="flex items-center gap-3 flex-wrap">
+            @php $hasUsers = \App\Models\User::where('referred_by_code', $code->code)->exists(); @endphp
+            <div class="flex items-center gap-2 flex-wrap">
                 <span class="font-mono font-bold text-pink-600 dark:text-pink-400">{{ $code->code }}</span>
-                <span class="text-xs text-gray-500">{{ $code->label ?? '' }}</span>
-                <a href="{{ route('invite', $code->code) }}" target="_blank"
-                   class="text-xs text-blue-500 hover:underline font-mono truncate max-w-xs">
-                    {{ route('invite', $code->code) }}
-                </a>
+                @if($code->label)
+                    <span class="text-xs text-gray-500">{{ $code->label }}</span>
+                @endif
+                <code class="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded truncate max-w-xs">{{ route('invite', $code->code) }}</code>
                 <button type="button" onclick="copyUrl('{{ route('invite', $code->code) }}')"
-                        class="text-xs text-gray-400 hover:text-gray-600 border rounded px-1.5 py-0.5">コピー</button>
+                        class="text-xs bg-pink-500 text-white px-2 py-0.5 rounded hover:bg-pink-600 shrink-0">コピー</button>
+                @if(!$hasUsers)
+                <form method="POST" action="{{ route('admin.agents.delete_code', $code) }}" onsubmit="return confirm('コード {{ $code->code }} を削除しますか？')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded px-1.5 py-0.5">削除</button>
+                </form>
+                @endif
             </div>
             @endforeach
         </div>
@@ -69,6 +78,7 @@
                 <th class="px-4 py-3 text-left">コード</th>
                 <th class="px-4 py-3 text-right">500円報酬</th>
                 <th class="px-4 py-3 text-right">1000円報酬</th>
+                <th class="px-4 py-3 text-left">招待URL</th>
                 <th class="px-4 py-3 text-left">ポータルURL</th>
             </tr>
         </thead>
@@ -82,16 +92,25 @@
                 <td class="px-4 py-3 text-right text-gray-800 dark:text-gray-200">¥{{ number_format($child->child_reward_500) }}</td>
                 <td class="px-4 py-3 text-right text-gray-800 dark:text-gray-200">¥{{ number_format($child->child_reward_1000) }}</td>
                 <td class="px-4 py-3">
+                    @foreach($child->codes as $cc)
+                    <div class="flex items-center gap-1 mb-1">
+                        <code class="text-xs text-gray-500 truncate max-w-36">{{ route('invite', $cc->code) }}</code>
+                        <button type="button" onclick="copyUrl('{{ route('invite', $cc->code) }}')"
+                                class="bg-pink-500 text-white text-xs px-2 py-0.5 rounded hover:bg-pink-600 shrink-0">コピー</button>
+                    </div>
+                    @endforeach
+                </td>
+                <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
-                        <code class="text-xs text-gray-500 truncate max-w-48">{{ $child->portalUrl() }}</code>
-                        <button onclick="navigator.clipboard.writeText('{{ $child->portalUrl() }}')"
+                        <code class="text-xs text-gray-500 truncate max-w-36">{{ $child->portalUrl() }}</code>
+                        <button type="button" onclick="copyUrl('{{ $child->portalUrl() }}')"
                                 class="bg-gray-500 text-white text-xs px-2 py-0.5 rounded hover:bg-gray-600 shrink-0">コピー</button>
                     </div>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="px-4 py-6 text-center text-gray-500">子代理店はまだありません（親ポータルから作成できます）</td>
+                <td colspan="6" class="px-4 py-6 text-center text-gray-500">子代理店はまだありません（親ポータルから作成できます）</td>
             </tr>
             @endforelse
         </tbody>
@@ -100,9 +119,20 @@
 @push('scripts')
 <script>
 function copyUrl(url) {
-    navigator.clipboard.writeText(url).then(() => {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(() => alert('コピーしました'));
+    } else {
+        const el = document.createElement('textarea');
+        el.value = url;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
         alert('コピーしました');
-    });
+    }
 }
 </script>
 @endpush

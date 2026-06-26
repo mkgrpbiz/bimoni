@@ -62,6 +62,20 @@ class AgentController extends Controller
         return back()->with('success', '紹介コードを追加しました。');
     }
 
+    public function deleteCode(AgentReferralCode $code): RedirectResponse
+    {
+        // 紐づいているユーザーがいる場合は削除不可
+        $userCount = \App\Models\User::where('referred_by_code', $code->code)->count();
+        if ($userCount > 0) {
+            return back()->with('error', "このコードには{$userCount}名のユーザーが紐づいているため削除できません。");
+        }
+
+        $agentId = $code->agent_id;
+        $code->delete();
+
+        return back()->with('success', 'コードを削除しました。');
+    }
+
     public function destroy(Agent $agent): RedirectResponse
     {
         $agent->delete();
