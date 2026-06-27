@@ -298,6 +298,156 @@ class ApplicationController extends Controller
         return back()->with('success', '継続依頼LINEを送信しました。');
     }
 
+    // 打診予約一覧
+    public function proposalReservationIndex(Request $request): View
+    {
+        $query = Application::with(['user', 'campaign', 'lineMessageJobs'])
+            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+            ->latest('applied_at');
+
+        if ($request->filled('campaign_id')) {
+            $query->where('campaign_id', $request->campaign_id);
+        }
+        if ($request->filled('q')) {
+            $query->whereHas('user', fn($q) =>
+                $q->where('name', 'like', '%'.$request->q.'%')
+                  ->orWhere('name_kana', 'like', '%'.$request->q.'%')
+            );
+        }
+
+        $applications = $query->paginate(50)->withQueryString();
+
+        // アラート1: 同案件・同時刻ダブルブッキング
+        $duplicateAlerts = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+            ->whereNotNull('invited_at')
+            ->select('campaign_id', 'invited_at', \Illuminate\Support\Facades\DB::raw('COUNT(*) as cnt'))
+            ->groupBy('campaign_id', 'invited_at')
+            ->having('cnt', '>', 1)
+            ->with('campaign:id,title')
+            ->get();
+
+        // アラート2: 同案件・日次目標件数オーバー
+        $overCapacityAlerts = collect();
+        $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+        $dailySlots = CampaignDailySlot::where('target_date', '>=', now()->subDays(1)->toDateString())
+            ->where('target_date', '<=', now()->addDays(7)->toDateString())
+            ->get();
+
+        foreach ($dailySlots as $slot) {
+            $bookedCount = Application::where('campaign_id', $slot->campaign_id)
+                ->whereIn('status', $activeStatuses)
+                ->whereNotNull('invited_at')
+                ->whereDate('invited_at', $slot->target_date)
+                ->count();
+            if ($bookedCount > $slot->planned_count) {
+                $overCapacityAlerts->push([
+                    'slot'        => $slot,
+                    'booked'      => $bookedCount,
+                    'planned'     => $slot->planned_count,
+                ]);
+            }
+        }
+
+        $campaigns = Campaign::orderBy('title')->get(['id', 'title']);
+
+        return view('admin.proposal_reservations.index', compact(
+            'applications', 'campaigns', 'duplicateAlerts', 'overCapacityAlerts'
+        ));
+    }
+
+    // 再打診送信
+    public function sendReProposal(Request $request, Application $application): RedirectResponse
+    {
+        $request->validate([
+            'invited_at'     => 'nullable|date',
+            'invited_end_at' => 'nullable|date',
+            'memo'           => 'nullable|string|max:500',
+        ]);
+
+        if (!in_array($application->status, ['line_contacted', 'scheduled'])) {
+            return back()->with('error', '打診中または予約中の応募のみ再打診できます。');
+        }
+
+        $application->loadMissing(['campaign', 'user']);
+
+        // 進行中のモニター案内・リマインドジョブをキャンセル
+        LineMessageJob::where('application_id', $application->id)
+            ->whereIn('send_type', ['monitor_guide', 'reminder'])
+            ->where('status', 'pending')
+            ->update(['status' => 'canceled']);
+
+        $prevStatus = $application->status;
+
+        // 案内日時・ステータスリセット
+        $updateData = [
+            'status'               => 'line_contacted',
+            'reserved_at'          => null,
+            'proposal_answered_at' => null,
+            'proposal_answer'      => null,
+            'invited_at'           => $request->invited_at,
+            'invited_end_at'       => $request->invited_end_at,
+            'is_re_proposal'       => true,
+        ];
+
+        // PR打診（invited_atなし、invited_end_atのみ）
+        $isPrIf = $application->isPrIfCampaign();
+        if ($isPrIf && !$request->filled('invited_at') && $request->filled('invited_end_at')) {
+            $updateData['invited_at'] = null;
+        }
+
+        $application->update($updateData);
+
+        if (!$application->proposal_token) {
+            $application->update(['proposal_token' => Str::random(64)]);
+        }
+        $application->refresh();
+
+        ApplicationStatusLog::create([
+            'application_id' => $application->id,
+            'from_status'    => $prevStatus,
+            'to_status'      => 'line_contacted',
+            'changed_by'     => auth('web')->id(),
+            'memo'           => '再打診送信' . ($request->memo ? '：' . $request->memo : ''),
+        ]);
+
+        // 再打診LINEメッセージ
+        $proposalUrl = route('proposals.confirm', $application->proposal_token);
+
+        if ($isPrIf && !$application->invited_at && $application->invited_end_at) {
+            $dayNames      = ['日', '月', '火', '水', '木', '金', '土'];
+            $deadlineLabel = $application->invited_end_at->format('m月d日(')
+                . $dayNames[$application->invited_end_at->dayOfWeek]
+                . $application->invited_end_at->format(') H:i');
+            $invitedLabel  = '今から' . $deadlineLabel . 'まで';
+        } else {
+            $invitedLabel = $application->invited_at
+                ? $application->invited_at->format('m月d日 H:i')
+                  . ($application->invited_end_at ? '〜' . $application->invited_end_at->format('H:i') : '')
+                : '（日時未設定）';
+        }
+
+        $proposalMsg = "【再打診のご案内】\n"
+            . $application->campaign->title . "\n\n"
+            . "申し訳ございませんが、ご指定の時間にご案内が出来なくなりました。\n"
+            . "再度日程調整をお願いいたします。\n\n"
+            . "新しい案内日時: {$invitedLabel}\n\n"
+            . "以下のURLよりご回答をお願いします。\n"
+            . $proposalUrl;
+
+        LineMessageJob::create([
+            'application_id' => $application->id,
+            'user_id'        => $application->user_id,
+            'campaign_id'    => $application->campaign_id,
+            'line_user_id'   => $application->user?->line_user_id,
+            'send_type'      => 'proposal',
+            'message_body'   => $proposalMsg,
+            'send_at'        => now(),
+            'status'         => 'pending',
+        ]);
+
+        return back()->with('success', '再打診を送信しました。');
+    }
+
     private function getTabCounts(): \Illuminate\Support\Collection
     {
         return collect([

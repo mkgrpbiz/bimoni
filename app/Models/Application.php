@@ -19,6 +19,7 @@ class Application extends Model
         'continuation_token', 'continuation_response', 'continuation_responded_at',
         'form_image',
         'bonus_amount',
+        'is_re_proposal',
     ];
 
     protected function casts(): array
@@ -40,6 +41,7 @@ class Application extends Model
             'proposal_answered_at'      => 'datetime',
             'proposal_sent_at'          => 'datetime',
             'purchase_available_times'  => 'array',
+            'is_re_proposal'            => 'boolean',
         ];
     }
 

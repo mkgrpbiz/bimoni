@@ -16,6 +16,13 @@
 
     <div class="px-6 py-5 space-y-4">
 
+        @if($application->is_re_proposal)
+        <div class="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-xs text-orange-700">
+            申し訳ございませんが、ご指定の時間にご案内が出来なくなりました。<br>
+            再度日程調整をお願いいたします。
+        </div>
+        @endif
+
         <div class="space-y-2 text-sm">
             <div class="flex gap-2">
                 <span class="text-gray-400 w-24 shrink-0">【商品名】</span>

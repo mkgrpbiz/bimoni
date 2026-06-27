@@ -39,6 +39,10 @@
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     応募管理
                 </a>
+                <a href="{{ route('admin.proposal_reservations.index') }}"
+                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
+                    打診予約
+                </a>
                 <a href="{{ route('admin.reports.index') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
                     報告管理

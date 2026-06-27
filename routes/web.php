@@ -86,6 +86,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('campaigns/{campaign}/daily-slots/import', [CampaignDailySlotController::class, 'importCsv'])->name('campaigns.daily_slots.import');
         // 応募管理
         Route::get('applications', [ApplicationController::class, 'index'])->name('applications.index');
+        Route::get('proposal-reservations', [ApplicationController::class, 'proposalReservationIndex'])->name('proposal_reservations.index');
+        Route::post('applications/{application}/re-proposal', [ApplicationController::class, 'sendReProposal'])->name('applications.re_proposal');
         Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
         Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.status');
         Route::patch('applications/{application}/notes', [ApplicationController::class, 'updateNotes'])->name('applications.notes');

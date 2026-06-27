@@ -88,6 +88,7 @@ class ProposalController extends Controller
             'reserved_at'          => now(),
             'proposal_answered_at' => now(),
             'proposal_answer'      => 'yes',
+            'is_re_proposal'       => false,
         ];
 
         // PR打診（invited_atなし）の場合は今すぐ実施確定
