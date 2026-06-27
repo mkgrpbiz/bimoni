@@ -24,10 +24,31 @@
 </div>
 @endif
 
+{{-- コードフィルター --}}
+@if($codeOptions->count() > 1)
+<form method="GET" class="flex gap-2 items-center mb-4">
+    <input type="hidden" name="mode" value="{{ $mode }}">
+    @if($childId)<input type="hidden" name="child_id" value="{{ $childId }}">@endif
+    @if($mode === 'month' && $month)<input type="hidden" name="month" value="{{ $month->format('Y-m') }}">@endif
+    <select name="code_filter" onchange="this.form.submit()"
+            class="border rounded px-2 py-1.5 text-sm flex-1">
+        <option value="">全コード</option>
+        @foreach($codeOptions as $code => $label)
+        <option value="{{ $code }}" @selected($codeFilter === $code)>{{ $label }}</option>
+        @endforeach
+    </select>
+    @if($codeFilter)
+    <a href="?mode={{ $mode }}{{ $childId ? '&child_id='.$childId : '' }}{{ $mode === 'month' && $month ? '&month='.$month->format('Y-m') : '' }}"
+       class="text-xs text-gray-500 hover:text-gray-700 shrink-0">✕ 解除</a>
+    @endif
+</form>
+@endif
+
 @if($mode === 'month')
 <form method="GET" class="flex gap-2 items-center mb-4">
     <input type="hidden" name="mode" value="month">
     @if($childId)<input type="hidden" name="child_id" value="{{ $childId }}">@endif
+    @if($codeFilter)<input type="hidden" name="code_filter" value="{{ $codeFilter }}">@endif
     <input type="month" name="month" value="{{ $month->format('Y-m') }}"
            class="border rounded px-2 py-1.5 text-sm flex-1">
     <button type="submit" class="bg-gray-800 text-white px-4 py-1.5 rounded text-sm shrink-0">表示</button>
@@ -126,4 +147,87 @@
     </div>
     @endif
 </div>
+
+{{-- コード別 ユーザー・報告詳細 --}}
+@if($codeFilter && $codeUsers !== null)
+<div class="mt-6 space-y-4">
+
+    {{-- ユーザー一覧 --}}
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <h2 class="font-bold text-gray-700 text-sm">登録ユーザー（{{ $codeFilter }}）</h2>
+            <span class="text-xs text-gray-500">{{ $codeUsers->count() }}人</span>
+        </div>
+        @if($codeUsers->isNotEmpty())
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-gray-600 text-xs">
+                    <tr>
+                        <th class="px-4 py-2 text-left">登録日</th>
+                        <th class="px-4 py-2 text-left">ユーザーID</th>
+                        <th class="px-4 py-2 text-left">名前</th>
+                        <th class="px-4 py-2 text-left">フリガナ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    @foreach($codeUsers as $u)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 text-xs text-gray-500">{{ $u->created_at?->format('Y/m/d') }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-600">{{ $u->bimoni_user_id ?? '-' }}</td>
+                        <td class="px-4 py-2 text-gray-800">{{ $u->name ?? '（未登録）' }}</td>
+                        <td class="px-4 py-2 text-gray-500 text-xs">{{ $u->name_kana ?? '-' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="px-4 py-6 text-center text-gray-400 text-sm">登録者がいません</div>
+        @endif
+    </div>
+
+    {{-- 報告一覧 --}}
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <h2 class="font-bold text-gray-700 text-sm">承認済み報告{{ $mode === 'month' && $month ? '（'.$month->format('Y年n月').'）' : '（累計）' }}（{{ $codeFilter }}）</h2>
+            <span class="text-xs text-gray-500">{{ $codeReports->count() }}件</span>
+        </div>
+        @if($codeReports->isNotEmpty())
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-gray-600 text-xs">
+                    <tr>
+                        <th class="px-4 py-2 text-left">報告日</th>
+                        <th class="px-4 py-2 text-left">名前</th>
+                        <th class="px-4 py-2 text-left">案件名</th>
+                        <th class="px-4 py-2 text-right">報酬</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    @foreach($codeReports as $r)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 text-xs text-gray-500">{{ $r->created_at->format('Y/m/d') }}</td>
+                        <td class="px-4 py-2 text-gray-800">{{ $r->user?->name ?? '-' }}</td>
+                        <td class="px-4 py-2 text-gray-700">{{ $r->campaign?->title ?? '-' }}</td>
+                        <td class="px-4 py-2 text-right font-bold text-green-600">¥{{ number_format(\App\Services\PortalService::calcReward($targetAgent, $r)) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot class="bg-gray-50">
+                    <tr>
+                        <td colspan="3" class="px-4 py-2 text-right text-xs font-bold text-gray-700">合計</td>
+                        <td class="px-4 py-2 text-right font-bold text-green-600">
+                            ¥{{ number_format($codeReports->sum(fn($r) => \App\Services\PortalService::calcReward($targetAgent, $r))) }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        @else
+        <div class="px-4 py-6 text-center text-gray-400 text-sm">報告がありません</div>
+        @endif
+    </div>
+
+</div>
+@endif
 @endsection

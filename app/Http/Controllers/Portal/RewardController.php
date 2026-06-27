@@ -11,7 +11,8 @@ class RewardController extends Controller
     {
         $agent   = \App\Services\PortalService::agent();
         $mode    = $request->get('mode', 'month');
-        $childId = $request->get('child_id'); // 子フィルター（親のみ）
+        $childId = $request->get('child_id');
+        $codeFilter = $request->get('code_filter'); // コード別フィルター
 
         // 子フィルター対象エージェント
         $targetAgent = $agent;
@@ -21,6 +22,9 @@ class RewardController extends Controller
 
         $codes = \App\Services\PortalService::codes($targetAgent, $childId === null && !$agent->parent_id);
 
+        // コードフィルター適用
+        $filteredCodes = ($codeFilter && in_array($codeFilter, $codes)) ? [$codeFilter] : $codes;
+
         $month = null;
         if ($mode === 'month') {
             $month = $request->filled('month')
@@ -28,7 +32,7 @@ class RewardController extends Controller
                 : \Carbon\Carbon::now()->startOfMonth();
         }
 
-        $reports = \App\Services\PortalService::approvedReports($codes, $month);
+        $reports = \App\Services\PortalService::approvedReports($filteredCodes, $month);
 
         // 2ヶ月ブロック用データ（月次モード時）
         $thisMonth = \Carbon\Carbon::now()->startOfMonth();
@@ -36,7 +40,7 @@ class RewardController extends Controller
 
         $block = [];
         foreach ([$lastMonth, $thisMonth] as $bm) {
-            $bReports = \App\Services\PortalService::approvedReports($codes, $bm);
+            $bReports = \App\Services\PortalService::approvedReports($filteredCodes, $bm);
             $block[] = [
                 'month'    => $bm,
                 'total'    => $bReports->sum(fn($r) => \App\Services\PortalService::calcReward($targetAgent, $r)),
@@ -44,11 +48,9 @@ class RewardController extends Controller
             ];
         }
 
-        // 案件別集計（全否認チェック含む）
+        // 案件別集計
         $campaignGroups = $reports->groupBy('campaign_id')->map(function ($rows) use ($targetAgent) {
             $fee       = $rows->first()->campaign?->referral_fee ?? 0;
-            $userIds   = $rows->pluck('user_id')->unique();
-            // 全否認: ユーザーの全報告が rejected（ここでは対象月内）
             $allDenied = $rows->groupBy('user_id')
                 ->filter(fn($ur) => $ur->every(fn($r) => $r->status === 'rejected'))
                 ->count();
@@ -69,9 +71,31 @@ class RewardController extends Controller
 
         $grandTotal = $campaignGroups->sum('total');
 
+        // コードプルダウン用リスト（コード → 代理店名）
+        $codeOptions = collect();
+        foreach ($agent->codes as $c) {
+            $codeOptions->put($c->code, $agent->name . '（' . $c->code . '）');
+        }
+        if (!$agent->parent_id) {
+            foreach ($agent->children as $child) {
+                foreach ($child->codes as $c) {
+                    $codeOptions->put($c->code, $child->name . '（' . $c->code . '）');
+                }
+            }
+        }
+
+        // コードフィルター選択時: ユーザー一覧・報告一覧
+        $codeUsers   = null;
+        $codeReports = null;
+        if ($codeFilter && in_array($codeFilter, $codes)) {
+            $codeUsers   = \App\Services\PortalService::users([$codeFilter]);
+            $codeReports = \App\Services\PortalService::approvedReports([$codeFilter], $month);
+        }
+
         return view('portal.rewards', compact(
             'agent','targetAgent','mode','month','block',
-            'campaignGroups','grandTotal','childId'
+            'campaignGroups','grandTotal','childId',
+            'codeOptions','codeFilter','codeUsers','codeReports'
         ));
     }
 }
