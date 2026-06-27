@@ -1,7 +1,38 @@
 @extends('layouts.portal')
 @section('title', 'ユーザー管理')
 @section('content')
-<h1 class="text-lg font-bold text-gray-800 mb-4">ユーザー管理</h1>
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-lg font-bold text-gray-800">ユーザー管理</h1>
+    <div class="flex gap-1">
+        <a href="?mode=all" class="px-3 py-1.5 rounded text-sm {{ $mode === 'all' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border' }}">累計</a>
+        <a href="?mode=month" class="px-3 py-1.5 rounded text-sm {{ $mode === 'month' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border' }}">月次</a>
+    </div>
+</div>
+
+@if($mode === 'month')
+<form method="GET" class="flex gap-2 items-center mb-4">
+    <input type="hidden" name="mode" value="month">
+    <input type="month" name="month" value="{{ $month->format('Y-m') }}"
+           class="border rounded px-2 py-1.5 text-sm flex-1">
+    <button type="submit" class="bg-gray-800 text-white px-4 py-1.5 rounded text-sm shrink-0">表示</button>
+</form>
+@endif
+
+{{-- 集計 --}}
+<div class="grid grid-cols-3 gap-3 mb-5">
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">登録</p>
+        <p class="text-2xl font-bold text-gray-800">{{ $totalRegistered }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">応募</p>
+        <p class="text-2xl font-bold text-gray-800">{{ $totalApps }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+        <p class="text-xs text-gray-500 mb-1">報告(承認済)</p>
+        <p class="text-2xl font-bold text-green-600">{{ $totalReports }}</p>
+    </div>
+</div>
 
 {{-- PC: テーブル --}}
 <div class="hidden md:block bg-white rounded-lg shadow overflow-x-auto">

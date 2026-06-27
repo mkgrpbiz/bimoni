@@ -80,7 +80,6 @@
                         </form>
                     @else
                         <span class="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded font-medium">処理待ち</span>
-                        @if($row['expected_pay'] > 0)
                         <form method="POST" action="{{ route('admin.referrals.mark_done') }}" class="mt-1"
                               onsubmit="return confirm('{{ $row['agent']->name }}を処理済みにしますか？')">
                             @csrf @method('PATCH')
@@ -88,11 +87,10 @@
                             <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
                             <button type="submit" class="text-xs text-green-600 hover:text-green-800 underline">処理済みにする</button>
                         </form>
-                        @endif
                     @endif
                 </td>
                 <td class="px-4 py-3 text-center">
-                    <a href="{{ route('admin.agents.show', $row['agent']) }}"
+                    <a href="{{ route('admin.referrals.show', ['agent' => $row['agent']->id, 'month' => $month->format('Y-m')]) }}"
                        class="bg-pink-500 text-white text-xs px-3 py-1 rounded hover:bg-pink-600">詳細</a>
                 </td>
             </tr>

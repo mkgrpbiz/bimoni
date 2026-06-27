@@ -23,7 +23,7 @@
             <p class="text-xs text-gray-500 mb-1">ポータルURL</p>
             <div class="flex items-center gap-2">
                 <code class="text-xs bg-gray-100 px-2 py-1.5 rounded flex-1 break-all leading-relaxed">{{ $child->portalUrl() }}</code>
-                <button onclick="navigator.clipboard.writeText('{{ $child->portalUrl() }}').then(()=>{ this.textContent='✓'; setTimeout(()=>this.textContent='コピー',1500) })"
+                <button onclick="portalCopy('{{ $child->portalUrl() }}')"
                         class="bg-gray-800 text-white text-xs px-3 py-1.5 rounded hover:bg-gray-700 shrink-0">コピー</button>
             </div>
         </div>
@@ -50,3 +50,24 @@
     @endforelse
 </div>
 @endsection
+
+@push('scripts')
+<div id="copy-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;">コピーしました</div>
+<script>
+function portalCopy(text) {
+    const fn = () => {
+        const toast = document.getElementById('copy-toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 1800);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(fn);
+    } else {
+        const el = document.createElement('textarea');
+        el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+        document.body.appendChild(el); el.focus(); el.select();
+        document.execCommand('copy'); document.body.removeChild(el); fn();
+    }
+}
+</script>
+@endpush

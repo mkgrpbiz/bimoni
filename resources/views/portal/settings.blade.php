@@ -67,27 +67,28 @@
                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm @error('invite_display_name') border-red-400 @enderror">
                 @error('invite_display_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
-            <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded text-sm hover:bg-gray-700">更新する</button>
+            <button type="submit" onclick="return confirm('招待ページ表示名を更新しますか？')"
+                    class="bg-gray-800 text-white px-6 py-2 rounded text-sm hover:bg-gray-700">更新する</button>
         </form>
     </div>
 
 </div>
 
+<div id="copy-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;">コピーしました</div>
 <script>
 function copyText(text) {
+    const fn = () => {
+        const toast = document.getElementById('copy-toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 1800);
+    };
     if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => alert('コピーしました'));
+        navigator.clipboard.writeText(text).then(fn);
     } else {
         const el = document.createElement('textarea');
-        el.value = text;
-        el.style.position = 'fixed';
-        el.style.opacity = '0';
-        document.body.appendChild(el);
-        el.focus();
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        alert('コピーしました');
+        el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+        document.body.appendChild(el); el.focus(); el.select();
+        document.execCommand('copy'); document.body.removeChild(el); fn();
     }
 }
 </script>
