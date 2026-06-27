@@ -28,18 +28,28 @@
             </div>
         </div>
         <div>
-            <div class="flex items-center gap-2 mb-2">
-                <p class="text-xs text-gray-500">紹介コード</p>
-                <form method="POST" action="{{ route('portal.children.add_code', $child) }}">
-                    @csrf
-                    <button type="submit" class="text-xs text-blue-600 hover:underline">＋追加</button>
-                </form>
-            </div>
-            <div class="flex flex-wrap gap-2">
+            <p class="text-xs text-gray-500 mb-2">紹介コード</p>
+            <div class="flex flex-wrap gap-2 mb-3">
                 @foreach($child->codes as $code)
-                <span class="font-mono font-bold text-sm bg-gray-100 px-3 py-1 rounded">{{ $code->code }}</span>
+                @php $hasUsers = \App\Models\User::where('referred_by_code', $code->code)->exists(); @endphp
+                <div class="flex items-center gap-1 bg-gray-100 rounded px-3 py-1">
+                    <span class="font-mono font-bold text-sm">{{ $code->code }}</span>
+                    @if(!$hasUsers)
+                    <form method="POST" action="{{ route('portal.children.delete_code', $code) }}"
+                          onsubmit="return confirm('コード {{ $code->code }} を削除しますか？')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="text-red-400 hover:text-red-600 text-xs ml-1 leading-none">✕</button>
+                    </form>
+                    @endif
+                </div>
                 @endforeach
             </div>
+            <form method="POST" action="{{ route('portal.children.add_code', $child) }}" class="flex gap-2">
+                @csrf
+                <input type="text" name="code" maxlength="20" placeholder="コード（空欄=自動生成）"
+                       class="border rounded px-2 py-1 text-xs font-mono w-44">
+                <button type="submit" class="text-xs text-blue-600 border border-blue-300 px-2 py-1 rounded hover:bg-blue-50">＋追加</button>
+            </form>
         </div>
     </div>
     @empty
