@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\AgentReferralCode;
+use App\Models\Application;
+use App\Models\MonitorReport;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -13,8 +16,41 @@ class AgentController extends Controller
 {
     public function index(): View
     {
-        $agents = Agent::with(['children', 'codes'])->whereNull('parent_id')->latest()->get();
-        return view('admin.agents.index', compact('agents'));
+        $agents = Agent::with(['children.codes', 'codes'])->whereNull('parent_id')->latest()->get();
+
+        // 全コード → agentId のマッピングを構築
+        $codeToAgent = [];
+        foreach ($agents as $agent) {
+            foreach ($agent->getAllCodeStrings() as $code) {
+                $codeToAgent[$code] = $agent->id;
+            }
+        }
+        $allCodes = array_keys($codeToAgent);
+
+        // 登録数・応募数・報告数を一括取得
+        $usersByCode   = User::whereIn('referred_by_code', $allCodes)
+            ->selectRaw('referred_by_code, count(*) as cnt, GROUP_CONCAT(id) as user_ids')
+            ->groupBy('referred_by_code')->get();
+
+        $registeredMap = []; // agentId => count
+        $userIdsByAgent = []; // agentId => [user_id, ...]
+        foreach ($usersByCode as $row) {
+            $aId = $codeToAgent[$row->referred_by_code] ?? null;
+            if (!$aId) continue;
+            $registeredMap[$aId] = ($registeredMap[$aId] ?? 0) + $row->cnt;
+            foreach (explode(',', $row->user_ids) as $uid) {
+                $userIdsByAgent[$aId][] = (int) $uid;
+            }
+        }
+
+        $appMap    = [];
+        $reportMap = [];
+        foreach ($userIdsByAgent as $aId => $uids) {
+            $appMap[$aId]    = Application::whereIn('user_id', $uids)->count();
+            $reportMap[$aId] = MonitorReport::whereIn('user_id', $uids)->where('status', 'approved')->count();
+        }
+
+        return view('admin.agents.index', compact('agents', 'registeredMap', 'appMap', 'reportMap'));
     }
 
     public function create(): View
