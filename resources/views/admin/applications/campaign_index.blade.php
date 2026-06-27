@@ -416,10 +416,15 @@ $statusTabs = [
                            class="w-full border rounded px-3 py-2 text-sm mb-2"
                            value="{{ now()->format('Y-m-d') }}"
                            onchange="buildPrDeadline()">
-                    <input type="time" id="prDeadlineTime"
-                           class="w-full border rounded px-3 py-2 text-sm"
-                           value="{{ now()->addHours(3)->format('H:i') }}"
-                           onchange="buildPrDeadline()">
+                    <select id="prDeadlineHour"
+                            class="w-full border rounded px-3 py-2 text-sm"
+                            onchange="buildPrDeadline()">
+                        @for($h = 0; $h < 24; $h++)
+                        <option value="{{ $h }}" @selected($h === now()->addHours(3)->hour)>
+                            {{ $h }}時
+                        </option>
+                        @endfor
+                    </select>
                 </div>
                 <p id="prDeadlineError" class="hidden text-xs text-red-500 mt-1">締め切り日時を入力してください</p>
             </div>
@@ -468,9 +473,11 @@ function buildDatetimes() {
 
 function buildPrDeadline() {
     const date = document.getElementById('prDeadlineDate').value;
-    const time = document.getElementById('prDeadlineTime').value;
+    const hour = document.getElementById('prDeadlineHour').value;
     document.getElementById('hiddenInvitedAt').value    = '';
-    document.getElementById('hiddenInvitedEndAt').value = (date && time) ? date + ' ' + time + ':00' : '';
+    document.getElementById('hiddenInvitedEndAt').value = (date && hour !== '')
+        ? date + ' ' + String(hour).padStart(2, '0') + ':00:00'
+        : '';
 }
 
 function switchModalTab(tab) {
