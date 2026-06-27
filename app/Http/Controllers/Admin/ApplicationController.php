@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -117,10 +118,10 @@ class ApplicationController extends Controller
             ->whereIn('status', ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'])
             ->whereNotNull('invited_at')
             ->whereIn(DB::raw('DATE(invited_at)'), $targetDates)
-            ->selectRaw('DATE(invited_at) as date, status, COUNT(*) as cnt')
-            ->groupBy('date', 'status')
+            ->selectRaw('DATE(invited_at) as inv_date, status, COUNT(*) as cnt')
+            ->groupBy(DB::raw('DATE(invited_at)'), 'status')
             ->get()
-            ->groupBy('date');
+            ->groupBy('inv_date');
 
         foreach ($targetDates as $dateStr) {
             $slot = $slots->get($dateStr);
@@ -128,7 +129,7 @@ class ApplicationController extends Controller
             $dayCounts = $appCounts->get($dateStr, collect());
             $slot->invited_count   = $dayCounts->where('status', 'line_contacted')->sum('cnt');
             $slot->reserved_count  = $dayCounts->where('status', 'scheduled')->sum('cnt');
-            $slot->completed_count = $dayCounts->whereIn('status', ['confirming', 'completed', 'reported', 'approved', 'point_granted'])->sum('cnt');
+            $slot->completed_count = $dayCounts->filter(fn($r) => in_array($r->status, ['confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
         }
 
         $completedApps = $campaign->applications()->where('status', 'completed')->with('user')->get();
