@@ -17,8 +17,8 @@ class User extends Authenticatable
                 $max = static::whereNotNull('bimoni_user_id')
                     ->orderByDesc('bimoni_user_id')
                     ->value('bimoni_user_id');
-                $next = $max ? (int) substr($max, 3) + 1 : 1001;
-                $user->bimoni_user_id = 'BMN' . str_pad($next, 8, '0', STR_PAD_LEFT);
+                $next = $max ? (int) substr($max, 3) + 1 : 10001;
+                $user->bimoni_user_id = 'BMN' . str_pad($next, 6, '0', STR_PAD_LEFT);
             }
         });
     }
