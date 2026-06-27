@@ -113,13 +113,15 @@ class ApplicationController extends Controller
             ->get()
             ->keyBy(fn($s) => $s->target_date->toDateString());
 
-        // 実際のステータス別件数を動的集計
+        // 実際のステータス別件数を動的集計（PR打診はinvited_atがnullのためCOALESCEで対応）
         $appCounts = $campaign->applications()
             ->whereIn('status', ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'])
-            ->whereNotNull('invited_at')
-            ->whereIn(DB::raw('DATE(invited_at)'), $targetDates)
-            ->selectRaw('DATE(invited_at) as inv_date, status, COUNT(*) as cnt')
-            ->groupBy(DB::raw('DATE(invited_at)'), 'status')
+            ->where(function ($q) use ($targetDates) {
+                $q->whereIn(DB::raw('DATE(invited_at)'), $targetDates)
+                  ->orWhereIn(DB::raw('DATE(invited_end_at)'), $targetDates);
+            })
+            ->selectRaw('DATE(COALESCE(invited_at, invited_end_at)) as inv_date, status, COUNT(*) as cnt')
+            ->groupBy(DB::raw('DATE(COALESCE(invited_at, invited_end_at))'), 'status')
             ->get()
             ->groupBy('inv_date');
 
