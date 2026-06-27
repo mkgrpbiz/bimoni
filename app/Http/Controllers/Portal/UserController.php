@@ -12,27 +12,40 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $agent = \App\Services\PortalService::agent();
-        $codes = \App\Services\PortalService::codes($agent);
+        $agent      = \App\Services\PortalService::agent();
+        $mode       = $request->input('mode', 'all');
+        $childId    = $request->get('child_id');
+        $codeFilter = $request->get('code_filter');
+
+        // 子フィルター（親のみ）
+        $targetAgent = $agent;
+        if (!$agent->parent_id && $childId) {
+            $targetAgent = $agent->children->firstWhere('id', (int)$childId) ?? $agent;
+        }
+
+        $allCodes = \App\Services\PortalService::codes($targetAgent, $childId === null && !$agent->parent_id);
+
+        // コードフィルター
+        $codes = ($codeFilter && in_array($codeFilter, $allCodes)) ? [$codeFilter] : $allCodes;
+
         $users = \App\Services\PortalService::users($codes);
 
-        $mode  = $request->input('mode', 'all');
         $month = $request->filled('month')
             ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
             : Carbon::now()->startOfMonth();
 
         $userIds = $users->pluck('id');
 
-        // 集計（累計 or 月次）
+        // 集計
         $appQuery    = Application::whereIn('user_id', $userIds);
         $reportQuery = MonitorReport::whereIn('user_id', $userIds)->where('status', 'approved');
 
         if ($mode === 'month') {
-            $appQuery->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
-            $reportQuery->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
-
-            // 月次登録数
-            $totalRegistered = $users->filter(fn($u) => $u->created_at?->between($month->copy()->startOfMonth(), $month->copy()->endOfMonth()))->count();
+            $s = $month->copy()->startOfMonth();
+            $e = $month->copy()->endOfMonth();
+            $appQuery->whereBetween('created_at', [$s, $e]);
+            $reportQuery->whereBetween('created_at', [$s, $e]);
+            $totalRegistered = $users->filter(fn($u) => $u->created_at?->between($s, $e))->count();
         } else {
             $totalRegistered = $users->count();
         }
@@ -43,6 +56,23 @@ class UserController extends Controller
         $appCounts    = Application::whereIn('user_id', $userIds)->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->pluck('cnt', 'user_id');
         $reportCounts = MonitorReport::whereIn('user_id', $userIds)->where('status', 'approved')->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->pluck('cnt', 'user_id');
 
-        return view('portal.users', compact('agent', 'users', 'appCounts', 'reportCounts', 'mode', 'month', 'totalRegistered', 'totalApps', 'totalReports'));
+        // コードプルダウン
+        $codeOptions = collect();
+        foreach ($agent->codes as $c) {
+            $codeOptions->put($c->code, $agent->name . '（' . $c->code . '）');
+        }
+        if (!$agent->parent_id) {
+            foreach ($agent->children as $child) {
+                foreach ($child->codes as $c) {
+                    $codeOptions->put($c->code, $child->name . '（' . $c->code . '）');
+                }
+            }
+        }
+
+        return view('portal.users', compact(
+            'agent', 'targetAgent', 'users', 'appCounts', 'reportCounts',
+            'mode', 'month', 'totalRegistered', 'totalApps', 'totalReports',
+            'childId', 'codeOptions', 'codeFilter'
+        ));
     }
 }

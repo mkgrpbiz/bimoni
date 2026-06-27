@@ -84,18 +84,10 @@ class RewardController extends Controller
             }
         }
 
-        // コードフィルター選択時: ユーザー一覧・報告一覧
-        $codeUsers   = null;
-        $codeReports = null;
-        if ($codeFilter && in_array($codeFilter, $codes)) {
-            $codeUsers   = \App\Services\PortalService::users([$codeFilter]);
-            $codeReports = \App\Services\PortalService::approvedReports([$codeFilter], $month);
-        }
-
         return view('portal.rewards', compact(
             'agent','targetAgent','mode','month','block',
             'campaignGroups','grandTotal','childId',
-            'codeOptions','codeFilter','codeUsers','codeReports'
+            'codeOptions','codeFilter'
         ));
     }
 }
