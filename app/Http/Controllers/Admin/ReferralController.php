@@ -127,25 +127,4 @@ class ReferralController extends Controller
         return back()->with('success', '処理待ちに戻しました。');
     }
 
-    public function show(Request $request, string $code): View
-    {
-        $code = strtoupper($code);
-        $referrer = User::where('referral_code', $code)->firstOrFail();
-
-        $month = $request->filled('month')
-            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-            : Carbon::now()->startOfMonth();
-
-        $referredUsers   = User::where('referred_by_code', $code)->orderBy('created_at')->get();
-        $referredUserIds = $referredUsers->pluck('id');
-
-        $reports = MonitorReport::with(['user:id,name,bimoni_user_id', 'campaign:id,title,cooperation_fee,referral_fee'])
-            ->whereIn('user_id', $referredUserIds)
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
-            ->orderBy('created_at')
-            ->get();
-
-        return view('admin.referrals.show', compact('referrer', 'referredUsers', 'reports', 'month', 'code'));
-    }
 }

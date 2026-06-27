@@ -23,7 +23,7 @@
             <tr>
                 <th class="px-4 py-3 text-left">登録日時</th>
                 <th class="px-4 py-3 text-left">ユーザーID</th>
-                <th class="px-4 py-3 text-left">紹介コード</th>
+                <th class="px-4 py-3 text-left">登録コード</th>
                 <th class="px-4 py-3 text-left">LINE表示名</th>
                 <th class="px-4 py-3 text-left">名前</th>
                 <th class="px-4 py-3 text-left">フリガナ</th>
@@ -46,7 +46,7 @@
                     {{ $user->bimoni_user_id ?? '-' }}
                 </td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-800 dark:text-gray-200">
-                    {{ $user->referral_code ?? '-' }}
+                    {{ $user->referred_by_code ?? '-' }}
                 </td>
                 <td class="px-4 py-3 text-gray-800 dark:text-gray-200 max-w-32 truncate">
                     {{ $user->line_display_name ?? '-' }}

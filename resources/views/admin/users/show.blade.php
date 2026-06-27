@@ -19,11 +19,7 @@
                 <dd class="font-mono text-gray-800 dark:text-gray-200">{{ $user->bimoni_user_id ?? '-' }}</dd>
             </div>
             <div class="flex gap-2">
-                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">紹介コード</dt>
-                <dd class="font-mono font-bold text-pink-600 dark:text-pink-400">{{ $user->referral_code ?? '-' }}</dd>
-            </div>
-            <div class="flex gap-2">
-                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">紹介元コード</dt>
+                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">登録コード</dt>
                 <dd class="font-mono text-gray-800 dark:text-gray-200">{{ $user->referred_by_code ?? '-' }}</dd>
             </div>
             <div class="flex gap-2">

@@ -117,7 +117,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('referrals', [ReferralController::class, 'index'])->name('referrals.index');
         Route::patch('referrals/mark-done', [ReferralController::class, 'markDone'])->name('referrals.mark_done');
         Route::patch('referrals/mark-pending', [ReferralController::class, 'markPending'])->name('referrals.mark_pending');
-        Route::get('referrals/{code}', [ReferralController::class, 'show'])->name('referrals.show');
         Route::get('points', [PointController::class, 'index'])->name('points.index');
         Route::get('points/csv', [PointController::class, 'exportCsv'])->name('points.csv');
         Route::get('points/zengin', [PointController::class, 'exportZengin'])->name('points.zengin');

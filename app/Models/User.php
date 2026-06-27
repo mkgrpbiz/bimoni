@@ -20,18 +20,11 @@ class User extends Authenticatable
                 $next = $max ? (int) substr($max, 3) + 1 : 1001;
                 $user->bimoni_user_id = 'BMN' . str_pad($next, 8, '0', STR_PAD_LEFT);
             }
-            if (empty($user->referral_code)) {
-                do {
-                    $code = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 6));
-                } while (static::where('referral_code', $code)->exists());
-                $user->referral_code = $code;
-            }
         });
     }
 
     protected $fillable = [
         'bimoni_user_id',
-        'referral_code',
         'referred_by_code',
         'line_user_id',
         'line_display_name',
@@ -75,5 +68,4 @@ class User extends Authenticatable
     public function points()         { return $this->hasMany(Point::class); }
     public function pointExchanges() { return $this->hasMany(PointExchange::class); }
     public function monitorReports() { return $this->hasMany(MonitorReport::class); }
-    public function referrals()      { return $this->hasMany(self::class, 'referred_by_code', 'referral_code'); }
 }
