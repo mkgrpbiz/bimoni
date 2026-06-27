@@ -73,30 +73,67 @@
     <table class="w-full text-xs">
         <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
             <tr>
-                <th class="px-3 py-2 text-left whitespace-nowrap">案件</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">応募日時</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">ユーザーID</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">LINE表示名</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">名前</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">フリガナ</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">年齢</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">性別</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">継続可否</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">実施可能時間</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">案件名</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">CP</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">ステータス</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">案内日時</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">打診回答</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">LINE送信</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">他案件状況</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">操作</th>
             </tr>
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($applications as $app)
             @php
-                $user         = $app->user;
-                $genderLabel  = match($user?->gender) { 'male'=>'男', 'female'=>'女', default=>'-' };
-                $lineJobs     = $app->lineMessageJobs ?? collect();
-                $proposalJob  = $lineJobs->where('send_type','proposal')->sortByDesc('created_at')->first();
-                $guideJob     = $lineJobs->where('send_type','monitor_guide')->where('status','pending')->first()
-                             ?? $lineJobs->where('send_type','monitor_guide')->sortByDesc('created_at')->first();
+                $user        = $app->user;
+                $age         = $user?->birthdate ? \Carbon\Carbon::parse($user->birthdate)->age : '-';
+                $genderLabel = match($user?->gender) { 'male'=>'男', 'female'=>'女', default=>'-' };
+                $others      = $app->other_applications ?? collect();
+                $unlockAt    = $app->unlock_at;
+                $lineJobs    = $app->lineMessageJobs ?? collect();
+                $proposalJob = $lineJobs->where('send_type','proposal')->sortByDesc('created_at')->first();
+                $guideJob    = $lineJobs->where('send_type','monitor_guide')->where('status','pending')->first()
+                            ?? $lineJobs->where('send_type','monitor_guide')->sortByDesc('created_at')->first();
+                $isPrIf      = $app->campaign->campaign_type === 'pr' && $app->campaign->pr_media === 'IF';
             @endphp
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+                <td class="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-400">{{ $app->applied_at?->format('m/d H:i') ?? '-' }}</td>
+                <td class="px-3 py-2 text-gray-700 dark:text-gray-400">{{ $user?->erme_respondent_id ?? '-' }}</td>
+                <td class="px-3 py-2 text-gray-700 dark:text-gray-400">{{ $user?->line_display_name ?? '-' }}</td>
+                <td class="px-3 py-2 font-medium whitespace-nowrap dark:text-gray-200">{{ $user?->name ?? '（未登録）' }}</td>
+                <td class="px-3 py-2 text-gray-700 dark:text-gray-400">{{ $user?->name_kana ?? '-' }}</td>
+                <td class="px-3 py-2 text-center dark:text-gray-300">{{ $age }}</td>
+                <td class="px-3 py-2 text-center dark:text-gray-300">{{ $genderLabel }}</td>
+                <td class="px-3 py-2 text-center whitespace-nowrap">
+                    @if($app->continuation_wish === '希望')
+                        <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">希望</span>
+                    @elseif($app->continuation_wish === '不可')
+                        <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">不可</span>
+                    @else
+                        <span class="text-gray-400">-</span>
+                    @endif
+                </td>
+                <td class="px-3 py-2 text-gray-700 dark:text-gray-400 text-xs">
+                    @if($app->purchase_available_times)
+                        {{ implode('・', $app->purchase_available_times) }}
+                    @elseif($user?->available_times)
+                        {{ implode('・', $user->available_times) }}
+                    @else
+                        -
+                    @endif
+                </td>
                 <td class="px-3 py-2 whitespace-nowrap font-medium dark:text-gray-200">{{ $app->campaign->title }}</td>
-                <td class="px-3 py-2 whitespace-nowrap dark:text-gray-200">{{ $user?->name ?? '（未登録）' }}</td>
-                <td class="px-3 py-2 text-center dark:text-gray-200">{{ $genderLabel }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-gray-400">{{ $app->campaign->getTypeLabel() }}</td>
                 <td class="px-3 py-2 whitespace-nowrap">
                     <span class="px-1.5 py-0.5 rounded text-xs {{ $app->getStatusColor() }}">{{ $app->getStatusLabel() }}</span>
                 </td>
@@ -106,23 +143,29 @@
                         〜{{ $app->invited_end_at->format('H:i') }}
                     @endif
                 </td>
+                {{-- 打診回答 --}}
                 <td class="px-3 py-2 whitespace-nowrap">
                     @if($app->proposal_answer === 'yes')
                         <span class="text-green-600 font-bold">はい</span>
                         @if($app->proposal_answered_at)
-                            <div class="text-gray-400 text-xs">{{ $app->proposal_answered_at->format('m/d H:i') }}</div>
+                            <div class="text-gray-500 text-xs">{{ $app->proposal_answered_at->format('m/d H:i') }}</div>
                         @endif
+                    @elseif($app->proposal_answer === 'no')
+                        <span class="text-red-500">いいえ</span>
                     @elseif($app->status === 'line_contacted')
                         <span class="text-yellow-500 text-xs">未回答</span>
                     @else
                         <span class="text-gray-400 text-xs">-</span>
                     @endif
                 </td>
+                {{-- LINE送信状態 --}}
                 <td class="px-3 py-2 whitespace-nowrap">
                     @if($proposalJob)
-                    <span class="px-1 py-0.5 rounded text-xs {{ $proposalJob->getStatusColor() }}">
-                        打診:{{ $proposalJob->getStatusLabel() }}
-                    </span>
+                    <div>
+                        <span class="px-1 py-0.5 rounded text-xs {{ $proposalJob->getStatusColor() }}">
+                            打診:{{ $proposalJob->getStatusLabel() }}
+                        </span>
+                    </div>
                     @endif
                     @if($guideJob)
                     <div class="mt-0.5">
@@ -134,21 +177,47 @@
                     @endif
                     @if(!$proposalJob && !$guideJob)<span class="text-gray-400">-</span>@endif
                 </td>
+                {{-- 他案件状況 --}}
+                <td class="px-3 py-2">
+                    @if($others->isEmpty())
+                        <span class="text-gray-400">-</span>
+                    @else
+                        @foreach($others as $other)
+                        @php
+                            $otherLabel = match($other->status) {
+                                'line_contacted' => '打診中',
+                                'scheduled'      => '予約中',
+                                'confirming'     => '実施確認中',
+                                'completed'      => '実施完了',
+                                default          => $other->getStatusLabel(),
+                            };
+                            $otherTime = $other->invited_at
+                                ? $other->invited_at->format('m/d H:i')
+                                  . ($other->invited_end_at ? '〜'.$other->invited_end_at->format('H:i') : '')
+                                : null;
+                        @endphp
+                        <div class="text-orange-600 whitespace-nowrap text-xs">
+                            {{ $other->campaign?->title ?? '不明' }}で{{ $otherLabel }}
+                            @if($otherTime) / {{ $otherTime }} @endif
+                        </div>
+                        @endforeach
+                    @endif
+                </td>
+                {{-- 操作 --}}
                 <td class="px-3 py-2 whitespace-nowrap">
                     <div class="flex gap-1 flex-wrap">
-                        {{-- ステータス更新 --}}
                         @if($app->status === 'line_contacted')
                         <form method="POST" action="{{ route('admin.applications.status', $app) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="scheduled">
-                            <button type="submit" class="bg-indigo-500 text-white px-1.5 py-0.5 rounded hover:bg-indigo-600 text-xs">予約</button>
+                            <button type="submit" class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">予約</button>
                         </form>
                         @endif
                         @if($app->status === 'scheduled')
                         <form method="POST" action="{{ route('admin.applications.status', $app) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="confirming">
-                            <button type="submit" class="bg-orange-500 text-white px-1.5 py-0.5 rounded hover:bg-orange-600 text-xs">実施確認</button>
+                            <button type="submit" class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">実施確認</button>
                         </form>
                         @endif
                         @if($app->status === 'confirming')
@@ -158,16 +227,13 @@
                             <button type="submit" class="bg-teal-500 text-white px-1.5 py-0.5 rounded hover:bg-teal-600 text-xs">実施完了</button>
                         </form>
                         @endif
-
-                        {{-- 再打診（打診中・予約中のみ） --}}
                         @if(in_array($app->status, ['line_contacted', 'scheduled']))
                         <button type="button"
-                                onclick="openReProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.re_proposal', $app) }}', {{ ($app->campaign->campaign_type === 'pr' && $app->campaign->pr_media === 'IF') ? 'true' : 'false' }})"
+                                onclick="openReProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.re_proposal', $app) }}', {{ $isPrIf ? 'true' : 'false' }})"
                                 class="bg-yellow-500 text-white px-1.5 py-0.5 rounded hover:bg-yellow-600 text-xs">
                             再打診
                         </button>
                         @endif
-
                         <a href="{{ route('admin.applications.show', $app) }}"
                            class="bg-gray-500 text-white px-1.5 py-0.5 rounded hover:bg-gray-600 text-xs">詳細</a>
                     </div>
@@ -175,7 +241,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">打診中・予約中・実施確認中の応募がありません</td>
+                <td colspan="17" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">打診中・予約中・実施確認中の応募がありません</td>
             </tr>
             @endforelse
         </tbody>
@@ -189,7 +255,6 @@
         <h3 class="font-bold text-gray-800 mb-1">再打診送信</h3>
         <p id="reProposalUserName" class="text-sm text-gray-600 mb-3"></p>
 
-        {{-- PR+IF案件のみ表示するタブ --}}
         <div id="reProposalTabs" class="hidden flex border-b border-gray-200 mb-4">
             <button type="button" id="reModalTabNormal" onclick="switchReModalTab('normal')"
                     class="flex-1 py-2 text-sm font-medium border-b-2 border-pink-500 text-pink-600">
@@ -206,7 +271,6 @@
             <input type="hidden" name="invited_at" id="reHiddenInvitedAt">
             <input type="hidden" name="invited_end_at" id="reHiddenInvitedEndAt">
 
-            {{-- 通常打診フォーム --}}
             <div id="reNormalForm">
                 <div>
                     <label class="block text-xs text-gray-700 mb-1">案内予定日 <span class="text-red-400">*</span></label>
@@ -238,7 +302,6 @@
                 <p id="reSlotError" class="hidden text-xs text-red-500 mt-1">時間帯を選択してください</p>
             </div>
 
-            {{-- PR打診フォーム --}}
             <div id="rePrForm" class="hidden">
                 <div>
                     <label class="block text-xs text-gray-700 mb-1">実施期限（締め切り日時） <span class="text-red-400">*</span></label>
@@ -289,7 +352,6 @@ function selectReSlot(btn) {
     btn.classList.remove('text-gray-700');
     _reSlotStart = btn.dataset.start;
     _reSlotEnd   = btn.dataset.end;
-    document.getElementById('reSelectedSlotStart').value = _reSlotStart;
     reBuildDatetimes();
 }
 
@@ -348,7 +410,6 @@ function openReProposalModal(appId, userName, actionUrl, isPrIf) {
         tabs.classList.remove('flex');
     }
     switchReModalTab('normal');
-
     document.getElementById('reProposalModal').classList.remove('hidden');
 }
 

@@ -325,7 +325,7 @@ class ApplicationController extends Controller
     // 打診予約一覧
     public function proposalReservationIndex(Request $request): View
     {
-        $query = Application::with(['user', 'campaign', 'lineMessageJobs'])
+        $query = Application::with(['user', 'campaign:id,title,campaign_type,pr_media', 'lineMessageJobs'])
             ->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->latest('applied_at');
 
@@ -340,6 +340,21 @@ class ApplicationController extends Controller
         }
 
         $applications = $query->paginate(50)->withQueryString();
+
+        // 他案件状況・ロック情報を付与
+        $userIds = $applications->getCollection()->pluck('user_id')->filter()->unique();
+        $campaignId = $request->filled('campaign_id') ? (int)$request->campaign_id : null;
+        $otherApplicationsMap = $userIds->isNotEmpty()
+            ? $this->getOtherApplicationsMap($userIds, $campaignId ?? 0)
+            : collect();
+
+        $applications->getCollection()->transform(function (Application $app) use ($otherApplicationsMap) {
+            $others = $otherApplicationsMap->get($app->user_id, collect());
+            $app->other_applications = $others;
+            $app->unlock_at  = $app->getUnlockAt($others);
+            $app->is_locked  = $app->isLocked($others);
+            return $app;
+        });
 
         // アラート1: 同案件・同時刻ダブルブッキング
         $duplicateAlerts = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
