@@ -50,13 +50,14 @@ Route::prefix('continuation/{token}')->name('continuation.')->group(function () 
 
 // 打診ページ（認証不要・トークンで保護）
 Route::prefix('proposals/{token}')->name('proposals.')->group(function () {
-    Route::get('/',        [ProposalController::class, 'confirm'])->name('confirm');
-    Route::post('/yes',    [ProposalController::class, 'acceptYes'])->name('yes');
-    Route::get('/no',      [ProposalController::class, 'declineNo'])->name('no');
-    Route::post('/slot',   [ProposalController::class, 'selectSlot'])->name('slot');
-    Route::post('/cancel', [ProposalController::class, 'cancel'])->name('cancel');
-    Route::get('/complete',[ProposalController::class, 'complete'])->name('complete');
-    Route::post('/revert', [ProposalController::class, 'revert'])->name('revert');
+    Route::get('/',          [ProposalController::class, 'confirm'])->name('confirm');
+    Route::post('/yes',      [ProposalController::class, 'acceptYes'])->name('yes');
+    Route::get('/no',        [ProposalController::class, 'declineNo'])->name('no');
+    Route::post('/slot',     [ProposalController::class, 'selectSlot'])->name('slot');
+    Route::post('/pr-now',   [ProposalController::class, 'acceptPrNow'])->name('pr_now');
+    Route::post('/cancel',   [ProposalController::class, 'cancel'])->name('cancel');
+    Route::get('/complete',  [ProposalController::class, 'complete'])->name('complete');
+    Route::post('/revert',   [ProposalController::class, 'revert'])->name('revert');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {

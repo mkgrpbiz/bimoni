@@ -21,7 +21,15 @@
                 <span class="text-gray-400 w-24 shrink-0">【商品名】</span>
                 <span class="font-medium text-gray-800">{{ $application->campaign->title }}</span>
             </div>
-            @if($application->invited_at)
+            @if($isPrIf && !$application->invited_at && $application->invited_end_at)
+            {{-- PR打診：実施期限表示 --}}
+            <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-2">
+                <p class="text-xs text-pink-400 mb-1">【PR実施期限】</p>
+                <p class="text-lg font-bold text-pink-700">
+                    今から {{ $application->invited_end_at->format('m月d日(') }}{{ ['日','月','火','水','木','金','土'][$application->invited_end_at->dayOfWeek] }}{{ $application->invited_end_at->format(') H:i') }} まで
+                </p>
+            </div>
+            @elseif($application->invited_at)
             <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-2">
                 <p class="text-xs text-pink-400 mb-1">【実施予定日時】</p>
                 <p class="text-lg font-bold text-pink-700">
@@ -42,9 +50,15 @@
 
         <hr class="border-gray-200">
 
+        @if($isPrIf && !$application->invited_at)
+        <p class="text-sm text-gray-700">
+            上記の期限内にモニター実施（購入/体験）は<strong>可能でしょうか？</strong>
+        </p>
+        @else
         <p class="text-sm text-gray-700">
             上記の対象時間内にモニター実施（購入/体験）は<strong>可能でしょうか？</strong>
         </p>
+        @endif
 
         <div class="space-y-3">
             <form method="POST" action="{{ route('proposals.yes', $application->proposal_token) }}">

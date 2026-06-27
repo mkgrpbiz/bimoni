@@ -78,13 +78,25 @@ class Application extends Model
         ]);
     }
 
+    // PRモニター+IF媒体かどうか（ロック・48h制限の対象外判定）
+    public function isPrIfCampaign(): bool
+    {
+        return $this->campaign?->campaign_type === 'pr' && $this->campaign?->pr_media === 'IF';
+    }
+
     // 次回案内可能日時（案内終了時間+48h）※表示用・案内時間バリデーション用
     public function getEarliestNextInviteAt(?\Illuminate\Support\Collection $otherApplications = null): ?Carbon
     {
+        // PR+IFは48h制限なし
+        if ($this->isPrIfCampaign()) {
+            return null;
+        }
+
         if ($otherApplications === null) {
             return null;
         }
         $latest = $otherApplications
+            ->filter(fn($a) => !$a->isPrIfCampaign()) // PR+IFは48h制限の対象外
             ->whereNotNull('invited_end_at')
             ->sortByDesc('invited_end_at')
             ->first();
@@ -105,13 +117,19 @@ class Application extends Model
     // ロック状態（打診不可）= 他案件が進行中のときのみ。48h制限は打診ではなく案内時間に適用
     public function isLocked(?\Illuminate\Support\Collection $otherApplications = null): bool
     {
+        // PR+IFは他案件状況のロック対象外
+        if ($this->isPrIfCampaign()) {
+            return false;
+        }
+
         // 自身が打診中・予約中・実施確認中
         if (in_array($this->status, ['line_contacted', 'scheduled', 'confirming'])) {
             return true;
         }
-        // 他案件でステータスが進行中ならロック
+        // 他案件でステータスが進行中ならロック（PR+IFは除外）
         if ($otherApplications) {
             foreach ($otherApplications as $other) {
+                if ($other->isPrIfCampaign()) continue;
                 if (in_array($other->status, ['line_contacted', 'scheduled', 'confirming'])) {
                     return true;
                 }

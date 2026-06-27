@@ -43,12 +43,16 @@ class ApplicationController extends Controller
         $userIds = $applications->pluck('user_id')->unique();
 
         // 同ユーザーの全関連応募を取得（進行中ステータス + 直近invited_end_at※案内時間制限表示用）
-        $allUserApps = Application::with('campaign:id,title')
+        // PR+IF案件は他案件状況に影響しないため除外
+        $allUserApps = Application::with('campaign:id,title,campaign_type,pr_media')
             ->whereIn('user_id', $userIds)
             ->where(function ($q) {
                 $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
                   ->orWhere('invited_end_at', '>=', now()->subHours(48));
             })
+            ->whereHas('campaign', fn($q) => $q->where(
+                fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
+            ))
             ->get()
             ->groupBy('user_id');
 
@@ -148,31 +152,42 @@ class ApplicationController extends Controller
             'status'         => 'required|in:line_contacted,scheduled,confirming,completed,reported,approved,point_granted,cancelled',
             'memo'           => 'nullable|string|max:500',
             'invited_at'     => 'nullable|date',
-            'invited_end_at' => 'nullable|date|after_or_equal:invited_at',
+            'invited_end_at' => 'nullable|date',
         ]);
 
         // 打診中への変更処理
         if ($request->status === 'line_contacted') {
-            // 48h・ロックチェック
-            $others = $this->getOtherApplicationsMap(
-                collect([$application->user_id]),
-                $application->campaign_id
-            )->get($application->user_id, collect());
+            $application->loadMissing('campaign');
+            $isPrIf = $application->isPrIfCampaign();
 
-            if ($application->isLocked($others)) {
-                return back()->with('error', 'このユーザーは現在打診不可の状態です（他案件対応中）。');
+            if (!$isPrIf) {
+                // 通常案件：ロック・48h制限チェック
+                $others = $this->getOtherApplicationsMap(
+                    collect([$application->user_id]),
+                    $application->campaign_id
+                )->get($application->user_id, collect());
+
+                if ($application->isLocked($others)) {
+                    return back()->with('error', 'このユーザーは現在打診不可の状態です（他案件対応中）。');
+                }
+
+                if ($request->filled('invited_at')) {
+                    $earliest = $application->getEarliestNextInviteAt($others);
+                    if ($earliest && Carbon::parse($request->invited_at)->lt($earliest)) {
+                        return back()->with('error', $earliest->format('m/d H:i') . '〜打診可能です。');
+                    }
+                }
             }
 
-            // 案内時間の48h制限チェック
+            // 案内日時を保存
             if ($request->filled('invited_at')) {
-                $earliest = $application->getEarliestNextInviteAt($others);
-                if ($earliest && Carbon::parse($request->invited_at)->lt($earliest)) {
-                    return back()->with('error', $earliest->format('m/d H:i') . '〜打診可能です。');
-                }
                 $application->update([
                     'invited_at'     => $request->invited_at,
                     'invited_end_at' => $request->invited_end_at,
                 ]);
+            } elseif ($isPrIf && $request->filled('invited_end_at')) {
+                // PR打診：締め切り日時のみ設定（invited_atはユーザー確認後にセット）
+                $application->update(['invited_end_at' => $request->invited_end_at]);
             }
 
             // 打診トークンを生成（初回のみ）
@@ -182,19 +197,35 @@ class ApplicationController extends Controller
             $application->refresh();
 
             // 打診 LINE ジョブ作成
-            $proposalUrl  = route('proposals.confirm', $application->proposal_token);
-            $invitedLabel = $application->invited_at
-                ? $application->invited_at->format('m月d日 H:i')
-                  . ($application->invited_end_at ? '〜' . $application->invited_end_at->format('H:i') : '')
-                : '（日時未設定）';
+            $proposalUrl = route('proposals.confirm', $application->proposal_token);
 
-            $proposalMsg = "【モニターご案内】\n"
-                . $application->campaign->title . "\n\n"
-                . "実施案内日時: {$invitedLabel}\n\n"
-                . "以下のURLよりご回答をお願いします。\n"
-                . $proposalUrl . "\n\n"
-                . "※こちら受信時間から実施案内日時までに回答がない場合、自動キャンセルになり再度応募していただく必要があります。\n"
-                . "上記の時間が難しい場合、別日程調整より都合の良い時間に予約お願いいたします。";
+            if ($isPrIf && !$application->invited_at && $application->invited_end_at) {
+                // PR打診メッセージ
+                $dayNames     = ['日', '月', '火', '水', '木', '金', '土'];
+                $deadlineLabel = $application->invited_end_at->format('m月d日(')
+                    . $dayNames[$application->invited_end_at->dayOfWeek]
+                    . $application->invited_end_at->format(') H:i');
+                $proposalMsg = "【PR打診のご案内】\n"
+                    . $application->campaign->title . "\n\n"
+                    . "実施期限: 今から{$deadlineLabel}まで\n\n"
+                    . "期限内に実施可能な方は下記URLから今すぐご回答ください。\n"
+                    . $proposalUrl . "\n\n"
+                    . "別日程をご希望の場合もURLから日程調整が可能です。";
+            } else {
+                // 通常打診メッセージ
+                $invitedLabel = $application->invited_at
+                    ? $application->invited_at->format('m月d日 H:i')
+                      . ($application->invited_end_at ? '〜' . $application->invited_end_at->format('H:i') : '')
+                    : '（日時未設定）';
+
+                $proposalMsg = "【モニターご案内】\n"
+                    . $application->campaign->title . "\n\n"
+                    . "実施案内日時: {$invitedLabel}\n\n"
+                    . "以下のURLよりご回答をお願いします。\n"
+                    . $proposalUrl . "\n\n"
+                    . "※こちら受信時間から実施案内日時までに回答がない場合、自動キャンセルになり再度応募していただく必要があります。\n"
+                    . "上記の時間が難しい場合、別日程調整より都合の良い時間に予約お願いいたします。";
+            }
 
             LineMessageJob::create([
                 'application_id' => $application->id,
@@ -278,9 +309,10 @@ class ApplicationController extends Controller
     }
 
     // ユーザーIDリストに対して、指定案件以外の関連応募を一括取得
+    // PR+IF案件は他案件状況・次回案内可能の対象外のため除外
     private function getOtherApplicationsMap(Collection $userIds, int $currentCampaignId): Collection
     {
-        return Application::with('campaign:id,title')
+        return Application::with('campaign:id,title,campaign_type,pr_media')
             ->whereIn('user_id', $userIds)
             ->where('campaign_id', '!=', $currentCampaignId)
             ->where(function ($q) {
@@ -288,6 +320,9 @@ class ApplicationController extends Controller
                 $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
                   ->orWhere('invited_end_at', '>=', now()->subHours(48));
             })
+            ->whereHas('campaign', fn($q) => $q->where(
+                fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
+            ))
             ->get()
             ->groupBy('user_id');
     }

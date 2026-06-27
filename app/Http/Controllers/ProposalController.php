@@ -21,6 +21,28 @@ class ProposalController extends Controller
             ->with(['campaign', 'user'])
             ->firstOrFail();
 
+        // PR打診の自動キャンセル（invited_end_at が過ぎた場合）
+        if ($application->status === 'line_contacted'
+            && $application->isPrIfCampaign()
+            && !$application->invited_at
+            && $application->invited_end_at
+            && now()->gte($application->invited_end_at)
+        ) {
+            $application->update([
+                'status'               => 'cancelled',
+                'proposal_answered_at' => now(),
+                'proposal_answer'      => 'expired',
+            ]);
+            ApplicationStatusLog::create([
+                'application_id' => $application->id,
+                'from_status'    => 'line_contacted',
+                'to_status'      => 'cancelled',
+                'changed_by'     => null,
+                'memo'           => 'PR打診期限を過ぎたため自動キャンセル',
+            ]);
+            return response()->view('proposals.expired', compact('application'), 410);
+        }
+
         // 実施案内日時が過ぎていたら自動キャンセル
         if ($application->status === 'line_contacted'
             && $application->invited_at
@@ -45,7 +67,9 @@ class ProposalController extends Controller
             return response()->view('proposals.expired', compact('application'), 410);
         }
 
-        return view('proposals.confirm', compact('application'));
+        $isPrIf = $application->isPrIfCampaign();
+
+        return view('proposals.confirm', compact('application', 'isPrIf'));
     }
 
     // はい → 予約中
@@ -59,12 +83,19 @@ class ProposalController extends Controller
             return redirect()->route('proposals.confirm', $token);
         }
 
-        $application->update([
+        $updateData = [
             'status'               => 'scheduled',
             'reserved_at'          => now(),
             'proposal_answered_at' => now(),
             'proposal_answer'      => 'yes',
-        ]);
+        ];
+
+        // PR打診（invited_atなし）の場合は今すぐ実施確定
+        if ($application->isPrIfCampaign() && !$application->invited_at) {
+            $updateData['invited_at'] = now();
+        }
+
+        $application->update($updateData);
 
         ApplicationStatusLog::create([
             'application_id' => $application->id,
@@ -74,10 +105,47 @@ class ProposalController extends Controller
             'memo'           => '打診ページからユーザーが承諾',
         ]);
 
-        // 案内文 LINE ジョブ作成（invited_at が設定されている場合）
+        $application->refresh();
         if ($application->invited_at) {
             $this->createMonitorGuideJob($application);
         }
+
+        return redirect()->route('proposals.complete', $token);
+    }
+
+    // PR打診「今すぐ実施します」→ 即時予約
+    public function acceptPrNow(string $token): RedirectResponse
+    {
+        $application = Application::where('proposal_token', $token)
+            ->with(['campaign', 'user'])
+            ->firstOrFail();
+
+        if ($application->status !== 'line_contacted') {
+            return redirect()->route('proposals.confirm', $token);
+        }
+
+        if (!$application->isPrIfCampaign()) {
+            return redirect()->route('proposals.no', $token);
+        }
+
+        $application->update([
+            'status'               => 'scheduled',
+            'reserved_at'          => now(),
+            'proposal_answered_at' => now(),
+            'proposal_answer'      => 'yes',
+            'invited_at'           => now(),
+        ]);
+
+        ApplicationStatusLog::create([
+            'application_id' => $application->id,
+            'from_status'    => 'line_contacted',
+            'to_status'      => 'scheduled',
+            'changed_by'     => null,
+            'memo'           => 'PR打診：別日程画面から今すぐ実施を選択',
+        ]);
+
+        $application->refresh();
+        $this->createMonitorGuideJob($application);
 
         return redirect()->route('proposals.complete', $token);
     }
@@ -89,21 +157,33 @@ class ProposalController extends Controller
             ->with(['campaign', 'user'])
             ->firstOrFail();
 
-        // 他案件の直近 invited_end_at から48h制限を計算
-        $otherApp = Application::where('user_id', $application->user_id)
-            ->where('id', '!=', $application->id)
-            ->whereNotNull('invited_end_at')
-            ->orderByDesc('invited_end_at')
-            ->first();
+        $isPrIf = $application->isPrIfCampaign();
 
+        // 48h制限チェック（PR+IFは対象外。また他案件がPR+IFの場合も除外）
         $minStart = null;
-        if ($otherApp?->invited_end_at && $otherApp->invited_end_at->addHours(48)->isFuture()) {
-            $minStart = $otherApp->invited_end_at->copy()->addHours(48);
+        if (!$isPrIf) {
+            $otherApp = Application::where('user_id', $application->user_id)
+                ->where('id', '!=', $application->id)
+                ->whereNotNull('invited_end_at')
+                ->whereHas('campaign', fn($q) => $q->where(
+                    fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
+                ))
+                ->orderByDesc('invited_end_at')
+                ->first();
+
+            if ($otherApp?->invited_end_at && $otherApp->invited_end_at->addHours(48)->isFuture()) {
+                $minStart = $otherApp->invited_end_at->copy()->addHours(48);
+            }
         }
 
         $slots = $this->generateTimeSlots($application->user, $minStart, $application);
 
-        return view('proposals.no_options', compact('application', 'slots', 'minStart'));
+        // PR打診の締め切り（invited_at未設定でinvited_end_atが将来ならPR打診タブ表示）
+        $prDeadline = ($isPrIf && !$application->invited_at && $application->invited_end_at?->isFuture())
+            ? $application->invited_end_at
+            : null;
+
+        return view('proposals.no_options', compact('application', 'slots', 'minStart', 'isPrIf', 'prDeadline'));
     }
 
     // いいえ → 候補日時を選択
@@ -122,18 +202,23 @@ class ProposalController extends Controller
             return redirect()->route('proposals.confirm', $token);
         }
 
-        // 48h制限チェック
-        $otherApp = Application::where('user_id', $application->user_id)
-            ->where('id', '!=', $application->id)
-            ->whereNotNull('invited_end_at')
-            ->orderByDesc('invited_end_at')
-            ->first();
+        // 48h制限チェック（PR+IFは対象外。また他案件がPR+IFの場合も除外）
+        if (!$application->isPrIfCampaign()) {
+            $otherApp = Application::where('user_id', $application->user_id)
+                ->where('id', '!=', $application->id)
+                ->whereNotNull('invited_end_at')
+                ->whereHas('campaign', fn($q) => $q->where(
+                    fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
+                ))
+                ->orderByDesc('invited_end_at')
+                ->first();
 
-        if ($otherApp?->invited_end_at) {
-            $earliest = $otherApp->invited_end_at->copy()->addHours(48);
-            if ($earliest->isFuture() && Carbon::parse($request->slot_start)->lt($earliest)) {
-                return redirect()->route('proposals.no', $token)
-                    ->with('error', $earliest->format('m/d H:i') . '〜から選択できます。');
+            if ($otherApp?->invited_end_at) {
+                $earliest = $otherApp->invited_end_at->copy()->addHours(48);
+                if ($earliest->isFuture() && Carbon::parse($request->slot_start)->lt($earliest)) {
+                    return redirect()->route('proposals.no', $token)
+                        ->with('error', $earliest->format('m/d H:i') . '〜から選択できます。');
+                }
             }
         }
 
