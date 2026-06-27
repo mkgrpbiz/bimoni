@@ -149,18 +149,19 @@
 </nav>
 <script>
 function copyUrl(url) {
-    const done = () => alert('コピーしました');
-    const fallback = () => {
+    try {
         const el = document.createElement('textarea');
-        el.value = url; el.style.position = 'fixed'; el.style.opacity = '0';
-        document.body.appendChild(el); el.focus(); el.select();
-        document.execCommand('copy'); document.body.removeChild(el); done();
-    };
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(done).catch(fallback);
-    } else {
-        fallback();
+        el.value = url;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+    } catch(e) {
+        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
     }
+    alert('コピーしました');
 }
 </script>
 @endpush
