@@ -65,7 +65,7 @@
     liff.init({ liffId: '{{ config("services.line.liff_id") }}' })
         .then(() => {
             if (!liff.isLoggedIn()) {
-                liff.login();
+                liff.login({ botPrompt: 'aggressive' });
                 return;
             }
             return liff.getProfile();
