@@ -74,23 +74,17 @@
 
 </div>
 
-<div id="copy-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;">コピーしました</div>
 <script>
 function copyText(text) {
-    const showToast = () => {
-        const toast = document.getElementById('copy-toast');
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 1800);
-    };
+    const done = () => alert('コピーしました');
     const fallback = () => {
         const el = document.createElement('textarea');
         el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
         document.body.appendChild(el); el.focus(); el.select();
-        document.execCommand('copy'); document.body.removeChild(el);
-        showToast();
+        document.execCommand('copy'); document.body.removeChild(el); done();
     };
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(showToast).catch(fallback);
+        navigator.clipboard.writeText(text).then(done).catch(fallback);
     } else {
         fallback();
     }
