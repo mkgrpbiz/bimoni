@@ -55,18 +55,22 @@
 <div id="copy-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;">コピーしました</div>
 <script>
 function portalCopy(text) {
-    const fn = () => {
+    const showToast = () => {
         const toast = document.getElementById('copy-toast');
         toast.style.display = 'block';
         setTimeout(() => toast.style.display = 'none', 1800);
     };
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(fn);
-    } else {
+    const fallback = () => {
         const el = document.createElement('textarea');
         el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
         document.body.appendChild(el); el.focus(); el.select();
-        document.execCommand('copy'); document.body.removeChild(el); fn();
+        document.execCommand('copy'); document.body.removeChild(el);
+        showToast();
+    };
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(showToast).catch(fallback);
+    } else {
+        fallback();
     }
 }
 </script>
