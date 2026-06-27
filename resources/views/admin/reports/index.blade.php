@@ -34,6 +34,7 @@
             <tr>
                 <th class="px-3 py-2 text-left whitespace-nowrap">報告日時</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">ユーザーID</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">登録コード</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">LINE表示名</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">名前</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">フリガナ</th>
@@ -50,6 +51,7 @@
             <tr class="hover:bg-gray-50">
                 <td class="px-3 py-2 whitespace-nowrap text-gray-700">{{ $report->created_at->format('m/d H:i') }}</td>
                 <td class="px-3 py-2 text-gray-700">{{ $user?->erme_respondent_id ?? '-' }}</td>
+                <td class="px-3 py-2 font-mono text-gray-700">{{ $user?->referred_by_code ?? '-' }}</td>
                 <td class="px-3 py-2 text-gray-700">{{ $user?->line_display_name ?? '-' }}</td>
                 <td class="px-3 py-2 font-medium whitespace-nowrap">{{ $user?->name ?? '（未登録）' }}</td>
                 <td class="px-3 py-2 text-gray-700">{{ $user?->name_kana ?? '-' }}</td>
@@ -85,7 +87,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="10" class="px-4 py-8 text-center text-gray-700">報告がありません</td>
+                <td colspan="11" class="px-4 py-8 text-center text-gray-700">報告がありません</td>
             </tr>
             @endforelse
         </tbody>

@@ -10,6 +10,7 @@
             <tr>
                 <th class="px-4 py-3 text-left">登録日</th>
                 <th class="px-4 py-3 text-left">ユーザーID</th>
+                <th class="px-4 py-3 text-left">登録コード</th>
                 <th class="px-4 py-3 text-left">LINE表示名</th>
                 <th class="px-4 py-3 text-left">名前</th>
                 <th class="px-4 py-3 text-left">フリガナ</th>
@@ -22,6 +23,7 @@
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-xs text-gray-500">{{ $user->created_at?->format('Y/m/d') }}</td>
                 <td class="px-4 py-3 font-mono text-xs">{{ $user->bimoni_user_id ?? '-' }}</td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $user->referred_by_code ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-700">{{ $user->line_name ?? '（未登録）' }}</td>
                 <td class="px-4 py-3 text-gray-800">{{ $user->name ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $user->name_kana ?? '-' }}</td>
@@ -29,7 +31,7 @@
                 <td class="px-4 py-3 text-right font-medium text-green-600">{{ $reportCounts->get($user->id, 0) }}</td>
             </tr>
             @empty
-            <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">ユーザーがいません</td></tr>
+            <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">ユーザーがいません</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -46,6 +48,7 @@
             </div>
             <div class="text-right shrink-0 ml-2">
                 <p class="font-mono text-xs text-gray-500">{{ $user->bimoni_user_id ?? '-' }}</p>
+                <p class="font-mono text-xs text-gray-400">{{ $user->referred_by_code ?? '-' }}</p>
                 <p class="text-xs text-gray-400">{{ $user->created_at?->format('Y/m/d') }}</p>
             </div>
         </div>

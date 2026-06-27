@@ -26,6 +26,7 @@
         <thead class="bg-gray-50 text-gray-700">
             <tr>
                 <th class="px-4 py-3 text-left">報告日</th>
+                <th class="px-4 py-3 text-left">登録コード</th>
                 <th class="px-4 py-3 text-left">名前</th>
                 <th class="px-4 py-3 text-left">フリガナ</th>
                 <th class="px-4 py-3 text-left">案件名</th>
@@ -36,6 +37,7 @@
             @forelse($reports as $r)
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-xs text-gray-500">{{ $r->created_at->format('Y/m/d') }}</td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $r->user?->referred_by_code ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-800">{{ $r->user?->name ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $r->user?->name_kana ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-800">{{ $r->campaign?->title ?? '-' }}</td>
@@ -44,7 +46,7 @@
                 </td>
             </tr>
             @empty
-            <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">報告がありません</td></tr>
+            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">報告がありません</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -59,6 +61,7 @@
             <span class="font-bold text-gray-800 text-sm ml-2 shrink-0">¥{{ number_format($r->campaign?->referral_fee ?? 0) }}</span>
         </div>
         <p class="text-xs text-gray-600">{{ $r->user?->name ?? '-' }}（{{ $r->user?->name_kana ?? '-' }}）</p>
+        <p class="font-mono text-xs text-gray-400 mt-0.5">{{ $r->user?->referred_by_code ?? '-' }}</p>
         <p class="text-xs text-gray-400 mt-1">{{ $r->created_at->format('Y/m/d') }}</p>
     </div>
     @empty
