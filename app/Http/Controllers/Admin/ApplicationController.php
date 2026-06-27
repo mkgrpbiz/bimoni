@@ -105,10 +105,31 @@ class ApplicationController extends Controller
         $tomorrow = Carbon::tomorrow();
         $dayAfter = Carbon::today()->addDays(2);
 
+        $targetDates = [$today->toDateString(), $tomorrow->toDateString(), $dayAfter->toDateString()];
+
         $slots = CampaignDailySlot::where('campaign_id', $campaign->id)
-            ->whereIn('target_date', [$today->toDateString(), $tomorrow->toDateString(), $dayAfter->toDateString()])
+            ->whereIn('target_date', $targetDates)
             ->get()
             ->keyBy(fn($s) => $s->target_date->toDateString());
+
+        // 実際のステータス別件数を動的集計
+        $appCounts = $campaign->applications()
+            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'])
+            ->whereNotNull('invited_at')
+            ->whereIn(DB::raw('DATE(invited_at)'), $targetDates)
+            ->selectRaw('DATE(invited_at) as date, status, COUNT(*) as cnt')
+            ->groupBy('date', 'status')
+            ->get()
+            ->groupBy('date');
+
+        foreach ($targetDates as $dateStr) {
+            $slot = $slots->get($dateStr);
+            if (!$slot) continue;
+            $dayCounts = $appCounts->get($dateStr, collect());
+            $slot->invited_count   = $dayCounts->where('status', 'line_contacted')->sum('cnt');
+            $slot->reserved_count  = $dayCounts->where('status', 'scheduled')->sum('cnt');
+            $slot->completed_count = $dayCounts->whereIn('status', ['confirming', 'completed', 'reported', 'approved', 'point_granted'])->sum('cnt');
+        }
 
         $completedApps = $campaign->applications()->where('status', 'completed')->with('user')->get();
         $summary = [
@@ -348,10 +369,33 @@ class ApplicationController extends Controller
             }
         }
 
+        // アラート3: 翌日の打診数が目標未達の案件
+        $tomorrowDate = now()->addDay()->toDateString();
+        $tomorrowSlots = CampaignDailySlot::where('target_date', $tomorrowDate)
+            ->where('planned_count', '>', 0)
+            ->with('campaign:id,title')
+            ->get();
+
+        $tomorrowUnderAlerts = collect();
+        foreach ($tomorrowSlots as $slot) {
+            $bookedCount = Application::where('campaign_id', $slot->campaign_id)
+                ->whereIn('status', $activeStatuses)
+                ->whereNotNull('invited_at')
+                ->whereDate('invited_at', $tomorrowDate)
+                ->count();
+            if ($bookedCount < $slot->planned_count) {
+                $tomorrowUnderAlerts->push([
+                    'slot'    => $slot,
+                    'booked'  => $bookedCount,
+                    'planned' => $slot->planned_count,
+                ]);
+            }
+        }
+
         $campaigns = Campaign::orderBy('title')->get(['id', 'title']);
 
         return view('admin.proposal_reservations.index', compact(
-            'applications', 'campaigns', 'duplicateAlerts', 'overCapacityAlerts'
+            'applications', 'campaigns', 'duplicateAlerts', 'overCapacityAlerts', 'tomorrowUnderAlerts'
         ));
     }
 

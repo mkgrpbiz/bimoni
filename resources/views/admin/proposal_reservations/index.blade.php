@@ -13,7 +13,7 @@
 @endif
 
 {{-- アラート --}}
-@if($duplicateAlerts->isNotEmpty() || $overCapacityAlerts->isNotEmpty())
+@if($duplicateAlerts->isNotEmpty() || $overCapacityAlerts->isNotEmpty() || $tomorrowUnderAlerts->isNotEmpty())
 <div class="space-y-2 mb-4">
     @foreach($duplicateAlerts as $dup)
     @php
@@ -32,6 +32,19 @@
         <span>{{ $over['slot']->campaign?->title ?? '不明' }} / {{ $over['slot']->target_date->format('m/d') }} — 目標 {{ $over['planned'] }}件に対し {{ $over['booked'] }}件</span>
     </div>
     @endforeach
+
+    @if($tomorrowUnderAlerts->isNotEmpty())
+    <div class="bg-yellow-50 border border-yellow-300 rounded-lg px-4 py-2 text-sm text-yellow-800">
+        <div class="font-bold mb-1">翌日未達成打診 <span class="font-normal text-xs ml-1">{{ now()->addDay()->format('m/d') }}</span></div>
+        <div class="flex flex-wrap gap-2">
+            @foreach($tomorrowUnderAlerts as $under)
+            <span class="bg-yellow-100 border border-yellow-300 rounded px-2 py-0.5 text-xs font-medium">
+                {{ $under['slot']->campaign?->title ?? '不明' }}（打診{{ $under['booked'] }}/目標{{ $under['planned'] }}）
+            </span>
+            @endforeach
+        </div>
+    </div>
+    @endif
 </div>
 @endif
 
