@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\CampaignDailySlotController;
 use App\Http\Controllers\Admin\CollectionReportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FormFieldController;
+use App\Http\Controllers\Admin\AdminManagerController;
+use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Admin\LineNotificationController;
 use App\Http\Controllers\Member\AuthController as MemberAuth;
@@ -132,6 +134,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('import/users', [ImportController::class, 'importUsers'])->name('import.users');
         Route::post('import/reports', [ImportController::class, 'importReports'])->name('import.reports');
         Route::post('import/campaigns', [ImportController::class, 'importCampaigns'])->name('import.campaigns');
+
+        // 管理者管理
+        Route::get('admins', [AdminManagerController::class, 'index'])->name('admins.index');
+        Route::get('admins/create', [AdminManagerController::class, 'create'])->name('admins.create');
+        Route::post('admins', [AdminManagerController::class, 'store'])->name('admins.store');
+        Route::get('admins/{admin}/edit', [AdminManagerController::class, 'edit'])->name('admins.edit');
+        Route::patch('admins/{admin}', [AdminManagerController::class, 'update'])->name('admins.update');
+        Route::delete('admins/{admin}', [AdminManagerController::class, 'destroy'])->name('admins.destroy');
+        Route::post('admins/{admin}/reset-password', [AdminManagerController::class, 'resetPassword'])->name('admins.reset_password');
+
+        // 自分のプロフィール（パスワード・メール変更）
+        Route::get('profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('profile', [AdminProfileController::class, 'update'])->name('profile.update');
 
         // キャンペーン管理（協力金ボーナス）
         Route::get('campaign-bonuses', [CampaignBonusController::class, 'index'])->name('campaign_bonuses.index');
