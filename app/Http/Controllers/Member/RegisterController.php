@@ -117,7 +117,7 @@ class RegisterController extends Controller
     private function tryLinkExistingUser(User $liffUser, Request $request): ?User
     {
         // インポート済みでまだLINE未紐付けのユーザーを検索
-        $query = User::whereNull('line_user_id')
+        $query = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
             ->where('imported_from', 'spreadsheet')
             ->where('name', $request->name)
             ->where('name_kana', $request->name_kana);

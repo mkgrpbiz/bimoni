@@ -61,7 +61,6 @@ class ImportService
                 $nameKana = $row['name_kana'] ?? $row['フリガナ'] ?? null;
 
                 User::create([
-                    'line_user_id'       => 'IMPORT_' . uniqid(),
                     'erme_respondent_id' => $ermeId ?: null,
                     'name'               => $name,
                     'name_kana'          => $nameKana,

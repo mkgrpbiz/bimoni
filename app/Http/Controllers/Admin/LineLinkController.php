@@ -14,7 +14,7 @@ class LineLinkController extends Controller
     // 未紐付きインポートユーザー一覧
     public function index(Request $request): View
     {
-        $query = User::whereNull('line_user_id')
+        $query = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
             ->where('imported_from', 'spreadsheet')
             ->orderBy('name');
 
@@ -59,8 +59,8 @@ class LineLinkController extends Controller
         $importUser = User::findOrFail($request->import_user_id);
         $liffUser   = User::findOrFail($request->liff_user_id);
 
-        // 既に紐付け済みのチェック
-        if ($importUser->line_user_id) {
+        // 既に紐付け済みのチェック（IMPORT_xxx は未紐付けとみなす）
+        if ($importUser->line_user_id && !str_starts_with($importUser->line_user_id, 'IMPORT_')) {
             return back()->withErrors(['error' => 'このユーザーはすでにLINEアカウントと紐付けられています。']);
         }
 
