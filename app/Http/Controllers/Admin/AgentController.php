@@ -114,7 +114,22 @@ class AgentController extends Controller
 
     public function destroy(Agent $agent): RedirectResponse
     {
+        $codes = $agent->getAllCodeStrings();
+        if (User::whereIn('referred_by_code', $codes)->exists()) {
+            return back()->with('error', '登録者がいるため削除できません。');
+        }
+
+        $parentId = $agent->parent_id;
+        foreach ($agent->children as $child) {
+            $child->codes()->delete();
+            $child->delete();
+        }
+        $agent->codes()->delete();
         $agent->delete();
-        return redirect()->route('admin.agents.index')->with('success', '削除しました。');
+
+        return ($parentId
+            ? redirect()->route('admin.agents.show', $parentId)
+            : redirect()->route('admin.agents.index')
+        )->with('success', "{$agent->name} を削除しました。");
     }
 }

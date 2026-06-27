@@ -4,6 +4,14 @@
 <div class="flex items-center gap-3 mb-6">
     <a href="{{ route('admin.agents.index') }}" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">← 代理店一覧</a>
     <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ $agent->name }}</h1>
+    @php $agentHasUsers = \App\Models\User::whereIn('referred_by_code', $agent->getAllCodeStrings())->exists(); @endphp
+    @if(!$agentHasUsers)
+    <form method="POST" action="{{ route('admin.agents.destroy', $agent) }}" class="ml-auto"
+          onsubmit="return confirm('{{ $agent->name }} を削除しますか？\n子代理店・コードも全て削除されます。')">
+        @csrf @method('DELETE')
+        <button type="submit" class="text-xs text-red-400 hover:text-red-600 border border-red-300 rounded px-3 py-1.5">この代理店を削除</button>
+    </form>
+    @endif
 </div>
 
 @if(session('success'))
@@ -80,6 +88,7 @@
                 <th class="px-4 py-3 text-right">1000円報酬</th>
                 <th class="px-4 py-3 text-left">招待URL</th>
                 <th class="px-4 py-3 text-left">ポータルURL</th>
+                <th class="px-4 py-3 text-center">削除</th>
             </tr>
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
@@ -107,10 +116,22 @@
                                 class="bg-gray-500 text-white text-xs px-2 py-0.5 rounded hover:bg-gray-600 shrink-0">コピー</button>
                     </div>
                 </td>
+                <td class="px-4 py-3 text-center">
+                    @php $childHasUsers = \App\Models\User::whereIn('referred_by_code', $child->codes->pluck('code')->toArray())->exists(); @endphp
+                    @if(!$childHasUsers)
+                    <form method="POST" action="{{ route('admin.agents.destroy', $child) }}"
+                          onsubmit="return confirm('{{ $child->name }} を削除しますか？')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded px-2 py-1">削除</button>
+                    </form>
+                    @else
+                    <span class="text-xs text-gray-300">登録者あり</span>
+                    @endif
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="px-4 py-6 text-center text-gray-500">子代理店はまだありません（親ポータルから作成できます）</td>
+                <td colspan="7" class="px-4 py-6 text-center text-gray-500">子代理店はまだありません（親ポータルから作成できます）</td>
             </tr>
             @endforelse
         </tbody>

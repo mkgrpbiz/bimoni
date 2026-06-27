@@ -33,8 +33,17 @@
                 <td class="px-4 py-3 text-right text-gray-800 dark:text-gray-200">{{ $appMap[$agent->id] ?? 0 }}</td>
                 <td class="px-4 py-3 text-right font-medium text-green-600 dark:text-green-400">{{ $reportMap[$agent->id] ?? 0 }}</td>
                 <td class="px-4 py-3 text-center">
-                    <a href="{{ route('admin.agents.show', $agent) }}"
-                       class="bg-pink-500 text-white text-xs px-3 py-1 rounded hover:bg-pink-600">詳細</a>
+                    <div class="flex items-center justify-center gap-2">
+                        <a href="{{ route('admin.agents.show', $agent) }}"
+                           class="bg-pink-500 text-white text-xs px-3 py-1 rounded hover:bg-pink-600">詳細</a>
+                        @if(($registeredMap[$agent->id] ?? 0) === 0)
+                        <form method="POST" action="{{ route('admin.agents.destroy', $agent) }}"
+                              onsubmit="return confirm('{{ $agent->name }} を削除しますか？\n子代理店・コードも全て削除されます。')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded px-2 py-1">削除</button>
+                        </form>
+                        @endif
+                    </div>
                 </td>
             </tr>
             @empty
