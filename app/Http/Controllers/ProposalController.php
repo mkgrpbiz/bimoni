@@ -113,43 +113,6 @@ class ProposalController extends Controller
         return redirect()->route('proposals.complete', $token);
     }
 
-    // PR打診「今すぐ実施します」→ 即時予約
-    public function acceptPrNow(string $token): RedirectResponse
-    {
-        $application = Application::where('proposal_token', $token)
-            ->with(['campaign', 'user'])
-            ->firstOrFail();
-
-        if ($application->status !== 'line_contacted') {
-            return redirect()->route('proposals.confirm', $token);
-        }
-
-        if (!$application->isPrIfCampaign()) {
-            return redirect()->route('proposals.no', $token);
-        }
-
-        $application->update([
-            'status'               => 'scheduled',
-            'reserved_at'          => now(),
-            'proposal_answered_at' => now(),
-            'proposal_answer'      => 'yes',
-            'invited_at'           => now(),
-        ]);
-
-        ApplicationStatusLog::create([
-            'application_id' => $application->id,
-            'from_status'    => 'line_contacted',
-            'to_status'      => 'scheduled',
-            'changed_by'     => null,
-            'memo'           => 'PR打診：別日程画面から今すぐ実施を選択',
-        ]);
-
-        $application->refresh();
-        $this->createMonitorGuideJob($application);
-
-        return redirect()->route('proposals.complete', $token);
-    }
-
     // いいえ → 候補日時表示
     public function declineNo(string $token): View
     {
@@ -178,12 +141,7 @@ class ProposalController extends Controller
 
         $slots = $this->generateTimeSlots($application->user, $minStart, $application);
 
-        // PR打診の締め切り（invited_at未設定でinvited_end_atが将来ならPR打診タブ表示）
-        $prDeadline = ($isPrIf && !$application->invited_at && $application->invited_end_at?->isFuture())
-            ? $application->invited_end_at
-            : null;
-
-        return view('proposals.no_options', compact('application', 'slots', 'minStart', 'isPrIf', 'prDeadline'));
+        return view('proposals.no_options', compact('application', 'slots', 'minStart', 'isPrIf'));
     }
 
     // いいえ → 候補日時を選択

@@ -16,39 +16,10 @@
 
     <div class="px-6 py-5 space-y-3">
 
-        @if(isset($prDeadline) && $prDeadline)
-        {{-- PR打診/通常打診 タブ --}}
-        <div class="flex border-b border-gray-200 mb-1 -mx-1">
-            <button id="tab-pr" onclick="showProposalTab('pr')"
-                    class="flex-1 py-2 text-sm font-medium border-b-2 border-pink-500 text-pink-600">
-                PR打診
-            </button>
-            <button id="tab-normal" onclick="showProposalTab('normal')"
-                    class="flex-1 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                通常打診
-            </button>
+        @if($isPrIf ?? false)
+        <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 text-xs text-pink-700">
+            こちらの商品はPR実施期限を過ぎるとご案内出来ない可能性があります。
         </div>
-
-        {{-- PR打診タブコンテンツ --}}
-        <div id="content-pr">
-            <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 text-sm">
-                <p class="text-xs text-pink-400 mb-1">【PR実施期限】</p>
-                <p class="font-bold text-pink-700 text-base">
-                    今から {{ $prDeadline->format('m月d日(') }}{{ ['日','月','火','水','木','金','土'][$prDeadline->dayOfWeek] }}{{ $prDeadline->format(') H:i') }} まで
-                </p>
-                <p class="text-xs text-pink-400 mt-1">今すぐ実施可能な場合は下のボタンを押してください。案内をすぐにお送りします。</p>
-            </div>
-            <form method="POST" action="{{ route('proposals.pr_now', $application->proposal_token) }}" class="mt-3">
-                @csrf
-                <button type="submit"
-                        class="w-full bg-pink-600 text-white py-3 rounded-xl font-bold text-base hover:bg-pink-700 active:scale-95 transition-transform">
-                    今すぐ実施します
-                </button>
-            </form>
-        </div>
-
-        {{-- 通常打診タブコンテンツ --}}
-        <div id="content-normal" style="display:none">
         @endif
 
         @if(isset($minStart))
@@ -88,10 +59,6 @@
         <p class="text-sm text-gray-400 text-center py-4">現在選択可能な日程がありません。</p>
         @endif
 
-        @if(isset($prDeadline) && $prDeadline)
-        </div>{{-- #content-normal 終わり --}}
-        @endif
-
         <hr class="border-gray-200 my-2">
 
         <form method="POST" action="{{ route('proposals.cancel', $application->proposal_token) }}">
@@ -109,22 +76,5 @@
         </a>
     </div>
 </div>
-
-@if(isset($prDeadline) && $prDeadline)
-<script>
-function showProposalTab(tab) {
-    var isPr = tab === 'pr';
-    document.getElementById('content-pr').style.display = isPr ? '' : 'none';
-    document.getElementById('content-normal').style.display = isPr ? 'none' : '';
-    document.getElementById('tab-pr').className = isPr
-        ? 'flex-1 py-2 text-sm font-medium border-b-2 border-pink-500 text-pink-600'
-        : 'flex-1 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
-    document.getElementById('tab-normal').className = isPr
-        ? 'flex-1 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700'
-        : 'flex-1 py-2 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600';
-}
-</script>
-@endif
-
 </body>
 </html>

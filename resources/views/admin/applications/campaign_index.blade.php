@@ -421,7 +421,7 @@ $statusTabs = [
                             onchange="buildPrDeadline()">
                         @for($h = 0; $h < 24; $h++)
                         <option value="{{ $h }}" @selected($h === now()->addHours(3)->hour)>
-                            {{ $h }}時
+                            〜{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}:00
                         </option>
                         @endfor
                     </select>

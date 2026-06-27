@@ -54,7 +54,6 @@ Route::prefix('proposals/{token}')->name('proposals.')->group(function () {
     Route::post('/yes',      [ProposalController::class, 'acceptYes'])->name('yes');
     Route::get('/no',        [ProposalController::class, 'declineNo'])->name('no');
     Route::post('/slot',     [ProposalController::class, 'selectSlot'])->name('slot');
-    Route::post('/pr-now',   [ProposalController::class, 'acceptPrNow'])->name('pr_now');
     Route::post('/cancel',   [ProposalController::class, 'cancel'])->name('cancel');
     Route::get('/complete',  [ProposalController::class, 'complete'])->name('complete');
     Route::post('/revert',   [ProposalController::class, 'revert'])->name('revert');
