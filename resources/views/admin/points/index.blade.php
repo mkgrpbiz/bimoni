@@ -80,8 +80,11 @@
 
             <form method="GET" action="{{ route('admin.points.zengin') }}" class="flex items-end gap-1.5">
                 <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
-                <input type="date" name="transfer_date" required value="{{ now()->format('Y-m-d') }}"
-                       class="border rounded px-2 py-1 text-xs">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-0.5">振込日</label>
+                    <input type="date" name="transfer_date" required value="{{ now()->format('Y-m-d') }}"
+                           class="border rounded px-2 py-1 text-xs">
+                </div>
                 <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">全銀出力</button>
             </form>
 
