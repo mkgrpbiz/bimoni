@@ -88,9 +88,23 @@ class ReferralController extends Controller
                 'expected_pay'   => $expectedPay,
                 'pay_status'     => $payStatus,
             ];
-        })->filter(fn($s) => $s['registered'] > 0 || $s['expected_pay'] > 0)->values();
+        })->filter(fn($s) => $s['registered'] > 0 || $s['expected_pay'] > 0)
+          ->sortByDesc('expected_pay')
+          ->values();
 
-        return view('admin.referrals.index', compact('summary', 'month'));
+        // 当月合計
+        $currentTotal = $summary->sum('expected_pay');
+
+        // 先月合計
+        $prevMonth = $month->copy()->subMonth();
+        $prevTotal = MonitorReport::with('campaign:id,referral_fee')
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$prevMonth->copy()->startOfMonth(), $prevMonth->copy()->endOfMonth()])
+            ->whereHas('user', fn($q) => $q->whereNotNull('referred_by_code'))
+            ->get()
+            ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+
+        return view('admin.referrals.index', compact('summary', 'month', 'currentTotal', 'prevTotal'));
     }
 
     public function markDone(Request $request): RedirectResponse

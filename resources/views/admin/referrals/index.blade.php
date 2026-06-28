@@ -21,6 +21,19 @@
     <a href="{{ route('admin.referrals.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded text-sm hover:bg-gray-500">リセット</a>
 </form>
 
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="bg-white rounded-lg shadow px-5 py-4">
+        <p class="text-xs text-gray-400 mb-1">先月 紹介報酬合計</p>
+        <p class="text-2xl font-bold text-gray-600">¥{{ number_format($prevTotal) }}</p>
+        <p class="text-xs text-gray-400 mt-1">{{ $month->copy()->subMonth()->format('Y年n月') }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow px-5 py-4 border-l-4 border-pink-400">
+        <p class="text-xs text-gray-400 mb-1">当月 紹介報酬合計</p>
+        <p class="text-2xl font-bold text-pink-600">¥{{ number_format($currentTotal) }}</p>
+        <p class="text-xs text-gray-400 mt-1">{{ $month->format('Y年n月') }}</p>
+    </div>
+</div>
+
 <div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600">
     {{ $month->format('Y年n月') }} 締め ／ 支払い: {{ $month->copy()->addMonth()->endOfMonth()->format('Y年n月末') }}
 </div>
