@@ -12,11 +12,8 @@
 
     {{-- ロゴ --}}
     <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-pink-500 rounded-2xl shadow-lg mb-3">
-            <span class="text-white text-2xl font-black">B</span>
-        </div>
-        <h1 class="text-xl font-black text-gray-800 tracking-wide">BIMONI</h1>
-        <p class="text-xs text-gray-400 mt-0.5">招待制モニター</p>
+        <img src="{{ asset('images/bimoni-logo.png') }}" alt="BIMONI" class="w-24 h-24 mx-auto mb-2">
+        <p class="text-xs text-gray-400">招待制モニター</p>
     </div>
 
     {{-- エージェント紹介バッジ --}}
