@@ -97,18 +97,9 @@ class DashboardController extends Controller
         // 売上 = 承認数 × 案件単価
         $sales = $reflections->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
 
-        // 全否認コスト = 全否認フラグのある案件の (初回+継続×率) + 協力金
-        $allDenied = $reflections
-            ->where('is_all_denied', true)
-            ->sum(function ($r) {
-                $c = $r->campaign;
-                if (!$c) return 0;
-                $productCost = ($c->initial_purchase_fee ?? 0) + ($c->recurring_purchase_fee ?? 0) * (($c->continuation_rate ?? 0) / 100);
-                return $productCost + ($c->cooperation_fee ?? 0);
-            });
-
-        // 漏れ経費 = (実施数 - 承認数) × (粗利 + 商品金額 + 協力金 - 紹介単価) per campaign
-        $leakCost = 0;
+        // 漏れ経費・全否認コストをループで同時計算
+        $leakCost  = 0;
+        $allDenied = 0;
         $campaigns = Campaign::all()->keyBy('id');
         foreach ($reflections as $r) {
             $c = $campaigns->get($r->campaign_id);
@@ -117,6 +108,14 @@ class DashboardController extends Controller
                 ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                 ->when($mode === 'monthly', fn($q) => $q->whereYear('completed_at', $year)->whereMonth('completed_at', $month))
                 ->count();
+
+            // 全否認コスト = 実施完了数 × (初回+継続×率 + 協力金)
+            if ($r->is_all_denied) {
+                $productCost = ($c->initial_purchase_fee ?? 0) + ($c->recurring_purchase_fee ?? 0) * (($c->continuation_rate ?? 0) / 100);
+                $allDenied += $completedForCampaign * ($productCost + ($c->cooperation_fee ?? 0));
+            }
+
+            // 漏れ経費 = (実施数 - 承認数) × (粗利 + 商品金額 + 協力金 - 紹介単価)
             $diff = max(0, $completedForCampaign - $r->reflection_count);
             $perUnit = ($c->gross_profit ?? 0)
                 + ($c->initial_purchase_fee ?? 0) + ($c->recurring_purchase_fee ?? 0) * (($c->continuation_rate ?? 0) / 100)
