@@ -57,7 +57,6 @@
         <div id="line-friend-modal-card" class="bg-white rounded-3xl mx-4 w-full max-w-xs text-center overflow-hidden" style="box-shadow: 0 20px 60px rgba(0,0,0,0.18);">
             <div class="bg-gradient-to-br from-pink-400 to-pink-500 px-4 pt-4 pb-4">
                 <img src="{{ asset('images/bimoni-logo.png') }}" alt="BIMONI" class="w-16 h-16 mx-auto mb-2 drop-shadow-md">
-                <h2 class="text-white font-bold text-base tracking-wide leading-tight">BIMONI【公式】</h2>
             </div>
             <div class="px-5 pt-4 pb-4">
                 <p class="text-gray-700 font-semibold text-sm mb-1">LINEの追加お願いします</p>
