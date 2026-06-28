@@ -59,6 +59,14 @@ php8.3 artisan migrate --force
 
 ## LINE LIFF
 
+### 招待ページ（LINEブラウザ外からのアクセス対応）
+- SafariなどLINEブラウザ以外からアクセスした場合、モーダルを表示して案内
+- `line://app/{LIFF_ID}` スキームでLINEアプリのLIFFを直接起動
+- 2秒フォールバックでLIFF URLへ遷移（LINEが未インストールの場合）
+- 実装: `resources/views/invite.blade.php`
+
+
+
 ```javascript
 liff.login({ botPrompt: 'aggressive' });
 ```
