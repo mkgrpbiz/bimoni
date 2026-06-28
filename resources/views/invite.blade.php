@@ -147,8 +147,8 @@ var _liffId  = '{{ config("services.line.liff_id") }}';
 
 function openInLine(e) {
     e.preventDefault();
-    // line://app/{LIFF_ID} でLINEアプリのLIFFを直接開く試み
-    window.location.href = 'line://app/' + _liffId;
+    // LINE内ブラウザで招待ページを開く
+    window.location.href = 'line://browser?url=' + encodeURIComponent(window.location.href);
     // 2秒後にLINEが開かなければLIFF URLへフォールバック
     setTimeout(function() {
         window.location.href = _liffUrl;
