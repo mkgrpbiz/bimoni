@@ -57,6 +57,16 @@ $tabs = [
             <option value="pr"         @selected(request('campaign_type') === 'pr')>PRモニター</option>
         </select>
     </div>
+    <div>
+        <label class="block text-xs text-gray-700 mb-1">PR媒体</label>
+        <select name="pr_media" class="border rounded px-2 py-1.5 text-sm">
+            <option value="">すべて</option>
+            <option value="AD"      @selected(request('pr_media') === 'AD')>AD</option>
+            <option value="IF"      @selected(request('pr_media') === 'IF')>IF</option>
+            <option value="LINE"    @selected(request('pr_media') === 'LINE')>LINE</option>
+            <option value="monitor" @selected(request('pr_media') === 'monitor')>モニター</option>
+        </select>
+    </div>
     <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">絞り込み</button>
     <a href="{{ route('admin.campaigns.index', ['status' => $status]) }}"
        class="text-sm text-gray-500 hover:text-gray-700 py-1.5">リセット</a>
@@ -73,7 +83,8 @@ $tabs = [
                 <th class="px-3 py-3 text-left">種別</th>
                 <th class="px-3 py-3 text-right">初回費</th>
                 <th class="px-3 py-3 text-right">継続費</th>
-                <th class="px-3 py-3 text-right">協力金</th>
+                <th class="px-3 py-3 text-right">初回協力金</th>
+                <th class="px-3 py-3 text-right">継続協力金</th>
                 <th class="px-3 py-3 text-center">操作</th>
             </tr>
         </thead>
@@ -89,12 +100,16 @@ $tabs = [
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->getTypeLabel() }}</td>
                 <td class="px-3 py-3 text-right">¥{{ number_format($campaign->initial_purchase_fee ?? 0) }}</td>
                 <td class="px-3 py-3 text-right">¥{{ number_format($campaign->recurring_purchase_fee ?? 0) }}</td>
-                <td class="px-3 py-3 text-right">¥{{ number_format($campaign->cooperation_fee ?? 0) }}</td>
+                <td class="px-3 py-3 text-right text-gray-600">+¥{{ number_format($campaign->cooperation_fee ?? 0) }}</td>
+                <td class="px-3 py-3 text-right text-gray-600">
+                    @if($campaign->continuation_cooperation_fee !== null)
+                        +¥{{ number_format($campaign->continuation_cooperation_fee) }}
+                    @else
+                        <span class="text-gray-300">-</span>
+                    @endif
+                </td>
                 <td class="px-3 py-3">
                     <div class="flex gap-1 justify-center flex-wrap">
-                        <a href="{{ route('admin.campaigns.applications', $campaign) }}"
-                           class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">応募者</a>
-
                         <a href="{{ route('admin.campaigns.edit', $campaign) }}"
                            class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">編集</a>
                         <form method="POST" action="{{ route('admin.campaigns.duplicate', $campaign) }}" class="inline">
@@ -112,7 +127,7 @@ $tabs = [
                 </td>
             </tr>
             @empty
-            <tr><td colspan="8" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
+            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
             @endforelse
         </tbody>
     </table>

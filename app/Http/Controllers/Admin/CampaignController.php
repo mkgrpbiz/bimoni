@@ -24,6 +24,9 @@ class CampaignController extends Controller
         if ($request->filled('campaign_type')) {
             $query->where('campaign_type', $request->campaign_type);
         }
+        if ($request->filled('pr_media')) {
+            $query->where('pr_media', $request->pr_media);
+        }
         if ($request->filled('q')) {
             $query->where('title', 'like', '%' . $request->q . '%');
         }
