@@ -61,25 +61,25 @@ class CampaignDailySlotController extends Controller
         // 区切り文字を自動判定（タブ優先、なければカンマ）
         $delimiter = str_contains($lines[0], "\t") ? "\t" : ",";
 
-        // 「商品名」を含む行をヘッダー行として探す
+        // 「商品名」または「案件名」を含む行をヘッダー行として探す
         $headerRowIdx = null;
         foreach ($lines as $idx => $line) {
-            if (str_contains($line, '商品名')) {
+            if (str_contains($line, '商品名') || str_contains($line, '案件名')) {
                 $headerRowIdx = $idx;
                 break;
             }
         }
         if ($headerRowIdx === null) {
-            return back()->withErrors(['tsv_file' => '「商品名」を含むヘッダー行が見つかりません']);
+            return back()->withErrors(['tsv_file' => '「商品名」または「案件名」を含むヘッダー行が見つかりません']);
         }
 
         $headers = str_getcsv($lines[$headerRowIdx], $delimiter);
         $headers = array_map('trim', $headers);
 
-        // 「商品名」列のインデックスを探す
+        // 「商品名」または「案件名」列のインデックスを探す
         $nameColIdx = null;
         foreach ($headers as $i => $h) {
-            if (str_contains($h, '商品名')) {
+            if (str_contains($h, '商品名') || str_contains($h, '案件名')) {
                 $nameColIdx = $i;
                 break;
             }

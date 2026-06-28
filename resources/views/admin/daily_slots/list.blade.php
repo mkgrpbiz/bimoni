@@ -18,8 +18,8 @@
 <div class="bg-white rounded-lg shadow p-4 mb-5">
     <h2 class="font-bold text-gray-700 mb-3 text-sm">CSV一括インポート</h2>
     <p class="text-xs text-gray-500 mb-3">
-        1行目にヘッダー（商品名・日付列）、2行目以降に商品名と日別件数が入ったCSVファイルをアップロードしてください。<br>
-        商品名は案件のタイトルと一致（または前方一致）する必要があります。
+        ヘッダー行（「案件名」または「商品名」列＋日付列）、以降に案件名と日別件数が入ったCSVをアップロードしてください。<br>
+        案件名は管理画面のタイトルと一致（または部分一致）する必要があります。
     </p>
     <form method="POST" action="{{ route('admin.daily_slots.import') }}" enctype="multipart/form-data"
           class="flex items-center gap-3">
