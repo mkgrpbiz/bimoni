@@ -483,22 +483,25 @@ class ImportService
     public function parseCsv(string $content): array
     {
         $content = ltrim($content, "\xEF\xBB\xBF"); // UTF-8 BOM除去
-        $lines = array_filter(explode("\n", str_replace("\r\n", "\n", trim($content))));
-        $lines = array_values($lines);
 
-        if (count($lines) < 2) return [];
+        // fgetcsv を使うことでセル内改行を含むCSVを正しく処理
+        $handle = fopen('php://temp', 'r+');
+        fwrite($handle, $content);
+        rewind($handle);
 
-        $headers = str_getcsv(array_shift($lines));
-        $headers = array_map('trim', $headers);
-
-        $rows = [];
-        foreach ($lines as $line) {
-            $values = str_getcsv($line);
-            if (count($values) === count($headers)) {
-                $rows[] = array_combine($headers, array_map('trim', $values));
+        $headers = null;
+        $rows    = [];
+        while (($data = fgetcsv($handle)) !== false) {
+            $data = array_map('trim', $data);
+            if ($headers === null) {
+                $headers = $data;
+                continue;
             }
+            if (count($data) !== count($headers)) continue;
+            $rows[] = array_combine($headers, $data);
         }
 
+        fclose($handle);
         return $rows;
     }
 }
