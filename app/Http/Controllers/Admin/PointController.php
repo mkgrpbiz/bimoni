@@ -19,24 +19,47 @@ class PointController extends Controller
             ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
             : Carbon::now()->startOfMonth();
 
-        $query = MonitorReport::with(['user', 'campaign', 'application'])
+        $tab = $request->input('tab', 'pending'); // pending | reserved
+
+        $calcFee = fn($r) => ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
+
+        // 当月の全承認済み報告
+        $allReports = MonitorReport::with(['user', 'campaign', 'application'])
             ->where('status', 'approved')
-            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->get();
 
-        if ($request->filled('bimoni_user_id')) {
-            $user = User::where('bimoni_user_id', strtoupper($request->bimoni_user_id))->first();
-            $query->where('user_id', $user?->id ?? 0);
-        }
+        $currentTotal  = $allReports->sum($calcFee);
+        $pendingTotal  = $allReports->where('payment_status', 'pending')->sum($calcFee);
+        $reservedTotal = $allReports->whereIn('payment_status', ['reserved', 'paid'])->sum($calcFee);
 
-        $reports = $query->orderBy('created_at')->get();
+        // 先月合計
+        $prevMonth = $month->copy()->subMonth();
+        $prevTotal = MonitorReport::with(['campaign', 'application'])
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$prevMonth->copy()->startOfMonth(), $prevMonth->copy()->endOfMonth()])
+            ->get()
+            ->sum($calcFee);
 
-        $calcFee        = fn($r) => ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
-        $totalAmount    = $reports->sum($calcFee);
-        $pendingAmount  = $reports->where('payment_status', 'pending')->sum($calcFee);
-        $reservedAmount = $reports->where('payment_status', 'reserved')->sum($calcFee);
-        $paidAmount     = $reports->where('payment_status', 'paid')->sum($calcFee);
+        // タブでフィルター → ユーザー単位で集計・金額順ソート
+        $userSummary = $allReports
+            ->filter(fn($r) => $tab === 'pending'
+                ? $r->payment_status === 'pending'
+                : in_array($r->payment_status, ['reserved', 'paid'])
+            )
+            ->groupBy('user_id')
+            ->map(fn($reports) => [
+                'user'  => $reports->first()->user,
+                'total' => $reports->sum($calcFee),
+                'count' => $reports->count(),
+            ])
+            ->sortByDesc('total')
+            ->values();
 
-        return view('admin.points.index', compact('reports', 'month', 'totalAmount', 'pendingAmount', 'reservedAmount', 'paidAmount'));
+        return view('admin.points.index', compact(
+            'userSummary', 'month', 'tab',
+            'currentTotal', 'prevTotal', 'pendingTotal', 'reservedTotal'
+        ));
     }
 
     public function markReserved(Request $request): RedirectResponse

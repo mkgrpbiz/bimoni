@@ -154,7 +154,7 @@ class DashboardController extends Controller
             if ($unpaidCount > 0) {
                 $alerts[] = [
                     'level'   => 'warning',
-                    'message' => "前月（{$prevMonth->format('Y年n月')}）の協力金 {$unpaidCount}件 が予約済みになっていません（毎月5日までに対応してください）。",
+                    'message' => "前月（{$prevMonth->format('Y年n月')}）の協力金 {$unpaidCount}件 が予約待ちのままです（毎月5日までに対応してください）。",
                     'link'    => route('admin.points.index', ['month' => $prevMonth->format('Y-m')]),
                     'label'   => '協力金管理',
                 ];
