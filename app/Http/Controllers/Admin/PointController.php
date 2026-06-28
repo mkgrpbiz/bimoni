@@ -17,6 +17,7 @@ class PointController extends Controller
     {
         $calcFee = fn($r) => ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
 
+        // 先月・当月ブロック
         $blocks = [];
         foreach ([Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->startOfMonth()] as $m) {
             $reports = MonitorReport::with(['campaign', 'application'])
@@ -24,19 +25,45 @@ class PointController extends Controller
                 ->whereBetween('created_at', [$m->copy()->startOfMonth(), $m->copy()->endOfMonth()])
                 ->get();
 
-            $total      = $reports->sum($calcFee);
-            $hasPending = $reports->contains('payment_status', 'pending');
-
             $blocks[] = [
                 'month'      => $m->copy(),
-                'total'      => $total,
+                'total'      => $reports->sum($calcFee),
                 'count'      => $reports->count(),
-                'hasPending' => $hasPending,
-                'status'     => $hasPending ? 'pending' : 'reserved',
+                'hasPending' => $reports->contains('payment_status', 'pending'),
             ];
         }
 
-        return view('admin.points.index', compact('blocks'));
+        // 月別詳細（フィルター対象月）
+        $month = $request->filled('month')
+            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
+            : Carbon::now()->startOfMonth();
+
+        $query = MonitorReport::with(['user', 'campaign', 'application'])
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
+
+        if ($request->filled('bimoni_user_id')) {
+            $user = User::where('bimoni_user_id', strtoupper($request->bimoni_user_id))->first();
+            $query->where('user_id', $user?->id ?? 0);
+        }
+
+        $reports = $query->get();
+
+        $userSummary = $reports->groupBy('user_id')->map(fn($rows) => [
+            'user'       => $rows->first()->user,
+            'total'      => $rows->sum($calcFee),
+            'count'      => $rows->count(),
+            'status'     => $rows->contains('payment_status', 'pending') ? 'pending' : 'reserved',
+        ])->sortByDesc('total')->values();
+
+        $totalAmount    = $reports->sum($calcFee);
+        $pendingAmount  = $reports->where('payment_status', 'pending')->sum($calcFee);
+        $reservedAmount = $reports->whereIn('payment_status', ['reserved', 'paid'])->sum($calcFee);
+
+        return view('admin.points.index', compact(
+            'blocks', 'month', 'userSummary',
+            'totalAmount', 'pendingAmount', 'reservedAmount'
+        ));
     }
 
     public function markReserved(Request $request): RedirectResponse
