@@ -81,8 +81,18 @@ class DashboardController extends Controller
 
         $approvedCount = $reflections->sum('reflection_count');
 
-        // 協力金 = 承認数 × 各案件の協力金
-        $cooperationFee = $reflections->sum(fn($r) => $r->reflection_count * ($r->campaign?->cooperation_fee ?? 0));
+        // 協力金 = 承認済み報告の初回費/継続費 + 協力金の実績合計
+        $reportQuery = MonitorReport::with(['campaign', 'application'])->where('status', 'approved');
+        if ($mode === 'monthly') {
+            $reportQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        }
+        $cooperationFee = $reportQuery->get()->sum(function ($r) {
+            $c = $r->campaign;
+            $fee = $r->purchase_type === 'continuation'
+                ? ($c?->recurring_purchase_fee ?? 0) + ($c?->continuation_cooperation_fee ?? 0)
+                : ($c?->initial_purchase_fee ?? 0) + ($c?->cooperation_fee ?? 0);
+            return $fee + ($r->application?->bonus_amount ?? 0);
+        });
 
         // 売上 = 承認数 × 案件単価
         $sales = $reflections->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));

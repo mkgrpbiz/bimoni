@@ -15,7 +15,15 @@ class PointController extends Controller
 {
     public function index(Request $request): View
     {
-        $calcFee = fn($r) => ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
+        $calcFee = function ($r) {
+            $c = $r->campaign;
+            if ($r->purchase_type === 'continuation') {
+                $fee = ($c?->recurring_purchase_fee ?? 0) + ($c?->continuation_cooperation_fee ?? 0);
+            } else {
+                $fee = ($c?->initial_purchase_fee ?? 0) + ($c?->cooperation_fee ?? 0);
+            }
+            return $fee + ($r->application?->bonus_amount ?? 0);
+        };
 
         // 先月・当月ブロック
         $blocks = [];
@@ -107,13 +115,18 @@ class PointController extends Controller
         $rows[] = ['日時', 'ユーザーID', 'ユーザー名', 'ステータス', 'モニター名', '協力金'];
 
         foreach ($reports as $r) {
+            $c = $r->campaign;
+            $fee = $r->purchase_type === 'continuation'
+                ? ($c?->recurring_purchase_fee ?? 0) + ($c?->continuation_cooperation_fee ?? 0)
+                : ($c?->initial_purchase_fee ?? 0) + ($c?->cooperation_fee ?? 0);
+            $fee += ($r->application?->bonus_amount ?? 0);
             $rows[] = [
                 $r->created_at->format('Y/m/d'),
                 $r->user?->bimoni_user_id ?? '',
                 $r->user?->name ?? '',
                 $r->payment_status === 'paid' ? '支払済' : '支払待ち',
                 $r->campaign?->title ?? '',
-                ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0),
+                $fee,
             ];
         }
 
