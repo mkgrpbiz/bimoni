@@ -116,5 +116,6 @@
     </nav>
     @endauth
 
+<p style="position:fixed;bottom:60px;left:0;right:0;text-align:center;font-size:10px;color:red;z-index:9999;">デプロイ確認v1</p>
 </body>
 </html>
