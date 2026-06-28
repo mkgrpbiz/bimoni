@@ -59,24 +59,16 @@ php8.3 artisan migrate --force
 
 ## LINE LIFF
 
-### 招待ページ（LINEブラウザ外からのアクセス対応）
-- SafariなどLINEブラウザ以外からアクセスした場合、モーダルを表示して案内
-- `line://app/{LIFF_ID}` スキームでLINEアプリのLIFFを直接起動
-- 2秒フォールバックでLIFF URLへ遷移（LINEが未インストールの場合）
-- 実装: `resources/views/invite.blade.php`
+### 招待ページ（`resources/views/invite.blade.php`）
+- 「LINEで登録する」ボタンは `line://app/{LIFF_ID}?referral_code={code}` で直接LINEアプリを開く
+- 招待コードをURLパラメータで渡すので紹介元の追跡が継続される
+- モーダルは廃止（`line://browser?url=` は動かなかった）
+- `liff.login()` に `botPrompt` は設定しない（友だち追加はメンバーページのモーダルで行う）
 
-
-
-```javascript
-liff.login({ botPrompt: 'aggressive' });
-```
-- `aggressive`: 友だち追加を強制（スキップ不可）
-- `resources/views/member/auth/login.blade.php` に実装済み
-
-### LINE友だち未追加モーダル
-- `resources/views/layouts/member.blade.php` に実装済み
+### LINE友だち未追加モーダル（`resources/views/layouts/member.blade.php`）
 - ログイン済みユーザーに対し `liff.getFriendship()` で友だち追加状態を確認
 - 未追加の場合はモーダルを表示して `@204zmull` へ誘導
+- **登録フォームページ（`member.register*`）は除外**（登録前に飛ばされると導線が崩れるため）
 - **必須設定**: LINEデベロッパーコンソールのLIFFアプリで「Add friend option」をONにして `@204zmull` を紐付けること（これがないと全員に表示される）
 
 ---
@@ -128,3 +120,4 @@ liff.login({ botPrompt: 'aggressive' });
 - `alert()` を Promise の `.then()/.catch()` 内で呼ぶとブラウザにブロックされる → `document.execCommand('copy')` で同期コピー後に `alert()` を呼ぶ
 - コピーボタンは必ず同期処理 + `alert('コピーしました')` のセットで実装
 - SSHの秘密鍵は `C:\Users\user\.ssh\xserver.key`
+- STGのDBをtinker経由で操作するときは、PowerShellからの直接実行は特殊文字で失敗する。PHPファイルをSCPで転送して `php8.3 /tmp/xxx.php` で実行するのが確実
