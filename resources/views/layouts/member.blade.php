@@ -59,7 +59,7 @@
                 <img src="{{ asset('images/bimoni-logo.png') }}" alt="BIMONI" class="w-16 h-16 mx-auto mb-2 drop-shadow-md">
                 <h2 class="text-gray-800 font-bold text-base tracking-wide leading-tight">BIMONI【公式】</h2>
             </div>
-            <div class="px-5 pt-4 pb-4">
+            <div class="px-5 pt-4 pb-8">
                 <p class="text-gray-700 font-semibold text-sm mb-1">LINEの追加お願いします</p>
                 <p class="text-gray-400 text-xs mb-3">※案内は全てLINEから送信されます</p>
                 <a href="https://line.me/R/ti/p/@204zmull"
