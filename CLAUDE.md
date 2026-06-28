@@ -65,6 +65,12 @@ liff.login({ botPrompt: 'aggressive' });
 - `aggressive`: 友だち追加を強制（スキップ不可）
 - `resources/views/member/auth/login.blade.php` に実装済み
 
+### LINE友だち未追加モーダル
+- `resources/views/layouts/member.blade.php` に実装済み
+- ログイン済みユーザーに対し `liff.getFriendship()` で友だち追加状態を確認
+- 未追加の場合はモーダルを表示して `@204zmull` へ誘導
+- **必須設定**: LINEデベロッパーコンソールのLIFFアプリで「Add friend option」をONにして `@204zmull` を紐付けること（これがないと全員に表示される）
+
 ---
 
 ## ポータル（代理店ポータル）
