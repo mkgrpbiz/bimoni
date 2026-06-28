@@ -70,13 +70,16 @@
                 return liff.getFriendship();
             })
             .then(friendship => {
+                console.log('friendship:', JSON.stringify(friendship));
                 if (friendship && !friendship.friendFlag) {
                     const modal = document.getElementById('line-friend-modal');
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
                 }
             })
-            .catch(() => {});
+            .catch((err) => {
+            console.error('LIFF friendship check error:', err);
+        });
     })();
     </script>
     @endif
