@@ -167,10 +167,26 @@ class DashboardController extends Controller
             $py = (int) $prevMonth->format('Y');
             $pm = (int) $prevMonth->format('n');
 
-            $agents       = Agent::whereNull('parent_id')->pluck('id');
+            // 前月に承認済み報告があったユーザーの招待コードを取得
+            $reportUserIds = MonitorReport::where('status', 'approved')
+                ->whereBetween('created_at', [$prevMonth->copy()->startOfMonth(), $prevMonth->copy()->endOfMonth()])
+                ->pluck('user_id');
+            $usedCodes = \App\Models\User::whereIn('id', $reportUserIds)
+                ->whereNotNull('referred_by_code')
+                ->pluck('referred_by_code')
+                ->unique();
+
+            // 該当コードを持つ親代理店IDを特定
+            $agentIdsWithReports = \App\Models\AgentReferralCode::whereIn('code', $usedCodes)
+                ->with('agent')
+                ->get()
+                ->map(fn($arc) => $arc->agent?->parent_id ?? $arc->agent?->id)
+                ->filter()
+                ->unique();
+
             $doneAgentIds = ReferralPaymentStatus::where('year', $py)->where('month', $pm)
                 ->where('status', 'done')->pluck('agent_id');
-            $undoneCount  = $agents->diff($doneAgentIds)->count();
+            $undoneCount  = $agentIdsWithReports->diff($doneAgentIds)->count();
 
             if ($undoneCount > 0) {
                 $alerts[] = [
