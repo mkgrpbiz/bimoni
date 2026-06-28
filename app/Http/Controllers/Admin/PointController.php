@@ -15,51 +15,28 @@ class PointController extends Controller
 {
     public function index(Request $request): View
     {
-        $month = $request->filled('month')
-            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-            : Carbon::now()->startOfMonth();
-
-        $tab = $request->input('tab', 'pending'); // pending | reserved
-
         $calcFee = fn($r) => ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
 
-        // 当月の全承認済み報告
-        $allReports = MonitorReport::with(['user', 'campaign', 'application'])
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
-            ->get();
+        $blocks = [];
+        foreach ([Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->startOfMonth()] as $m) {
+            $reports = MonitorReport::with(['campaign', 'application'])
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$m->copy()->startOfMonth(), $m->copy()->endOfMonth()])
+                ->get();
 
-        $currentTotal  = $allReports->sum($calcFee);
-        $pendingTotal  = $allReports->where('payment_status', 'pending')->sum($calcFee);
-        $reservedTotal = $allReports->whereIn('payment_status', ['reserved', 'paid'])->sum($calcFee);
+            $total      = $reports->sum($calcFee);
+            $hasPending = $reports->contains('payment_status', 'pending');
 
-        // 先月合計
-        $prevMonth = $month->copy()->subMonth();
-        $prevTotal = MonitorReport::with(['campaign', 'application'])
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$prevMonth->copy()->startOfMonth(), $prevMonth->copy()->endOfMonth()])
-            ->get()
-            ->sum($calcFee);
+            $blocks[] = [
+                'month'      => $m->copy(),
+                'total'      => $total,
+                'count'      => $reports->count(),
+                'hasPending' => $hasPending,
+                'status'     => $hasPending ? 'pending' : 'reserved',
+            ];
+        }
 
-        // タブでフィルター → ユーザー単位で集計・金額順ソート
-        $userSummary = $allReports
-            ->filter(fn($r) => $tab === 'pending'
-                ? $r->payment_status === 'pending'
-                : in_array($r->payment_status, ['reserved', 'paid'])
-            )
-            ->groupBy('user_id')
-            ->map(fn($reports) => [
-                'user'  => $reports->first()->user,
-                'total' => $reports->sum($calcFee),
-                'count' => $reports->count(),
-            ])
-            ->sortByDesc('total')
-            ->values();
-
-        return view('admin.points.index', compact(
-            'userSummary', 'month', 'tab',
-            'currentTotal', 'prevTotal', 'pendingTotal', 'reservedTotal'
-        ));
+        return view('admin.points.index', compact('blocks'));
     }
 
     public function markReserved(Request $request): RedirectResponse
