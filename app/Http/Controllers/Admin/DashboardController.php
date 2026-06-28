@@ -180,6 +180,7 @@ class DashboardController extends Controller
             $agentIdsWithReports = \App\Models\AgentReferralCode::whereIn('code', $usedCodes)
                 ->with('agent')
                 ->get()
+                ->toBase()
                 ->map(fn($arc) => $arc->agent?->parent_id ?? $arc->agent?->id)
                 ->filter()
                 ->unique();
