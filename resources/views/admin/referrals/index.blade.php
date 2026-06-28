@@ -70,7 +70,9 @@
                     ¥{{ number_format($row['expected_pay']) }}
                 </td>
                 <td class="px-4 py-3 text-center">
-                    @if($row['pay_status'] === 'done')
+                    @if($row['reports_total'] === 0)
+                        <span class="inline-block bg-gray-100 text-gray-400 text-xs px-2 py-1 rounded font-medium">処理不要</span>
+                    @elseif($row['pay_status'] === 'done')
                         <span class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-medium">処理済</span>
                         <form method="POST" action="{{ route('admin.referrals.mark_pending') }}" class="mt-1">
                             @csrf @method('PATCH')
