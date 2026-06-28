@@ -133,9 +133,9 @@ class CampaignDailySlotController extends Controller
             }
 
             // 類似度マッチ（similar_text >= 75%）
+            $bestMatch   = null;
+            $bestPercent = 0;
             if (!$campaign) {
-                $bestMatch   = null;
-                $bestPercent = 0;
                 foreach ($exactMap as $dbKey => $c) {
                     similar_text($key, $dbKey, $pct);
                     if ($pct > $bestPercent) {
@@ -149,7 +149,11 @@ class CampaignDailySlotController extends Controller
             }
 
             if (!$campaign) {
-                $skipped[] = $productName;
+                $info = $productName;
+                if (isset($bestMatch)) {
+                    $info .= sprintf(' → 近候補: 「%s」%.0f%%', $bestMatch->title, $bestPercent);
+                }
+                $skipped[] = $info;
                 continue;
             }
 
