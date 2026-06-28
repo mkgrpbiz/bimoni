@@ -74,20 +74,23 @@
     </div>
     <script>
     (function() {
-        if (typeof liff === 'undefined') return;
+        function showModal() {
+            const modal = document.getElementById('line-friend-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        if (typeof liff === 'undefined') { showModal(); return; }
         liff.init({ liffId: '{{ config("services.line.liff_id") }}' })
             .then(() => {
-                if (!liff.isLoggedIn()) return null;
+                if (!liff.isLoggedIn()) { showModal(); return; }
                 return liff.getFriendship();
             })
             .then(friendship => {
-                if (friendship && !friendship.friendFlag) {
-                    const modal = document.getElementById('line-friend-modal');
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
+                if (!friendship || !friendship.friendFlag) {
+                    showModal();
                 }
             })
-            .catch(() => {});
+            .catch(() => { showModal(); });
     })();
     </script>
     @endauth
