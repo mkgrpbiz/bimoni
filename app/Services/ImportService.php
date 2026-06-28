@@ -430,6 +430,7 @@ class ImportService
             '初回'             => 'initial_purchase_fee',
             '継続'             => 'recurring_purchase_fee',
             '協力金'           => 'cooperation_fee',
+            '初回費'           => 'cooperation_fee',
             '紹介単価'         => 'referral_fee',
             '継続率'           => 'continuation_rate',
             '粗利'             => 'gross_profit',
@@ -481,6 +482,7 @@ class ImportService
 
     public function parseCsv(string $content): array
     {
+        $content = ltrim($content, "\xEF\xBB\xBF"); // UTF-8 BOM除去
         $lines = array_filter(explode("\n", str_replace("\r\n", "\n", trim($content))));
         $lines = array_values($lines);
 
