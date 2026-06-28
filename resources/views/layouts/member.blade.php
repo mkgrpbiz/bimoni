@@ -57,9 +57,9 @@
         <div id="line-friend-modal-card" class="bg-white rounded-3xl mx-4 w-full max-w-xs text-center overflow-hidden" style="box-shadow: 0 20px 60px rgba(0,0,0,0.18);">
             <div class="bg-gradient-to-br from-pink-400 to-pink-500 px-4 pt-4 pb-3">
                 <img src="{{ asset('images/bimoni-logo.png') }}" alt="BIMONI" class="w-16 h-16 mx-auto mb-4 drop-shadow-md">
-                <h2 class="text-white font-bold text-base tracking-wide">★BIMONI【公式】★</h2>
+                <h2 class="text-white font-bold text-base tracking-wide">BIMONI【公式】</h2>
             </div>
-            <div class="px-5 pt-4 pb-5">
+            <div class="px-5 pt-4 pb-4">
                 <p class="text-gray-700 font-semibold text-sm mb-1">LINEの追加お願いします</p>
                 <p class="text-gray-400 text-xs mb-3">※案内は全てLINEから送信されます</p>
                 <a href="https://line.me/R/ti/p/@204zmull"
@@ -116,6 +116,5 @@
     </nav>
     @endauth
 
-<p style="position:fixed;bottom:60px;left:0;right:0;text-align:center;font-size:10px;color:red;z-index:9999;">デプロイ確認v1</p>
 </body>
 </html>
