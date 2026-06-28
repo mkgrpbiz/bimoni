@@ -44,8 +44,7 @@
     @stack('scripts')
 
     @auth('liff')
-    @if(config('services.line.liff_id'))
-    <div id="line-friend-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] hidden items-center justify-center">
+    <div id="line-friend-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center">
         <div class="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center shadow-xl">
             <div class="w-16 h-16 bg-[#06C755] rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg class="w-9 h-9 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -82,7 +81,6 @@
         });
     })();
     </script>
-    @endif
     @endauth
 
     @auth('liff')
