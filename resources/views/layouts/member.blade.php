@@ -55,13 +55,13 @@
     </style>
     <div id="line-friend-modal" class="fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.25); backdrop-filter: blur(4px);">
         <div id="line-friend-modal-card" class="bg-white rounded-3xl mx-4 w-full max-w-xs text-center overflow-hidden" style="box-shadow: 0 20px 60px rgba(0,0,0,0.18);">
-            <div class="bg-gradient-to-br from-pink-400 to-pink-500 px-4 pt-5 pb-4">
+            <div class="bg-gradient-to-br from-pink-400 to-pink-500 px-4 pt-4 pb-3">
                 <img src="{{ asset('images/bimoni-logo.png') }}" alt="BIMONI" class="w-16 h-16 mx-auto mb-2 drop-shadow-md">
                 <h2 class="text-white font-bold text-base tracking-wide">BIMONI【公式】</h2>
             </div>
-            <div class="px-5 py-5">
+            <div class="px-5 pt-4 pb-4">
                 <p class="text-gray-700 font-semibold text-sm mb-1">LINEの追加お願いします</p>
-                <p class="text-gray-400 text-xs mb-4">※案内は全てLINEから送信されます</p>
+                <p class="text-gray-400 text-xs mb-3">※案内は全てLINEから送信されます</p>
                 <a href="https://line.me/R/ti/p/@204zmull"
                    class="flex items-center justify-center gap-2 w-full bg-green-500 text-white py-3 rounded-2xl font-bold text-sm shadow-md active:scale-95 transition-transform">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
