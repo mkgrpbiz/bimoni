@@ -58,7 +58,11 @@
             </div>
             <div>
                 <p class="text-xs text-gray-400 mb-0.5">ステータス</p>
-                @if($block['hasPending'])
+                @if($block['count'] === 0)
+                    <span class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-400 text-xs font-medium px-2.5 py-1 rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>予約不要
+                    </span>
+                @elseif($block['hasPending'])
                     <span class="inline-flex items-center gap-1.5 bg-yellow-100 text-yellow-700 text-xs font-medium px-2.5 py-1 rounded-full">
                         <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>予約待ち
                     </span>
@@ -134,7 +138,9 @@
                 <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $row['user']?->bimoni_user_id ?? '-' }}</td>
                 <td class="px-4 py-3 font-medium text-gray-800">{{ $row['user']?->name ?? '-' }}</td>
                 <td class="px-4 py-3 text-center">
-                    @if($row['status'] === 'pending')
+                    @if($row['total'] === 0)
+                        <span class="bg-gray-100 text-gray-400 text-xs px-2 py-0.5 rounded-full">予約不要</span>
+                    @elseif($row['status'] === 'pending')
                         <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">予約待ち</span>
                     @else
                         <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">予約済</span>
