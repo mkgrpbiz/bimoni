@@ -63,17 +63,23 @@
             <p>CSVヘッダー（日本語列名も対応）：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名（任意）, 名前, フリガナ, 性別, 生年月日, 紹介コード, メールアドレス</code></p>
             <p>・英語ヘッダーも可：<code class="bg-gray-100 px-1 rounded">erme_respondent_id, name, name_kana, gender, birthdate, referred_by_code, email</code></p>
             <p>・性別：男性/女性 または male/female</p>
-            <p>・紹介コードはCSV列・下のプルダウン両方から設定可（CSV列が優先）</p>
+            <p>・CSVに<code class="bg-gray-100 px-1 rounded">紹介コード</code>列がある場合はその値を使用。代理店を選択すると未登録コードは自動発行されます</p>
+            <p>・代理店のコードが1つだけの場合、CSV列が空の行にもそのコードが適用されます</p>
             <p>・エルメID・メールアドレスが重複する行はスキップされます</p>
         </div>
         <form method="POST" action="{{ route('admin.import.users') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
             @csrf
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">紹介コード（一括適用）</label>
-                <select name="referral_code" class="border rounded px-3 py-1.5 text-sm w-64">
+                <label class="block text-sm font-medium text-gray-700 mb-1">代理店（一括適用・CSVコード自動発行先）</label>
+                <select name="agent_id" class="border rounded px-3 py-1.5 text-sm w-72">
                     <option value="">紹介なし</option>
-                    @foreach($referralCodes as $rc)
-                        <option value="{{ $rc['code'] }}">{{ $rc['label'] }}</option>
+                    @foreach($parentAgents as $parent)
+                        <optgroup label="{{ $parent->name }}">
+                            <option value="{{ $parent->id }}">{{ $parent->name }}（親）</option>
+                            @foreach($parent->children as $child)
+                                <option value="{{ $child->id }}">　└ {{ $child->name }}</option>
+                            @endforeach
+                        </optgroup>
                     @endforeach
                 </select>
             </div>

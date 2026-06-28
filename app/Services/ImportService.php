@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Agent;
+use App\Models\AgentReferralCode;
 use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\Category;
@@ -12,11 +14,23 @@ use Illuminate\Support\Facades\DB;
 
 class ImportService
 {
-    public function importUsers(array $rows, ?string $defaultReferralCode = null): array
+    public function importUsers(array $rows, ?int $agentId = null): array
     {
         $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
 
-        DB::transaction(function () use ($rows, $defaultReferralCode, &$result) {
+        // 代理店のデフォルトコード（コードが1つだけの場合に使用）
+        $defaultReferralCode = null;
+        if ($agentId) {
+            $agent = Agent::with('codes')->find($agentId);
+            if ($agent && $agent->codes->count() === 1) {
+                $defaultReferralCode = $agent->codes->first()->code;
+            }
+        }
+
+        // 既存コードをキャッシュ（ループ内での都度クエリを避ける）
+        $existingCodes = AgentReferralCode::pluck('code')->flip()->toArray();
+
+        DB::transaction(function () use ($rows, $agentId, $defaultReferralCode, &$existingCodes, &$result) {
             foreach ($rows as $i => $row) {
                 $line = $i + 2;
 
@@ -42,8 +56,15 @@ class ImportService
                     continue;
                 }
 
-                // 紹介コード（行内指定 > フォーム選択 > なし）
-                $referralCode = $row['referred_by_code'] ?? $row['紹介コード'] ?? $defaultReferralCode ?? null;
+                // 紹介コード（行内指定 > デフォルト > なし）
+                $csvCode      = $row['referred_by_code'] ?? $row['紹介コード'] ?? null;
+                $referralCode = $csvCode ?: $defaultReferralCode;
+
+                // CSVのコードが未登録かつ代理店が選択されている場合は自動発行
+                if ($csvCode && $agentId && !isset($existingCodes[$csvCode])) {
+                    AgentReferralCode::create(['agent_id' => $agentId, 'code' => $csvCode]);
+                    $existingCodes[$csvCode] = true;
+                }
 
                 // 性別マッピング
                 $genderRaw = $row['gender'] ?? $row['性別'] ?? '';
