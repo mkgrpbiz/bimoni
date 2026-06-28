@@ -44,6 +44,7 @@
     @stack('scripts')
 
     @auth('liff')
+    @if(!request()->routeIs('member.register*'))
     <style>
     @keyframes bimoni-popup {
         from { opacity: 0; transform: scale(0.8) translateY(20px); }
@@ -93,6 +94,7 @@
             .catch(() => { showModal(); });
     })();
     </script>
+    @endif
     @endauth
 
     @auth('liff')
