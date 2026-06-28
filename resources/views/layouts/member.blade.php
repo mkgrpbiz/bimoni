@@ -53,7 +53,7 @@
         animation: bimoni-popup 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
     </style>
-    <div id="line-friend-modal" class="fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.25); backdrop-filter: blur(4px);">
+    <div id="line-friend-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background: rgba(0,0,0,0.25); backdrop-filter: blur(4px);">
         <div id="line-friend-modal-card" class="bg-white rounded-3xl mx-4 w-full max-w-xs text-center overflow-hidden" style="box-shadow: 0 20px 60px rgba(0,0,0,0.18);">
             <div class="bg-gradient-to-br from-pink-400 to-pink-500 px-4 pt-4 pb-4">
                 <img src="{{ asset('images/bimoni-logo.png') }}" alt="BIMONI" class="w-16 h-16 mx-auto mb-2 drop-shadow-md">
@@ -81,16 +81,13 @@
                 return liff.getFriendship();
             })
             .then(friendship => {
-                console.log('friendship:', JSON.stringify(friendship));
                 if (friendship && !friendship.friendFlag) {
                     const modal = document.getElementById('line-friend-modal');
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
                 }
             })
-            .catch((err) => {
-            console.error('LIFF friendship check error:', err);
-        });
+            .catch(() => {});
     })();
     </script>
     @endauth
