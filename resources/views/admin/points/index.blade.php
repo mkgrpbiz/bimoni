@@ -118,10 +118,8 @@
     <a href="{{ route('admin.points.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded text-sm hover:bg-gray-500">リセット</a>
 </form>
 
-<div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600 flex gap-6">
-    <span>{{ $month->format('Y年n月') }} 合計: <strong>¥{{ number_format($totalAmount) }}</strong></span>
-    <span class="text-yellow-600">予約待ち: <strong>¥{{ number_format($pendingAmount) }}</strong></span>
-    <span class="text-green-600">予約済: <strong>¥{{ number_format($reservedAmount) }}</strong></span>
+<div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600">
+    {{ $month->format('Y年n月') }} 合計: <strong>¥{{ number_format($totalAmount) }}</strong>
 </div>
 
 <div class="bg-white rounded-lg shadow overflow-x-auto">

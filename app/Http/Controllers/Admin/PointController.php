@@ -56,13 +56,10 @@ class PointController extends Controller
             'status'     => $rows->contains('payment_status', 'pending') ? 'pending' : 'reserved',
         ])->sortByDesc('total')->values();
 
-        $totalAmount    = $reports->sum($calcFee);
-        $pendingAmount  = $reports->where('payment_status', 'pending')->sum($calcFee);
-        $reservedAmount = $reports->whereIn('payment_status', ['reserved', 'paid'])->sum($calcFee);
+        $totalAmount = $reports->sum($calcFee);
 
         return view('admin.points.index', compact(
-            'blocks', 'month', 'userSummary',
-            'totalAmount', 'pendingAmount', 'reservedAmount'
+            'blocks', 'month', 'userSummary', 'totalAmount'
         ));
     }
 
