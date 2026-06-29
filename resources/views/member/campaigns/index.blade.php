@@ -37,11 +37,11 @@
             <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">期間限定</span>
             <h2 class="text-sm font-bold text-gray-800">キャンペーン実施中</h2>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
             @foreach($activeBonuses as $bonus)
             @php $campaign = $bonus->campaign; $appliedStatus = $appliedIds->get($campaign->id); @endphp
             <a href="{{ route('member.campaigns.show', $campaign) }}"
-               class="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-red-400 active:opacity-70 transition-opacity">
+               class="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-red-400 active:opacity-70 transition-opacity flex-shrink-0 w-40 snap-start">
                 <div class="aspect-square bg-gradient-to-br from-pink-100 to-pink-200 relative overflow-hidden">
                     @if($campaign->thumbnail)
                         <img src="{{ asset('storage/' . $campaign->thumbnail) }}" alt="{{ $campaign->title }}" class="w-full h-full object-cover">
