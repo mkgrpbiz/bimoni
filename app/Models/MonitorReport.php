@@ -31,8 +31,8 @@ class MonitorReport extends Model
     public function getStatusLabel(): string
     {
         return match($this->status) {
-            'pending'  => '審査中',
-            'approved' => '承認済',
+            'pending'  => '承認待ち',
+            'approved' => '承認',
             'rejected' => '差戻し',
             default    => $this->status,
         };

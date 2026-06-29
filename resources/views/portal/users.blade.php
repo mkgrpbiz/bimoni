@@ -73,7 +73,7 @@
         <p class="text-2xl font-bold text-gray-800">{{ $totalApps }}</p>
     </div>
     <div class="bg-white rounded-lg shadow p-4 text-center">
-        <p class="text-xs text-gray-500 mb-1">報告(承認済)</p>
+        <p class="text-xs text-gray-500 mb-1">報告(承認)</p>
         <p class="text-2xl font-bold text-green-600">{{ $totalReports }}</p>
     </div>
 </div>

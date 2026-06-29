@@ -12,8 +12,8 @@
 {{-- ステータスタブ --}}
 @php
 $tabs = [
-    'pending'  => ['label' => '審査中', 'color' => 'bg-yellow-500'],
-    'approved' => ['label' => '承認済', 'color' => 'bg-green-500'],
+    'pending'  => ['label' => '承認待ち', 'color' => 'bg-yellow-500'],
+    'approved' => ['label' => '承認',   'color' => 'bg-green-500'],
     'rejected' => ['label' => '差戻し', 'color' => 'bg-red-500'],
 ];
 @endphp

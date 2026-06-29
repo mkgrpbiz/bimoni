@@ -55,7 +55,7 @@
     <div class="flex items-center gap-3">
         <span class="text-yellow-500 text-xl">⚠️</span>
         <div>
-            <p class="font-bold text-yellow-800">モニター報告 審査中</p>
+            <p class="font-bold text-yellow-800">モニター報告 承認待ち</p>
             <p class="text-sm text-yellow-700">
                 {{ $pendingReportsCount }}件　¥{{ number_format($pendingReportsAmount) }}
                 （協力金合計）
