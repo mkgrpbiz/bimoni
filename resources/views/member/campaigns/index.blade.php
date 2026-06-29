@@ -5,6 +5,31 @@
 @section('content')
 <div class="py-2">
 
+    {{-- 予約済みアラート --}}
+    @if($scheduledApps->isNotEmpty())
+    <div class="mb-5 space-y-2">
+        @foreach($scheduledApps as $app)
+        @php
+            $days = ['日','月','火','水','木','金','土'];
+            $dt = $app->invited_at;
+            $today = now()->startOfDay();
+            $diff = $today->diffInDays($dt->copy()->startOfDay());
+            $dayLabel = $diff === 0 ? '今日' : ($diff === 1 ? '明日' : $dt->format('m/d'));
+        @endphp
+        <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <span class="text-xl">📅</span>
+            <div>
+                <p class="text-xs text-pink-400 font-medium">モニター予定</p>
+                <p class="text-sm font-bold text-pink-700">
+                    {{ $dayLabel }}（{{ $days[$dt->dayOfWeek] }}）{{ $dt->format('H:i') }}〜@if($app->invited_end_at){{ $app->invited_end_at->format('H:i') }}@endif
+                </p>
+                <p class="text-xs text-pink-600">{{ $app->campaign->title ?? '' }}</p>
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
     {{-- 期間限定キャンペーン --}}
     @if($activeBonuses->isNotEmpty())
     <div class="mb-5">

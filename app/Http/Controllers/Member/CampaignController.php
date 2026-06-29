@@ -37,7 +37,15 @@ class CampaignController extends Controller
             ->get()
             ->keyBy('campaign_id');
 
-        return view('member.campaigns.index', compact('campaigns', 'campaignsByType', 'appliedIds', 'activeBonuses'));
+        $scheduledApps = Application::where('user_id', $user->id)
+            ->where('status', 'scheduled')
+            ->whereNotNull('invited_at')
+            ->where('invited_at', '>', $now)
+            ->with('campaign:id,title')
+            ->orderBy('invited_at')
+            ->get();
+
+        return view('member.campaigns.index', compact('campaigns', 'campaignsByType', 'appliedIds', 'activeBonuses', 'scheduledApps'));
     }
 
     public function show(Campaign $campaign): View|RedirectResponse
