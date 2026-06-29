@@ -18,17 +18,25 @@ $tabs = [
     'rejected' => ['label' => '差戻し',   'color' => 'bg-red-500'],
 ];
 @endphp
-<div class="flex border-b border-gray-200 mb-4">
-    @foreach($tabs as $key => $tab)
-    <a href="{{ route('admin.collection_reports.index', ['status' => $key]) }}"
-       class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
-              {{ $status === $key ? 'border-pink-500 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
-        {{ $tab['label'] }}
-        <span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white {{ $tab['color'] }}">
-            {{ $counts->get($key, 0) }}
-        </span>
-    </a>
-    @endforeach
+<div class="flex items-center justify-between border-b border-gray-200 mb-4">
+    <div class="flex">
+        @foreach($tabs as $key => $tab)
+        <a href="{{ route('admin.collection_reports.index', ['status' => $key, 'q' => request('q')]) }}"
+           class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
+                  {{ $status === $key ? 'border-pink-500 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+            {{ $tab['label'] }}
+            <span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white {{ $tab['color'] }}">
+                {{ $counts->get($key, 0) }}
+            </span>
+        </a>
+        @endforeach
+    </div>
+    <form method="GET" class="flex gap-2 items-end pb-2">
+        <input type="hidden" name="status" value="{{ $status }}">
+        <input type="text" name="q" value="{{ request('q') }}"
+               class="border rounded px-2 py-1.5 text-sm w-48" placeholder="ユーザーID/LINE名/氏名/フリガナ">
+        <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">検索</button>
+    </form>
 </div>
 
 <div class="bg-white rounded-lg shadow overflow-x-auto">

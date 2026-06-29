@@ -16,10 +16,20 @@ class CollectionReportController extends Controller
     {
         $status = $request->input('status', 'pending');
 
-        $reports = CollectionReport::with('user')
+        $query = CollectionReport::with('user')
             ->where('status', $status)
-            ->latest()
-            ->paginate(30);
+            ->latest();
+
+        if ($request->filled('q')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('bimoni_user_id', 'like', '%' . $request->q . '%')
+                  ->orWhere('line_display_name', 'like', '%' . $request->q . '%')
+                  ->orWhere('name', 'like', '%' . $request->q . '%')
+                  ->orWhere('name_kana', 'like', '%' . $request->q . '%');
+            });
+        }
+
+        $reports = $query->paginate(30)->withQueryString();
 
         $counts = CollectionReport::selectRaw('status, count(*) as count')
             ->groupBy('status')
