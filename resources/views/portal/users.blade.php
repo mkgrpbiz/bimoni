@@ -99,7 +99,7 @@
                 <td class="px-4 py-3 text-xs text-gray-500">{{ $user->created_at?->format('Y/m/d') }}</td>
                 <td class="px-4 py-3 font-mono text-xs">{{ $user->bimoni_user_id ?? '-' }}</td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $user->referred_by_code ?? '-' }}</td>
-                <td class="px-4 py-3 text-gray-700">{{ $user->line_name ?? '（未登録）' }}</td>
+                <td class="px-4 py-3 text-gray-700">{{ $user->line_display_name ?? '（未登録）' }}</td>
                 <td class="px-4 py-3 text-gray-800">{{ $user->name ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $user->name_kana ?? '-' }}</td>
                 <td class="px-4 py-3 text-right">{{ $appCounts->get($user->id, 0) }}</td>
@@ -128,7 +128,7 @@
             </div>
         </div>
         <div class="flex gap-3 mt-2 text-xs text-gray-600 border-t pt-2">
-            <span>LINE: <span class="text-gray-800">{{ $user->line_name ?? '-' }}</span></span>
+            <span>LINE: <span class="text-gray-800">{{ $user->line_display_name ?? '-' }}</span></span>
             <span class="ml-auto">応募 <span class="font-bold text-gray-800">{{ $appCounts->get($user->id, 0) }}</span></span>
             <span>報告 <span class="font-bold text-green-600">{{ $reportCounts->get($user->id, 0) }}</span></span>
         </div>
