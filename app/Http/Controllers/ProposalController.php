@@ -133,26 +133,9 @@ class ProposalController extends Controller
 
         $isPrIf = $application->isPrIfCampaign();
 
-        // 48h制限チェック（PR+IFは対象外。また他案件がPR+IFの場合も除外）
-        $minStart = null;
-        if (!$isPrIf) {
-            $otherApp = Application::where('user_id', $application->user_id)
-                ->where('id', '!=', $application->id)
-                ->whereNotNull('invited_end_at')
-                ->whereHas('campaign', fn($q) => $q->where(
-                    fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
-                ))
-                ->orderByDesc('invited_end_at')
-                ->first();
+        $slots = $this->generateTimeSlots($application->user, null, $application);
 
-            if ($otherApp?->invited_end_at && $otherApp->invited_end_at->addHours(48)->isFuture()) {
-                $minStart = $otherApp->invited_end_at->copy()->addHours(48);
-            }
-        }
-
-        $slots = $this->generateTimeSlots($application->user, $minStart, $application);
-
-        return view('proposals.no_options', compact('application', 'slots', 'minStart', 'isPrIf'));
+        return view('proposals.no_options', compact('application', 'slots', 'isPrIf'));
     }
 
     // いいえ → 候補日時を選択
@@ -169,26 +152,6 @@ class ProposalController extends Controller
 
         if ($application->status !== 'line_contacted') {
             return redirect()->route('proposals.confirm', $token);
-        }
-
-        // 48h制限チェック（PR+IFは対象外。また他案件がPR+IFの場合も除外）
-        if (!$application->isPrIfCampaign()) {
-            $otherApp = Application::where('user_id', $application->user_id)
-                ->where('id', '!=', $application->id)
-                ->whereNotNull('invited_end_at')
-                ->whereHas('campaign', fn($q) => $q->where(
-                    fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
-                ))
-                ->orderByDesc('invited_end_at')
-                ->first();
-
-            if ($otherApp?->invited_end_at) {
-                $earliest = $otherApp->invited_end_at->copy()->addHours(48);
-                if ($earliest->isFuture() && Carbon::parse($request->slot_start)->lt($earliest)) {
-                    return redirect()->route('proposals.no', $token)
-                        ->with('error', $earliest->format('m/d H:i') . '〜から選択できます。');
-                }
-            }
         }
 
         $application->update([
