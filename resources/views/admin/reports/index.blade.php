@@ -5,28 +5,38 @@
 @section('content')
 <h1 class="text-2xl font-bold text-gray-800 mb-6">報告管理</h1>
 
-<form method="GET" class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs text-gray-800 mb-1">ステータス</label>
-        <select name="status" class="border rounded px-2 py-1.5 text-sm">
-            <option value="">すべて</option>
-            <option value="pending"  @selected(request('status') === 'pending')>審査中</option>
-            <option value="approved" @selected(request('status') === 'approved')>承認済</option>
-            <option value="rejected" @selected(request('status') === 'rejected')>差戻し</option>
-        </select>
-    </div>
-    <div>
-        <label class="block text-xs text-gray-800 mb-1">名前</label>
-        <input type="text" name="q" value="{{ request('q') }}"
-               class="border rounded px-2 py-1.5 text-sm w-36" placeholder="氏名">
-    </div>
-    <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">絞り込み</button>
-    <a href="{{ route('admin.reports.index') }}" class="bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600 text-sm">リセット</a>
-</form>
-
 @if(session('success'))
     <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
 @endif
+
+{{-- ステータスタブ --}}
+@php
+$tabs = [
+    'pending'  => ['label' => '審査中', 'color' => 'bg-yellow-500'],
+    'approved' => ['label' => '承認済', 'color' => 'bg-green-500'],
+    'rejected' => ['label' => '差戻し', 'color' => 'bg-red-500'],
+];
+@endphp
+<div class="flex items-center justify-between border-b border-gray-200 mb-4">
+    <div class="flex">
+        @foreach($tabs as $key => $tab)
+        <a href="{{ route('admin.reports.index', ['status' => $key, 'q' => request('q')]) }}"
+           class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
+                  {{ $status === $key ? 'border-pink-500 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+            {{ $tab['label'] }}
+            <span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white {{ $tab['color'] }}">
+                {{ $counts->get($key, 0) }}
+            </span>
+        </a>
+        @endforeach
+    </div>
+    <form method="GET" class="flex gap-2 items-end pb-2">
+        <input type="hidden" name="status" value="{{ $status }}">
+        <input type="text" name="q" value="{{ request('q') }}"
+               class="border rounded px-2 py-1.5 text-sm w-36" placeholder="氏名で絞り込み">
+        <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">検索</button>
+    </form>
+</div>
 
 <div class="bg-white rounded-lg shadow overflow-x-auto">
     <table class="w-full text-xs">

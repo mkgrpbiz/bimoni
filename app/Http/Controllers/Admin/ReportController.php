@@ -13,11 +13,11 @@ class ReportController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = MonitorReport::with(['user', 'campaign', 'images'])->latest();
+        $status = $request->input('status', 'pending');
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        $query = MonitorReport::with(['user', 'campaign', 'images'])
+            ->where('status', $status)
+            ->latest();
 
         if ($request->filled('q')) {
             $query->whereHas('user', function ($q) use ($request) {
@@ -28,7 +28,11 @@ class ReportController extends Controller
 
         $reports = $query->paginate(20)->withQueryString();
 
-        return view('admin.reports.index', compact('reports'));
+        $counts = MonitorReport::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        return view('admin.reports.index', compact('reports', 'status', 'counts'));
     }
 
     public function show(MonitorReport $report): View
