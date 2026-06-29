@@ -214,7 +214,8 @@ class DashboardController extends Controller
             ->whereNotNull('invited_at')
             ->select('campaign_id', 'invited_at', DB::raw('COUNT(*) as cnt'))
             ->groupBy('campaign_id', 'invited_at')
-            ->having('cnt', '>', 1)
+            ->havingRaw('COUNT(*) > 1')
+            ->get()
             ->count();
         if ($duplicates > 0) {
             $alerts[] = [
