@@ -43,14 +43,11 @@ class ApplicationController extends Controller
         // 他案件状況・48h制限の計算
         $userIds = $applications->pluck('user_id')->unique();
 
-        // 同ユーザーの全関連応募を取得（進行中ステータス + 直近invited_end_at※案内時間制限表示用）
+        // 同ユーザーの全関連応募を取得（進行中ステータスのみ）
         // PR+IF案件は他案件状況に影響しないため除外
         $allUserApps = Application::with('campaign:id,title,campaign_type,pr_media')
             ->whereIn('user_id', $userIds)
-            ->where(function ($q) {
-                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
-                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
-            })
+            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->whereHas('campaign', fn($q) => $q->where(
                 fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
             ))
@@ -527,11 +524,7 @@ class ApplicationController extends Controller
         return Application::with('campaign:id,title,campaign_type,pr_media')
             ->whereIn('user_id', $userIds)
             ->where('campaign_id', '!=', $currentCampaignId)
-            ->where(function ($q) {
-                // 進行中ステータス（打診ロック判定用）+ 直近invited_end_at（案内時間制限表示用）
-                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
-                  ->orWhere('invited_end_at', '>=', now()->subHours(48));
-            })
+            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->whereHas('campaign', fn($q) => $q->where(
                 fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
             ))
