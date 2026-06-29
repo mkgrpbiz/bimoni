@@ -13,6 +13,7 @@ class AutoCancelExpiredProposals extends Command
 
     public function handle(): void
     {
+        // 通常打診：invited_at を過ぎても未回答
         $expired = Application::where('status', 'line_contacted')
             ->whereNotNull('invited_at')
             ->where('invited_at', '<=', now())
@@ -33,6 +34,30 @@ class AutoCancelExpiredProposals extends Command
             ]);
         }
 
-        $this->info("自動キャンセル: {$expired->count()}件");
+        // PR打診（invited_at なし）：invited_end_at を過ぎても未回答
+        $expiredPr = Application::where('status', 'line_contacted')
+            ->whereNull('invited_at')
+            ->whereNotNull('invited_end_at')
+            ->where('invited_end_at', '<=', now())
+            ->whereHas('campaign', fn($q) => $q->where('campaign_type', 'pr')->where('pr_media', 'IF'))
+            ->get();
+
+        foreach ($expiredPr as $app) {
+            $app->update([
+                'status'               => 'cancelled',
+                'proposal_answered_at' => now(),
+                'proposal_answer'      => 'expired',
+            ]);
+            ApplicationStatusLog::create([
+                'application_id' => $app->id,
+                'from_status'    => 'line_contacted',
+                'to_status'      => 'cancelled',
+                'changed_by'     => null,
+                'memo'           => 'PR打診期限を過ぎたため自動キャンセル',
+            ]);
+        }
+
+        $total = $expired->count() + $expiredPr->count();
+        $this->info("自動キャンセル: {$total}件（通常: {$expired->count()}件、PR打診: {$expiredPr->count()}件）");
     }
 }
