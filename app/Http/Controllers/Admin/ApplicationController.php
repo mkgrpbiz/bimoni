@@ -33,7 +33,9 @@ class ApplicationController extends Controller
         }
         if ($request->filled('q')) {
             $query->whereHas('user', fn($q) =>
-                $q->where('name', 'like', '%'.$request->q.'%')
+                $q->where('bimoni_user_id', 'like', '%'.$request->q.'%')
+                  ->orWhere('line_display_name', 'like', '%'.$request->q.'%')
+                  ->orWhere('name', 'like', '%'.$request->q.'%')
                   ->orWhere('name_kana', 'like', '%'.$request->q.'%')
             );
         }
@@ -331,7 +333,9 @@ class ApplicationController extends Controller
         }
         if ($request->filled('q')) {
             $query->whereHas('user', fn($q) =>
-                $q->where('name', 'like', '%'.$request->q.'%')
+                $q->where('bimoni_user_id', 'like', '%'.$request->q.'%')
+                  ->orWhere('line_display_name', 'like', '%'.$request->q.'%')
+                  ->orWhere('name', 'like', '%'.$request->q.'%')
                   ->orWhere('name_kana', 'like', '%'.$request->q.'%')
             );
         }

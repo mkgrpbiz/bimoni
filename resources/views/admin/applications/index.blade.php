@@ -47,11 +47,6 @@ $tabs = [
 <form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-end">
     <input type="hidden" name="status" value="{{ $campaignStatus }}">
     <div>
-        <label class="block text-xs text-gray-700 mb-1">名前検索</label>
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="名前・フリガナ"
-               class="border rounded px-2 py-1 text-sm w-40">
-    </div>
-    <div>
         <label class="block text-xs text-gray-700 mb-1">案件</label>
         <select name="campaign_id" class="border rounded px-2 py-1 text-sm">
             <option value="">すべて</option>
@@ -59,6 +54,11 @@ $tabs = [
                 <option value="{{ $c->id }}" @selected(request('campaign_id') == $c->id)>{{ $c->title }}</option>
             @endforeach
         </select>
+    </div>
+    <div>
+        <label class="block text-xs text-gray-700 mb-1">検索</label>
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="ユーザーID/LINE名/氏名/フリガナ"
+               class="border rounded px-2 py-1 text-sm w-52">
     </div>
     <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">絞り込み</button>
     <a href="{{ route('admin.applications.index', ['status' => $campaignStatus]) }}"
