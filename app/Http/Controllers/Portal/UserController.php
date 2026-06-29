@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
-use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -31,18 +30,6 @@ class UserController extends Controller
 
         $users = \App\Services\PortalService::users($codes);
 
-        // 検索フィルター
-        $q = $request->input('q');
-        if ($q) {
-            $ql = mb_strtolower($q);
-            $users = $users->filter(fn($u) =>
-                str_contains(mb_strtolower($u->bimoni_user_id ?? ''), $ql) ||
-                str_contains(mb_strtolower($u->line_display_name ?? ''), $ql) ||
-                str_contains(mb_strtolower($u->name ?? ''), $ql) ||
-                str_contains(mb_strtolower($u->name_kana ?? ''), $ql)
-            );
-        }
-
         $month = $request->filled('month')
             ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
             : Carbon::now()->startOfMonth();
@@ -66,24 +53,8 @@ class UserController extends Controller
         $totalApps    = $appQuery->count();
         $totalReports = $reportQuery->count();
 
-        $reportCounts = MonitorReport::whereIn('user_id', $userIds)
-            ->where('status', 'approved')
-            ->selectRaw('user_id, count(*) as cnt')
-            ->groupBy('user_id')
-            ->pluck('cnt', 'user_id');
-
-        $collectionCounts = CollectionReport::whereIn('user_id', $userIds)
-            ->where('status', 'approved')
-            ->selectRaw('user_id, count(*) as cnt')
-            ->groupBy('user_id')
-            ->pluck('cnt', 'user_id');
-
-        $cooperationTotals = MonitorReport::whereIn('monitor_reports.user_id', $userIds)
-            ->where('monitor_reports.status', 'approved')
-            ->join('campaigns', 'monitor_reports.campaign_id', '=', 'campaigns.id')
-            ->selectRaw('monitor_reports.user_id, SUM(campaigns.cooperation_fee) as total')
-            ->groupBy('monitor_reports.user_id')
-            ->pluck('total', 'user_id');
+        $appCounts    = Application::whereIn('user_id', $userIds)->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->pluck('cnt', 'user_id');
+        $reportCounts = MonitorReport::whereIn('user_id', $userIds)->where('status', 'approved')->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->pluck('cnt', 'user_id');
 
         // コードプルダウン
         $codeOptions = collect();
@@ -99,9 +70,9 @@ class UserController extends Controller
         }
 
         return view('portal.users', compact(
-            'agent', 'targetAgent', 'users', 'reportCounts', 'collectionCounts', 'cooperationTotals',
+            'agent', 'targetAgent', 'users', 'appCounts', 'reportCounts',
             'mode', 'month', 'totalRegistered', 'totalApps', 'totalReports',
-            'childId', 'codeOptions', 'codeFilter', 'q'
+            'childId', 'codeOptions', 'codeFilter'
         ));
     }
 }
