@@ -7,6 +7,7 @@ use App\Models\Agent;
 use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\CampaignApprovalReflection;
+use App\Models\CampaignDailySlot;
 use App\Models\LineNotification;
 use App\Models\MonitorReport;
 use App\Models\ReferralPaymentStatus;
@@ -206,6 +207,48 @@ class DashboardController extends Controller
                     'label'   => '紹介報酬管理',
                 ];
             }
+        }
+
+        // 打診予約: ダブルブッキング
+        $duplicates = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+            ->whereNotNull('invited_at')
+            ->select('campaign_id', 'invited_at', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('campaign_id', 'invited_at')
+            ->having('cnt', '>', 1)
+            ->count();
+        if ($duplicates > 0) {
+            $alerts[] = [
+                'level'   => 'error',
+                'message' => "打診予約でダブルブッキングが {$duplicates}件 発生しています。",
+                'link'    => route('admin.proposal_reservations.index'),
+                'label'   => '打診予約管理',
+            ];
+        }
+
+        // 打診予約: 翌日未達成
+        $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+        $tomorrowDate   = $today->copy()->addDay()->toDateString();
+        $tomorrowSlots  = CampaignDailySlot::where('target_date', $tomorrowDate)
+            ->where('planned_count', '>', 0)
+            ->get();
+        $underCount = 0;
+        foreach ($tomorrowSlots as $slot) {
+            $booked = Application::where('campaign_id', $slot->campaign_id)
+                ->whereIn('status', $activeStatuses)
+                ->whereNotNull('invited_at')
+                ->whereDate('invited_at', $tomorrowDate)
+                ->count();
+            if ($booked < $slot->planned_count) {
+                $underCount++;
+            }
+        }
+        if ($underCount > 0) {
+            $alerts[] = [
+                'level'   => 'warning',
+                'message' => "翌日（{$today->copy()->addDay()->format('m/d')}）の打診が目標に達していない案件が {$underCount}件 あります。",
+                'link'    => route('admin.proposal_reservations.index'),
+                'label'   => '打診予約管理',
+            ];
         }
 
         return $alerts;
