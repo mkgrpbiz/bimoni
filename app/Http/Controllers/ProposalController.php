@@ -63,6 +63,16 @@ class ProposalController extends Controller
             return response()->view('proposals.expired', compact('application'), 410);
         }
 
+        // 案内日時・期限を過ぎたリンクはステータス問わず無効
+        if ($application->invited_at && now()->gte($application->invited_at)) {
+            return response()->view('proposals.expired', compact('application'), 410);
+        }
+        if ($application->isPrIfCampaign() && !$application->invited_at
+            && $application->invited_end_at && now()->gte($application->invited_end_at)
+        ) {
+            return response()->view('proposals.expired', compact('application'), 410);
+        }
+
         if (!in_array($application->status, ['line_contacted', 'scheduled'])) {
             return response()->view('proposals.expired', compact('application'), 410);
         }
