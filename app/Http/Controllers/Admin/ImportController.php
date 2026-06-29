@@ -29,7 +29,7 @@ class ImportController extends Controller
     public function importUsers(Request $request): RedirectResponse
     {
         $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
+            'csv_file' => 'required|file|max:10240',
             'agent_id' => 'nullable|integer|exists:agents,id',
         ]);
 
@@ -37,12 +37,16 @@ class ImportController extends Controller
         $rows    = $this->importer->parseCsv($content);
 
         if (empty($rows)) {
-            return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
+            return redirect()->route('admin.import.index')->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
-        $result = $this->importer->importUsers($rows, $request->filled('agent_id') ? (int) $request->agent_id : null);
+        try {
+            $result = $this->importer->importUsers($rows, $request->filled('agent_id') ? (int) $request->agent_id : null);
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.import.index')->with('error', 'インポートエラー: ' . $e->getMessage());
+        }
 
-        return back()->with('import_result', $result)->with('import_type', 'ユーザー');
+        return redirect()->route('admin.import.index')->with('import_result', $result)->with('import_type', 'ユーザー');
     }
 
     public function importApplications(Request $request): RedirectResponse
@@ -56,12 +60,12 @@ class ImportController extends Controller
         $rows    = $this->importer->parseCsv($content);
 
         if (empty($rows)) {
-            return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
+            return redirect()->route('admin.import.index')->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
         $result = $this->importer->importApplications($rows, $request->input('campaign_name'));
 
-        return back()->with('import_result', $result)->with('import_type', '応募履歴');
+        return redirect()->route('admin.import.index')->with('import_result', $result)->with('import_type', '応募履歴');
     }
 
     public function importPoints(Request $request): RedirectResponse
@@ -72,12 +76,12 @@ class ImportController extends Controller
         $rows    = $this->importer->parseCsv($content);
 
         if (empty($rows)) {
-            return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
+            return redirect()->route('admin.import.index')->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
         $result = $this->importer->importPoints($rows);
 
-        return back()->with('import_result', $result)->with('import_type', 'ポイント履歴');
+        return redirect()->route('admin.import.index')->with('import_result', $result)->with('import_type', 'ポイント履歴');
     }
 
     public function importReports(Request $request): RedirectResponse
@@ -88,12 +92,12 @@ class ImportController extends Controller
         $rows    = $this->importer->parseCsv($content);
 
         if (empty($rows)) {
-            return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
+            return redirect()->route('admin.import.index')->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
         $result = $this->importer->importReports($rows);
 
-        return back()->with('import_result', $result)->with('import_type', '報告');
+        return redirect()->route('admin.import.index')->with('import_result', $result)->with('import_type', '報告');
     }
 
     public function importCampaigns(Request $request): RedirectResponse
@@ -104,11 +108,11 @@ class ImportController extends Controller
         $rows    = $this->importer->parseCsv($content);
 
         if (empty($rows)) {
-            return back()->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
+            return redirect()->route('admin.import.index')->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
         $result = $this->importer->importCampaigns($rows);
 
-        return back()->with('import_result', $result)->with('import_type', '案件');
+        return redirect()->route('admin.import.index')->with('import_result', $result)->with('import_type', '案件');
     }
 }
