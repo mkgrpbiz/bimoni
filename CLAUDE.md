@@ -19,12 +19,19 @@ ssh -i "$env:USERPROFILE\.ssh\xserver.key" -p 10022 mkgrp@sv16576.xserver.jp
 ```
 
 ### デプロイ手順（STGサーバー）
+mainにpushすると GitHub Actions で自動デプロイ（git pull + migrate + view:clear）。
+> **Secret登録が必要**: GitHubリポジトリ Settings → Secrets → `STG_SSH_KEY` に `C:\Users\user\.ssh\xserver.key` の中身を登録すること。
+
+手動デプロイが必要な場合:
 ```bash
 cd /home/mkgrp/bimoni
 git pull
 php8.3 artisan migrate --force
+php8.3 artisan view:clear
 ```
 > **注意**: サーバーのデフォルトPHPは8.0。必ず `php8.3` を使う。
+> STGのcronは `schedule:run` を毎分実行。`proposals:auto-cancel`（5分ごと）と `line:send-messages`（毎分）が動く。
+> cron設定: `/opt/php-8.3/bin/php /home/mkgrp/bimoni/artisan schedule:run`
 
 ### Git（ローカル）
 ```powershell
@@ -115,9 +122,29 @@ php8.3 artisan migrate --force
 
 ---
 
+## 打診（proposal）フロー
+
+### ステータス遷移
+`line_contacted` → 承諾: `scheduled` / 拒否+別日程: `scheduled` / 拒否+キャンセル: `cancelled`
+`scheduled` → 実施: `confirming` → `completed` → 報告: `reported` → 承認: `approved` → `point_granted`
+
+### 自動キャンセル
+- `proposals:auto-cancel` コマンド（5分ごと）が処理
+- 通常打診: `invited_at <= now()` で未回答 → `cancelled`
+- PR打診: `invited_end_at <= now()` で未回答 → `cancelled`（`invited_at` は null）
+- `proposal_answer` は ENUM('yes', 'no', 'expired')
+
+### 打診ページ（`/proposals/{token}`）
+- 期限切れ・無効なリンクは全て「このリンクは無効になりました」ページ（410）
+- キャンセル（「いいえ」→断る）に48h制限・他案件ロックなし
+- 「いいえ」→別日程選択にも制限なし（管理画面側での打診送信時のみロックチェック）
+
+---
+
 ## 注意事項・過去のミス
 
 - `alert()` を Promise の `.then()/.catch()` 内で呼ぶとブラウザにブロックされる → `document.execCommand('copy')` で同期コピー後に `alert()` を呼ぶ
 - コピーボタンは必ず同期処理 + `alert('コピーしました')` のセットで実装
 - SSHの秘密鍵は `C:\Users\user\.ssh\xserver.key`
-- STGのDBをtinker経由で操作するときは、PowerShellからの直接実行は特殊文字で失敗する。PHPファイルをSCPで転送して `php8.3 /tmp/xxx.php` で実行するのが確実
+- STGのDBをtinker経由で操作するときは、PowerShellからの直接実行は特殊文字で失敗する。PHPファイルをSCPで転送して `php8.3 /home/mkgrp/bimoni/xxx.php` で実行するのが確実（`/tmp/` はパスが解決できない）
+- STGのcrontab編集は `crontab -e`（viが開く）ではなく PHP経由で: `php8.3 -r "file_put_contents('/tmp/nc.txt', '...' . PHP_EOL); passthru('crontab /tmp/nc.txt');"`
