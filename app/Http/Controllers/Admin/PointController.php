@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\User;
 use Carbon\Carbon;
@@ -50,24 +51,37 @@ class PointController extends Controller
             ->where('status', 'approved')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
 
-        if ($request->filled('bimoni_user_id')) {
-            $user = User::where('bimoni_user_id', strtoupper($request->bimoni_user_id))->first();
-            $query->where('user_id', $user?->id ?? 0);
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $userIds = User::where('bimoni_user_id', 'like', '%' . $q . '%')
+                ->orWhere('line_display_name', 'like', '%' . $q . '%')
+                ->orWhere('name', 'like', '%' . $q . '%')
+                ->orWhere('name_kana', 'like', '%' . $q . '%')
+                ->pluck('id');
+            $query->whereIn('user_id', $userIds);
         }
 
         $reports = $query->get();
 
         $userSummary = $reports->groupBy('user_id')->map(fn($rows) => [
-            'user'       => $rows->first()->user,
-            'total'      => $rows->sum($calcFee),
-            'count'      => $rows->count(),
-            'status'     => $rows->contains('payment_status', 'pending') ? 'pending' : 'reserved',
+            'user'   => $rows->first()->user,
+            'total'  => $rows->sum($calcFee),
+            'count'  => $rows->count(),
+            'status' => $rows->contains('payment_status', 'pending') ? 'pending' : 'reserved',
         ])->sortByDesc('total')->values();
 
         $totalAmount = $reports->sum($calcFee);
 
+        $summaryUserIds = $userSummary->pluck('user.id')->filter();
+        $collectionCounts = CollectionReport::whereIn('user_id', $summaryUserIds)
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->selectRaw('user_id, count(*) as cnt')
+            ->groupBy('user_id')
+            ->pluck('cnt', 'user_id');
+
         return view('admin.points.index', compact(
-            'blocks', 'month', 'userSummary', 'totalAmount'
+            'blocks', 'month', 'userSummary', 'totalAmount', 'collectionCounts'
         ));
     }
 

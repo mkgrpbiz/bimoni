@@ -109,10 +109,10 @@
                class="border rounded px-2 py-1 text-sm">
     </div>
     <div>
-        <label class="block text-xs text-gray-500 mb-1">ユーザーID検索</label>
-        <input type="text" name="bimoni_user_id" value="{{ request('bimoni_user_id') }}"
-               placeholder="BMN010001"
-               class="border rounded px-2 py-1 text-sm w-36">
+        <label class="block text-xs text-gray-500 mb-1">検索</label>
+        <input type="text" name="q" value="{{ request('q') }}"
+               placeholder="ユーザーID/LINE名/氏名/フリガナ"
+               class="border rounded px-2 py-1 text-sm w-52">
     </div>
     <button type="submit" class="bg-pink-500 text-white px-4 py-2 rounded text-sm hover:bg-pink-600">絞り込み</button>
     <a href="{{ route('admin.points.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded text-sm hover:bg-gray-500">リセット</a>
@@ -127,17 +127,23 @@
         <thead class="bg-gray-50 text-gray-700">
             <tr>
                 <th class="px-4 py-3 text-left">ユーザーID</th>
-                <th class="px-4 py-3 text-left">ユーザー名</th>
+                <th class="px-4 py-3 text-left">LINE表示名</th>
+                <th class="px-4 py-3 text-left">名前</th>
+                <th class="px-4 py-3 text-left">フリガナ</th>
                 <th class="px-4 py-3 text-center">ステータス</th>
-                <th class="px-4 py-3 text-right">件数</th>
+                <th class="px-4 py-3 text-right">モニター件数</th>
+                <th class="px-4 py-3 text-right">回収件数</th>
                 <th class="px-4 py-3 text-right">協力金合計</th>
             </tr>
         </thead>
         <tbody class="divide-y">
             @forelse($userSummary as $row)
+            @php $u = $row['user']; @endphp
             <tr class="hover:bg-gray-50">
-                <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $row['user']?->bimoni_user_id ?? '-' }}</td>
-                <td class="px-4 py-3 font-medium text-gray-800">{{ $row['user']?->name ?? '-' }}</td>
+                <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $u?->bimoni_user_id ?? '-' }}</td>
+                <td class="px-4 py-3 text-gray-700">{{ $u?->line_display_name ?? '-' }}</td>
+                <td class="px-4 py-3 font-medium text-gray-800">{{ $u?->name ?? '-' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ $u?->name_kana ?? '-' }}</td>
                 <td class="px-4 py-3 text-center">
                     @if($row['total'] === 0)
                         <span class="bg-gray-100 text-gray-400 text-xs px-2 py-0.5 rounded-full">予約不要</span>
@@ -147,12 +153,13 @@
                         <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">予約済</span>
                     @endif
                 </td>
-                <td class="px-4 py-3 text-right text-gray-500">{{ $row['count'] }}件</td>
+                <td class="px-4 py-3 text-right text-gray-600">{{ $row['count'] }}件</td>
+                <td class="px-4 py-3 text-right text-blue-600">{{ $collectionCounts->get($u?->id, 0) }}件</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($row['total']) }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+                <td colspan="8" class="px-4 py-8 text-center text-gray-400">
                     {{ $month->format('Y年n月') }}の承認済み報告はありません
                 </td>
             </tr>
