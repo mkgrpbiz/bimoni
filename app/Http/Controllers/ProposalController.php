@@ -205,7 +205,7 @@ class ProposalController extends Controller
     }
 
     // いいえ → キャンセル（再応募必要）
-    public function cancel(string $token): RedirectResponse
+    public function cancel(string $token): View
     {
         $application = Application::where('proposal_token', $token)
             ->with('user')
