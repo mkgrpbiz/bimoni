@@ -38,7 +38,7 @@
             <div class="flex justify-between items-center py-1 {{ $activeBonus ? 'border-b border-gray-50' : '' }}">
                 <span class="text-sm text-gray-600">モニター協力金</span>
                 <span class="font-bold text-pink-600">
-                    {{ number_format($campaign->initial_purchase_fee ?? 0) }}+{{ number_format($campaign->cooperation_fee ?? 0) }}円
+                    @if($campaign->initial_purchase_fee){{ number_format($campaign->initial_purchase_fee) }}+@endif{{ number_format($campaign->cooperation_fee ?? 0) }}円
                 </span>
             </div>
             @if($activeBonus)
