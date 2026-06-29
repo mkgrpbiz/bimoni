@@ -33,7 +33,7 @@ $tabs = [
     <form method="GET" class="flex gap-2 items-end pb-2">
         <input type="hidden" name="status" value="{{ $status }}">
         <input type="text" name="q" value="{{ request('q') }}"
-               class="border rounded px-2 py-1.5 text-sm w-36" placeholder="氏名で絞り込み">
+               class="border rounded px-2 py-1.5 text-sm w-48" placeholder="ユーザーID/LINE名/氏名/フリガナ">
         <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">検索</button>
     </form>
 </div>

@@ -21,7 +21,9 @@ class ReportController extends Controller
 
         if ($request->filled('q')) {
             $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->q . '%')
+                $q->where('erme_respondent_id', 'like', '%' . $request->q . '%')
+                  ->orWhere('line_display_name', 'like', '%' . $request->q . '%')
+                  ->orWhere('name', 'like', '%' . $request->q . '%')
                   ->orWhere('name_kana', 'like', '%' . $request->q . '%');
             });
         }
