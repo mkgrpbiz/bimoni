@@ -9,8 +9,8 @@
 
 <form method="GET" class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 mb-4 flex gap-3 items-end">
     <div class="flex-1">
-        <label class="block text-xs text-gray-700 dark:text-gray-400 mb-1">ユーザーID・氏名・フリガナで検索</label>
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="BMN00100001 または 山田 太郎"
+        <label class="block text-xs text-gray-700 dark:text-gray-400 mb-1">検索</label>
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="ユーザーID/LINE名/氏名/フリガナ"
                class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm">
     </div>
     <button type="submit" class="bg-pink-500 text-white px-4 py-2 rounded text-sm hover:bg-pink-600">検索</button>

@@ -19,7 +19,8 @@ class UserController extends Controller
         if ($request->filled('q')) {
             $q = $request->q;
             $query->where(function ($qb) use ($q) {
-                $qb->where('bimoni_user_id', $q)
+                $qb->where('bimoni_user_id', 'like', "%{$q}%")
+                   ->orWhere('line_display_name', 'like', "%{$q}%")
                    ->orWhere('name', 'like', "%{$q}%")
                    ->orWhere('name_kana', 'like', "%{$q}%");
             });
