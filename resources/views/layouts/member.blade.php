@@ -18,10 +18,12 @@
                 BIMONI
             </a>
             @auth('liff')
+            @if(!request()->routeIs('member.transfer*'))
             <nav class="flex gap-4 text-sm">
                 <a href="{{ route('member.campaigns.index') }}" class="opacity-90 hover:opacity-100">案件一覧</a>
                 <a href="{{ route('member.mypage') }}" class="opacity-90 hover:opacity-100">マイページ</a>
             </nav>
+            @endif
             @endauth
         </div>
     </header>

@@ -3,7 +3,7 @@
 @section('content')
 <div class="py-4">
     <h1 class="text-xl font-bold text-gray-800 mb-1">データ引き継ぎ登録</h1>
-    <p class="text-sm text-gray-500 mb-6">自動紐付けされる為、BIMONI参加時に設定した名前・フリガナ・生年月日・メールアドレスで登録お願いいたします。<br>登録後にマイページからいつでも変更可能です。</p>
+    <p class="text-sm text-gray-500 mb-6">BIMONI参加時に設定した名前・フリガナ・生年月日・メールアドレスで登録お願いいたします。<br>登録後にマイページからいつでも変更可能です。</p>
 
     @if($errors->any())
         <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-4 text-sm">
