@@ -84,6 +84,7 @@ class ImportService
                 $lineDisplayName = $row['line_display_name'] ?? $row['回答者名（任意）'] ?? null;
 
                 User::create([
+                    'line_user_id'         => 'IMPORT_' . uniqid(),
                     'erme_respondent_id'   => $ermeId ?: null,
                     'line_display_name'    => $lineDisplayName ?: null,
                     'name'                 => $name,
