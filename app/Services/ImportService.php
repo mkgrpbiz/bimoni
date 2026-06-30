@@ -81,15 +81,19 @@ class ImportService
 
                 $nameKana = $row['name_kana'] ?? $row['フリガナ'] ?? null;
 
+                $lineDisplayName = $row['line_display_name'] ?? $row['回答者名（任意）'] ?? null;
+
                 User::create([
-                    'erme_respondent_id' => $ermeId ?: null,
-                    'name'               => $name,
-                    'name_kana'          => $nameKana,
-                    'gender'             => $gender,
-                    'birthdate'          => $birthdate,
-                    'email'              => $email ?: null,
-                    'referred_by_code'   => $referralCode,
-                    'imported_from'      => 'spreadsheet',
+                    'erme_respondent_id'   => $ermeId ?: null,
+                    'line_display_name'    => $lineDisplayName ?: null,
+                    'name'                 => $name,
+                    'name_kana'            => $nameKana,
+                    'gender'               => $gender,
+                    'birthdate'            => $birthdate,
+                    'email'                => $email ?: null,
+                    'referred_by_code'     => $referralCode,
+                    'profile_completed_at' => now(),
+                    'imported_from'        => 'spreadsheet',
                 ]);
 
                 $result['success']++;
