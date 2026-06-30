@@ -187,8 +187,7 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('register', [MemberRegister::class, 'show'])->name('register');
         Route::post('register', [MemberRegister::class, 'store'])->name('register.store');
         Route::get('transfer', [\App\Http\Controllers\Member\TransferController::class, 'show'])->name('transfer');
-        Route::post('transfer', [\App\Http\Controllers\Member\TransferController::class, 'search'])->name('transfer.search');
-        Route::post('transfer/link/{userId}', [\App\Http\Controllers\Member\TransferController::class, 'link'])->name('transfer.link');
+        Route::post('transfer', [\App\Http\Controllers\Member\TransferController::class, 'store'])->name('transfer.store');
 
         // プロフィール登録済みユーザー用
         Route::middleware(EnsureProfileCompleted::class)->group(function () {
