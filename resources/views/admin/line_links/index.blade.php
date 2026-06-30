@@ -94,7 +94,7 @@
             @empty
             <tr>
                 <td colspan="7" class="px-4 py-10 text-center text-gray-400">
-                    未紐付きのユーザーはいません
+                    {{ $status === 'linked' ? '紐付け済みのユーザーはいません' : '未紐付きのユーザーはいません' }}
                 </td>
             </tr>
             @endforelse
