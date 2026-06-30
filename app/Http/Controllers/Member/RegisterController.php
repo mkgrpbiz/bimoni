@@ -117,17 +117,22 @@ class RegisterController extends Controller
     private function tryLinkExistingUser(User $liffUser, Request $request): ?User
     {
         // インポート済みでまだLINE未紐付けのユーザーを検索
-        $query = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
+        $base = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
             ->where('imported_from', 'spreadsheet')
             ->where('name', $request->name)
             ->where('name_kana', $request->name_kana);
 
-        // 3点一致（名前+フリガナ+生年月日）
-        $matched = (clone $query)->where('birthdate', $request->birthdate)->get();
+        // 1. 名前+フリガナ+生年月日 で一致
+        $matched = (clone $base)->where('birthdate', $request->birthdate)->get();
 
-        // 3点一致が0件 → 2点一致（名前+フリガナのみ）にフォールバック
-        if ($matched->count() === 0) {
-            $matched = $query->get();
+        // 2. 名前+フリガナ+メール で一致
+        if ($matched->count() !== 1 && $request->filled('email')) {
+            $matched = (clone $base)->where('email', $request->email)->get();
+        }
+
+        // 3. 名前+フリガナのみ で一致
+        if ($matched->count() !== 1) {
+            $matched = $base->get();
         }
 
         // 一意に特定できない場合は自動紐付けしない
