@@ -186,6 +186,9 @@ Route::prefix('member')->name('member.')->group(function () {
         // プロフィール未設定ユーザー用（register は profile チェック除外）
         Route::get('register', [MemberRegister::class, 'show'])->name('register');
         Route::post('register', [MemberRegister::class, 'store'])->name('register.store');
+        Route::get('transfer', [\App\Http\Controllers\Member\TransferController::class, 'show'])->name('transfer');
+        Route::post('transfer', [\App\Http\Controllers\Member\TransferController::class, 'search'])->name('transfer.search');
+        Route::post('transfer/link/{userId}', [\App\Http\Controllers\Member\TransferController::class, 'link'])->name('transfer.link');
 
         // プロフィール登録済みユーザー用
         Route::middleware(EnsureProfileCompleted::class)->group(function () {
