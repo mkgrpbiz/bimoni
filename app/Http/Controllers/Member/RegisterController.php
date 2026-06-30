@@ -146,7 +146,7 @@ class RegisterController extends Controller
             'gender'              => $request->gender,
             'birthdate'           => $request->birthdate,
             'email'               => $request->email,
-            'referred_by_code'    => $request->referred_by_code ?: $existing->referred_by_code,
+            'referred_by_code'    => $existing->referred_by_code ?: ($request->referred_by_code ?: null),
             'profile_completed_at' => now(),
         ]);
         $this->saveBank($existing, $request);
