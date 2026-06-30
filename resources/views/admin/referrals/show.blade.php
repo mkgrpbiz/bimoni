@@ -28,8 +28,40 @@
                 <dd class="font-medium text-gray-800">{{ $agent->name }}</dd>
             </div>
             <div class="flex gap-2">
-                <dt class="text-gray-500 w-28 shrink-0">登録コード</dt>
-                <dd class="font-mono text-pink-600 font-bold">{{ implode('、', $codeStrings) }}</dd>
+                <dt class="text-gray-500 w-28 shrink-0 pt-0.5">登録コード</dt>
+                <dd>
+                    @foreach($sortedCodes as $idx => $code)
+                    <div class="{{ $idx > 0 ? 'ref-code-extra hidden' : '' }} flex items-center gap-2 mb-1 flex-wrap">
+                        <span class="font-mono font-bold text-pink-600">{{ $code->code }}</span>
+                        @if($code->label)<span class="text-xs text-gray-400">{{ $code->label }}</span>@endif
+                        <span class="text-xs text-gray-400">{{ $userCounts[$code->code] ?? 0 }}名</span>
+                        <button type="button" onclick="copyUrl('{{ route('invite', $code->code) }}')"
+                                class="text-xs bg-pink-500 text-white px-2 py-0.5 rounded hover:bg-pink-600">コピー</button>
+                    </div>
+                    @endforeach
+                    @if($sortedCodes->count() > 1)
+                    <button type="button" id="toggle-ref-btn" onclick="toggleRefCodes(this, 'ref-code-extra', {{ $sortedCodes->count() - 1 }})"
+                            class="text-xs text-pink-500 hover:underline">他{{ $sortedCodes->count() - 1 }}件を表示</button>
+                    @endif
+                    @foreach($childrenWithSortedCodes as $ci => $child)
+                    <div class="mt-2 pt-2 border-t border-gray-100">
+                        <p class="text-xs text-gray-500 mb-1">{{ $child->name }}</p>
+                        @foreach($child->sortedCodes as $idx => $code)
+                        <div class="{{ $idx > 0 ? 'child-code-extra-'.$ci.' hidden' : '' }} flex items-center gap-2 mb-1 flex-wrap">
+                            <span class="font-mono font-bold text-pink-600">{{ $code->code }}</span>
+                            @if($code->label)<span class="text-xs text-gray-400">{{ $code->label }}</span>@endif
+                            <span class="text-xs text-gray-400">{{ $child->codeCounts[$code->code] ?? 0 }}名</span>
+                            <button type="button" onclick="copyUrl('{{ route('invite', $code->code) }}')"
+                                    class="text-xs bg-pink-500 text-white px-2 py-0.5 rounded hover:bg-pink-600">コピー</button>
+                        </div>
+                        @endforeach
+                        @if($child->sortedCodes->count() > 1)
+                        <button type="button" onclick="toggleRefCodes(this, 'child-code-extra-{{ $ci }}', {{ $child->sortedCodes->count() - 1 }})"
+                                class="text-xs text-pink-500 hover:underline">他{{ $child->sortedCodes->count() - 1 }}件を表示</button>
+                        @endif
+                    </div>
+                    @endforeach
+                </dd>
             </div>
             <div class="flex gap-2">
                 <dt class="text-gray-500 w-28 shrink-0">総登録人数</dt>
@@ -162,4 +194,29 @@
         </tbody>
     </table>
 </div>
+@push('scripts')
+<script>
+function toggleRefCodes(btn, cls, count) {
+    const extras = document.querySelectorAll('.' + cls);
+    const isHidden = extras[0].classList.contains('hidden');
+    extras.forEach(el => el.classList.toggle('hidden', !isHidden));
+    btn.textContent = isHidden ? '折りたたむ' : '他' + count + '件を表示';
+}
+function copyUrl(url) {
+    try {
+        const el = document.createElement('textarea');
+        el.value = url;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+    } catch(e) {
+        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+    }
+    alert('コピーしました');
+}
+</script>
+@endpush
 @endsection

@@ -147,6 +147,7 @@ class ReferralController extends Controller
             ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
             : Carbon::now()->startOfMonth();
 
+        $agent->load(['codes', 'children.codes']);
         $codeStrings = $agent->getAllCodeStrings();
 
         $referredUsers   = User::whereIn('referred_by_code', $codeStrings)->orderBy('created_at')->get();
@@ -161,6 +162,27 @@ class ReferralController extends Controller
 
         $payStatus = ReferralPaymentStatus::getStatus($agent->id, (int) $month->format('Y'), (int) $month->format('n'));
 
-        return view('admin.referrals.show', compact('agent', 'referredUsers', 'reports', 'month', 'codeStrings', 'payStatus'));
+        // 自分のコードを登録者数順にソート
+        $userCounts = User::whereIn('referred_by_code', $agent->codes->pluck('code')->toArray())
+            ->selectRaw('referred_by_code, count(*) as cnt')
+            ->groupBy('referred_by_code')
+            ->pluck('cnt', 'referred_by_code');
+        $sortedCodes = $agent->codes->sortByDesc(fn($c) => $userCounts[$c->code] ?? 0)->values();
+
+        // 子代理店のコードも登録者数順にソート
+        $childrenWithSortedCodes = $agent->children->map(function ($child) {
+            $counts = User::whereIn('referred_by_code', $child->codes->pluck('code')->toArray())
+                ->selectRaw('referred_by_code, count(*) as cnt')
+                ->groupBy('referred_by_code')
+                ->pluck('cnt', 'referred_by_code');
+            $child->sortedCodes = $child->codes->sortByDesc(fn($c) => $counts[$c->code] ?? 0)->values();
+            $child->codeCounts  = $counts;
+            return $child;
+        });
+
+        return view('admin.referrals.show', compact(
+            'agent', 'referredUsers', 'reports', 'month', 'codeStrings', 'payStatus',
+            'sortedCodes', 'userCounts', 'childrenWithSortedCodes'
+        ));
     }
 }
