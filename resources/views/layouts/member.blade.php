@@ -44,7 +44,7 @@
     @stack('scripts')
 
     @auth('liff')
-    @if(!request()->routeIs('member.register*'))
+    @if(!request()->routeIs('member.register*') && !request()->routeIs('member.transfer*'))
     <style>
     @keyframes bimoni-popup {
         from { opacity: 0; transform: scale(0.8) translateY(20px); }

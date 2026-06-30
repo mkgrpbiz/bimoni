@@ -19,16 +19,15 @@ ssh -i "$env:USERPROFILE\.ssh\xserver.key" -p 10022 mkgrp@sv16576.xserver.jp
 ```
 
 ### デプロイ手順（STGサーバー）
-mainにpushすると GitHub Actions で自動デプロイ（git pull + migrate + view:clear）。
-> **Secret登録が必要**: GitHubリポジトリ Settings → Secrets → `STG_SSH_KEY` に `C:\Users\user\.ssh\xserver.key` の中身を登録すること。
-
-手動デプロイが必要な場合:
+自動デプロイは廃止（GitHub Actionsのワークフローは削除済み）。mainにpushしたあと、毎回SSHで手動デプロイが必要：
 ```bash
 cd /home/mkgrp/bimoni
 git pull
 php8.3 artisan migrate --force
 php8.3 artisan view:clear
+php8.3 artisan route:clear
 ```
+> STGのURLは `https://stg.bimoni.online`（本番 `bimoni.online` とは別。本番に反映するには本番サーバーでも別途git pull等が必要）
 > **注意**: サーバーのデフォルトPHPは8.0。必ず `php8.3` を使う。
 > STGのcronは `schedule:run` を毎分実行。`proposals:auto-cancel`（5分ごと）と `line:send-messages`（毎分）が動く。
 > cron設定: `/opt/php-8.3/bin/php /home/mkgrp/bimoni/artisan schedule:run`
