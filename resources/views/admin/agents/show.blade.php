@@ -37,14 +37,15 @@
         @if(session('error'))
             <div class="bg-red-100 text-red-700 px-3 py-2 rounded text-xs mb-3">{{ session('error') }}</div>
         @endif
-        <div class="space-y-2 mb-4">
-            @foreach($agent->codes as $code)
+        <div class="space-y-2 mb-3">
+            @foreach($sortedCodes as $index => $code)
             @php $hasUsers = \App\Models\User::where('referred_by_code', $code->code)->exists(); @endphp
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="{{ $index > 0 ? 'code-extra hidden' : '' }} flex items-center gap-2 flex-wrap">
                 <span class="font-mono font-bold text-pink-600 dark:text-pink-400">{{ $code->code }}</span>
                 @if($code->label)
                     <span class="text-xs text-gray-500">{{ $code->label }}</span>
                 @endif
+                <span class="text-xs text-gray-400 dark:text-gray-500">{{ $userCounts[$code->code] ?? 0 }}名</span>
                 <code class="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded truncate max-w-xs">{{ route('invite', $code->code) }}</code>
                 <button type="button" onclick="copyUrl('{{ route('invite', $code->code) }}')"
                         class="text-xs bg-pink-500 text-white px-2 py-0.5 rounded hover:bg-pink-600 shrink-0">コピー</button>
@@ -57,6 +58,13 @@
             </div>
             @endforeach
         </div>
+        @if($sortedCodes->count() > 1)
+        <button type="button" id="toggle-codes-btn"
+                onclick="toggleCodes()"
+                class="text-xs text-pink-500 hover:underline mb-4">
+            他{{ $sortedCodes->count() - 1 }}件を表示
+        </button>
+        @endif
         <form method="POST" action="{{ route('admin.agents.add_code', $agent) }}" class="flex items-end gap-2">
             @csrf
             <div>
@@ -169,6 +177,13 @@
     </a>
 </nav>
 <script>
+function toggleCodes() {
+    const extras = document.querySelectorAll('.code-extra');
+    const btn = document.getElementById('toggle-codes-btn');
+    const isHidden = extras[0].classList.contains('hidden');
+    extras.forEach(el => el.classList.toggle('hidden', !isHidden));
+    btn.textContent = isHidden ? '折りたたむ' : '他' + extras.length + '件を表示';
+}
 function copyUrl(url) {
     try {
         const el = document.createElement('textarea');

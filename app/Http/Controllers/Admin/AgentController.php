@@ -79,7 +79,15 @@ class AgentController extends Controller
     public function show(Agent $agent): View
     {
         $agent->load(['children.codes', 'codes']);
-        return view('admin.agents.show', compact('agent'));
+
+        $userCounts = User::whereIn('referred_by_code', $agent->codes->pluck('code')->toArray())
+            ->selectRaw('referred_by_code, count(*) as cnt')
+            ->groupBy('referred_by_code')
+            ->pluck('cnt', 'referred_by_code');
+
+        $sortedCodes = $agent->codes->sortByDesc(fn($c) => $userCounts[$c->code] ?? 0)->values();
+
+        return view('admin.agents.show', compact('agent', 'sortedCodes', 'userCounts'));
     }
 
     public function addCode(Agent $agent, Request $request): RedirectResponse
