@@ -11,23 +11,32 @@ use Illuminate\View\View;
 
 class LineLinkController extends Controller
 {
-    // 未紐付きインポートユーザー一覧
+    // インポートユーザー一覧（紐付け状況別）
     public function index(Request $request): View
     {
-        $query = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
-            ->where('imported_from', 'spreadsheet')
-            ->orderBy('name');
+        $status = $request->get('status', 'unlinked') === 'linked' ? 'linked' : 'unlinked';
+
+        $query = User::where('imported_from', 'spreadsheet');
+
+        if ($status === 'linked') {
+            $query->whereNotNull('line_user_id')->where('line_user_id', 'not like', 'IMPORT_%');
+        } else {
+            $query->where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'));
+        }
+
+        $query->orderBy('name');
 
         if ($request->filled('name')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->name . '%')
-                  ->orWhere('name_kana', 'like', '%' . $request->name . '%');
+                  ->orWhere('name_kana', 'like', '%' . $request->name . '%')
+                  ->orWhere('erme_respondent_id', 'like', '%' . $request->name . '%');
             });
         }
 
         $unlinked = $query->paginate(50)->withQueryString();
 
-        return view('admin.line_links.index', compact('unlinked'));
+        return view('admin.line_links.index', compact('unlinked', 'status'));
     }
 
     // 手動紐付けモーダル用: LINE登録済みユーザー検索（JSON）
@@ -43,7 +52,14 @@ class LineLinkController extends Controller
             })
             ->orderBy('name')
             ->limit(20)
-            ->get(['id', 'name', 'name_kana', 'birthdate', 'gender']);
+            ->get(['id', 'name', 'name_kana', 'birthdate', 'gender'])
+            ->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'name_kana'  => $u->name_kana,
+                'birthdate'  => $u->birthdate?->format('Y-m-d'),
+                'gender'     => $u->gender,
+            ]);
 
         return response()->json($liffUsers);
     }

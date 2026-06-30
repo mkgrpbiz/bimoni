@@ -5,7 +5,7 @@
 @section('content')
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-800">LINE紐付け管理</h1>
-    <span class="text-sm text-gray-500">未紐付き: <strong class="text-red-500">{{ $unlinked->total() }}人</strong></span>
+    <span class="text-sm text-gray-500">{{ $status === 'linked' ? '紐付け済み' : '未紐付き' }}: <strong class="{{ $status === 'linked' ? 'text-green-600' : 'text-red-500' }}">{{ $unlinked->total() }}人</strong></span>
 </div>
 
 @if(session('success'))
@@ -16,19 +16,32 @@
 @endif
 
 <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4 text-sm">
-    インポート済みでまだLINE登録していないユーザーの一覧です。<br>
+    インポート済みユーザーの一覧です。<br>
     ユーザーがLIFF登録すると名前・フリガナ・生年月日で自動紐付けされます。自動紐付けできなかった場合は手動で紐付けてください。
+</div>
+
+{{-- タブ --}}
+<div class="flex gap-2 mb-4">
+    <a href="{{ route('admin.line_links.index', array_merge(request()->except(['page', 'status']), ['status' => 'unlinked'])) }}"
+       class="px-4 py-2 rounded text-sm font-medium {{ $status !== 'linked' ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600' }}">
+        未完了
+    </a>
+    <a href="{{ route('admin.line_links.index', array_merge(request()->except(['page', 'status']), ['status' => 'linked'])) }}"
+       class="px-4 py-2 rounded text-sm font-medium {{ $status === 'linked' ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600' }}">
+        完了
+    </a>
 </div>
 
 {{-- 検索 --}}
 <form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex gap-3 items-end">
+    <input type="hidden" name="status" value="{{ $status }}">
     <div>
-        <label class="block text-xs text-gray-500 mb-1">名前・フリガナ検索</label>
-        <input type="text" name="name" value="{{ request('name') }}" placeholder="名前で絞り込み"
-               class="border rounded px-2 py-1 text-sm w-48">
+        <label class="block text-xs text-gray-500 mb-1">名前・フリガナ・エルメID検索</label>
+        <input type="text" name="name" value="{{ request('name') }}" placeholder="名前・フリガナ・エルメIDで絞り込み"
+               class="border rounded px-2 py-1 text-sm w-64">
     </div>
     <button type="submit" class="bg-pink-500 text-white px-4 py-2 rounded text-sm hover:bg-pink-600">検索</button>
-    <a href="{{ route('admin.line_links.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded text-sm">リセット</a>
+    <a href="{{ route('admin.line_links.index', ['status' => $status]) }}" class="bg-gray-400 text-white px-4 py-2 rounded text-sm">リセット</a>
 </form>
 
 <div class="bg-white rounded-lg shadow overflow-hidden" x-data="linkModal()">
@@ -53,23 +66,29 @@
                 <td class="px-4 py-3 text-gray-600">
                     {{ $user->gender === 'male' ? '男性' : ($user->gender === 'female' ? '女性' : '-') }}
                 </td>
-                <td class="px-4 py-3 text-gray-600">{{ $user->birthdate ?? '-' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ $user->birthdate?->format('Y-m-d') ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $user->email ?? '-' }}</td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ $user->erme_respondent_id ?? '-' }}</td>
-                <td class="px-4 py-3 text-center flex gap-2 justify-center">
-                    <button type="button"
-                            @click="open({{ $user->id }}, '{{ $user->name }}')"
-                            class="bg-pink-500 text-white text-xs px-3 py-1 rounded hover:bg-pink-600">
-                        手動紐付け
-                    </button>
-                    <form method="POST" action="{{ route('admin.line_links.skip') }}"
-                          onsubmit="return confirm('{{ $user->name }} をスキップしますか？一覧から非表示になります。')">
-                        @csrf
-                        <input type="hidden" name="import_user_id" value="{{ $user->id }}">
-                        <button type="submit" class="bg-gray-400 text-white text-xs px-3 py-1 rounded hover:bg-gray-500">
-                            スキップ
+                <td class="px-4 py-3 text-center">
+                    @if($status === 'linked')
+                        <span class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-medium">紐付け済み</span>
+                    @else
+                    <div class="flex gap-2 justify-center">
+                        <button type="button"
+                                @click="open({{ $user->id }}, '{{ $user->name }}')"
+                                class="bg-pink-500 text-white text-xs px-3 py-1 rounded hover:bg-pink-600">
+                            手動紐付け
                         </button>
-                    </form>
+                        <form method="POST" action="{{ route('admin.line_links.skip') }}"
+                              onsubmit="return confirm('{{ $user->name }} をスキップしますか？一覧から非表示になります。')">
+                            @csrf
+                            <input type="hidden" name="import_user_id" value="{{ $user->id }}">
+                            <button type="submit" class="bg-gray-400 text-white text-xs px-3 py-1 rounded hover:bg-gray-500">
+                                スキップ
+                            </button>
+                        </form>
+                    </div>
+                    @endif
                 </td>
             </tr>
             @empty
