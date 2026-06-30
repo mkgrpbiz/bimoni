@@ -41,6 +41,7 @@ class User extends Authenticatable
         'point_balance',
         'status',
         'profile_completed_at',
+        'transfer_registered_at',
         'imported_from',
         'bank_name',
         'bank_code',
@@ -61,6 +62,7 @@ class User extends Authenticatable
             'available_times'     => 'array',
             'birthdate'           => 'date',
             'profile_completed_at' => 'datetime',
+            'transfer_registered_at' => 'datetime',
         ];
     }
 

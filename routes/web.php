@@ -112,8 +112,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
         Route::get('line-links', [LineLinkController::class, 'index'])->name('line_links.index');
         Route::get('line-links/search', [LineLinkController::class, 'searchLiff'])->name('line_links.search');
+        Route::get('line-links/search-import', [LineLinkController::class, 'searchImport'])->name('line_links.search_import');
         Route::post('line-links/link', [LineLinkController::class, 'link'])->name('line_links.link');
         Route::post('line-links/skip', [LineLinkController::class, 'skip'])->name('line_links.skip');
+        Route::post('line-links/confirm-new', [LineLinkController::class, 'confirmNew'])->name('line_links.confirm_new');
         Route::get('referrals', [ReferralController::class, 'index'])->name('referrals.index');
         Route::patch('referrals/mark-done', [ReferralController::class, 'markDone'])->name('referrals.mark_done');
         Route::patch('referrals/mark-pending', [ReferralController::class, 'markPending'])->name('referrals.mark_pending');

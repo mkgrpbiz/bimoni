@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\LegalPage;
 use App\Models\User;
+use App\Services\UserMatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,43 +51,66 @@ class TransferController extends Controller
             'bank_account_number.digits_between' => '口座番号は7〜8桁で入力してください。',
         ]);
 
-        $base = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
+        $target = [
+            'name'      => $request->name,
+            'name_kana' => $request->name_kana,
+            'birthdate' => $request->birthdate,
+            'email'     => $request->email ? strtolower($request->email) : null,
+        ];
+
+        $candidates = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
             ->where('imported_from', 'spreadsheet')
-            ->where('name', $request->name)
-            ->where('name_kana', $request->name_kana);
+            ->where(function ($q) use ($target) {
+                $q->where('name', $target['name'])
+                  ->orWhere('name_kana', $target['name_kana']);
+                if ($target['birthdate']) {
+                    $q->orWhere('birthdate', $target['birthdate']);
+                }
+                if ($target['email']) {
+                    $q->orWhere('email', $target['email']);
+                }
+            })
+            ->get();
 
-        // 名前+フリガナ+生年月日
-        $matched = (clone $base)->where('birthdate', $request->birthdate)->get();
+        // 名前・フリガナ・生年月日・メールのうち3項目以上一致がただ1件の場合のみ自動紐付け
+        $existing = UserMatcher::findUniqueTopMatch($candidates, $target);
 
-        // 名前+フリガナ+メール
-        if ($matched->count() !== 1) {
-            $matched = (clone $base)->where('email', $request->email)->get();
+        if ($existing) {
+            $existing->update([
+                'line_user_id'         => $liffUser->line_user_id,
+                'line_display_name'    => $liffUser->line_display_name ?? $existing->line_display_name,
+                'name'                 => $request->name,
+                'name_kana'            => $request->name_kana,
+                'gender'               => $request->gender,
+                'birthdate'            => $request->birthdate,
+                'email'                => $request->email,
+                'profile_completed_at' => $existing->profile_completed_at ?? now(),
+                'bank_name'            => $request->bank_name,
+                'bank_code'            => $request->bank_code ?: null,
+                'bank_branch_name'     => $request->bank_branch_name,
+                'bank_branch_code'     => $request->bank_branch_code ?: null,
+                'bank_account_type'    => $request->bank_account_type,
+                'bank_account_number'  => $request->bank_account_number,
+                'bank_account_name'    => preg_replace('/\s+/', '', $request->bank_account_name),
+            ]);
+
+            $liffUser->delete();
+
+            Auth::guard('liff')->login($existing);
+
+            return redirect()->route('member.campaigns.index');
         }
 
-        // 名前+フリガナのみ
-        if ($matched->count() !== 1) {
-            $matched = $base->get();
-        }
-
-        if ($matched->count() === 0) {
-            return back()->withErrors(['name' => '一致するデータが見つかりませんでした。入力内容をご確認ください。'])->withInput();
-        }
-
-        if ($matched->count() > 1) {
-            return back()->withErrors(['name' => '複数のデータが見つかりました。運営にお問い合わせください。'])->withInput();
-        }
-
-        $existing = $matched->first();
-
-        $existing->update([
-            'line_user_id'         => $liffUser->line_user_id,
-            'line_display_name'    => $liffUser->line_display_name ?? $existing->line_display_name,
-            'name'                 => $request->name,
-            'name_kana'            => $request->name_kana,
-            'gender'               => $request->gender,
-            'birthdate'            => $request->birthdate,
-            'email'                => $request->email,
-            'profile_completed_at' => $existing->profile_completed_at ?? now(),
+        // 自動紐付けできなかった場合も通常の新規プロフィールとして完了させる
+        // （古いインポートデータとの紐付けはLINE紐付け管理の「紐付け登録」タブから手動で行う）
+        $liffUser->update([
+            'name'                   => $request->name,
+            'name_kana'              => $request->name_kana,
+            'gender'                 => $request->gender,
+            'birthdate'              => $request->birthdate,
+            'email'                  => $request->email,
+            'profile_completed_at'   => now(),
+            'transfer_registered_at' => now(),
             'bank_name'            => $request->bank_name,
             'bank_code'            => $request->bank_code ?: null,
             'bank_branch_name'     => $request->bank_branch_name,
@@ -95,10 +119,6 @@ class TransferController extends Controller
             'bank_account_number'  => $request->bank_account_number,
             'bank_account_name'    => preg_replace('/\s+/', '', $request->bank_account_name),
         ]);
-
-        $liffUser->delete();
-
-        Auth::guard('liff')->login($existing);
 
         return redirect()->route('member.campaigns.index');
     }

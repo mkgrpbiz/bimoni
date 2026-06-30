@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserMatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 
 class LineLinkController extends Controller
@@ -14,7 +16,15 @@ class LineLinkController extends Controller
     // インポートユーザー一覧（紐付け状況別）
     public function index(Request $request): View
     {
-        $status = $request->get('status', 'unlinked') === 'linked' ? 'linked' : 'unlinked';
+        $status = $request->get('status', 'unlinked');
+        if (!in_array($status, ['unlinked', 'linked', 'transfer'], true)) {
+            $status = 'unlinked';
+        }
+
+        if ($status === 'transfer') {
+            $entries = $this->buildTransferEntries($request);
+            return view('admin.line_links.index', ['status' => $status, 'entries' => $entries]);
+        }
 
         $query = User::where('imported_from', 'spreadsheet');
 
@@ -37,6 +47,44 @@ class LineLinkController extends Controller
         $unlinked = $query->paginate(50)->withQueryString();
 
         return view('admin.line_links.index', compact('unlinked', 'status'));
+    }
+
+    // 引き継ぎ登録（紐付け未確定）一覧 + それぞれの候補一覧を作成
+    private function buildTransferEntries(Request $request): LengthAwarePaginator
+    {
+        $importPool = User::where('imported_from', 'spreadsheet')
+            ->where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
+            ->get();
+
+        $query = User::whereNotNull('transfer_registered_at')->orderByDesc('transfer_registered_at');
+
+        if ($request->filled('name')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->name . '%')
+                  ->orWhere('name_kana', 'like', '%' . $request->name . '%');
+            });
+        }
+
+        $transferUsers = $query->get();
+
+        $entries = $transferUsers->map(function (User $user) use ($importPool) {
+            $target = UserMatcher::fields($user);
+            return [
+                'user'       => $user,
+                'candidates' => UserMatcher::scoredCandidates($importPool, $target, 1),
+            ];
+        });
+
+        $perPage = 50;
+        $page = max((int) $request->get('page', 1), 1);
+
+        return new LengthAwarePaginator(
+            $entries->forPage($page, $perPage)->values(),
+            $entries->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
     }
 
     // 手動紐付けモーダル用: LINE登録済みユーザー検索（JSON）
@@ -62,6 +110,33 @@ class LineLinkController extends Controller
             ]);
 
         return response()->json($liffUsers);
+    }
+
+    // 手動紐付けモーダル用: 未紐付きインポートユーザー検索（JSON）
+    public function searchImport(Request $request): JsonResponse
+    {
+        $request->validate(['name' => 'required|string|min:1']);
+
+        $importUsers = User::where('imported_from', 'spreadsheet')
+            ->where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
+            ->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->name . '%')
+                  ->orWhere('name_kana', 'like', '%' . $request->name . '%')
+                  ->orWhere('erme_respondent_id', 'like', '%' . $request->name . '%');
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'name_kana', 'birthdate', 'gender', 'erme_respondent_id'])
+            ->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'name_kana'  => $u->name_kana,
+                'birthdate'  => $u->birthdate?->format('Y-m-d'),
+                'gender'     => $u->gender,
+                'erme_respondent_id' => $u->erme_respondent_id,
+            ]);
+
+        return response()->json($importUsers);
     }
 
     // 手動紐付け実行
@@ -120,5 +195,16 @@ class LineLinkController extends Controller
             ->update(['imported_from' => 'spreadsheet_skipped']);
 
         return back()->with('success', 'スキップしました。');
+    }
+
+    // 引き継ぎ登録ユーザーを正真正銘の新規として確定（紐付け候補一覧から外す）
+    public function confirmNew(Request $request): RedirectResponse
+    {
+        $request->validate(['user_id' => 'required|exists:users,id']);
+
+        User::findOrFail($request->user_id)
+            ->update(['transfer_registered_at' => null]);
+
+        return back()->with('success', '新規ユーザーとして確定しました。');
     }
 }

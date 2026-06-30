@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\LegalPage;
 use App\Models\User;
+use App\Services\UserMatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,31 +117,33 @@ class RegisterController extends Controller
 
     private function tryLinkExistingUser(User $liffUser, Request $request): ?User
     {
-        // インポート済みでまだLINE未紐付けのユーザーを検索
-        $base = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
+        $target = [
+            'name'      => $request->name,
+            'name_kana' => $request->name_kana,
+            'birthdate' => $request->birthdate,
+            'email'     => $request->email ? strtolower($request->email) : null,
+        ];
+
+        // インポート済みでまだLINE未紐付けのユーザーから候補を絞り込み
+        $candidates = User::where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
             ->where('imported_from', 'spreadsheet')
-            ->where('name', $request->name)
-            ->where('name_kana', $request->name_kana);
+            ->where(function ($q) use ($target) {
+                $q->where('name', $target['name'])
+                  ->orWhere('name_kana', $target['name_kana']);
+                if ($target['birthdate']) {
+                    $q->orWhere('birthdate', $target['birthdate']);
+                }
+                if ($target['email']) {
+                    $q->orWhere('email', $target['email']);
+                }
+            })
+            ->get();
 
-        // 1. 名前+フリガナ+生年月日 で一致
-        $matched = (clone $base)->where('birthdate', $request->birthdate)->get();
-
-        // 2. 名前+フリガナ+メール で一致
-        if ($matched->count() !== 1 && $request->filled('email')) {
-            $matched = (clone $base)->where('email', $request->email)->get();
-        }
-
-        // 3. 名前+フリガナのみ で一致
-        if ($matched->count() !== 1) {
-            $matched = $base->get();
-        }
-
-        // 一意に特定できない場合は自動紐付けしない
-        if ($matched->count() !== 1) {
+        // 名前・フリガナ・生年月日・メールのうち3項目以上一致がただ1件の場合のみ自動紐付け
+        $existing = UserMatcher::findUniqueTopMatch($candidates, $target);
+        if (!$existing) {
             return null;
         }
-
-        $existing = $matched->first();
 
         // 既存ユーザーに LINE情報・プロフィール・銀行情報をマージ
         $existing->update([
