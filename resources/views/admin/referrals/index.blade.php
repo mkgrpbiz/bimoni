@@ -64,9 +64,14 @@
                     @endforeach
                 </td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-600">
-                    @foreach($row['codes'] as $code)
-                        <span class="block">{{ $code }}</span>
+                    @foreach($row['codes'] as $codeIdx => $code)
+                        <span class="{{ $codeIdx > 0 ? 'ref-extra-'.$row['agent']->id.' hidden' : '' }} block">{{ $code }}</span>
                     @endforeach
+                    @if(count($row['codes']) > 1)
+                    <button type="button"
+                            onclick="toggleIndexCodes(this, 'ref-extra-{{ $row['agent']->id }}', {{ count($row['codes']) - 1 }})"
+                            class="text-pink-500 hover:underline mt-0.5">他{{ count($row['codes']) - 1 }}件</button>
+                    @endif
                 </td>
                 <td class="px-4 py-3 text-right">{{ $row['registered'] }}</td>
                 <td class="px-4 py-3 text-right">{{ $row['applications'] }}</td>
@@ -119,4 +124,14 @@
         </tbody>
     </table>
 </div>
+@push('scripts')
+<script>
+function toggleIndexCodes(btn, cls, count) {
+    const extras = document.querySelectorAll('.' + cls);
+    const isHidden = extras[0].classList.contains('hidden');
+    extras.forEach(el => el.classList.toggle('hidden', !isHidden));
+    btn.textContent = isHidden ? '折りたたむ' : '他' + count + '件';
+}
+</script>
+@endpush
 @endsection
