@@ -42,9 +42,14 @@ class AuthController extends Controller
 
         Auth::guard('liff')->login($user);
 
-        $redirect = $user->profile_completed_at
-            ? route('member.campaigns.index')
-            : route('member.register');
+        if ($user->profile_completed_at) {
+            $redirect = route('member.campaigns.index');
+        } else {
+            $intended = session()->pull('url.intended');
+            $redirect = ($intended === route('member.transfer'))
+                ? route('member.transfer')
+                : route('member.register');
+        }
 
         return response()->json(['redirect' => $redirect]);
     }
