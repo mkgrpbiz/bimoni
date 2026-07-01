@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', '承認反映管理')
 
@@ -6,26 +6,33 @@
 <div class="flex items-center justify-between mb-5">
     <h1 class="text-2xl font-bold text-gray-800">承認反映管理</h1>
 
-    <form method="GET" class="flex items-center gap-2">
-        <select name="mode" onchange="this.form.submit()"
-                class="border rounded px-2 py-1.5 text-sm bg-white">
-            <option value="monthly"    @selected($mode === 'monthly')>月次</option>
-            <option value="cumulative" @selected($mode === 'cumulative')>累計</option>
-        </select>
-        @if($mode === 'monthly')
-        <select name="month_key" onchange="syncMonth(this); this.form.submit()"
-                class="border rounded px-2 py-1.5 text-sm bg-white">
-            @foreach($months as $m)
-                <option value="{{ $m['year'] }}-{{ $m['month'] }}"
-                    @selected($m['year'] === $year && $m['month'] === $month)>
-                    {{ $m['label'] }}
-                </option>
-            @endforeach
-        </select>
-        <input type="hidden" name="year"  id="inp-year"  value="{{ $year }}">
-        <input type="hidden" name="month" id="inp-month" value="{{ $month }}">
-        @endif
-    </form>
+    <div class="flex items-center gap-3">
+        <button onclick="saveSortOrder(this)"
+                class="text-xs bg-indigo-500 text-white px-3 py-1.5 rounded hover:bg-indigo-600">
+            並び順を保存
+        </button>
+
+        <form method="GET" class="flex items-center gap-2">
+            <select name="mode" onchange="this.form.submit()"
+                    class="border rounded px-2 py-1.5 text-sm bg-white">
+                <option value="monthly"    @selected($mode === 'monthly')>月次</option>
+                <option value="cumulative" @selected($mode === 'cumulative')>累計</option>
+            </select>
+            @if($mode === 'monthly')
+            <select name="month_key" onchange="syncMonth(this); this.form.submit()"
+                    class="border rounded px-2 py-1.5 text-sm bg-white">
+                @foreach($months as $m)
+                    <option value="{{ $m['year'] }}-{{ $m['month'] }}"
+                        @selected($m['year'] === $year && $m['month'] === $month)>
+                        {{ $m['label'] }}
+                    </option>
+                @endforeach
+            </select>
+            <input type="hidden" name="year"  id="inp-year"  value="{{ $year }}">
+            <input type="hidden" name="month" id="inp-month" value="{{ $month }}">
+            @endif
+        </form>
+    </div>
 </div>
 
 @if(session('success'))
@@ -36,6 +43,7 @@
     <table class="w-full text-sm">
         <thead class="bg-gray-50 text-gray-800 text-xs">
             <tr>
+                <th class="px-2 py-3 w-8"></th>
                 <th class="px-4 py-3 text-left">案件名</th>
                 <th class="px-3 py-3 text-center">実施数</th>
                 <th class="px-3 py-3 text-center">報告数</th>
@@ -46,7 +54,7 @@
                 <th class="px-3 py-3 text-center">表示</th>
             </tr>
         </thead>
-        <tbody class="divide-y">
+        <tbody id="campaign-tbody" class="divide-y">
             @php
             $totalSales = 0;
             $totalGross = 0;
@@ -65,6 +73,9 @@
             $isAllDenied    = $ref?->is_all_denied ?? false;
             $sales          = $reflectCount * ($campaign->campaign_unit_price ?? 0);
             $gross          = $reflectCount * ($campaign->gross_profit ?? 0);
+            @endphp
+            @if($completedCount >= 1)
+            @php
             $totalSales     += $sales;
             $totalGross     += $gross;
             $totalCompleted += $completedCount;
@@ -73,6 +84,7 @@
             @endphp
             <tr class="hover:bg-gray-50 {{ $isAllDenied ? 'bg-red-50' : '' }} {{ $campaign->is_visible ? '' : 'opacity-50' }}"
                 data-campaign="{{ $campaign->id }}">
+                <td class="px-2 py-3 text-center text-gray-400 drag-handle cursor-grab select-none text-base">≡</td>
                 <td class="px-4 py-3">
                     <span class="font-medium text-gray-800">{{ $campaign->title }}</span>
                     @if(!$campaign->is_visible)
@@ -113,10 +125,12 @@
                     </button>
                 </td>
             </tr>
+            @endif
             @endforeach
-
-            {{-- 合計行 --}}
-            <tr class="bg-gray-50 font-bold text-sm">
+        </tbody>
+        <tfoot>
+            <tr class="bg-gray-50 font-bold text-sm border-t">
+                <td></td>
                 <td class="px-4 py-3">合計</td>
                 <td class="px-3 py-3 text-center">{{ $totalCompleted }}</td>
                 <td class="px-3 py-3 text-center">{{ $totalReported }}</td>
@@ -126,7 +140,7 @@
                 <td></td>
                 <td></td>
             </tr>
-        </tbody>
+        </tfoot>
     </table>
 </div>
 
@@ -145,7 +159,14 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
+new Sortable(document.getElementById('campaign-tbody'), {
+    handle: '.drag-handle',
+    animation: 150,
+    ghostClass: 'bg-blue-50',
+});
+
 function syncMonth(sel) {
     const [y, m] = sel.value.split('-');
     document.getElementById('inp-year').value  = y;
@@ -211,6 +232,30 @@ function toggleVisible(campaignId, current, btn) {
     document.body.appendChild(form);
     form.submit();
 }
+
+async function saveSortOrder(btn) {
+    const rows = document.querySelectorAll('#campaign-tbody tr[data-campaign]');
+    const ids  = Array.from(rows).map(r => parseInt(r.dataset.campaign));
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '保存中…';
+
+    const res = await fetch('/admin/campaigns/reorder', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: JSON.stringify({ ids }),
+    });
+
+    if (res.ok) {
+        btn.textContent = '✓ 保存しました';
+        btn.classList.replace('bg-indigo-500', 'bg-green-500');
+        setTimeout(() => { btn.textContent = orig; btn.classList.replace('bg-green-500', 'bg-indigo-500'); btn.disabled = false; }, 2000);
+    } else {
+        btn.textContent = 'エラー'; btn.disabled = false;
+    }
+}
 </script>
 @endsection
-
