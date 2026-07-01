@@ -54,11 +54,18 @@
                     <p class="text-xs text-amber-600 mb-2">※5つ以下は送料がご負担になります。</p>
                     <div class="space-y-2" id="collection-campaign-list">
                         @foreach($completedApplications as $app)
+                        @php
+                            $collectionCount = $app->campaign->collection_count_judgment;
+                            $itemFee = ($collectionCount ?? 1) * 800;
+                        @endphp
                         <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
                             <input type="checkbox" name="collection_campaign_ids[]" value="{{ $app->campaign_id }}"
+                                   data-fee="{{ $itemFee }}"
                                    class="rounded border-gray-300 text-pink-500"
                                    onchange="updateCollectionFee()">
-                            <span class="text-sm text-gray-800">{{ $app->campaign->title }}</span>
+                            <span class="text-sm text-gray-800">
+                                {{ $app->campaign->title }}@if($collectionCount)(継続分)@if($collectionCount >= 2)×{{ $collectionCount }}@endif@endif
+                            </span>
                         </label>
                         @endforeach
                     </div>
@@ -317,16 +324,19 @@ function updateCollectionFee() {
     const checkboxes = document.querySelectorAll('input[name="collection_campaign_ids[]"]:checked');
     const count = checkboxes.length;
     const shippingFee = parseInt(document.getElementById('shipping-fee-input')?.value || 0);
-    const gross = count * 800;
+
+    let gross = 0;
+    checkboxes.forEach(cb => { gross += parseInt(cb.dataset.fee || 800); });
+
     const fee = count <= 5 ? gross - shippingFee : gross;
 
     document.getElementById('collection-fee-display').textContent = fee.toLocaleString() + '円';
 
-    if (count <= 5 && count > 0) {
+    if (count > 0 && count <= 5) {
         document.getElementById('collection-fee-note').textContent =
-            count + '点×800円 - 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + '円';
+            gross.toLocaleString() + '円 - 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + '円';
     } else if (count > 0) {
-        document.getElementById('collection-fee-note').textContent = count + '点×800円 = ' + fee.toLocaleString() + '円';
+        document.getElementById('collection-fee-note').textContent = gross.toLocaleString() + '円';
     } else {
         document.getElementById('collection-fee-note').textContent = '';
     }

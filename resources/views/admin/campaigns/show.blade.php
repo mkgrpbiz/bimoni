@@ -34,6 +34,8 @@
             -
         @endif
     </div>
+    <div><span class="text-gray-700">回収前提（継続）：</span>{{ $campaign->collection_requirement ?? '-' }}</div>
+    <div><span class="text-gray-700">回収個数判定（継続）：</span>{{ $campaign->collection_count_judgment ? $campaign->collection_count_judgment . '個' : '-' }}</div>
     <div><span class="text-gray-700">募集人数：</span>{{ $campaign->capacity }}名</div>
     <div><span class="text-gray-700">打診予定数：</span>{{ $campaign->solicitation_target ?? '-' }}名</div>
     <div><span class="text-gray-700">粗利：</span>{{ $campaign->gross_profit !== null ? '¥'.number_format($campaign->gross_profit) : '-' }}</div>

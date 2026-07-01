@@ -112,6 +112,7 @@
     <h2 class="font-bold text-gray-700 mb-4">詳細情報</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
+        {{-- Row 1: 案件単価 / モニターコスト / 粗利 --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">案件単価（円）</label>
             <input type="number" name="campaign_unit_price"
@@ -119,6 +120,22 @@
                    class="w-full border rounded px-3 py-2 text-sm" min="0"
                    oninput="calcGross()">
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">モニターコスト（自動計算）</label>
+            <input type="text" id="f-monitor-cost" readonly
+                   class="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-700"
+                   value="{{ number_format(($campaign->initial_purchase_fee ?? 0) + ($campaign->recurring_purchase_fee ?? 0) * (($campaign->continuation_rate ?? 0) / 100) + ($campaign->cooperation_fee ?? 0) + ($campaign->referral_fee ?? 0)) }}円">
+            <p class="text-xs text-gray-400 mt-0.5">初回+継続×継続率+協力金+紹介単価</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">粗利（自動計算）</label>
+            <input type="number" name="gross_profit" id="f-gross" readonly
+                   value="{{ old('gross_profit', $campaign->gross_profit ?? '') }}"
+                   class="w-full border rounded px-3 py-2 text-sm bg-gray-50">
+            <p class="text-xs text-gray-400 mt-0.5">案件単価 − モニターコスト</p>
+        </div>
+
+        {{-- Row 2: 初回購入費 / 継続購入費 / 紹介報酬 --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">初回購入費（円）</label>
             <input type="number" name="initial_purchase_fee" id="f-initial"
@@ -134,14 +151,18 @@
                    oninput="updateCoopLabels(); calcGross()">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">目標継続率（%）</label>
-            <input type="number" name="continuation_rate" id="f-rate"
-                   value="{{ old('continuation_rate', $campaign->continuation_rate ?? '') }}"
-                   class="w-full border rounded px-3 py-2 text-sm" min="0" max="100" step="0.01"
-                   oninput="calcGross()">
+            <label class="block text-sm font-medium text-gray-700 mb-1">紹介単価（円）</label>
+            <select name="referral_fee" id="f-referral" onchange="calcGross()"
+                    class="w-full border rounded px-3 py-2 text-sm">
+                @foreach([0 => 'なし', 500 => '500円', 1000 => '1,000円'] as $val => $label)
+                <option value="{{ $val }}" @selected((int) old('referral_fee', $campaign->referral_fee ?? 0) === $val)>
+                    {{ $label }}
+                </option>
+                @endforeach
+            </select>
         </div>
 
-        {{-- モニター協力金 --}}
+        {{-- Row 3: モニター協力金 / 回収前提 --}}
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金（+○円部分） <span class="text-red-500">*</span></label>
             <div class="flex items-center gap-1">
@@ -155,8 +176,16 @@
             <p class="text-xs text-gray-400 mt-0.5">表示例：初回購入費(5,000円)+200円</p>
             @error('cooperation_fee')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">回収前提（継続）</label>
+            <select name="collection_requirement" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">未設定</option>
+                <option value="回収前提" @selected(old('collection_requirement', $campaign->collection_requirement ?? '') === '回収前提')>回収前提</option>
+                <option value="回収不要" @selected(old('collection_requirement', $campaign->collection_requirement ?? '') === '回収不要')>回収不要</option>
+            </select>
+        </div>
 
-        {{-- 継続モニター協力金 --}}
+        {{-- Row 4: 継続モニター協力金 / 回収個数判定 --}}
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">継続モニター協力金（+○円部分）</label>
             <div class="flex items-center gap-1">
@@ -169,36 +198,17 @@
             </div>
             <p class="text-xs text-gray-400 mt-0.5">空欄の場合「継続購入費(○円)」のみ表示</p>
         </div>
-
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">紹介単価（円）</label>
-            <select name="referral_fee" id="f-referral" onchange="calcGross()"
-                    class="w-full border rounded px-3 py-2 text-sm">
-                @foreach([0 => 'なし', 500 => '500円', 1000 => '1,000円'] as $val => $label)
-                <option value="{{ $val }}" @selected((int) old('referral_fee', $campaign->referral_fee ?? 0) === $val)>
-                    {{ $label }}
-                </option>
-                @endforeach
+            <label class="block text-sm font-medium text-gray-700 mb-1">回収個数判定（継続）</label>
+            <select name="collection_count_judgment" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">未設定</option>
+                <option value="1" @selected((string) old('collection_count_judgment', $campaign->collection_count_judgment ?? '') === '1')>1個</option>
+                <option value="2" @selected((string) old('collection_count_judgment', $campaign->collection_count_judgment ?? '') === '2')>2個</option>
+                <option value="3" @selected((string) old('collection_count_judgment', $campaign->collection_count_judgment ?? '') === '3')>3個</option>
             </select>
         </div>
 
-        {{-- モニターコスト（自動計算） --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">モニターコスト（自動計算）</label>
-            <input type="text" id="f-monitor-cost" readonly
-                   class="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-700"
-                   value="{{ number_format(($campaign->initial_purchase_fee ?? 0) + ($campaign->recurring_purchase_fee ?? 0) * (($campaign->continuation_rate ?? 0) / 100) + ($campaign->cooperation_fee ?? 0) + ($campaign->referral_fee ?? 0)) }}円">
-            <p class="text-xs text-gray-400 mt-0.5">初回+継続×継続率+協力金+紹介単価</p>
-        </div>
-
-        {{-- 粗利（自動計算） --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">粗利（自動計算）</label>
-            <input type="number" name="gross_profit" id="f-gross" readonly
-                   value="{{ old('gross_profit', $campaign->gross_profit ?? '') }}"
-                   class="w-full border rounded px-3 py-2 text-sm bg-gray-50">
-            <p class="text-xs text-gray-400 mt-0.5">案件単価 − モニターコスト</p>
-        </div>
+        {{-- Row 5: 締日 / 支払い日 --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">締日</label>
             <select name="closing_date" class="w-full border rounded px-3 py-2 text-sm">
@@ -223,6 +233,13 @@
 <div class="bg-white rounded-lg shadow p-6 mb-4">
     <h2 class="font-bold text-gray-700 mb-4">募集設定</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">目標継続率（%）</label>
+            <input type="number" name="continuation_rate" id="f-rate"
+                   value="{{ old('continuation_rate', $campaign->continuation_rate ?? '') }}"
+                   class="w-full border rounded px-3 py-2 text-sm" min="0" max="100" step="0.01"
+                   oninput="calcGross()">
+        </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">目標男性比率（%）</label>
             <input type="number" name="target_male_ratio"

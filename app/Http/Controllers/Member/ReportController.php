@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\Campaign;
 use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\MonitorReportImage;
@@ -98,7 +99,14 @@ class ReportController extends Controller
         $campaignIds = $request->collection_campaign_ids;
         $itemCount   = count($campaignIds);
         $shippingFee = (int) $request->shipping_fee;
-        $fee         = CollectionReport::calcFee($itemCount, $shippingFee);
+
+        $campaignMap = Campaign::whereIn('id', $campaignIds)->get()->keyBy('id');
+        $grossFee    = 0;
+        foreach ($campaignIds as $cid) {
+            $count    = (int) ($campaignMap->get($cid)?->collection_count_judgment ?? 1);
+            $grossFee += 800 * $count;
+        }
+        $fee = $itemCount <= 5 ? $grossFee - $shippingFee : $grossFee;
 
         $boxPath   = $request->file('box_image')->store('collection', 'public');
         $labelPath = $request->file('label_image')->store('collection', 'public');
