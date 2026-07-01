@@ -350,6 +350,24 @@
        class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 text-sm self-center">キャンセル</a>
 </div>
 
+@if(!$isEdit && isset($lineMessageDefaults))
+<script>
+const lineMessageDefaults = @json($lineMessageDefaults);
+document.addEventListener('DOMContentLoaded', function () {
+    const prMediaSel = document.querySelector('select[name="pr_media"]');
+    if (!prMediaSel) return;
+    prMediaSel.addEventListener('change', function () {
+        const def = lineMessageDefaults[this.value];
+        if (!def) return;
+        const inviteField = document.querySelector('textarea[name="monitor_invite_message"]');
+        const endField    = document.querySelector('textarea[name="monitor_end_message"]');
+        if (inviteField && def.monitor_invite_message) inviteField.value = def.monitor_invite_message;
+        if (endField    && def.monitor_end_message)    endField.value    = def.monitor_end_message;
+    });
+});
+</script>
+@endif
+
 <script>
 function previewThumbnail(input) {
     const preview = document.getElementById('thumbnail-preview');

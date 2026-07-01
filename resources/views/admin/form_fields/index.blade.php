@@ -1,7 +1,7 @@
 @extends('layouts.admin')
-@section('title', 'ページ編集')
+@section('title', '編集')
 @section('content')
-<h1 class="text-2xl font-bold text-gray-800 mb-6">ページ編集</h1>
+<h1 class="text-2xl font-bold text-gray-800 mb-6">編集</h1>
 
 @if(session('success'))
     <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
