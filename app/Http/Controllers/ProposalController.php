@@ -19,7 +19,11 @@ class ProposalController extends Controller
     {
         $application = Application::where('proposal_token', $token)
             ->with(['campaign', 'user'])
-            ->firstOrFail();
+            ->first();
+
+        if (!$application) {
+            return response()->view('proposals.expired', [], 410);
+        }
 
         // PR打診の自動キャンセル（invited_end_at が過ぎた場合）
         if ($application->status === 'line_contacted'

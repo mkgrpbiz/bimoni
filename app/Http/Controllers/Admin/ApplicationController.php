@@ -221,10 +221,8 @@ class ApplicationController extends Controller
                 $application->update(['invited_end_at' => $request->invited_end_at]);
             }
 
-            // 打診トークンを生成（初回のみ）
-            if (!$application->proposal_token) {
-                $application->update(['proposal_token' => Str::random(64)]);
-            }
+            // 打診トークンを生成（再打診時は新しいトークンで上書き→旧リンクを無効化）
+            $application->update(['proposal_token' => Str::random(64)]);
             $application->refresh();
 
             // 打診 LINE ジョブ作成
