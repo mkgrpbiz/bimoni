@@ -9,9 +9,9 @@
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
 <div class="bg-white rounded-2xl shadow-md w-full max-w-sm p-6 text-center">
     <div class="text-4xl mb-4">✅</div>
-    <h1 class="text-base font-bold text-gray-800 mb-4">継続購入可能</h1>
+    <h1 class="text-base font-bold text-gray-800 mb-4">ありがとうございます。</h1>
     <p class="text-sm text-gray-600 leading-relaxed">
-        二回目の受け取りが完了しましたら、報告フォームよりご報告をお願いいたします。
+        商品到着後にモニター報告をお願いいたします。
     </p>
 </div>
 </body>

@@ -76,7 +76,44 @@ class ApplicationController extends Controller
         $tabCounts = $this->getTabCounts();
         $campaigns = Campaign::orderBy('title')->get();
 
-        return view('admin.applications.index', compact('applications', 'campaigns', 'campaignStatus', 'tabCounts'));
+        // アラート: 翌日未達成打診
+        $tomorrowDate  = now()->addDay()->toDateString();
+        $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+        $tomorrowSlots = CampaignDailySlot::where('target_date', $tomorrowDate)
+            ->where('planned_count', '>', 0)
+            ->with('campaign:id,title')
+            ->get();
+        $tomorrowUnderAlerts = collect();
+        foreach ($tomorrowSlots as $slot) {
+            $booked = Application::where('campaign_id', $slot->campaign_id)
+                ->whereIn('status', $activeStatuses)
+                ->whereNotNull('invited_at')
+                ->whereDate('invited_at', $tomorrowDate)
+                ->count();
+            if ($booked < $slot->planned_count) {
+                $tomorrowUnderAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count]);
+            }
+        }
+
+        // アラート: 未達成目標継続率
+        $contCampaigns = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->get();
+        $contStats = Application::whereIn('campaign_id', $contCampaigns->pluck('id'))
+            ->whereNotNull('continuation_token')
+            ->selectRaw('campaign_id, COUNT(*) as sent, SUM(continuation_response = "possible") as possible_count')
+            ->groupBy('campaign_id')
+            ->get()->keyBy('campaign_id');
+        $continuationRateAlerts = $contCampaigns->filter(function ($c) use ($contStats) {
+            $s = $contStats->get($c->id);
+            return $s && $s->sent > 0 && ($s->possible_count / $s->sent * 100) < $c->continuation_rate;
+        })->map(function ($c) use ($contStats) {
+            $s = $contStats->get($c->id);
+            return ['campaign' => $c, 'actual' => round($s->possible_count / $s->sent * 100), 'target' => (int) $c->continuation_rate];
+        })->values();
+
+        return view('admin.applications.index', compact(
+            'applications', 'campaigns', 'campaignStatus', 'tabCounts',
+            'tomorrowUnderAlerts', 'continuationRateAlerts'
+        ));
     }
 
     public function campaignIndex(Campaign $campaign, Request $request): View
@@ -303,24 +340,20 @@ class ApplicationController extends Controller
 
     public function sendContinuationRequest(Application $application, LineMessagingService $lineService): RedirectResponse
     {
-        if ($application->continuation_wish !== '希望') {
-            return back()->with('error', '継続希望が「希望」の応募者のみ送信できます。');
-        }
+        $application->loadMissing('campaign');
 
-        if (!$application->continuation_token) {
-            $application->update(['continuation_token' => Str::random(64)]);
-            $application->refresh();
-        }
+        // 再送時も新しいトークンで上書き → 旧リンクを無効化
+        $application->update(['continuation_token' => Str::random(64), 'continuation_response' => null, 'continuation_responded_at' => null]);
+        $application->refresh();
 
-        $campaign = $application->campaign;
-        $acceptUrl  = route('continuation.accept', $application->continuation_token);
-        $declineUrl = route('continuation.decline', $application->continuation_token);
+        $campaign   = $application->campaign;
+        $confirmUrl = route('continuation.confirm', $application->continuation_token);
 
         $msg = "【継続購入のご案内】\n"
             . $campaign->title . "\n\n"
             . "継続購入についてのご希望をお聞かせください。\n\n"
-            . "✅ 継続購入可能\n" . $acceptUrl . "\n\n"
-            . "❌ 継続購入不可\n" . $declineUrl;
+            . "以下のURLよりご回答をお願いします。\n"
+            . $confirmUrl;
 
         $lineService->sendPush($application->user_id, $msg, 'continuation_request', $application->id);
 

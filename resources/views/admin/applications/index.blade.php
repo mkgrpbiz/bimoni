@@ -13,6 +13,37 @@
     <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4 text-sm">{{ session('error') }}</div>
 @endif
 
+{{-- アラート --}}
+@if($tomorrowUnderAlerts->isNotEmpty() || $continuationRateAlerts->isNotEmpty())
+<div class="space-y-2 mb-4">
+    @if($tomorrowUnderAlerts->isNotEmpty())
+    <div class="bg-yellow-50 border border-yellow-300 rounded-lg px-4 py-2 text-sm text-yellow-800">
+        <div class="font-bold mb-1">翌日未達成打診 <span class="font-normal text-xs ml-1">{{ now()->addDay()->format('m/d') }}</span></div>
+        <div class="flex flex-wrap gap-2">
+            @foreach($tomorrowUnderAlerts as $under)
+            <span class="bg-yellow-100 border border-yellow-300 rounded px-2 py-0.5 text-xs font-medium">
+                {{ $under['slot']->campaign?->title ?? '不明' }}（打診{{ $under['booked'] }}/目標{{ $under['planned'] }}）
+            </span>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    @if($continuationRateAlerts->isNotEmpty())
+    <div class="bg-green-50 border border-green-300 rounded-lg px-4 py-2 text-sm text-green-800">
+        <div class="font-bold mb-1">未達成目標継続率</div>
+        <div class="flex flex-wrap gap-2">
+            @foreach($continuationRateAlerts as $alert)
+            <span class="bg-green-100 border border-green-300 rounded px-2 py-0.5 text-xs font-medium">
+                {{ $alert['campaign']->title }}（完了{{ $alert['actual'] }}%/目標{{ $alert['target'] }}%）
+            </span>
+            @endforeach
+        </div>
+    </div>
+    @endif
+</div>
+@endif
+
 {{-- 案件ステータスタブ --}}
 @php
 $tabs = [

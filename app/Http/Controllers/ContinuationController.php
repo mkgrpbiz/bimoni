@@ -12,10 +12,10 @@ class ContinuationController extends Controller
     {
         $application = Application::where('continuation_token', $token)
             ->with(['campaign', 'user'])
-            ->firstOrFail();
+            ->first();
 
-        if ($application->continuation_response !== null) {
-            return response()->view('continuation.already_answered', compact('application'), 410);
+        if (!$application || $application->continuation_response !== null) {
+            return response()->view('proposals.expired', [], 410);
         }
 
         return view('continuation.confirm', compact('application'));
