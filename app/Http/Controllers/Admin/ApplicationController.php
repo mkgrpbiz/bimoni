@@ -53,7 +53,7 @@ class ApplicationController extends Controller
             ->where(function ($q) use ($cutoff) {
                 $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
                   ->orWhere(function ($q2) use ($cutoff) {
-                      $q2->whereIn('status', ['completed', 'reported', 'approved', 'point_granted', 'cancelled'])
+                      $q2->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                          ->where(fn($q3) => $q3->where('invited_end_at', '>=', $cutoff)
                                                ->orWhere('invited_at', '>=', $cutoff));
                   });
@@ -541,7 +541,7 @@ class ApplicationController extends Controller
             ->where(function ($q) use ($cutoff) {
                 $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
                   ->orWhere(function ($q2) use ($cutoff) {
-                      $q2->whereIn('status', ['completed', 'reported', 'approved', 'point_granted', 'cancelled'])
+                      $q2->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                          ->where(fn($q3) => $q3->where('invited_end_at', '>=', $cutoff)
                                                ->orWhere('invited_at', '>=', $cutoff));
                   });
