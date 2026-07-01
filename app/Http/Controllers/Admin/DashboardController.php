@@ -47,11 +47,16 @@ class DashboardController extends Controller
         $chartData = $this->getChartData();
 
         // 月一覧
+        $dataMonths = Application::selectRaw('YEAR(created_at) as y, MONTH(created_at) as m')
+            ->groupBy('y', 'm')
+            ->get()
+            ->map(fn($r) => $r->y . '-' . $r->m)
+            ->toArray();
         $months = [];
         $start  = now()->subMonths(11);
         for ($i = 0; $i < 18; $i++) {
             $d        = $start->copy()->addMonths($i);
-            $months[] = ['year' => (int)$d->format('Y'), 'month' => (int)$d->format('n'), 'label' => $d->format('Y年n月')];
+            $months[] = ['year' => (int)$d->format('Y'), 'month' => (int)$d->format('n'), 'label' => $d->format('Y年n月'), 'has_data' => in_array($d->format('Y') . '-' . (int)$d->format('n'), $dataMonths)];
         }
 
         return view('admin.dashboard', compact(

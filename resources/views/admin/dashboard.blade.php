@@ -38,7 +38,8 @@
                 class="border rounded px-2 py-1.5 text-sm bg-white">
             @foreach($months as $m)
                 <option value="{{ $m['year'] }}-{{ $m['month'] }}"
-                    @selected($m['year'] === $year && $m['month'] === $month)>
+                    @selected($m['year'] === $year && $m['month'] === $month)
+                    @disabled(!($m['has_data'] ?? true))>
                     {{ $m['label'] }}
                 </option>
             @endforeach

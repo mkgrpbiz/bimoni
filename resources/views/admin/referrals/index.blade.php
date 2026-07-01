@@ -11,15 +11,29 @@
     <div class="bg-green-100 border border-green-400 text-green-800 rounded px-4 py-2 mb-4">{{ session('success') }}</div>
 @endif
 
-<form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">月</label>
-        <input type="month" name="month" value="{{ $month->format('Y-m') }}"
-               class="border rounded px-2 py-1 text-sm">
-    </div>
-    <button type="submit" class="bg-pink-500 text-white px-4 py-2 rounded text-sm hover:bg-pink-600">絞り込み</button>
+<form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-center">
+    <select name="month_key" onchange="syncMonth(this); this.form.submit()"
+            class="border rounded px-2 py-1.5 text-sm bg-white">
+        @foreach($months as $m)
+            <option value="{{ $m['year'] }}-{{ $m['month'] }}"
+                @selected($m['year'] === $year && $m['month'] === $mon)
+                @disabled(!($m['has_data'] ?? true))>
+                {{ $m['label'] }}
+            </option>
+        @endforeach
+    </select>
+    <input type="hidden" name="year"  id="inp-year"  value="{{ $year }}">
+    <input type="hidden" name="month" id="inp-month" value="{{ $mon }}">
     <a href="{{ route('admin.referrals.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded text-sm hover:bg-gray-500">リセット</a>
 </form>
+
+<script>
+function syncMonth(sel) {
+    const [y, m] = sel.value.split('-');
+    document.getElementById('inp-year').value  = y;
+    document.getElementById('inp-month').value = m;
+}
+</script>
 
 <div class="grid grid-cols-2 gap-4 mb-4">
     <div class="bg-white rounded-lg shadow px-5 py-4">

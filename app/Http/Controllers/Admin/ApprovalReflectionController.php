@@ -97,11 +97,17 @@ class ApprovalReflectionController extends Controller
 
     private function getAvailableMonths(): array
     {
+        $dataMonths = \App\Models\Application::whereNotNull('completed_at')
+            ->selectRaw('YEAR(completed_at) as y, MONTH(completed_at) as m')
+            ->groupBy('y', 'm')
+            ->get()
+            ->map(fn($r) => $r->y . '-' . $r->m)
+            ->toArray();
         $months = [];
         $start  = now()->subMonths(11);
         for ($i = 0; $i < 18; $i++) {
             $d        = $start->copy()->addMonths($i);
-            $months[] = ['year' => (int)$d->format('Y'), 'month' => (int)$d->format('n'), 'label' => $d->format('Y年n月')];
+            $months[] = ['year' => (int)$d->format('Y'), 'month' => (int)$d->format('n'), 'label' => $d->format('Y年n月'), 'has_data' => in_array($d->format('Y') . '-' . (int)$d->format('n'), $dataMonths)];
         }
         return $months;
     }

@@ -43,9 +43,22 @@ class PointController extends Controller
         }
 
         // 月別詳細（フィルター対象月）
-        $month = $request->filled('month')
-            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-            : Carbon::now()->startOfMonth();
+        $year  = (int)($request->input('year',  now()->year));
+        $mon   = (int)($request->input('month', now()->month));
+        $month = Carbon::createFromDate($year, $mon, 1)->startOfMonth();
+
+        $dataMonths = MonitorReport::where('status', 'approved')
+            ->selectRaw('YEAR(created_at) as y, MONTH(created_at) as m')
+            ->groupBy('y', 'm')
+            ->get()
+            ->map(fn($r) => $r->y . '-' . $r->m)
+            ->toArray();
+        $months = [];
+        $start  = now()->subMonths(11);
+        for ($i = 0; $i < 18; $i++) {
+            $d        = $start->copy()->addMonths($i);
+            $months[] = ['year' => (int)$d->format('Y'), 'month' => (int)$d->format('n'), 'label' => $d->format('Y年n月'), 'has_data' => in_array($d->format('Y') . '-' . (int)$d->format('n'), $dataMonths)];
+        }
 
         $query = MonitorReport::with(['user', 'campaign', 'application'])
             ->where('status', 'approved')
@@ -81,7 +94,7 @@ class PointController extends Controller
             ->pluck('cnt', 'user_id');
 
         return view('admin.points.index', compact(
-            'blocks', 'month', 'userSummary', 'totalAmount', 'collectionCounts'
+            'blocks', 'month', 'year', 'mon', 'months', 'userSummary', 'totalAmount', 'collectionCounts'
         ));
     }
 
@@ -95,7 +108,7 @@ class PointController extends Controller
             ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
             ->update(['payment_status' => 'reserved']);
 
-        return redirect()->route('admin.points.index', ['month' => $request->month])
+        return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
             ->with('success', $month->format('Y年n月') . 'の支払いを予約済みにしました。');
     }
 
@@ -109,7 +122,7 @@ class PointController extends Controller
             ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
-        return redirect()->route('admin.points.index', ['month' => $request->month])
+        return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
             ->with('success', $month->format('Y年n月') . 'の支払いを支払済みにしました。');
     }
 

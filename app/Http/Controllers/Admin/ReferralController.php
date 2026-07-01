@@ -18,12 +18,9 @@ class ReferralController extends Controller
 {
     public function index(Request $request): View
     {
-        $month = $request->filled('month')
-            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-            : Carbon::now()->startOfMonth();
-
-        $year  = (int) $month->format('Y');
-        $mon   = (int) $month->format('n');
+        $year  = (int)($request->input('year',  now()->year));
+        $mon   = (int)($request->input('month', now()->month));
+        $month = Carbon::createFromDate($year, $mon, 1)->startOfMonth();
 
         // 全代理店（親のみ）とそのコードを取得
         $agents = Agent::with(['children.codes', 'codes'])->whereNull('parent_id')->get();
@@ -104,7 +101,21 @@ class ReferralController extends Controller
             ->get()
             ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
 
-        return view('admin.referrals.index', compact('summary', 'month', 'currentTotal', 'prevTotal'));
+        $dataMonths = MonitorReport::where('status', 'approved')
+            ->whereHas('user', fn($q) => $q->whereNotNull('referred_by_code'))
+            ->selectRaw('YEAR(created_at) as y, MONTH(created_at) as m')
+            ->groupBy('y', 'm')
+            ->get()
+            ->map(fn($r) => $r->y . '-' . $r->m)
+            ->toArray();
+        $months = [];
+        $start  = now()->subMonths(11);
+        for ($i = 0; $i < 18; $i++) {
+            $d        = $start->copy()->addMonths($i);
+            $months[] = ['year' => (int)$d->format('Y'), 'month' => (int)$d->format('n'), 'label' => $d->format('Y年n月'), 'has_data' => in_array($d->format('Y') . '-' . (int)$d->format('n'), $dataMonths)];
+        }
+
+        return view('admin.referrals.index', compact('summary', 'month', 'year', 'mon', 'months', 'currentTotal', 'prevTotal'));
     }
 
     public function markDone(Request $request): RedirectResponse

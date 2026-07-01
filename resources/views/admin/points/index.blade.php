@@ -102,21 +102,33 @@
 </div>
 
 {{-- 月別詳細 --}}
-<form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">月</label>
-        <input type="month" name="month" value="{{ $month->format('Y-m') }}"
-               class="border rounded px-2 py-1 text-sm">
-    </div>
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">検索</label>
-        <input type="text" name="q" value="{{ request('q') }}"
-               placeholder="ユーザーID/LINE名/氏名/フリガナ"
-               class="border rounded px-2 py-1 text-sm w-52">
-    </div>
+<form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-center">
+    <select name="month_key" onchange="syncMonth(this); this.form.submit()"
+            class="border rounded px-2 py-1.5 text-sm bg-white">
+        @foreach($months as $m)
+            <option value="{{ $m['year'] }}-{{ $m['month'] }}"
+                @selected($m['year'] === $year && $m['month'] === $mon)
+                @disabled(!($m['has_data'] ?? true))>
+                {{ $m['label'] }}
+            </option>
+        @endforeach
+    </select>
+    <input type="hidden" name="year"  id="inp-year"  value="{{ $year }}">
+    <input type="hidden" name="month" id="inp-month" value="{{ $mon }}">
+    <input type="text" name="q" value="{{ request('q') }}"
+           placeholder="ユーザーID/LINE名/氏名/フリガナ"
+           class="border rounded px-2 py-1 text-sm w-52">
     <button type="submit" class="bg-pink-500 text-white px-4 py-2 rounded text-sm hover:bg-pink-600">絞り込み</button>
     <a href="{{ route('admin.points.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded text-sm hover:bg-gray-500">リセット</a>
 </form>
+
+<script>
+function syncMonth(sel) {
+    const [y, m] = sel.value.split('-');
+    document.getElementById('inp-year').value  = y;
+    document.getElementById('inp-month').value = m;
+}
+</script>
 
 <div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600">
     {{ $month->format('Y年n月') }} 合計: <strong>¥{{ number_format($totalAmount) }}</strong>
