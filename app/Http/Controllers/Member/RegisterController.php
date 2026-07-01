@@ -23,11 +23,7 @@ class RegisterController extends Controller
         $terms   = LegalPage::terms();
         $privacy = LegalPage::privacy();
 
-        // 既存紹介コード → セッション紹介コード → null の優先順
-        $referralCode = $user->referred_by_code
-            ?? $request->session()->get('referral_code');
-
-        return view('member.register', compact('user', 'terms', 'privacy', 'referralCode'));
+        return view('member.register', compact('user', 'terms', 'privacy'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -40,7 +36,6 @@ class RegisterController extends Controller
             'gender'              => 'required|in:male,female',
             'birthdate'           => 'required|date',
             'email'               => 'required|email|max:255',
-            'referred_by_code'    => 'nullable|string|max:10',
             'bank_name'           => 'required|string|max:100',
             'bank_branch_name'    => 'required|string|max:100',
             'bank_account_type'   => 'required|in:普通,当座',
@@ -67,7 +62,6 @@ class RegisterController extends Controller
             'gender'              => $request->gender,
             'birthdate'           => $request->birthdate,
             'email'               => $request->email,
-            'referred_by_code'    => $request->referred_by_code ?: null,
             'profile_completed_at' => now(),
         ]);
 
@@ -154,7 +148,7 @@ class RegisterController extends Controller
             'gender'              => $request->gender,
             'birthdate'           => $request->birthdate,
             'email'               => $request->email,
-            'referred_by_code'    => $existing->referred_by_code ?: ($request->referred_by_code ?: null),
+            'referred_by_code'    => $existing->referred_by_code ?: $liffUser->referred_by_code,
             'profile_completed_at' => now(),
         ]);
         $this->saveBank($existing, $request);

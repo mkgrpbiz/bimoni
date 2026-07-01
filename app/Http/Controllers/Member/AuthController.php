@@ -35,9 +35,9 @@ class AuthController extends Controller
             $user->update(['line_display_name' => $request->line_display_name]);
         }
 
-        // URLパラメータから紹介コードをセッションに保存
+        // 招待リンク経由の紹介コードをDBに直接保存
         if ($request->filled('referral_code') && !$user->referred_by_code) {
-            $request->session()->put('referral_code', strtoupper($request->referral_code));
+            $user->update(['referred_by_code' => strtoupper($request->referral_code)]);
         }
 
         Auth::guard('liff')->login($user);
