@@ -21,9 +21,10 @@
         <div class="font-bold mb-1">翌日未達成打診 <span class="font-normal text-xs ml-1">{{ now()->addDay()->format('m/d') }}</span></div>
         <div class="flex flex-wrap gap-2">
             @foreach($tomorrowUnderAlerts as $under)
-            <span class="bg-yellow-100 border border-yellow-300 rounded px-2 py-0.5 text-xs font-medium">
+            <a href="{{ route('admin.campaigns.applications', $under['slot']->campaign_id) }}"
+               class="bg-yellow-100 border border-yellow-300 rounded px-2 py-0.5 text-xs font-medium hover:bg-yellow-200">
                 {{ $under['slot']->campaign?->title ?? '不明' }}（打診{{ $under['booked'] }}/目標{{ $under['planned'] }}）
-            </span>
+            </a>
             @endforeach
         </div>
     </div>
@@ -34,9 +35,10 @@
         <div class="font-bold mb-1">未達成目標継続率</div>
         <div class="flex flex-wrap gap-2">
             @foreach($continuationRateAlerts as $alert)
-            <span class="bg-green-100 border border-green-300 rounded px-2 py-0.5 text-xs font-medium">
+            <a href="{{ route('admin.campaigns.applications', $alert['campaign']->id) }}"
+               class="bg-green-100 border border-green-300 rounded px-2 py-0.5 text-xs font-medium hover:bg-green-200">
                 {{ $alert['campaign']->title }}（完了{{ $alert['actual'] }}%/目標{{ $alert['target'] }}%）
-            </span>
+            </a>
             @endforeach
         </div>
     </div>

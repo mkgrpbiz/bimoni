@@ -195,7 +195,44 @@ class ApplicationController extends Controller
         $tabCounts      = $this->getTabCounts();
         $campaignStatus = $campaign->status;
 
-        return view('admin.applications.campaign_index', compact('campaign', 'applications', 'summary', 'allCampaigns', 'tabCounts', 'campaignStatus'));
+        // アラート: 翌日未達成打診
+        $tomorrowDate2  = now()->addDay()->toDateString();
+        $activeStatuses2 = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+        $tomorrowSlots2 = CampaignDailySlot::where('target_date', $tomorrowDate2)
+            ->where('planned_count', '>', 0)
+            ->with('campaign:id,title')
+            ->get();
+        $tomorrowUnderAlerts = collect();
+        foreach ($tomorrowSlots2 as $slot) {
+            $booked = Application::where('campaign_id', $slot->campaign_id)
+                ->whereIn('status', $activeStatuses2)
+                ->whereNotNull('invited_at')
+                ->whereDate('invited_at', $tomorrowDate2)
+                ->count();
+            if ($booked < $slot->planned_count) {
+                $tomorrowUnderAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count]);
+            }
+        }
+
+        // アラート: 未達成目標継続率
+        $contCampaigns2 = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->get();
+        $contStats2 = Application::whereIn('campaign_id', $contCampaigns2->pluck('id'))
+            ->whereNotNull('continuation_token')
+            ->selectRaw('campaign_id, COUNT(*) as sent, SUM(continuation_response = "possible") as possible_count')
+            ->groupBy('campaign_id')
+            ->get()->keyBy('campaign_id');
+        $continuationRateAlerts = $contCampaigns2->filter(function ($c) use ($contStats2) {
+            $s = $contStats2->get($c->id);
+            return $s && $s->sent > 0 && ($s->possible_count / $s->sent * 100) < $c->continuation_rate;
+        })->map(function ($c) use ($contStats2) {
+            $s = $contStats2->get($c->id);
+            return ['campaign' => $c, 'actual' => round($s->possible_count / $s->sent * 100), 'target' => (int) $c->continuation_rate];
+        })->values();
+
+        return view('admin.applications.campaign_index', compact(
+            'campaign', 'applications', 'summary', 'allCampaigns', 'tabCounts', 'campaignStatus',
+            'tomorrowUnderAlerts', 'continuationRateAlerts'
+        ));
     }
 
     public function show(Application $application): View
@@ -427,33 +464,10 @@ class ApplicationController extends Controller
             }
         }
 
-        // アラート3: 翌日の打診数が目標未達の案件
-        $tomorrowDate = now()->addDay()->toDateString();
-        $tomorrowSlots = CampaignDailySlot::where('target_date', $tomorrowDate)
-            ->where('planned_count', '>', 0)
-            ->with('campaign:id,title')
-            ->get();
-
-        $tomorrowUnderAlerts = collect();
-        foreach ($tomorrowSlots as $slot) {
-            $bookedCount = Application::where('campaign_id', $slot->campaign_id)
-                ->whereIn('status', $activeStatuses)
-                ->whereNotNull('invited_at')
-                ->whereDate('invited_at', $tomorrowDate)
-                ->count();
-            if ($bookedCount < $slot->planned_count) {
-                $tomorrowUnderAlerts->push([
-                    'slot'    => $slot,
-                    'booked'  => $bookedCount,
-                    'planned' => $slot->planned_count,
-                ]);
-            }
-        }
-
         $campaigns = Campaign::orderBy('title')->get(['id', 'title']);
 
         return view('admin.proposal_reservations.index', compact(
-            'applications', 'campaigns', 'duplicateAlerts', 'overCapacityAlerts', 'tomorrowUnderAlerts'
+            'applications', 'campaigns', 'duplicateAlerts', 'overCapacityAlerts'
         ));
     }
 
