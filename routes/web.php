@@ -162,8 +162,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('collection-reports/{collectionReport}/approve', [CollectionReportController::class, 'approve'])->name('collection_reports.approve');
         Route::patch('collection-reports/{collectionReport}/reject', [CollectionReportController::class, 'reject'])->name('collection_reports.reject');
 
-        // LINEデフォルトメッセージ管理
-        Route::get('line-message-defaults', [LineMessageDefaultController::class, 'index'])->name('line_message_defaults.index');
+        // LINEデフォルトメッセージ管理（表示は form-fields に統合）
         Route::patch('line-message-defaults/{prMedia}', [LineMessageDefaultController::class, 'update'])->name('line_message_defaults.update');
 
         // フォーム項目管理（ページ編集）

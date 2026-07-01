@@ -33,7 +33,6 @@
                     'agents'                => ['label' => '代理店',          'route' => 'admin.agents.index'],
                     'import'                => ['label' => 'インポート',      'route' => 'admin.import.index'],
                     'form_fields'           => ['label' => '編集',            'route' => 'admin.form_fields.index'],
-                    'line_message_defaults' => ['label' => 'LINEデフォルト',  'route' => 'admin.line_message_defaults.index'],
                 ];
             @endphp
             <div class="flex items-center gap-1 text-sm">

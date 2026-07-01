@@ -42,6 +42,6 @@ class LineMessageDefaultController extends Controller
             $validated
         );
 
-        return back()->with('success', self::PR_MEDIA_LIST[$prMedia] . ' のデフォルトを保存しました。');
+        return redirect()->route('admin.form_fields.index')->with('success', self::PR_MEDIA_LIST[$prMedia] . ' のデフォルトを保存しました。');
     }
 }
