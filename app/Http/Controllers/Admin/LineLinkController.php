@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class LineLinkController extends Controller
@@ -155,32 +156,37 @@ class LineLinkController extends Controller
             return back()->withErrors(['error' => 'このユーザーはすでにLINEアカウントと紐付けられています。']);
         }
 
-        // インポートユーザーにLIFF情報をマージ
-        $importUser->update([
-            'line_user_id'        => $liffUser->line_user_id,
-            'line_display_name'   => $liffUser->line_display_name,
-            'name'                => $liffUser->name ?: $importUser->name,
-            'name_kana'           => $liffUser->name_kana ?: $importUser->name_kana,
-            'gender'              => $liffUser->gender ?: $importUser->gender,
-            'birthdate'           => $liffUser->birthdate ?: $importUser->birthdate,
-            'email'               => $liffUser->email ?: $importUser->email,
-            'bank_name'           => $liffUser->bank_name ?: $importUser->bank_name,
-            'bank_code'           => $liffUser->bank_code ?: $importUser->bank_code,
-            'bank_branch_name'    => $liffUser->bank_branch_name ?: $importUser->bank_branch_name,
-            'bank_branch_code'    => $liffUser->bank_branch_code ?: $importUser->bank_branch_code,
-            'bank_account_type'   => $liffUser->bank_account_type ?: $importUser->bank_account_type,
-            'bank_account_number' => $liffUser->bank_account_number ?: $importUser->bank_account_number,
-            'bank_account_name'   => $liffUser->bank_account_name ?: $importUser->bank_account_name,
-            'profile_completed_at' => $liffUser->profile_completed_at ?? now(),
-        ]);
-
         // LIFFユーザーの応募・報告データをインポートユーザーに移動
-        $liffUser->applications()->update(['user_id' => $importUser->id]);
-        $liffUser->monitorReports()->update(['user_id' => $importUser->id]);
-        $liffUser->points()->update(['user_id' => $importUser->id]);
+        // line_user_id にユニーク制約があるため、liffUser を先に削除してから importUser を更新する
+        DB::transaction(function () use ($importUser, $liffUser) {
+            $lineUserId        = $liffUser->line_user_id;
+            $lineDisplayName   = $liffUser->line_display_name;
+            $profileCompletedAt = $liffUser->profile_completed_at ?? now();
 
-        // LIFFユーザー（空）を削除
-        $liffUser->delete();
+            $liffUser->applications()->update(['user_id' => $importUser->id]);
+            $liffUser->monitorReports()->update(['user_id' => $importUser->id]);
+            $liffUser->points()->update(['user_id' => $importUser->id]);
+
+            $liffUser->delete();
+
+            $importUser->update([
+                'line_user_id'        => $lineUserId,
+                'line_display_name'   => $lineDisplayName,
+                'name'                => $liffUser->name ?: $importUser->name,
+                'name_kana'           => $liffUser->name_kana ?: $importUser->name_kana,
+                'gender'              => $liffUser->gender ?: $importUser->gender,
+                'birthdate'           => $liffUser->birthdate ?: $importUser->birthdate,
+                'email'               => $liffUser->email ?: $importUser->email,
+                'bank_name'           => $liffUser->bank_name ?: $importUser->bank_name,
+                'bank_code'           => $liffUser->bank_code ?: $importUser->bank_code,
+                'bank_branch_name'    => $liffUser->bank_branch_name ?: $importUser->bank_branch_name,
+                'bank_branch_code'    => $liffUser->bank_branch_code ?: $importUser->bank_branch_code,
+                'bank_account_type'   => $liffUser->bank_account_type ?: $importUser->bank_account_type,
+                'bank_account_number' => $liffUser->bank_account_number ?: $importUser->bank_account_number,
+                'bank_account_name'   => $liffUser->bank_account_name ?: $importUser->bank_account_name,
+                'profile_completed_at' => $profileCompletedAt,
+            ]);
+        });
 
         return redirect()->route('admin.line_links.index')
             ->with('success', "{$importUser->name} のLINEアカウントを紐付けました。");
