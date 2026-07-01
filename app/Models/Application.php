@@ -97,14 +97,16 @@ class Application extends Model
         if ($otherApplications === null) {
             return null;
         }
+
         $latest = $otherApplications
-            ->filter(fn($a) => !$a->isPrIfCampaign()) // PR+IFは48h制限の対象外
-            ->whereNotNull('invited_end_at')
-            ->sortByDesc('invited_end_at')
+            ->filter(fn($a) => !$a->isPrIfCampaign())
+            ->filter(fn($a) => $a->invited_end_at || $a->invited_at)
+            ->sortByDesc(fn($a) => ($a->invited_end_at ?? $a->invited_at)->timestamp)
             ->first();
 
-        if ($latest?->invited_end_at) {
-            $earliest = $latest->invited_end_at->addHours(48);
+        $ref = $latest?->invited_end_at ?? $latest?->invited_at;
+        if ($ref) {
+            $earliest = $ref->copy()->addHours(48);
             if ($earliest->isFuture()) return $earliest;
         }
         return null;

@@ -45,11 +45,19 @@ class ApplicationController extends Controller
         // 他案件状況・48h制限の計算
         $userIds = $applications->pluck('user_id')->unique();
 
-        // 同ユーザーの全関連応募を取得（進行中ステータスのみ）
+        // 同ユーザーの全関連応募を取得（進行中 + 48h以内に終了した案件）
         // PR+IF案件は他案件状況に影響しないため除外
+        $cutoff = now()->subHours(48);
         $allUserApps = Application::with('campaign:id,title,campaign_type,pr_media')
             ->whereIn('user_id', $userIds)
-            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+            ->where(function ($q) use ($cutoff) {
+                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                  ->orWhere(function ($q2) use ($cutoff) {
+                      $q2->whereIn('status', ['completed', 'reported', 'approved', 'point_granted', 'cancelled'])
+                         ->where(fn($q3) => $q3->where('invited_end_at', '>=', $cutoff)
+                                               ->orWhere('invited_at', '>=', $cutoff));
+                  });
+            })
             ->whereHas('campaign', fn($q) => $q->where(
                 fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
             ))
@@ -525,10 +533,19 @@ class ApplicationController extends Controller
     // PR+IF案件は他案件状況・次回案内可能の対象外のため除外
     private function getOtherApplicationsMap(Collection $userIds, int $currentCampaignId): Collection
     {
+        $cutoff = now()->subHours(48);
+
         return Application::with('campaign:id,title,campaign_type,pr_media')
             ->whereIn('user_id', $userIds)
             ->where('campaign_id', '!=', $currentCampaignId)
-            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+            ->where(function ($q) use ($cutoff) {
+                $q->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+                  ->orWhere(function ($q2) use ($cutoff) {
+                      $q2->whereIn('status', ['completed', 'reported', 'approved', 'point_granted', 'cancelled'])
+                         ->where(fn($q3) => $q3->where('invited_end_at', '>=', $cutoff)
+                                               ->orWhere('invited_at', '>=', $cutoff));
+                  });
+            })
             ->whereHas('campaign', fn($q) => $q->where(
                 fn($q2) => $q2->where('campaign_type', '!=', 'pr')->orWhere('pr_media', '!=', 'IF')
             ))
