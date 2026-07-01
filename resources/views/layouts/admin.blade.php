@@ -23,7 +23,7 @@
                     'approval_reflections'  => ['label' => '承認反映',        'route' => 'admin.approval_reflections.index'],
                     'campaign_bonuses'      => ['label' => 'キャンペーン',    'route' => 'admin.campaign_bonuses.index'],
                     'applications'          => ['label' => '応募管理',        'route' => 'admin.applications.index'],
-                    'proposal_reservations' => ['label' => '打診予約',        'route' => 'admin.proposal_reservations.index'],
+                    'proposal_reservations' => ['label' => '状況確認',        'route' => 'admin.proposal_reservations.index'],
                     'reports'               => ['label' => '報告管理',        'route' => 'admin.reports.index'],
                     'collection_reports'    => ['label' => '回収管理',        'route' => 'admin.collection_reports.index'],
                     'users'                 => ['label' => 'ユーザー管理',    'route' => 'admin.users.index'],

@@ -1,9 +1,9 @@
 @extends('layouts.admin')
 
-@section('title', '打診予約管理')
+@section('title', '状況確認')
 
 @section('content')
-<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">打診予約管理</h1>
+<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">状況確認</h1>
 
 @if(session('success'))
     <div class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
