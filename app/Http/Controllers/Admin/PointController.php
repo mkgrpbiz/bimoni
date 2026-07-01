@@ -47,17 +47,13 @@ class PointController extends Controller
         $mon   = (int)($request->input('month', now()->month));
         $month = Carbon::createFromDate($year, $mon, 1)->startOfMonth();
 
-        $dataMonths = MonitorReport::where('status', 'approved')
+        $months = MonitorReport::where('status', 'approved')
             ->selectRaw('YEAR(created_at) as y, MONTH(created_at) as m')
             ->groupBy('y', 'm')
+            ->orderByDesc('y')->orderByDesc('m')
             ->get()
-            ->map(fn($r) => $r->y . '-' . $r->m)
+            ->map(fn($r) => ['year' => (int)$r->y, 'month' => (int)$r->m, 'label' => Carbon::createFromDate($r->y, $r->m, 1)->format('Y年n月')])
             ->toArray();
-        $months = [];
-        for ($i = 0; $i < 18; $i++) {
-            $d        = now()->subMonths($i)->startOfMonth();
-            $months[] = ['year' => (int)$d->format('Y'), 'month' => (int)$d->format('n'), 'label' => $d->format('Y年n月'), 'has_data' => in_array($d->format('Y') . '-' . (int)$d->format('n'), $dataMonths)];
-        }
 
         $query = MonitorReport::with(['user', 'campaign', 'application'])
             ->where('status', 'approved')
