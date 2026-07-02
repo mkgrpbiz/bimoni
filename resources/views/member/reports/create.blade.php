@@ -347,7 +347,10 @@ function updateMonitorFeeByApp(sel) {
     const opt = sel.options[sel.selectedIndex];
     if (!opt || !opt.value) return;
 
-    const extraBonus = parseInt(opt.dataset.fee || 0);
+    const purchaseType = document.querySelector('input[name="purchase_type"]:checked')?.value;
+    const isCont = purchaseType === 'continuation';
+
+    const extraBonus = parseInt(isCont ? (opt.dataset.contFee || opt.dataset.fee || 0) : (opt.dataset.fee || 0));
     const campaignBonus = parseInt(opt.dataset.bonus || 0);
     const purchaseAmt = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
     const totalFee = purchaseAmt + extraBonus + campaignBonus;
