@@ -19,9 +19,15 @@ class ReportController extends Controller
     {
         $user = Auth::guard('liff')->user();
 
-        // 実施完了済みの応募（completed/reported/approved は未報告分も含む）
+        // 差し戻しでない報告済みapplication_idは除外
+        $reportedAppIds = MonitorReport::where('user_id', $user->id)
+            ->where('status', '!=', 'rejected')
+            ->pluck('application_id')
+            ->all();
+
         $completedApplications = Application::where('user_id', $user->id)
             ->whereIn('status', ['completed', 'reported', 'approved'])
+            ->whereNotIn('id', $reportedAppIds)
             ->with('campaign')
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
