@@ -64,7 +64,8 @@
                                    class="rounded border-gray-300 text-pink-500"
                                    onchange="updateCollectionFee()">
                             <span class="text-sm text-gray-800">
-                                {{ $app->campaign->title }}@if($collectionCount)(継続分)@if($collectionCount >= 2)×{{ $collectionCount }}@endif@endif
+                                {{ $app->campaign->title }}@if($collectionCount)(継続分)@if($collectionCount >= 2)×{{ $collectionCount }}@endif
+                                @endif
                             </span>
                         </label>
                         @endforeach
