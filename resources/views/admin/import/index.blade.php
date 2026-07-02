@@ -100,12 +100,13 @@
     <div class="bg-white rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 mb-1">報告インポート</h2>
         <div class="text-xs text-gray-500 mb-3 space-y-0.5">
-            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費</code></p>
+            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費, キャンペーン</code></p>
             <p>・初回か継続：<code class="bg-gray-100 px-1 rounded">初回</code> または <code class="bg-gray-100 px-1 rounded">継続</code></p>
             <p>・ステータスは承認済みで登録されます</p>
             <p>・回答者IDでユーザーを検索、なければ名前+フリガナで検索します（新規作成はしません）</p>
             <p>・同一ユーザー×案件×初回/継続が重複する行はスキップされます</p>
             <p>・モニター経費の¥・カンマは自動除去します</p>
+            <p>・キャンペーン列に何か書いてあれば+300円のボーナスを設定、空欄はボーナスなし</p>
         </div>
         <form method="POST" action="{{ route('admin.import.reports') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
             @csrf

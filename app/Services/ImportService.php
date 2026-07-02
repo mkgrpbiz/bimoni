@@ -331,11 +331,17 @@ class ImportService
                     continue;
                 }
 
+                $hasBonus = !empty(trim($row['キャンペーン'] ?? ''));
+
                 // 応募レコードを確保（なければ作成）
                 $application = Application::firstOrCreate(
                     ['user_id' => $user->id, 'campaign_id' => $campaign->id],
-                    ['status' => 'completed', 'applied_at' => now(), 'completed_at' => now(), 'imported_from' => 'spreadsheet']
+                    ['status' => 'completed', 'applied_at' => now(), 'completed_at' => now(),
+                     'bonus_amount' => $hasBonus ? 300 : null, 'imported_from' => 'spreadsheet']
                 );
+                if ($application->wasRecentlyCreated === false && $hasBonus && !$application->bonus_amount) {
+                    $application->update(['bonus_amount' => 300]);
+                }
 
                 $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['モニター経費'] ?? $row['商品金額'] ?? '0');
 
