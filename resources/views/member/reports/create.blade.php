@@ -71,6 +71,20 @@
                         @endforeach
                     </div>
 
+                    {{-- 送料 --}}
+                    <div class="mt-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            送料 <span class="text-red-500 text-xs">必須</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">¥</span>
+                            <input type="number" name="shipping_fee" inputmode="numeric" min="0"
+                                   value="{{ old('shipping_fee', 0) }}" required
+                                   onchange="updateCollectionFee()" id="shipping-fee-input"
+                                   class="w-full border border-gray-300 rounded-xl pl-7 pr-3 py-3 text-sm">
+                        </div>
+                    </div>
+
                     {{-- 回収サービス協力金表示 --}}
                     <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-3" id="collection-fee-box">
                         <div class="flex justify-between items-center">
@@ -88,15 +102,6 @@
                     </p>
                     <p class="text-xs text-gray-500 mb-2">段ボールを閉じる前の状態が確認できる写真を添付してください。</p>
                     @include('member._image_picker', ['inputName' => 'box_image', 'labelText' => '写真を選択', 'required' => true, 'pickerId' => 'box_image'])
-                </div>
-
-                {{-- 画像2: 伝票 --}}
-                <div>
-                    <p class="text-sm font-medium text-gray-700 mb-1">
-                        発送伝票の写真 <span class="text-red-500 text-xs">必須</span>
-                    </p>
-                    <p class="text-xs text-gray-500 mb-2">追跡番号と送料が確認できるよう、発送伝票の控えの写真を添付してください。</p>
-                    @include('member._image_picker', ['inputName' => 'label_image', 'labelText' => '写真を選択', 'required' => true, 'pickerId' => 'label_image'])
                 </div>
 
                 {{-- 到着予定日 --}}
@@ -128,18 +133,13 @@
                            class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm">
                 </div>
 
-                {{-- 送料 --}}
+                {{-- 画像2: 伝票 --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        送料 <span class="text-red-500 text-xs">必須</span>
-                    </label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">¥</span>
-                        <input type="number" name="shipping_fee" inputmode="numeric" min="0"
-                               value="{{ old('shipping_fee', 0) }}" required
-                               onchange="updateCollectionFee()" id="shipping-fee-input"
-                               class="w-full border border-gray-300 rounded-xl pl-7 pr-3 py-3 text-sm">
-                    </div>
+                    <p class="text-sm font-medium text-gray-700 mb-1">
+                        発送伝票の写真 <span class="text-red-500 text-xs">必須</span>
+                    </p>
+                    <p class="text-xs text-gray-500 mb-2">追跡番号と送料が確認できるよう、発送伝票の控えの写真を添付してください。</p>
+                    @include('member._image_picker', ['inputName' => 'label_image', 'labelText' => '写真を選択', 'required' => true, 'pickerId' => 'label_image'])
                 </div>
 
                 <div class="pb-8">
