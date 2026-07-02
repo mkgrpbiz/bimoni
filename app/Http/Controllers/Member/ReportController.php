@@ -19,22 +19,29 @@ class ReportController extends Controller
     {
         $user = Auth::guard('liff')->user();
 
-        // 差し戻しでない報告済みapplication_idは除外
-        $reportedAppIds = MonitorReport::where('user_id', $user->id)
-            ->where('status', '!=', 'rejected')
-            ->pluck('application_id')
-            ->all();
-
-        $completedApplications = Application::where('user_id', $user->id)
+        // 全完了済み応募
+        $allCompleted = Application::where('user_id', $user->id)
             ->whereIn('status', ['completed', 'reported', 'approved'])
-            ->whereNotIn('id', $reportedAppIds)
             ->with('campaign')
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
 
+        // モニター報告用: 差し戻しでない報告済みは除外
+        $reportedAppIds = MonitorReport::where('user_id', $user->id)
+            ->where('status', '!=', 'rejected')
+            ->pluck('application_id')
+            ->all();
+        $completedApplications = $allCompleted->whereNotIn('id', $reportedAppIds)->values();
+
+        // 回収サービス用
+        $initialApplications      = $allCompleted->values();
+        $continuationApplications = $allCompleted->where('continuation_response', 'possible')->values();
+
         $reportType = $request->input('report_type', 'monitor');
 
-        return view('member.reports.create', compact('completedApplications', 'reportType'));
+        return view('member.reports.create', compact(
+            'completedApplications', 'initialApplications', 'continuationApplications', 'reportType'
+        ));
     }
 
     public function store(Request $request): RedirectResponse
@@ -93,25 +100,53 @@ class ReportController extends Controller
         $user = Auth::guard('liff')->user();
 
         $request->validate([
-            'collection_campaign_ids'   => 'required|array|min:1',
-            'collection_campaign_ids.*' => 'integer|exists:campaigns,id',
-            'box_image'                 => 'required|image|max:10240',
-            'label_image'               => 'required|image|max:10240',
-            'estimated_arrival_date'    => 'required|date|after:today',
-            'tracking_number'           => 'required|digits_between:1,30',
-            'shipping_fee'              => 'required|integer|min:0',
+            'initial_app_ids'         => 'nullable|array',
+            'initial_app_ids.*'       => 'integer|exists:applications,id',
+            'continuation_app_ids'    => 'nullable|array',
+            'continuation_app_ids.*'  => 'integer|exists:applications,id',
+            'box_image'               => 'required|image|max:10240',
+            'label_image'             => 'required|image|max:10240',
+            'estimated_arrival_date'  => 'required|date|after:today',
+            'tracking_number'         => 'required|digits_between:1,30',
+            'shipping_fee'            => 'required|integer|min:0',
         ]);
 
-        $campaignIds = $request->collection_campaign_ids;
-        $itemCount   = count($campaignIds);
+        $initialIds      = $request->initial_app_ids ?? [];
+        $continuationIds = $request->continuation_app_ids ?? [];
+
+        if (empty($initialIds) && empty($continuationIds)) {
+            return back()->withErrors(['initial_app_ids' => '返送する商品を1つ以上選択してください。'])->withInput();
+        }
+
         $shippingFee = (int) $request->shipping_fee;
 
-        $campaignMap = Campaign::whereIn('id', $campaignIds)->get()->keyBy('id');
+        $allAppIds    = array_merge($initialIds, $continuationIds);
+        $applications = Application::whereIn('id', $allAppIds)
+            ->where('user_id', $user->id)
+            ->with('campaign')
+            ->get()
+            ->keyBy('id');
+
         $grossFee    = 0;
-        foreach ($campaignIds as $cid) {
-            $count    = (int) ($campaignMap->get($cid)?->collection_count_judgment ?? 1);
-            $grossFee += 800 * $count;
+        $campaignIds = [];
+        $itemCount   = 0;
+
+        foreach ($initialIds as $appId) {
+            $app = $applications->get($appId);
+            if (!$app) continue;
+            $grossFee += 800;
+            $campaignIds[] = $app->campaign_id;
+            $itemCount++;
         }
+        foreach ($continuationIds as $appId) {
+            $app = $applications->get($appId);
+            if (!$app) continue;
+            $count     = (int) ($app->campaign?->collection_count_judgment ?? 1);
+            $grossFee += 800 * $count;
+            $campaignIds[] = $app->campaign_id;
+            $itemCount++;
+        }
+
         $fee = $itemCount <= 5 ? $grossFee - $shippingFee : $grossFee;
 
         $boxPath   = $request->file('box_image')->store('collection', 'public');
