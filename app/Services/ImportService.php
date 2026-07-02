@@ -317,10 +317,9 @@ class ImportService
 
                 // 初回か継続
                 $purchaseRaw  = $row['初回か継続'] ?? '';
-                $purchaseType = match($purchaseRaw) {
-                    '継続', 'continuation' => 'continuation',
-                    default                => 'initial',
-                };
+                $purchaseType = str_contains($purchaseRaw, '継続') || $purchaseRaw === 'continuation'
+                    ? 'continuation'
+                    : 'initial';
 
                 // 同一ユーザー×案件×購入タイプの報告が既にあればスキップ
                 if (MonitorReport::where('user_id', $user->id)
