@@ -93,14 +93,11 @@
                 <dd class="dark:text-gray-200 flex items-center gap-2">
                     {{ $application->continuation_wish ?? '-' }}
                     @if($application->continuation_wish === '希望' && in_array($application->status, ['completed','reported','approved']))
-                    <form method="POST" action="{{ route('admin.applications.continuation_line', $application) }}">
-                        @csrf
-                        <button type="submit"
-                                class="bg-green-500 text-white px-2 py-0.5 rounded text-xs hover:bg-green-600"
-                                onclick="return confirm('継続依頼LINEを送信しますか？')">
-                            LINE送信
-                        </button>
-                    </form>
+                    <button type="button"
+                            onclick="document.getElementById('cont-modal').classList.remove('hidden')"
+                            class="bg-green-500 text-white px-2 py-0.5 rounded text-xs hover:bg-green-600">
+                        LINE送信
+                    </button>
                     @endif
                 </dd>
                 @if($application->continuation_response)
@@ -119,6 +116,28 @@
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">保有ポイント</dt>
                 <dd class="font-medium text-pink-600 dark:text-pink-400">{{ number_format($user->point_balance) }} pt</dd>
             </dl>
+        </div>
+    </div>
+</div>
+{{-- 継続依頼LINE送信モーダル --}}
+<div id="cont-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
+        <h3 class="font-bold text-gray-800 mb-2">継続依頼LINE送信</h3>
+        <p class="text-sm text-gray-600 mb-4">
+            <span class="font-medium">{{ $application->user?->name }}</span> さんに継続購入のご案内LINEを送信します。
+        </p>
+        <div class="flex gap-3 justify-end">
+            <button type="button"
+                    onclick="document.getElementById('cont-modal').classList.add('hidden')"
+                    class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200">
+                キャンセル
+            </button>
+            <form method="POST" action="{{ route('admin.applications.continuation_line', $application) }}">
+                @csrf
+                <button type="submit" class="px-4 py-2 text-sm text-white bg-green-500 rounded hover:bg-green-600">
+                    送信する
+                </button>
+            </form>
         </div>
     </div>
 </div>

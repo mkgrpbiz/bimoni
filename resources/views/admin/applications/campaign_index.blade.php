@@ -353,15 +353,12 @@ $statusTabs = [
                         </form>
                         @endif
                         @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']))
-                        <form method="POST" action="{{ route('admin.applications.continuation_line', $app) }}">
-                            @csrf
-                            <button type="submit"
-                                    class="bg-green-500 text-white px-1.5 py-0.5 rounded hover:bg-green-600 text-xs"
-                                    onclick="return confirm('継続依頼LINEを送信しますか？')"
-                                    title="{{ $app->continuation_response ? '回答済: '.($app->continuation_response === 'possible' ? '可能' : '不可') : '未回答' }}">
-                                継続LINE{{ $app->continuation_response ? '✓' : '' }}
-                            </button>
-                        </form>
+                        <button type="button"
+                                class="bg-green-500 text-white px-1.5 py-0.5 rounded hover:bg-green-600 text-xs"
+                                title="{{ $app->continuation_response ? '回答済: '.($app->continuation_response === 'possible' ? '可能' : '不可') : '未回答' }}"
+                                onclick="openContModal('{{ route('admin.applications.continuation_line', $app) }}', '{{ addslashes($app->user?->name) }}')">
+                            継続LINE{{ $app->continuation_response ? '✓' : '' }}
+                        </button>
                         @endif
                         <a href="{{ route('admin.applications.show', $app) }}"
                            class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">詳細</a>
@@ -589,7 +586,36 @@ function submitProposal() {
 function copyUrl(url) {
     navigator.clipboard.writeText(url).then(() => alert('URLをコピーしました'));
 }
+
+function openContModal(actionUrl, userName) {
+    document.getElementById('cont-modal-name').textContent = userName;
+    document.getElementById('cont-modal-form').action = actionUrl;
+    document.getElementById('cont-modal').classList.remove('hidden');
+}
 </script>
+
+{{-- 継続依頼LINE送信モーダル --}}
+<div id="cont-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
+        <h3 class="font-bold text-gray-800 mb-2">継続依頼LINE送信</h3>
+        <p class="text-sm text-gray-600 mb-4">
+            <span id="cont-modal-name" class="font-medium"></span> さんに継続購入のご案内LINEを送信します。
+        </p>
+        <div class="flex gap-3 justify-end">
+            <button type="button"
+                    onclick="document.getElementById('cont-modal').classList.add('hidden')"
+                    class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200">
+                キャンセル
+            </button>
+            <form id="cont-modal-form" method="POST">
+                @csrf
+                <button type="submit" class="px-4 py-2 text-sm text-white bg-green-500 rounded hover:bg-green-600">
+                    送信する
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 
