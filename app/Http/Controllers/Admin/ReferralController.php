@@ -147,6 +147,67 @@ class ReferralController extends Controller
         return back()->with('success', '処理待ちに戻しました。');
     }
 
+    public function exportCsv(Request $request, Agent $agent)
+    {
+        $month = $request->filled('month')
+            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
+            : Carbon::now()->startOfMonth();
+
+        $agent->load(['codes', 'children.codes']);
+        $codeStrings = $agent->getAllCodeStrings();
+
+        $referredUserIds = User::whereIn('referred_by_code', $codeStrings)->pluck('id');
+        $referredUsers   = User::whereIn('referred_by_code', $codeStrings)->orderBy('created_at')->get();
+
+        $approvedReports = MonitorReport::with(['campaign:id,referral_fee'])
+            ->whereIn('user_id', $referredUserIds)
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->get();
+
+        $rejectedReports = MonitorReport::with(['campaign:id,referral_fee'])
+            ->whereIn('user_id', $referredUserIds)
+            ->where('status', 'rejected')
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->get();
+
+        $activeUsers = $referredUsers->filter(fn($ru) => $approvedReports->where('user_id', $ru->id)->isNotEmpty());
+
+        $filename = $agent->name . '_' . $month->format('Y年n月') . '_承認ユーザー.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($activeUsers, $approvedReports, $rejectedReports) {
+            $out = fopen('php://output', 'w');
+            // BOM for Excel
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['登録日', '登録コード', 'LINE表示名', '名前', 'フリガナ', '報告数(¥500)', '報告数(¥1000)', '全否認数(¥500)', '全否認数(¥1000)', '紹介報酬合計']);
+
+            foreach ($activeUsers as $ru) {
+                $userApproved  = $approvedReports->where('user_id', $ru->id);
+                $userRejected  = $rejectedReports->where('user_id', $ru->id);
+                fputcsv($out, [
+                    $ru->created_at?->format('Y/m/d'),
+                    $ru->referred_by_code,
+                    $ru->line_display_name ?? '',
+                    $ru->name ?? '',
+                    $ru->name_kana ?? '',
+                    $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count(),
+                    $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count(),
+                    $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count(),
+                    $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count(),
+                    $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0),
+                ]);
+            }
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function show(Request $request, Agent $agent): View
     {
         $month = $request->filled('month')

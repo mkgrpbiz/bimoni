@@ -154,8 +154,10 @@
     $activeUsers = $referredUsers->filter(fn($ru) => $reports->where('user_id', $ru->id)->isNotEmpty());
 @endphp
 <div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="px-5 py-3 border-b">
+    <div class="px-5 py-3 border-b flex items-center justify-between">
         <h2 class="font-bold text-gray-700">{{ $month->format('Y年n月') }} 承認ユーザー一覧（{{ $activeUsers->count() }}人）</h2>
+        <a href="{{ route('admin.referrals.csv', [$agent, 'month' => $month->format('Y-m')]) }}"
+           class="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">CSVダウンロード</a>
     </div>
     @if($activeUsers->isNotEmpty())
     <div class="overflow-x-auto">
