@@ -58,7 +58,7 @@ class RegisterController extends Controller
 
         $user->update([
             'name'                => $request->name,
-            'name_kana'           => $request->name_kana,
+            'name_kana'           => mb_convert_kana($request->name_kana, 'C', 'UTF-8'),
             'gender'              => $request->gender,
             'birthdate'           => $request->birthdate,
             'email'               => $request->email,
@@ -144,7 +144,7 @@ class RegisterController extends Controller
             'line_user_id'        => $liffUser->line_user_id,
             'line_display_name'   => $liffUser->line_display_name,
             'name'                => $request->name,
-            'name_kana'           => $request->name_kana,
+            'name_kana'           => mb_convert_kana($request->name_kana, 'C', 'UTF-8'),
             'gender'              => $request->gender,
             'birthdate'           => $request->birthdate,
             'email'               => $request->email,

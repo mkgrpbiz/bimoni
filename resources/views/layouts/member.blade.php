@@ -122,5 +122,12 @@
     @endif
     @endauth
 
+<script>
+function hiraToKata(str) {
+    return str.replace(/[ぁ-ゖ]/g, function(ch) {
+        return String.fromCharCode(ch.charCodeAt(0) + 0x60);
+    });
+}
+</script>
 </body>
 </html>

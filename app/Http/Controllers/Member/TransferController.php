@@ -53,7 +53,7 @@ class TransferController extends Controller
 
         $target = [
             'name'      => $request->name,
-            'name_kana' => $request->name_kana,
+            'name_kana' => mb_convert_kana($request->name_kana, 'C', 'UTF-8'),
             'birthdate' => $request->birthdate,
             'email'     => $request->email ? strtolower($request->email) : null,
         ];
