@@ -182,42 +182,46 @@
                 @csrf
                 <input type="hidden" name="report_type" value="monitor">
 
-                {{-- 初回 / 継続 --}}
-                <div>
-                    <p class="text-sm font-medium text-gray-700 mb-2">購入の種類 <span class="text-red-500 text-xs">必須</span></p>
-                    <div class="grid grid-cols-2 gap-3">
-                        @foreach(['initial' => '初回購入', 'continuation' => '継続購入'] as $val => $lbl)
-                        <label class="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
-                            <input type="radio" name="purchase_type" value="{{ $val }}" required
-                                   {{ old('purchase_type') === $val ? 'checked' : '' }}
-                                   class="text-pink-500" onchange="updateMonitorFee(this)">
-                            <span class="text-sm font-medium">{{ $lbl }}</span>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
+                <input type="hidden" name="purchase_type" id="monitor-purchase-type">
+                <input type="hidden" name="application_id" id="monitor-application-id">
 
-                {{-- 案件選択 --}}
+                {{-- 初回購入 --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
-                        報告する案件 <span class="text-red-500 text-xs">必須</span>
+                        初回購入 <span class="text-red-500 text-xs">必須（どちらか選択）</span>
                     </label>
-                    <select name="application_id" id="monitor-app-select" required
-                            onchange="updateMonitorFeeByApp(this)"
+                    <select id="monitor-initial-select"
+                            onchange="onMonitorSelectChange(this, 'initial')"
                             class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm">
-                        <option value="">案件を選択してください</option>
-                        @foreach($completedApplications as $app)
+                        <option value="">選択してください</option>
+                        @foreach($monitorInitialApps as $app)
                         <option value="{{ $app->id }}"
                                 data-fee="{{ $app->campaign->cooperation_fee ?? 0 }}"
-                                data-cont-fee="{{ $app->campaign->continuation_cooperation_fee ?? 0 }}"
-                                data-bonus="{{ $app->bonus_amount ?? 0 }}"
-                                data-continuation="{{ $app->continuation_response === 'possible' ? '1' : '0' }}"
-                                {{ old('application_id') == $app->id ? 'selected' : '' }}>
+                                data-bonus="{{ $app->bonus_amount ?? 0 }}">
                             {{ $app->campaign->title }}
                         </option>
                         @endforeach
                     </select>
                 </div>
+
+                {{-- 継続購入 --}}
+                @if($monitorContinuationApps->isNotEmpty())
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">継続購入</label>
+                    <select id="monitor-cont-select"
+                            onchange="onMonitorSelectChange(this, 'continuation')"
+                            class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm">
+                        <option value="">選択してください</option>
+                        @foreach($monitorContinuationApps as $app)
+                        <option value="{{ $app->id }}"
+                                data-fee="{{ $app->campaign->cooperation_fee ?? 0 }}"
+                                data-bonus="{{ $app->bonus_amount ?? 0 }}">
+                            {{ $app->campaign->title }}（継続分）
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
 
                 {{-- モニター経費 --}}
                 <div>
@@ -233,7 +237,7 @@
                         <input type="number" name="purchase_amount" id="purchase-amount-input"
                                inputmode="numeric" min="0"
                                value="{{ old('purchase_amount', 0) }}" required
-                               oninput="updateMonitorFeeByApp(document.getElementById('monitor-app-select'))"
+                               oninput="refreshMonitorFee()"
                                class="w-full border border-gray-300 rounded-xl pl-7 pr-3 py-3 text-sm">
                     </div>
                 </div>
@@ -370,21 +374,24 @@ function updateCollectionFee() {
     }
 }
 
-function updateMonitorFeeByApp(sel) {
+function onMonitorSelectChange(sel, purchaseType) {
+    if (!sel.value) return;
+    // 他方をリセット
+    const otherId = purchaseType === 'initial' ? 'monitor-cont-select' : 'monitor-initial-select';
+    const other = document.getElementById(otherId);
+    if (other) other.value = '';
+
+    document.getElementById('monitor-purchase-type').value  = purchaseType;
+    document.getElementById('monitor-application-id').value = sel.value;
+
     const opt = sel.options[sel.selectedIndex];
-    if (!opt || !opt.value) return;
-
-    const purchaseType = document.querySelector('input[name="purchase_type"]:checked')?.value;
-    const isCont = purchaseType === 'continuation';
-
-    const extraBonus = parseInt(isCont ? (opt.dataset.contFee || opt.dataset.fee || 0) : (opt.dataset.fee || 0));
+    const extraBonus  = parseInt(opt.dataset.fee || 0);
     const campaignBonus = parseInt(opt.dataset.bonus || 0);
     const purchaseAmt = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
-    const totalFee = purchaseAmt + extraBonus + campaignBonus;
+    const totalFee    = purchaseAmt + extraBonus + campaignBonus;
 
     document.getElementById('display-expense').textContent = purchaseAmt.toLocaleString() + '円';
     document.getElementById('display-extra').textContent   = '+' + extraBonus.toLocaleString() + '円';
-
     const bonusRow = document.getElementById('display-bonus-row');
     if (campaignBonus > 0) {
         document.getElementById('display-bonus').textContent = '+' + campaignBonus.toLocaleString() + '円';
@@ -392,34 +399,18 @@ function updateMonitorFeeByApp(sel) {
     } else {
         bonusRow.style.setProperty('display', 'none', 'important');
     }
-
     document.getElementById('monitor-fee-display').textContent = totalFee.toLocaleString() + '円';
 }
 
-var _allMonitorOptions = null;
-
-function updateMonitorFee(radio) {
-    const sel = document.getElementById('monitor-app-select');
-    if (!sel) return;
-
-    if (!_allMonitorOptions) {
-        _allMonitorOptions = Array.from(sel.options).filter(o => o.value).map(o => o.cloneNode(true));
-    }
-
-    const isCont = radio.value === 'continuation';
-    while (sel.options.length > 1) sel.remove(1);
-    _allMonitorOptions.forEach(function(opt) {
-        const optIsCont = opt.dataset.continuation === '1';
-        if (isCont === optIsCont) sel.add(opt.cloneNode(true));
-    });
-    sel.value = '';
-    updateMonitorFeeByApp(sel);
+function refreshMonitorFee() {
+    const initialSel = document.getElementById('monitor-initial-select');
+    const contSel    = document.getElementById('monitor-cont-select');
+    if (initialSel && initialSel.value) onMonitorSelectChange(initialSel, 'initial');
+    else if (contSel && contSel.value)  onMonitorSelectChange(contSel, 'continuation');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     updateCollectionFee();
-    const sel = document.getElementById('monitor-app-select');
-    if (sel && sel.value) updateMonitorFeeByApp(sel);
 });
 </script>
 @endpush

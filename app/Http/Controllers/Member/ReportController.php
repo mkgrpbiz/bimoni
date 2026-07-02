@@ -26,12 +26,21 @@ class ReportController extends Controller
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
 
-        // モニター報告用: 差し戻しでない報告済みは除外
-        $reportedAppIds = MonitorReport::where('user_id', $user->id)
+        // モニター報告用: 購入タイプ別に申請済みを除外（初回・継続は独立して保持）
+        $reportedInitialIds = MonitorReport::where('user_id', $user->id)
+            ->where('purchase_type', 'initial')
             ->where('status', '!=', 'rejected')
-            ->pluck('application_id')
-            ->all();
-        $completedApplications = $allCompleted->whereNotIn('id', $reportedAppIds)->values();
+            ->pluck('application_id')->all();
+        $reportedContinuationIds = MonitorReport::where('user_id', $user->id)
+            ->where('purchase_type', 'continuation')
+            ->where('status', '!=', 'rejected')
+            ->pluck('application_id')->all();
+
+        $monitorInitialApps      = $allCompleted->whereNotIn('id', $reportedInitialIds)->values();
+        $monitorContinuationApps = $allCompleted
+            ->where('continuation_response', 'possible')
+            ->whereNotIn('id', $reportedContinuationIds)
+            ->values();
 
         // 回収サービス用
         $initialApplications      = $allCompleted->values();
@@ -40,7 +49,8 @@ class ReportController extends Controller
         $reportType = $request->input('report_type', 'monitor');
 
         return view('member.reports.create', compact(
-            'completedApplications', 'initialApplications', 'continuationApplications', 'reportType'
+            'monitorInitialApps', 'monitorContinuationApps',
+            'initialApplications', 'continuationApplications', 'reportType'
         ));
     }
 
@@ -63,8 +73,11 @@ class ReportController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        if (MonitorReport::where('application_id', $application->id)->exists()) {
-            return back()->with('error', 'この案件の報告は既に送信済みです。');
+        if (MonitorReport::where('application_id', $application->id)
+            ->where('purchase_type', $request->purchase_type)
+            ->where('status', '!=', 'rejected')
+            ->exists()) {
+            return back()->with('error', 'この案件のこの種類の報告は既に送信済みです。');
         }
 
         $report = MonitorReport::create([
