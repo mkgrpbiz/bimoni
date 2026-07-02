@@ -123,11 +123,13 @@ class CampaignController extends Controller
             }
         }
 
-        return redirect()->route('member.campaigns.complete');
+        return redirect()->route('member.campaigns.complete')
+            ->with('applied_pr_media', $campaign->pr_media);
     }
 
     public function complete(): \Illuminate\View\View
     {
-        return view('member.campaigns.complete');
+        $prMedia = session('applied_pr_media');
+        return view('member.campaigns.complete', compact('prMedia'));
     }
 }

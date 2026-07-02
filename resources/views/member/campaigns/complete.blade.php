@@ -13,6 +13,15 @@
         <p class="text-gray-500 text-xs">※途中で終了する場合もあり、応募=確定ではございません。</p>
     </div>
 
+    <div class="bg-red-50 rounded-xl border border-red-200 p-5 mb-4">
+        <p class="text-base font-bold text-red-600 mb-2">【注意事項】</p>
+        <ul class="text-sm text-gray-700 space-y-1">
+            <li>・モニター対象時間外の購入は協力金対象外です。</li>
+            <li>・案内があるまで購入しないでください。</li>
+        </ul>
+    </div>
+
+    @if($prMedia === 'AD')
     <div class="bg-pink-50 rounded-xl border border-pink-100 p-5 mb-4">
         <p class="text-sm font-bold text-pink-600 mb-2">Instagramフォローのお願い</p>
         <p class="text-sm text-gray-700 mb-3 leading-relaxed">
@@ -25,14 +34,7 @@
         </a>
         <p class="text-xs text-gray-400 mt-2 text-center">※こちらのアカウントをフォローしていないとモニターを実施することができません。</p>
     </div>
-
-    <div class="bg-amber-50 rounded-xl border border-amber-100 p-5 mb-6">
-        <p class="text-xs font-bold text-amber-600 mb-2">【注意事項】</p>
-        <ul class="text-sm text-gray-700 space-y-1">
-            <li>・モニター対象時間外の購入は協力金対象外です。</li>
-            <li>・案内があるまで購入しないでください。</li>
-        </ul>
-    </div>
+    @endif
 
     <a href="{{ route('member.mypage') }}"
        class="block w-full bg-pink-500 text-white text-center py-4 rounded-xl font-bold text-base">
