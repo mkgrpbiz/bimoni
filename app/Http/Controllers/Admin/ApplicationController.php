@@ -178,7 +178,7 @@ class ApplicationController extends Controller
             $slot->completed_count = $dayCounts->filter(fn($r) => in_array($r->status, ['confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
         }
 
-        $completedApps = $campaign->applications()->where('status', 'completed')->with('user')->get();
+        $completedApps = $campaign->applications()->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])->with('user')->get();
         $summary = [
             'today'    => $slots->get($today->toDateString()),
             'tomorrow' => $slots->get($tomorrow->toDateString()),
