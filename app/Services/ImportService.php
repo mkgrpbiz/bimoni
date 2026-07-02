@@ -337,7 +337,7 @@ class ImportService
                     ['status' => 'completed', 'applied_at' => now(), 'completed_at' => now(), 'imported_from' => 'spreadsheet']
                 );
 
-                $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['商品金額'] ?? '0');
+                $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['モニター経費'] ?? $row['商品金額'] ?? '0');
 
                 MonitorReport::create([
                     'user_id'         => $user->id,
