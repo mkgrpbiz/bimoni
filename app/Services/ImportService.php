@@ -293,11 +293,10 @@ class ImportService
                     continue;
                 }
 
-                // ユーザー特定: 回答者IDで検索 → なければ名前で検索 → なければ新規作成
-                $ermeId = $row['回答者ID'] ?? $row['erme_respondent_id'] ?? null;
-                $name   = $row['名前'] ?? $row['name'] ?? $row['回答者名'] ?? null;
-                $kana   = $row['フリガナ'] ?? $row['name_kana'] ?? null;
-                $refCode = $row['紹介コード'] ?? $row['referred_by_code'] ?? null;
+                // ユーザー特定: 回答者IDで検索 → なければ名前+フリガナで検索（新規作成なし）
+                $ermeId = $row['回答者ID'] ?? null;
+                $name   = $row['名前'] ?? $row['回答者名'] ?? null;
+                $kana   = $row['フリガナ'] ?? null;
 
                 $user = null;
                 if ($ermeId) {
@@ -312,20 +311,24 @@ class ImportService
                     }
                 }
                 if (!$user) {
-                    if (empty($name)) {
-                        $result['errors'][] = "{$line}行目: ユーザーが特定できません（回答者IDまたは名前が必要）";
-                        continue;
-                    }
-                    $user = User::create([
-                        'line_user_id'       => 'IMPORT_' . uniqid(),
-                        'erme_respondent_id' => $ermeId ?: null,
-                        'name'               => $name,
-                        'name_kana'          => $kana,
-                        'referred_by_code'   => $refCode ?: null,
-                        'imported_from'      => 'spreadsheet',
-                    ]);
-                } elseif ($refCode && !$user->referred_by_code) {
-                    $user->update(['referred_by_code' => $refCode]);
+                    $result['errors'][] = "{$line}行目: ユーザーが特定できません（{$name}）";
+                    continue;
+                }
+
+                // 初回か継続
+                $purchaseRaw  = $row['初回か継続'] ?? '';
+                $purchaseType = match($purchaseRaw) {
+                    '継続', 'continuation' => 'continuation',
+                    default                => 'initial',
+                };
+
+                // 同一ユーザー×案件×購入タイプの報告が既にあればスキップ
+                if (MonitorReport::where('user_id', $user->id)
+                    ->where('campaign_id', $campaign->id)
+                    ->where('purchase_type', $purchaseType)
+                    ->exists()) {
+                    $result['skipped']++;
+                    continue;
                 }
 
                 // 応募レコードを確保（なければ作成）
@@ -334,34 +337,16 @@ class ImportService
                     ['status' => 'completed', 'applied_at' => now(), 'completed_at' => now(), 'imported_from' => 'spreadsheet']
                 );
 
-                // 同一ユーザー×案件の報告が既にあればスキップ
-                if (MonitorReport::where('user_id', $user->id)->where('campaign_id', $campaign->id)->exists()) {
-                    $result['skipped']++;
-                    continue;
-                }
-
-                // 初回か継続
-                $purchaseRaw  = $row['初回か継続'] ?? $row['purchase_type'] ?? '';
-                $purchaseType = match($purchaseRaw) {
-                    '継続', 'continuation' => 'continuation',
-                    default                => 'initial',
-                };
-
-                // ステータス
-                $statusRaw = $row['ステータス'] ?? $row['status'] ?? '';
-                $status    = match($statusRaw) {
-                    '否認', 'rejected'              => 'rejected',
-                    '保留', 'pending_review'         => 'pending_review',
-                    default                          => 'approved',
-                };
+                $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['商品金額'] ?? '0');
 
                 MonitorReport::create([
-                    'user_id'        => $user->id,
-                    'campaign_id'    => $campaign->id,
-                    'application_id' => $application->id,
-                    'status'         => $status,
-                    'purchase_type'  => $purchaseType,
-                    'payment_status' => 'pending',
+                    'user_id'         => $user->id,
+                    'campaign_id'     => $campaign->id,
+                    'application_id'  => $application->id,
+                    'status'          => 'approved',
+                    'purchase_type'   => $purchaseType,
+                    'purchase_amount' => $purchaseAmount,
+                    'payment_status'  => 'pending',
                 ]);
 
                 $result['success']++;
