@@ -138,6 +138,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('import/users', [ImportController::class, 'importUsers'])->name('import.users');
         Route::post('import/reports', [ImportController::class, 'importReports'])->name('import.reports');
         Route::post('import/campaigns', [ImportController::class, 'importCampaigns'])->name('import.campaigns');
+        Route::post('import/collections', [ImportController::class, 'importCollections'])->name('import.collections');
 
         // 管理者管理
         Route::get('admins', [AdminManagerController::class, 'index'])->name('admins.index');

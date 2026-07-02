@@ -7,6 +7,7 @@ use App\Models\AgentReferralCode;
 use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\Point;
 use App\Models\User;
@@ -529,5 +530,70 @@ class ImportService
 
         fclose($handle);
         return $rows;
+    }
+
+    public function importCollections(array $rows): array
+    {
+        $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
+
+        DB::transaction(function () use ($rows, &$result) {
+            foreach ($rows as $i => $row) {
+                $line = $i + 2;
+
+                $ermeId    = $row['回答者ID'] ?? null;
+                $name      = $row['名前'] ?? $row['回答者名'] ?? null;
+                $kana      = $row['フリガナ'] ?? null;
+                $itemCount = (int) ($row['商品数'] ?? 0);
+                $shipping  = (int) preg_replace('/[^\d]/', '', $row['送料'] ?? '0');
+                $tracking  = trim($row['追跡番号'] ?? '');
+
+                if (empty($tracking)) {
+                    $result['errors'][] = "{$line}行目: 追跡番号が空です";
+                    continue;
+                }
+                if ($itemCount <= 0) {
+                    $result['errors'][] = "{$line}行目: 商品数が不正です";
+                    continue;
+                }
+
+                // 追跡番号が既に存在すればスキップ
+                if (CollectionReport::where('tracking_number', $tracking)->exists()) {
+                    $result['skipped']++;
+                    continue;
+                }
+
+                // ユーザー特定
+                $user = null;
+                if ($ermeId) {
+                    $user = User::where('erme_respondent_id', $ermeId)->first();
+                }
+                if (!$user && $name) {
+                    $q = User::where('name', $name);
+                    if ($kana) $q->where('name_kana', $kana);
+                    $found = $q->get();
+                    if ($found->count() === 1) {
+                        $user = $found->first();
+                    }
+                }
+                if (!$user) {
+                    $result['errors'][] = "{$line}行目: ユーザーが特定できません（{$name}）";
+                    continue;
+                }
+
+                CollectionReport::create([
+                    'user_id'        => $user->id,
+                    'campaign_ids'   => [],
+                    'tracking_number' => $tracking,
+                    'shipping_fee'   => $shipping,
+                    'item_count'     => $itemCount,
+                    'cooperation_fee' => CollectionReport::calcFee($itemCount, $shipping),
+                    'status'         => 'approved',
+                ]);
+
+                $result['success']++;
+            }
+        });
+
+        return $result;
     }
 }

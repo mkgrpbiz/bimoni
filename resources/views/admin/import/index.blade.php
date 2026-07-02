@@ -121,6 +121,33 @@
         </form>
     </div>
 
+
+    {{-- 回収インポート --}}
+    <div class="bg-white rounded-lg shadow p-5">
+        <h2 class="font-bold text-gray-700 mb-1">回収インポート</h2>
+        <div class="text-xs text-gray-500 mb-3 space-y-0.5">
+            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号</code></p>
+            <p>・追跡番号が重複する行はスキップされます</p>
+            <p>・回答者IDでユーザーを検索、なければ名前+フリガナで検索します（新規作成はしません）</p>
+            <p>・協力金は自動計算（800円×商品数、5個以下は送料を差し引き）</p>
+            <p>・ステータスは「承認済み」で登録されます</p>
+            <p>・送料の¥・カンマは自動除去します</p>
+        </div>
+        <form method="POST" action="{{ route('admin.import.collections') }}" enctype="multipart/form-data" class="flex gap-3 items-end">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CSVファイル <span class="text-red-500">*</span></label>
+                <input type="file" name="csv_file" accept=".csv,.txt" required
+                       class="border rounded px-3 py-1.5 text-sm">
+            </div>
+            <button type="submit"
+                    onclick="return confirm('回収CSVをインポートしますか？')"
+                    class="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 text-sm">
+                インポート実行
+            </button>
+        </form>
+    </div>
+
 </div>
 @endsection
 
