@@ -396,14 +396,21 @@ function updateMonitorFeeByApp(sel) {
     document.getElementById('monitor-fee-display').textContent = totalFee.toLocaleString() + '円';
 }
 
+var _allMonitorOptions = null;
+
 function updateMonitorFee(radio) {
     const sel = document.getElementById('monitor-app-select');
     if (!sel) return;
+
+    if (!_allMonitorOptions) {
+        _allMonitorOptions = Array.from(sel.options).filter(o => o.value).map(o => o.cloneNode(true));
+    }
+
     const isCont = radio.value === 'continuation';
-    Array.from(sel.options).forEach(function(opt) {
-        if (!opt.value) return;
+    while (sel.options.length > 1) sel.remove(1);
+    _allMonitorOptions.forEach(function(opt) {
         const optIsCont = opt.dataset.continuation === '1';
-        opt.hidden = isCont ? !optIsCont : optIsCont;
+        if (isCont === optIsCont) sel.add(opt.cloneNode(true));
     });
     sel.value = '';
     updateMonitorFeeByApp(sel);
