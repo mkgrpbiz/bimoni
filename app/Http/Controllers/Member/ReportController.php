@@ -58,16 +58,48 @@ class ReportController extends Controller
     {
         $user = Auth::guard('liff')->user();
 
-        $request->validate([
-            'application_id'   => 'required|exists:applications,id',
-            'purchase_type'    => 'required|in:initial,continuation',
-            'purchase_amount'  => 'required|integer|min:0',
-            'payment_method'   => 'required|string|max:50',
-            'payment_method_other' => 'nullable|string|max:100',
+        $isOther = $request->input('purchase_type') === 'other';
+
+        $rules = [
+            'purchase_type'    => 'required|in:initial,continuation,other',
             'report_image_1'   => 'required|image|max:10240',
-            'report_image_2'   => 'required|image|max:10240',
+            'report_image_2'   => 'nullable|image|max:10240',
             'report_image_3'   => 'nullable|image|max:10240',
-        ]);
+        ];
+
+        if ($isOther) {
+            $rules['report_body'] = 'required|string|max:2000';
+        } else {
+            $rules['application_id']       = 'required|exists:applications,id';
+            $rules['purchase_amount']      = 'required|integer|min:0';
+            $rules['payment_method']       = 'required|string|max:50';
+            $rules['payment_method_other'] = 'nullable|string|max:100';
+            $rules['report_image_2']       = 'required|image|max:10240';
+        }
+
+        $request->validate($rules);
+
+        if ($isOther) {
+            $report = MonitorReport::create([
+                'user_id'       => $user->id,
+                'purchase_type' => 'other',
+                'report_body'   => $request->report_body,
+                'status'        => 'pending',
+            ]);
+
+            foreach (['report_image_1', 'report_image_2', 'report_image_3'] as $i => $key) {
+                if ($request->hasFile($key) && $request->file($key)->isValid()) {
+                    $path = $request->file($key)->store('reports', 'public');
+                    MonitorReportImage::create([
+                        'monitor_report_id' => $report->id,
+                        'image_path'        => $path,
+                        'sort_order'        => $i,
+                    ]);
+                }
+            }
+
+            return redirect()->route('member.mypage')->with('success', 'その他報告を送信しました。確認をお待ちください。');
+        }
 
         $application = Application::where('id', $request->application_id)
             ->where('user_id', $user->id)

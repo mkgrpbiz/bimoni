@@ -205,9 +205,8 @@
                 </div>
 
                 {{-- 継続購入 --}}
-                @if($monitorContinuationApps->isNotEmpty())
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">継続購入</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">継続購入 / その他報告</label>
                     <select id="monitor-cont-select"
                             onchange="onMonitorSelectChange(this, 'continuation')"
                             class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm">
@@ -219,9 +218,18 @@
                             {{ $app->campaign->title }}（継続分）
                         </option>
                         @endforeach
+                        <option value="other" data-fee="0" data-bonus="0">その他報告</option>
                     </select>
+                    {{-- その他報告 入力欄 --}}
+                    <div id="other-report-box" class="hidden mt-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            報告内容 <span class="text-red-500 text-xs">必須</span>
+                        </label>
+                        <textarea name="report_body" id="other-report-body" rows="4"
+                                  placeholder="イレギュラーな内容を詳しく記入してください"
+                                  class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm leading-relaxed">{{ old('report_body') }}</textarea>
+                    </div>
                 </div>
-                @endif
 
                 {{-- モニター経費 --}}
                 <div>
@@ -376,19 +384,30 @@ function updateCollectionFee() {
 
 function onMonitorSelectChange(sel, purchaseType) {
     if (!sel.value) return;
+
+    const isOther = sel.value === 'other';
+
     // 他方をリセット
     const otherId = purchaseType === 'initial' ? 'monitor-cont-select' : 'monitor-initial-select';
     const other = document.getElementById(otherId);
     if (other) other.value = '';
 
-    document.getElementById('monitor-purchase-type').value  = purchaseType;
-    document.getElementById('monitor-application-id').value = sel.value;
+    // その他報告の表示切り替え
+    const otherBox = document.getElementById('other-report-box');
+    const feeBox   = document.getElementById('monitor-fee-box');
+    if (otherBox) otherBox.classList.toggle('hidden', !isOther);
+    if (feeBox)   feeBox.style.display = isOther ? 'none' : '';
+
+    document.getElementById('monitor-purchase-type').value  = isOther ? 'other' : purchaseType;
+    document.getElementById('monitor-application-id').value = isOther ? '' : sel.value;
+
+    if (isOther) return;
 
     const opt = sel.options[sel.selectedIndex];
-    const extraBonus  = parseInt(opt.dataset.fee || 0);
+    const extraBonus    = parseInt(opt.dataset.fee || 0);
     const campaignBonus = parseInt(opt.dataset.bonus || 0);
-    const purchaseAmt = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
-    const totalFee    = purchaseAmt + extraBonus + campaignBonus;
+    const purchaseAmt   = parseInt(document.getElementById('purchase-amount-input')?.value || 0);
+    const totalFee      = purchaseAmt + extraBonus + campaignBonus;
 
     document.getElementById('display-expense').textContent = purchaseAmt.toLocaleString() + '円';
     document.getElementById('display-extra').textContent   = '+' + extraBonus.toLocaleString() + '円';
