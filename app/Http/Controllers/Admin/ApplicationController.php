@@ -95,19 +95,20 @@ class ApplicationController extends Controller
             }
         }
 
-        // アラート: 未達成目標継続率
+        // アラート: 未達成目標継続率（実施完了以上のデータで計算）
         $contCampaigns = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->get();
+        $contCompletedStatuses = ['completed', 'reported', 'approved', 'point_granted'];
         $contStats = Application::whereIn('campaign_id', $contCampaigns->pluck('id'))
-            ->whereNotNull('continuation_token')
-            ->selectRaw('campaign_id, COUNT(*) as sent, SUM(continuation_response = "possible") as possible_count')
+            ->whereIn('status', $contCompletedStatuses)
+            ->selectRaw('campaign_id, COUNT(*) as total, SUM(continuation_wish = "希望" OR continuation_response = "possible") as ok_count')
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
         $continuationRateAlerts = $contCampaigns->filter(function ($c) use ($contStats) {
             $s = $contStats->get($c->id);
-            return $s && $s->sent > 0 && ($s->possible_count / $s->sent * 100) < $c->continuation_rate;
+            return $s && $s->total > 0 && ($s->ok_count / $s->total * 100) < $c->continuation_rate;
         })->map(function ($c) use ($contStats) {
             $s = $contStats->get($c->id);
-            return ['campaign' => $c, 'actual' => round($s->possible_count / $s->sent * 100), 'target' => (int) $c->continuation_rate];
+            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate];
         })->values();
 
         return view('admin.applications.index', compact(
@@ -214,19 +215,20 @@ class ApplicationController extends Controller
             }
         }
 
-        // アラート: 未達成目標継続率
+        // アラート: 未達成目標継続率（実施完了以上のデータで計算）
         $contCampaigns2 = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->get();
+        $contCompletedStatuses2 = ['completed', 'reported', 'approved', 'point_granted'];
         $contStats2 = Application::whereIn('campaign_id', $contCampaigns2->pluck('id'))
-            ->whereNotNull('continuation_token')
-            ->selectRaw('campaign_id, COUNT(*) as sent, SUM(continuation_response = "possible") as possible_count')
+            ->whereIn('status', $contCompletedStatuses2)
+            ->selectRaw('campaign_id, COUNT(*) as total, SUM(continuation_wish = "希望" OR continuation_response = "possible") as ok_count')
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
         $continuationRateAlerts = $contCampaigns2->filter(function ($c) use ($contStats2) {
             $s = $contStats2->get($c->id);
-            return $s && $s->sent > 0 && ($s->possible_count / $s->sent * 100) < $c->continuation_rate;
+            return $s && $s->total > 0 && ($s->ok_count / $s->total * 100) < $c->continuation_rate;
         })->map(function ($c) use ($contStats2) {
             $s = $contStats2->get($c->id);
-            return ['campaign' => $c, 'actual' => round($s->possible_count / $s->sent * 100), 'target' => (int) $c->continuation_rate];
+            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate];
         })->values();
 
         return view('admin.applications.campaign_index', compact(
