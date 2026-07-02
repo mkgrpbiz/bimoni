@@ -29,32 +29,26 @@
             @if($campaign->initial_purchase_fee)
             <div class="flex justify-between items-center py-1 border-b border-gray-50">
                 <span class="text-sm text-gray-600">初回購入費</span>
-                <div class="text-right">
-                    <span class="font-bold text-gray-800">{{ number_format($campaign->initial_purchase_fee) }}円</span>
-                    <p class="text-xs text-gray-400">※支払い方法などで多少前後する場合があります。</p>
-                </div>
+                <span class="font-bold text-gray-800">{{ number_format($campaign->initial_purchase_fee) }}円</span>
             </div>
             @endif
             <div class="flex justify-between items-center py-1 {{ $activeBonus ? 'border-b border-gray-50' : '' }}">
                 <span class="text-sm text-gray-600">モニター協力金</span>
-                <div class="text-right">
-                    <span class="font-bold text-pink-600">
-                        @php
-                            $coopDisplay = '';
-                            if ($campaign->initial_purchase_fee && $campaign->cooperation_fee) {
-                                $coopDisplay = number_format($campaign->initial_purchase_fee) . '+' . number_format($campaign->cooperation_fee) . '円';
-                            } elseif ($campaign->initial_purchase_fee) {
-                                $coopDisplay = number_format($campaign->initial_purchase_fee) . '円';
-                            } elseif ($campaign->cooperation_fee) {
-                                $coopDisplay = number_format($campaign->cooperation_fee) . '円';
-                            } else {
-                                $coopDisplay = '0円';
-                            }
-                        @endphp
-                        {{ $coopDisplay }}
-                    </span>
-                    <p class="text-xs text-gray-400">※支払い方法などで多少前後する場合があります。</p>
-                </div>
+                <span class="font-bold text-pink-600">
+                    @php
+                        $coopDisplay = '';
+                        if ($campaign->initial_purchase_fee && $campaign->cooperation_fee) {
+                            $coopDisplay = number_format($campaign->initial_purchase_fee) . '+' . number_format($campaign->cooperation_fee) . '円';
+                        } elseif ($campaign->initial_purchase_fee) {
+                            $coopDisplay = number_format($campaign->initial_purchase_fee) . '円';
+                        } elseif ($campaign->cooperation_fee) {
+                            $coopDisplay = number_format($campaign->cooperation_fee) . '円';
+                        } else {
+                            $coopDisplay = '0円';
+                        }
+                    @endphp
+                    {{ $coopDisplay }}
+                </span>
             </div>
             @if($activeBonus)
             <div class="flex justify-between items-center py-1">
@@ -63,6 +57,7 @@
             </div>
             @endif
         </div>
+        <p class="text-xs text-gray-400 -mt-1">※支払い方法などで多少前後する場合があります。</p>
 
         @if($campaign->cancellation_info)
         <div class="bg-white rounded-xl border border-gray-100 p-4">
