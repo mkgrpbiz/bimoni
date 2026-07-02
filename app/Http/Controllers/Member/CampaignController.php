@@ -105,15 +105,38 @@ class CampaignController extends Controller
             ->where('end_at', '>=', $now)
             ->first();
 
-        $application = Application::create([
-            'user_id'                 => $user->id,
-            'campaign_id'             => $campaign->id,
-            'status'                  => 'pending',
-            'applied_at'              => $now,
-            'bonus_amount'            => $activeBonus?->bonus_amount,
-            'continuation_wish'       => $hasContinuation ? $request->continuation_wish : null,
+        $fields = [
+            'status'                   => 'pending',
+            'applied_at'               => $now,
+            'bonus_amount'             => $activeBonus?->bonus_amount,
+            'continuation_wish'        => $hasContinuation ? $request->continuation_wish : null,
             'purchase_available_times' => $request->purchase_available_times,
-        ]);
+            'selected_at'              => null, 'line_contacted_at'   => null,
+            'sounded_at'               => null, 'schedule_confirmed_at' => null,
+            'reserved_at'              => null, 'monitoring_confirmed_at' => null,
+            'completed_at'             => null, 'reported_at'         => null,
+            'approved_at'              => null, 'invited_at'          => null,
+            'invited_end_at'           => null, 'proposal_token'      => null,
+            'proposal_answered_at'     => null, 'proposal_answer'     => null,
+            'proposal_sent_at'         => null, 'continuation_token'  => null,
+            'continuation_response'    => null, 'continuation_responded_at' => null,
+            'notes'                    => null,
+        ];
+
+        $cancelled = Application::where('user_id', $user->id)
+            ->where('campaign_id', $campaign->id)
+            ->where('status', 'cancelled')
+            ->first();
+
+        if ($cancelled) {
+            $cancelled->update($fields);
+            $application = $cancelled;
+        } else {
+            $application = Application::create(array_merge($fields, [
+                'user_id'     => $user->id,
+                'campaign_id' => $campaign->id,
+            ]));
+        }
 
         // 応募上限チェック → 上限到達で自動一時停止
         if ($campaign->capacity !== null) {
