@@ -57,7 +57,9 @@
             </div>
             @endif
         </div>
+        @if($campaign->initial_purchase_fee)
         <p class="text-xs text-gray-400 -mt-1">※支払い方法などで多少前後する場合があります。</p>
+        @endif
 
         @if($campaign->cancellation_info)
         <div class="bg-white rounded-xl border border-gray-100 p-4">
