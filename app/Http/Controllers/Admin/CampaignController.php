@@ -155,10 +155,16 @@ class CampaignController extends Controller
 
     private function applyCooperationFormula(array &$validated, $request): void
     {
-        // 初回協力金: 入力値は「+○円」部分のみ
-        $extra = (int) $request->input('cooperation_fee', 0);
-        $validated['cooperation_fee']         = $extra;
-        $validated['cooperation_fee_formula'] = '初回購入費+' . $extra . '円';
+        // 初回協力金: 空欄 or 数値
+        $raw = trim($request->input('cooperation_fee', ''));
+        if ($raw !== '') {
+            $extra = (int) $raw;
+            $validated['cooperation_fee']         = $extra;
+            $validated['cooperation_fee_formula'] = '初回購入費+' . $extra . '円';
+        } else {
+            $validated['cooperation_fee']         = null;
+            $validated['cooperation_fee_formula'] = null;
+        }
 
         // 継続協力金: 空欄 or 数値
         $rawCont = trim($request->input('continuation_cooperation_fee', ''));
@@ -175,7 +181,7 @@ class CampaignController extends Controller
         $initial   = (float) ($validated['initial_purchase_fee']   ?? 0);
         $recurring = (float) ($validated['recurring_purchase_fee'] ?? 0);
         $rate      = (float) ($validated['continuation_rate']      ?? 0);
-        $coop      = (float) $validated['cooperation_fee'];
+        $coop      = (float) ($validated['cooperation_fee']        ?? 0);
         $referral  = (float) ($validated['referral_fee']           ?? 0);
         $unitPrice = (float) ($validated['campaign_unit_price']    ?? 0);
         $monitorCost = $initial + $recurring * ($rate / 100) + $coop + $referral;
@@ -201,7 +207,7 @@ class CampaignController extends Controller
             'monitor_video'          => 'nullable|mimes:mp4,mov,avi,webm|max:204800',
             'product_name'           => 'nullable|string|max:255',
             'product_price'          => 'nullable|integer|min:0',
-            'cooperation_fee'              => 'required|integer|min:0',
+            'cooperation_fee'              => 'nullable|integer|min:0',
             'continuation_cooperation_fee' => 'nullable|integer|min:0',
             'referral_fee'           => 'required|integer|in:0,500,1000',
             'campaign_unit_price'    => 'nullable|integer|min:0',

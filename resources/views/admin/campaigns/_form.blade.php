@@ -164,11 +164,12 @@
 
         {{-- Row 3: モニター協力金 / 回収前提 --}}
         <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金（+○円部分） <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金（+○円部分）</label>
             <div class="flex items-center gap-1">
                 <span class="text-sm text-gray-500 whitespace-nowrap">初回購入費(<span id="lbl-initial">{{ number_format($campaign->initial_purchase_fee ?? 0) }}</span>円)+</span>
                 <input type="number" name="cooperation_fee" id="f-coop"
-                       value="{{ old('cooperation_fee', $campaign->cooperation_fee ?? 0) }}"
+                       value="{{ old('cooperation_fee', $campaign->cooperation_fee ?? '') }}"
+                       placeholder="空欄=非表示"
                        class="flex-1 border rounded px-3 py-2 text-sm @error('cooperation_fee') border-red-400 @enderror"
                        min="0" oninput="calcGross()">
                 <span class="text-sm text-gray-500">円</span>

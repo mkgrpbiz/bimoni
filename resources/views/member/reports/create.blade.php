@@ -410,7 +410,9 @@ function onMonitorSelectChange(sel, purchaseType) {
     const totalFee      = purchaseAmt + extraBonus + campaignBonus;
 
     document.getElementById('display-expense').textContent = purchaseAmt.toLocaleString() + '円';
-    document.getElementById('display-extra').textContent   = '+' + extraBonus.toLocaleString() + '円';
+    const extraRow = document.getElementById('display-extra').closest('.flex');
+    document.getElementById('display-extra').textContent = '+' + extraBonus.toLocaleString() + '円';
+    if (extraRow) extraRow.style.setProperty('display', extraBonus > 0 ? '' : 'none', 'important');
     const bonusRow = document.getElementById('display-bonus-row');
     if (campaignBonus > 0) {
         document.getElementById('display-bonus').textContent = '+' + campaignBonus.toLocaleString() + '円';
