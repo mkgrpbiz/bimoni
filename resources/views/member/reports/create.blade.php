@@ -211,6 +211,7 @@
                                 data-fee="{{ $app->campaign->cooperation_fee ?? 0 }}"
                                 data-cont-fee="{{ $app->campaign->continuation_cooperation_fee ?? 0 }}"
                                 data-bonus="{{ $app->bonus_amount ?? 0 }}"
+                                data-continuation="{{ $app->continuation_response === 'possible' ? '1' : '0' }}"
                                 {{ old('application_id') == $app->id ? 'selected' : '' }}>
                             {{ $app->campaign->title }}
                         </option>
@@ -397,7 +398,15 @@ function updateMonitorFeeByApp(sel) {
 
 function updateMonitorFee(radio) {
     const sel = document.getElementById('monitor-app-select');
-    if (sel) updateMonitorFeeByApp(sel);
+    if (!sel) return;
+    const isCont = radio.value === 'continuation';
+    Array.from(sel.options).forEach(function(opt) {
+        if (!opt.value) return;
+        const optIsCont = opt.dataset.continuation === '1';
+        opt.hidden = isCont ? !optIsCont : optIsCont;
+    });
+    sel.value = '';
+    updateMonitorFeeByApp(sel);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
