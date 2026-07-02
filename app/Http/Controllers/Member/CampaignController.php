@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\CampaignBonus;
+use App\Models\LineMessageJob;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -130,6 +131,10 @@ class CampaignController extends Controller
 
         if ($cancelled) {
             $cancelled->update($fields);
+            // 前回応募時のLINEジョブ（打診等）をキャンセルして再応募後に残らないようにする
+            LineMessageJob::where('application_id', $cancelled->id)
+                ->whereIn('status', ['pending', 'sent'])
+                ->update(['status' => 'canceled']);
             $application = $cancelled;
         } else {
             $application = Application::create(array_merge($fields, [
