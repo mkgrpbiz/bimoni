@@ -225,8 +225,9 @@ Route::prefix('portal')->name('portal.')->middleware('portal.auth')->group(funct
     Route::get('children',        [PortalChild::class,    'index'])->name('children');
     Route::post('children',       [PortalChild::class,    'store'])->name('children.store');
     Route::get('children/create', [PortalChild::class,    'create'])->name('children.create');
-    Route::post('children/{child}/code',   [PortalChild::class, 'addCode'])->name('children.add_code');
-    Route::delete('children/code/{code}', [PortalChild::class, 'deleteCode'])->name('children.delete_code');
+    Route::post('children/{child}/code',    [PortalChild::class, 'addCode'])->name('children.add_code');
+    Route::patch('children/{child}/reward', [PortalChild::class, 'updateReward'])->name('children.update_reward');
+    Route::delete('children/code/{code}',  [PortalChild::class, 'deleteCode'])->name('children.delete_code');
     Route::get('settings',        [PortalSettings::class, 'index'])->name('settings');
     Route::patch('settings',      [PortalSettings::class, 'update'])->name('settings.update');
 });

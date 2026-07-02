@@ -15,9 +15,34 @@
     <div class="bg-white rounded-lg shadow p-4">
         <div class="flex items-center justify-between mb-3">
             <h2 class="font-bold text-gray-800">{{ $child->name }}</h2>
-            <p class="text-xs text-gray-500">
-                500円→¥{{ number_format($child->child_reward_500) }} ／ 1000円→¥{{ number_format($child->child_reward_1000) }}
-            </p>
+            <button type="button" onclick="toggleReward({{ $child->id }})"
+                    class="text-xs text-blue-600 border border-blue-300 px-2 py-1 rounded hover:bg-blue-50">
+                支払額変更
+            </button>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">
+            500円→¥{{ number_format($child->child_reward_500) }} ／ 1000円→¥{{ number_format($child->child_reward_1000) }}
+        </div>
+        <div id="reward-form-{{ $child->id }}" class="hidden mb-3 bg-gray-50 rounded p-3">
+            <form method="POST" action="{{ route('portal.children.update_reward', $child) }}" class="flex items-end gap-3 flex-wrap">
+                @csrf @method('PATCH')
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">代理店名</label>
+                    <input type="text" name="name" value="{{ $child->name }}"
+                           class="border rounded px-2 py-1 text-sm w-36">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">¥500案件の支払額</label>
+                    <input type="number" name="child_reward_500" value="{{ $child->child_reward_500 }}"
+                           min="0" max="500" class="border rounded px-2 py-1 text-sm w-24">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">¥1000案件の支払額</label>
+                    <input type="number" name="child_reward_1000" value="{{ $child->child_reward_1000 }}"
+                           min="0" max="1000" class="border rounded px-2 py-1 text-sm w-24">
+                </div>
+                <button type="submit" class="bg-gray-800 text-white text-xs px-3 py-1.5 rounded hover:bg-gray-700">保存</button>
+            </form>
         </div>
         <div class="mb-3">
             <p class="text-xs text-gray-500 mb-1">ポータルURL</p>
@@ -62,6 +87,10 @@
 @endsection
 
 <script>
+function toggleReward(id) {
+    const el = document.getElementById('reward-form-' + id);
+    el.classList.toggle('hidden');
+}
 function portalCopy(text) {
     const done = () => alert('コピーしました');
     const fallback = () => {

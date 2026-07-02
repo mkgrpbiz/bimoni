@@ -53,6 +53,26 @@ class ChildController extends Controller
         return redirect()->route('portal.children')->with('success', "{$child->name} を作成しました。");
     }
 
+    public function updateReward(Request $request, Agent $child)
+    {
+        $agent = \App\Services\PortalService::agent();
+        if ($child->parent_id !== $agent->id) abort(403);
+
+        $request->validate([
+            'name'              => 'required|string|max:100',
+            'child_reward_500'  => 'required|integer|min:0|max:500',
+            'child_reward_1000' => 'required|integer|min:0|max:1000',
+        ]);
+
+        $child->update([
+            'name'              => $request->name,
+            'child_reward_500'  => $request->child_reward_500,
+            'child_reward_1000' => $request->child_reward_1000,
+        ]);
+
+        return back()->with('success', "{$child->name} の支払い額を変更しました。");
+    }
+
     public function addCode(Request $request, Agent $child)
     {
         $agent = \App\Services\PortalService::agent();
