@@ -43,17 +43,17 @@ $tabs = [
     <table class="w-full text-sm">
         <thead class="bg-gray-50 text-gray-700 text-xs">
             <tr>
-                <th class="px-4 py-3 text-left">報告日時</th>
-                <th class="px-3 py-3 text-left">ユーザーID</th>
-                <th class="px-3 py-3 text-left">LINE名</th>
-                <th class="px-3 py-3 text-left">名前</th>
-                <th class="px-3 py-3 text-left">フリガナ</th>
-                <th class="px-3 py-3 text-right">商品数</th>
-                <th class="px-3 py-3 text-right">協力金</th>
-                <th class="px-3 py-3 text-left">到着予定日</th>
-                <th class="px-3 py-3 text-right">送料</th>
-                <th class="px-3 py-3 text-center">ステータス</th>
-                <th class="px-3 py-3 text-center">詳細</th>
+                <th class="px-4 py-3 text-left whitespace-nowrap">報告日時</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">ユーザーID</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">登録コード</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">LINE名</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">名前</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">フリガナ</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">商品数</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">到着予定日</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">追跡番号</th>
+                <th class="px-3 py-3 text-center whitespace-nowrap">ステータス</th>
+                <th class="px-3 py-3 text-center whitespace-nowrap">詳細</th>
             </tr>
         </thead>
         <tbody class="divide-y">
@@ -61,13 +61,13 @@ $tabs = [
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ $report->created_at->format('m/d H:i') }}</td>
                 <td class="px-3 py-3 text-gray-600 text-xs">{{ $report->user->bimoni_user_id ?? '-' }}</td>
+                <td class="px-3 py-3 font-mono text-xs text-pink-600">{{ $report->user->referred_by_code ?? '-' }}</td>
                 <td class="px-3 py-3 max-w-xs truncate">{{ $report->user->line_display_name ?? '-' }}</td>
                 <td class="px-3 py-3 font-medium">{{ $report->user->name ?? '-' }}</td>
                 <td class="px-3 py-3 text-gray-600">{{ $report->user->name_kana ?? '-' }}</td>
                 <td class="px-3 py-3 text-right font-bold">{{ $report->item_count }}</td>
-                <td class="px-3 py-3 text-right font-bold text-pink-600">¥{{ number_format($report->cooperation_fee) }}</td>
-                <td class="px-3 py-3 whitespace-nowrap">{{ $report->estimated_arrival_date->format('m/d') }}</td>
-                <td class="px-3 py-3 text-right">¥{{ number_format($report->shipping_fee) }}</td>
+                <td class="px-3 py-3 whitespace-nowrap">{{ $report->estimated_arrival_date?->format('m/d') ?? '-' }}</td>
+                <td class="px-3 py-3 font-mono text-xs">{{ $report->tracking_number ?? '-' }}</td>
                 <td class="px-3 py-3 text-center">
                     <span class="text-xs px-2 py-0.5 rounded-full {{ $report->getStatusColor() }}">
                         {{ $report->getStatusLabel() }}
