@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', '報告詳細')
 
@@ -27,19 +27,20 @@
         </div>
 
         {{-- 報告画像 --}}
-        @if($report->images->isNotEmpty())
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">報告画像</h2>
+            @if($report->images->isNotEmpty())
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 @foreach($report->images as $image)
-                <a href="{{ Storage::url($image->image_path) }}" target="_blank">
-                    <img src="{{ Storage::url($image->image_path) }}"
-                         class="w-full h-32 object-cover rounded border dark:border-gray-600 hover:opacity-80 transition">
-                </a>
+                <img src="{{ Storage::url($image->image_path) }}"
+                     class="w-full h-32 object-cover rounded border dark:border-gray-600 cursor-pointer hover:opacity-80 transition"
+                     onclick="openLightbox(this.src)">
                 @endforeach
             </div>
+            @else
+            <p class="text-sm text-gray-400">画像なし</p>
+            @endif
         </div>
-        @endif
 
         {{-- 承認・差戻し --}}
         @if($report->status === 'pending')
@@ -69,9 +70,9 @@
         @elseif($report->status === 'approved')
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">協力金付与</h2>
-            @if($report->application->status === 'approved')
+            @if($report->application?->status === 'approved')
             <p class="text-sm text-gray-800 dark:text-gray-400 mb-3">
-                付与金額：<span class="font-bold text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign->cooperation_fee) }}</span>
+                付与金額：<span class="font-bold text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign?->cooperation_fee ?? 0) }}</span>
             </p>
             <form method="POST" action="{{ route('admin.points.grant', $report) }}"
                   onsubmit="return confirm('協力金を付与しますか？')">
@@ -99,13 +100,13 @@
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">応募情報</h2>
             <dl class="space-y-2">
                 <dt class="text-gray-700 dark:text-gray-400">モニター</dt>
-                <dd class="font-medium dark:text-gray-200">{{ $report->user->name ?? '-' }}</dd>
+                <dd class="font-medium dark:text-gray-200">{{ $report->user?->name ?? '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">案件</dt>
-                <dd class="dark:text-gray-200">{{ $report->campaign->title }}</dd>
+                <dd class="dark:text-gray-200">{{ $report->campaign?->title ?? '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">種別</dt>
-                <dd class="dark:text-gray-200">{{ $report->campaign->getTypeLabel() }}</dd>
+                <dd class="dark:text-gray-200">{{ $report->campaign?->getTypeLabel() ?? '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">協力金</dt>
-                <dd class="font-medium text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign->cooperation_fee) }}</dd>
+                <dd class="font-medium text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign?->cooperation_fee ?? 0) }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">報告日</dt>
                 <dd class="dark:text-gray-200">{{ $report->created_at->format('Y/m/d H:i') }}</dd>
                 @if($report->reviewed_at)
@@ -113,12 +114,36 @@
                 <dd class="dark:text-gray-200">{{ $report->reviewed_at->format('Y/m/d H:i') }}</dd>
                 @endif
             </dl>
+            @if($report->application)
             <div class="mt-3">
                 <a href="{{ route('admin.applications.show', $report->application) }}"
                    class="bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600 text-xs">→ 応募詳細を見る</a>
             </div>
+            @endif
         </div>
     </div>
 </div>
-@endsection
 
+{{-- ライトボックス --}}
+<div id="lightbox" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex items-center justify-center p-4"
+     onclick="closeLightbox()">
+    <img id="lightbox-img" src="" class="max-w-full max-h-full rounded-lg shadow-xl object-contain">
+</div>
+
+@push('scripts')
+<script>
+function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.remove('hidden');
+    document.getElementById('lightbox').classList.add('flex');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.add('hidden');
+    document.getElementById('lightbox').classList.remove('flex');
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+});
+</script>
+@endpush
+@endsection
