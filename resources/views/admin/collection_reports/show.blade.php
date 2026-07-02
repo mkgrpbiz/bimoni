@@ -42,7 +42,7 @@
                     </span>
                 </dd>
                 <dt class="text-gray-500">到着予定日</dt>
-                <dd>{{ $collectionReport->estimated_arrival_date->format('Y/m/d') }}</dd>
+                <dd>{{ $collectionReport->estimated_arrival_date?->format('Y/m/d') ?? '-' }}</dd>
                 <dt class="text-gray-500">追跡番号</dt>
                 <dd class="font-mono">{{ $collectionReport->tracking_number }}</dd>
                 <dt class="text-gray-500">送料</dt>
@@ -64,13 +64,23 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <p class="text-xs text-gray-500 mb-2">段ボール（閉じる前）</p>
+                    @if($collectionReport->box_image)
                     <img src="{{ asset('storage/' . $collectionReport->box_image) }}"
-                         class="w-full rounded-lg border">
+                         class="w-full rounded-lg border cursor-pointer hover:opacity-80 transition"
+                         onclick="openLightbox(this.src)">
+                    @else
+                    <div class="w-full rounded-lg border bg-gray-50 flex items-center justify-center h-32 text-gray-400 text-sm">画像なし</div>
+                    @endif
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 mb-2">発送伝票の控え</p>
+                    @if($collectionReport->label_image)
                     <img src="{{ asset('storage/' . $collectionReport->label_image) }}"
-                         class="w-full rounded-lg border">
+                         class="w-full rounded-lg border cursor-pointer hover:opacity-80 transition"
+                         onclick="openLightbox(this.src)">
+                    @else
+                    <div class="w-full rounded-lg border bg-gray-50 flex items-center justify-center h-32 text-gray-400 text-sm">画像なし</div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -141,4 +151,26 @@
     </div>
 
 </div>
+{{-- ライトボックス --}}
+<div id="lightbox" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex items-center justify-center p-4"
+     onclick="closeLightbox()">
+    <img id="lightbox-img" src="" class="max-w-full max-h-full rounded-lg shadow-xl object-contain">
+</div>
+
+@push('scripts')
+<script>
+function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.remove('hidden');
+    document.getElementById('lightbox').classList.add('flex');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.add('hidden');
+    document.getElementById('lightbox').classList.remove('flex');
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+});
+</script>
+@endpush
 @endsection
