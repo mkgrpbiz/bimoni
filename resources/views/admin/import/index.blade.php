@@ -71,8 +71,8 @@
             @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">代理店（一括適用・CSVコード自動発行先）</label>
-                <select name="agent_id" class="border rounded px-3 py-1.5 text-sm w-72">
-                    <option value="">紹介なし</option>
+                <select name="agent_id" required class="border rounded px-3 py-1.5 text-sm w-72">
+                    <option value="">選択してください</option>
                     @foreach($parentAgents as $parent)
                         <optgroup label="{{ $parent->name }}">
                             <option value="{{ $parent->id }}">{{ $parent->name }}（親）</option>
