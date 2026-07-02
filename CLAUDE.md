@@ -61,6 +61,17 @@ php8.3 artisan route:clear
 ### ReferralPaymentStatus
 - 月次の紹介報酬支払い状況を管理
 
+### CollectionReport（回収報告）
+- `cooperation_fee`: 自動計算（`calcFee($itemCount, $shippingFee)`: 800円×商品数、5個以下は送料を差し引き）
+- `tracking_number`: 追跡番号（重複スキップキー）
+- `box_image` / `label_image`: 添付画像パス（null許容）
+- `estimated_arrival_date`: 到着予定日（null許容、`?->format()` でnull安全に）
+
+### Campaign
+- `collection_requirement`: ENUM('回収前提', '回収不要') nullable
+  - 条件チェックは必ず `=== '回収前提'`（truthy判定だと'回収不要'でも引っかかる）
+  - 回収前提の場合、応募フォームに警告メッセージ表示
+
 ---
 
 ## LINE LIFF
@@ -82,9 +93,10 @@ php8.3 artisan route:clear
 ## ポータル（代理店ポータル）
 
 ### 共通フィルター（ユーザー管理・報告管理・報酬管理）
-- 累計 / 月次 トグル
+- 累計 / 月次 トグル（**デフォルトは月次**）
 - 子代理店フィルター（親代理店のみ表示）
 - コード別プルダウン（コードが複数ある場合）
+- ユーザー一覧は `profile_completed_at` not null のみ表示（LIFF登録だけのユーザーを除外）
 
 ### ページ構成
 | ページ | 内容 |
@@ -112,6 +124,32 @@ php8.3 artisan route:clear
 
 ### ユーザー管理
 - 登録コード（`referred_by_code`）を表示
+
+### 報告管理（`admin/reports`）
+- 一覧列: 報告日時 / ユーザーID(`bimoni_user_id`) / 登録コード / LINE表示名 / 名前 / フリガナ / 案件名 / モニター協力金 / ステータス / 詳細
+- 詳細: 画像クリックでライトボックス拡大、承認・差戻しアクションあり
+
+### 回収管理（`admin/collection_reports`）
+- 一覧列: 報告日時 / ユーザーID(`bimoni_user_id`) / 登録コード / LINE表示名 / 名前 / フリガナ / 商品数 / 到着予定日 / 追跡番号 / ステータス / 詳細
+- 詳細: 段ボール画像・発送伝票画像をライトボックスで拡大、承認・差戻しアクションあり
+
+### 紹介報酬詳細
+- 承認報告があるユーザーのみ表示（`$activeUsers`）
+- 戻るボタンのルートは `['year' => $month->year, 'month' => $month->month]`（`'month' => 'Y-m'` 形式はNG→500エラー）
+- 期待報酬0円の場合は「処理不要」バッジ表示
+- 承認ユーザー一覧CSVダウンロード機能あり（`referrals.csv` ルート）
+
+### インポート機能
+- **報告インポート**: 列 = 回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費, キャンペーン
+  - ステータスは常に `approved`
+  - キャンペーン列に値があれば `bonus_amount=300`
+  - 重複チェック: ユーザー×案件×purchase_type
+  - `purchase_amount` = モニター経費（¥・カンマ除去）
+  - `cooperation_fee` 列はMonitorReportに存在しない（Campaignから取得するため保存しない）
+- **回収インポート**: 列 = 回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号
+  - 追跡番号重複スキップ
+  - 協力金は `CollectionReport::calcFee()` で自動計算（800円×商品数、5個以下は送料を差し引き）
+  - ステータスは `approved`
 
 ---
 
@@ -147,3 +185,7 @@ php8.3 artisan route:clear
 - SSHの秘密鍵は `C:\Users\user\.ssh\xserver.key`
 - STGのDBをtinker経由で操作するときは、PowerShellからの直接実行は特殊文字で失敗する。PHPファイルをSCPで転送して `php8.3 /home/mkgrp/bimoni/xxx.php` で実行するのが確実（`/tmp/` はパスが解決できない）
 - STGのcrontab編集は `crontab -e`（viが開く）ではなく PHP経由で: `php8.3 -r "file_put_contents('/tmp/nc.txt', '...' . PHP_EOL); passthru('crontab /tmp/nc.txt');"`
+- 再応募（cancelled→update）時に古いLineMessageJobが残存する問題 → update前に `status='canceled'` に更新すること
+- ライトボックスは純JS実装（`openLightbox(src)` / `closeLightbox()`）、クリックまたはEscで閉じる。回収詳細・報告詳細で使用
+- CSVインポートはBOM付きUTF-8（`"\xEF\xBB\xBF"`プレフィックス）でExcel対応
+- ¥・カンマ除去は `preg_replace('/[^\d]/', '', $value)` を使う

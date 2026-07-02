@@ -125,6 +125,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('points', [PointController::class, 'index'])->name('points.index');
         Route::get('points/csv', [PointController::class, 'exportCsv'])->name('points.csv');
         Route::get('points/zengin', [PointController::class, 'exportZengin'])->name('points.zengin');
+        Route::patch('points/grant/{report}', [PointController::class, 'grant'])->name('points.grant');
         Route::patch('points/mark-reserved', [PointController::class, 'markReserved'])->name('points.mark_reserved');
         Route::patch('points/mark-paid', [PointController::class, 'markPaid'])->name('points.mark_paid');
         Route::post('points/adjust', [PointController::class, 'adjust'])->name('points.adjust');

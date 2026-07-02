@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\User;
+use App\Services\PointService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -91,6 +92,12 @@ class PointController extends Controller
         return view('admin.points.index', compact(
             'blocks', 'month', 'year', 'mon', 'months', 'userSummary', 'totalAmount', 'collectionCounts'
         ));
+    }
+
+    public function grant(MonitorReport $report, PointService $pointService): RedirectResponse
+    {
+        $pointService->grantForReport($report);
+        return back()->with('success', '協力金を付与しました。');
     }
 
     public function markReserved(Request $request): RedirectResponse
