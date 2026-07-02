@@ -166,6 +166,12 @@ class ReferralController extends Controller
             ->orderBy('created_at')
             ->get();
 
+        $rejectedReports = MonitorReport::with(['campaign:id,referral_fee'])
+            ->whereIn('user_id', $referredUserIds)
+            ->where('status', 'rejected')
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->get();
+
         $payStatus = ReferralPaymentStatus::getStatus($agent->id, (int) $month->format('Y'), (int) $month->format('n'));
 
         // 自分のコードを登録者数順にソート
@@ -187,7 +193,7 @@ class ReferralController extends Controller
         });
 
         return view('admin.referrals.show', compact(
-            'agent', 'referredUsers', 'reports', 'month', 'codeStrings', 'payStatus',
+            'agent', 'referredUsers', 'reports', 'rejectedReports', 'month', 'codeStrings', 'payStatus',
             'sortedCodes', 'userCounts', 'childrenWithSortedCodes'
         ));
     }
