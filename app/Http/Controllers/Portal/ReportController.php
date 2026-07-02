@@ -10,7 +10,7 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $agent      = \App\Services\PortalService::agent();
-        $mode       = $request->get('mode', 'all');
+        $mode       = $request->get('mode', 'month');
         $childId    = $request->get('child_id');
         $codeFilter = $request->get('code_filter');
 

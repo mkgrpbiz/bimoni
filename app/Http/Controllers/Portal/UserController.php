@@ -13,7 +13,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $agent      = \App\Services\PortalService::agent();
-        $mode       = $request->input('mode', 'all');
+        $mode       = $request->input('mode', 'month');
         $childId    = $request->get('child_id');
         $codeFilter = $request->get('code_filter');
 

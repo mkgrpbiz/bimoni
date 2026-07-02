@@ -31,7 +31,7 @@ class PortalService
     /** コードに紐づくユーザーを取得 */
     public static function users(array $codes): Collection
     {
-        return User::whereIn('referred_by_code', $codes)->orderByDesc('created_at')->get();
+        return User::whereIn('referred_by_code', $codes)->whereNotNull('profile_completed_at')->orderByDesc('created_at')->get();
     }
 
     /** 承認済み報告を取得 */
