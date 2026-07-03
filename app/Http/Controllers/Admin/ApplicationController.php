@@ -121,6 +121,7 @@ class ApplicationController extends Controller
     {
         $query = $campaign->applications()->with(['user', 'statusLogs.changedBy', 'lineMessageJobs'])
             ->orderByRaw("CASE WHEN status IN ('completed','cancelled') THEN 1 ELSE 0 END ASC")
+            ->orderByRaw("CASE WHEN status IN ('completed','cancelled') THEN applied_at END DESC")
             ->orderBy('applied_at', 'asc');
 
         if ($request->filled('status')) {
