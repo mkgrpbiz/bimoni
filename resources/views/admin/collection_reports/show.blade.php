@@ -38,7 +38,7 @@
                 <dd class="font-bold text-pink-600 text-base">¥{{ number_format($collectionReport->cooperation_fee) }}
                     <span class="text-xs font-normal text-gray-400 ml-1">
                         ({{ $collectionReport->item_count }}点×800円
-                        @if($collectionReport->item_count <= 5) - 送料¥{{ number_format($collectionReport->shipping_fee) }}@endif)
+                        @if($collectionReport->item_count < 5) - 送料¥{{ number_format($collectionReport->shipping_fee) }}@endif)
                     </span>
                 </dd>
                 <dt class="text-gray-500">到着予定日</dt>
