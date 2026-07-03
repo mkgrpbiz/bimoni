@@ -404,7 +404,7 @@ class ApplicationController extends Controller
     {
         $query = Application::with(['user', 'campaign:id,title,campaign_type,pr_media', 'lineMessageJobs'])
             ->whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
-            ->latest('applied_at');
+            ->orderByDesc('invited_at');
 
         if ($request->filled('campaign_id')) {
             $query->where('campaign_id', $request->campaign_id);
