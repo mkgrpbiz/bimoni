@@ -360,26 +360,17 @@ class ImportService
                     continue;
                 }
 
-                $hasBonus = !empty(trim($row['キャンペーン'] ?? ''));
-
-                // 応募レコードを確保（なければ作成）
-                $application = Application::firstOrCreate(
-                    ['user_id' => $user->id, 'campaign_id' => $campaign->id],
-                    ['status' => 'completed', 'applied_at' => $reportedAt, 'completed_at' => $reportedAt,
-                     'bonus_amount' => $hasBonus ? 300 : null, 'imported_from' => 'spreadsheet']
-                );
-                if ($application->wasRecentlyCreated) {
-                    DB::table('applications')->where('id', $application->id)->update(['created_at' => $reportedAt]);
-                } elseif ($hasBonus && !$application->bonus_amount) {
-                    $application->update(['bonus_amount' => 300]);
-                }
-
                 $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['モニター経費'] ?? $row['商品金額'] ?? '0');
+
+                // 既存の応募レコードを探すだけ（作成しない）
+                $application = Application::where('user_id', $user->id)
+                    ->where('campaign_id', $campaign->id)
+                    ->first();
 
                 $report = MonitorReport::create([
                     'user_id'         => $user->id,
                     'campaign_id'     => $campaign->id,
-                    'application_id'  => $application->id,
+                    'application_id'  => $application?->id,
                     'status'          => 'approved',
                     'purchase_type'   => $purchaseType,
                     'purchase_amount' => $purchaseAmount,
