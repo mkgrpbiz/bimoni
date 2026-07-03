@@ -96,6 +96,42 @@
         </form>
     </div>
 
+    {{-- 応募リストインポート --}}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+        <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">応募リストインポート</h2>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 space-y-0.5">
+            <p class="font-medium text-gray-700 dark:text-gray-300">エルメの応募フォーム回答データをそのままCSVでインポートできます。案件を選択してください。</p>
+            <p>・ヘッダー行（日本語）に対応：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">回答日時, 回答者ID, 回答者, お名前(漢字フルネーム), フリガナ, 生年月日をご入力ください, 性別を選択してください, 購入可能時間を選択して下さい, 継続購入がある場合〜, ステータス, 採用日, 継続</code></p>
+            <p>・ステータス：実施完了 / キャンセル / 予約中 / 実施確認中 / 打診中 / 空欄（応募のみ）</p>
+            <p>・継続購入希望（はい/いいえ）と継続打診承諾（TRUE/FALSE）を自動マッピング</p>
+            <p>・採用日が入力されているとステータスが実施完了の場合に <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">completed_at</code> に設定されます</p>
+            <p>・回答者IDでユーザーを検索。見つからない場合は新規ユーザーとして登録します</p>
+            <p>・重複チェック：同一ユーザー×同一案件×同一応募日時の場合はスキップ</p>
+        </div>
+        <form method="POST" action="{{ route('admin.import.applications') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">案件 <span class="text-red-500">*</span></label>
+                <select name="campaign_id" required class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm w-64">
+                    <option value="">選択してください</option>
+                    @foreach($campaigns as $campaign)
+                        <option value="{{ $campaign->id }}">{{ $campaign->title }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSVファイル <span class="text-red-500">*</span></label>
+                <input type="file" name="csv_file" accept=".csv,.txt" required
+                       class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm">
+            </div>
+            <button type="submit"
+                    onclick="return confirm('応募リストCSVをインポートしますか？')"
+                    class="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 text-sm">
+                インポート実行
+            </button>
+        </form>
+    </div>
+
     {{-- 報告インポート --}}
     <div class="bg-white rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 mb-1">報告インポート</h2>
@@ -133,7 +169,7 @@
             <p>・報告日時が空欄の場合はインポート実行時の日時が使われます</p>
             <p>・追跡番号が重複する行はスキップされます</p>
             <p>・回答者IDでユーザーを検索、なければ名前+フリガナで検索します（新規作成はしません）</p>
-            <p>・協力金は自動計算（800円×商品数、5個以下は送料を差し引き）</p>
+            <p>・協力金は自動計算（800円×商品数、4個以下は送料を差し引き）</p>
             <p>・ステータスは「承認済み」で登録されます</p>
             <p>・送料の¥・カンマは自動除去します</p>
         </div>

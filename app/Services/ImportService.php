@@ -106,43 +106,40 @@ class ImportService
         return $result;
     }
 
-    public function importApplications(array $rows, ?string $campaignName = null): array
+    public function importApplications(array $rows, int $campaignId): array
     {
         $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
+
+        $campaign = Campaign::find($campaignId);
+        if (!$campaign) {
+            $result['errors'][] = '指定された案件が見つかりません';
+            return $result;
+        }
 
         $rows = $this->normalizeApplicationRows($rows);
 
         $statusMap = [
-            '実施完了'     => 'completed',
-            '実施確認中'   => 'confirming',
-            'キャンセル'   => 'cancelled',
-            '予約中'       => 'scheduled',
-            '打診中'       => 'line_contacted',
-            '選考中'       => 'pending',
+            '実施完了'   => 'completed',
+            '実施確認中' => 'confirming',
+            'キャンセル' => 'cancelled',
+            '予約中'     => 'scheduled',
+            '打診中'     => 'line_contacted',
+            '選考中'     => 'pending',
+            '応募'       => 'pending',
         ];
         $validStatuses = ['pending','line_contacted','scheduled','confirming','completed','reported','approved','point_granted','cancelled'];
 
-        DB::transaction(function () use ($rows, $campaignName, &$result, $statusMap, $validStatuses) {
+        DB::transaction(function () use ($rows, $campaign, &$result, $statusMap, $validStatuses) {
             foreach ($rows as $i => $row) {
-                $line = $i + 2;
-
-                $ermeId = $row['erme_respondent_id'] ?? '';
+                $ermeId = trim($row['erme_respondent_id'] ?? '');
                 if (empty($ermeId)) {
                     continue;
                 }
 
-                $targetCampaignName = $campaignName ?: ($row['campaign_name'] ?? '');
-                if (empty($targetCampaignName)) {
-                    $result['errors'][] = "{$line}行目: 案件名が指定されていません";
-                    continue;
-                }
+                $appliedAtStr = $this->parseDateTime($row['applied_at'] ?? '') ?? now()->toDateTimeString();
+                $appliedAtCarbon = Carbon::parse($appliedAtStr);
 
-                $campaign = Campaign::where('title', $targetCampaignName)->first();
-                if (!$campaign) {
-                    $result['errors'][] = "{$line}行目: 案件「{$targetCampaignName}」が見つかりません";
-                    continue;
-                }
-
+                // ユーザー検索（なければ作成）
                 $user = User::where('erme_respondent_id', $ermeId)->first();
                 if (!$user) {
                     $gender = match($row['gender'] ?? '') {
@@ -150,45 +147,68 @@ class ImportService
                         '男性' => 'male',
                         default => null,
                     };
-                    $wantsCont = match($row['wants_continuation'] ?? '') {
-                        'はい' => 1,
-                        'いいえ' => 0,
-                        default => null,
-                    };
                     $times = null;
                     if (!empty($row['available_times']) && $row['available_times'] !== 'いつでもOK') {
                         $times = array_values(array_filter(array_map('trim', explode(',', $row['available_times']))));
                     }
                     $user = User::create([
-                        'line_user_id'       => 'IMPORT_' . uniqid(),
-                        'erme_respondent_id' => $ermeId,
-                        'name'               => $row['name'] ?? ($row['name_kana'] ?? ''),
-                        'name_kana'          => $row['name_kana'] ?? null,
-                        'gender'             => $gender,
-                        'birthdate'          => $this->parseDate($row['birthdate'] ?? ''),
-                        'available_times'    => $times ?: null,
-                        'wants_continuation' => $wantsCont,
-                        'imported_from'      => 'spreadsheet',
+                        'line_user_id'         => 'IMPORT_' . uniqid(),
+                        'erme_respondent_id'   => $ermeId,
+                        'line_display_name'    => $row['line_display_name'] ?? null,
+                        'name'                 => $row['name'] ?? ($row['name_kana'] ?? ''),
+                        'name_kana'            => $row['name_kana'] ?? null,
+                        'gender'               => $gender,
+                        'birthdate'            => $this->parseDate($row['birthdate'] ?? ''),
+                        'available_times'      => $times ?: null,
+                        'imported_from'        => 'spreadsheet',
+                        'profile_completed_at' => $appliedAtCarbon,
                     ]);
                 }
 
-                if (Application::where('user_id', $user->id)->where('campaign_id', $campaign->id)->exists()) {
+                // 重複チェック: 同一ユーザー×同一案件×同一応募日時
+                if (Application::where('user_id', $user->id)
+                    ->where('campaign_id', $campaign->id)
+                    ->where('applied_at', $appliedAtStr)
+                    ->exists()) {
                     $result['skipped']++;
                     continue;
                 }
 
-                $rawStatus = $row['status'] ?? '';
-                $status = $statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'pending');
+                $rawStatus = trim($row['status'] ?? '');
+                $status = $rawStatus !== ''
+                    ? ($statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'pending'))
+                    : 'pending';
 
-                Application::create([
-                    'user_id'       => $user->id,
-                    'campaign_id'   => $campaign->id,
-                    'status'        => $status,
-                    'applied_at'    => $this->parseDateTime($row['applied_at'] ?? '') ?? now(),
-                    'selected_at'   => $this->parseDate($row['selected_at'] ?? ''),
-                    'completed_at'  => $status === 'completed' ? ($this->parseDate($row['selected_at'] ?? '') ?? now()) : null,
-                    'imported_from' => 'spreadsheet',
+                $completedDate = $this->parseDate($row['completed_date'] ?? $row['selected_at'] ?? '');
+                $completedAt = ($status === 'completed' && $completedDate) ? $completedDate : null;
+
+                // 継続購入希望（はい/いいえ → 1/0）
+                $continuationWish = match($row['wants_continuation'] ?? '') {
+                    'はい'   => 1,
+                    'いいえ' => 0,
+                    default  => null,
+                };
+
+                // 継続打診承諾（TRUE/FALSE → possible/not_possible）
+                $flagRaw = strtoupper(trim($row['continuation_flag'] ?? ''));
+                $continuationResponse = match($flagRaw) {
+                    'TRUE'  => 'possible',
+                    'FALSE' => 'not_possible',
+                    default => null,
+                };
+
+                $application = Application::create([
+                    'user_id'               => $user->id,
+                    'campaign_id'           => $campaign->id,
+                    'status'                => $status,
+                    'applied_at'            => $appliedAtStr,
+                    'completed_at'          => $completedAt,
+                    'continuation_wish'     => $continuationWish,
+                    'continuation_response' => $continuationResponse,
+                    'imported_from'         => 'spreadsheet',
                 ]);
+
+                DB::table('applications')->where('id', $application->id)->update(['created_at' => $appliedAtCarbon]);
 
                 $result['success']++;
             }
@@ -202,17 +222,22 @@ class ImportService
         if (empty($rows)) return $rows;
 
         $headerMap = [
-            '回答日時'                          => 'applied_at',
-            '回答者ID'                          => 'erme_respondent_id',
-            'お名前(漢字フルネーム)'            => 'name',
-            'フリガナ'                          => 'name_kana',
-            '生年月日をご入力ください'          => 'birthdate',
-            '性別を選択してください'            => 'gender',
-            '購入可能時間を選択して下さい'      => 'available_times',
+            '回答日時'         => 'applied_at',
+            '回答者ID'         => 'erme_respondent_id',
+            '回答者'           => 'line_display_name',
+            'お名前(漢字フルネーム)' => 'name',
+            'フリガナ'         => 'name_kana',
+            '生年月日をご入力ください' => 'birthdate',
+            '性別を選択してください'  => 'gender',
+            '購入可能時間を選択して下さい' => 'available_times',
             '継続購入がある場合、複数回の購入を希望されますか？' => 'wants_continuation',
-            'ステータス'                        => 'status',
-            '案内日'                            => 'selected_at',
-            'ｷｬﾝﾍﾟｰﾝ'                          => 'campaign_name',
+            'ステータス'       => 'status',
+            '採用日'           => 'completed_date',
+            '採用時間'         => 'completed_time',
+            '継続'             => 'continuation_flag',
+            '案内日'           => 'completed_date',
+            '備考'             => 'notes',
+            'ｷｬﾝﾍﾟｰﾝ'         => 'campaign_name',
         ];
 
         $firstKeys = array_keys($rows[0]);
@@ -558,14 +583,6 @@ class ImportService
                     continue;
                 }
 
-                // 重複チェック: ユーザー×報告日時
-                if (CollectionReport::where('user_id', $user->id)
-                    ->whereDate('created_at', $reportedAt->toDateString())
-                    ->exists()) {
-                    $result['skipped']++;
-                    continue;
-                }
-
                 // ユーザー特定
                 $user = null;
                 if ($ermeId) {
@@ -581,6 +598,14 @@ class ImportService
                 }
                 if (!$user) {
                     $result['errors'][] = "{$line}行目: ユーザーが特定できません（{$name}）";
+                    continue;
+                }
+
+                // 重複チェック: ユーザー×報告日時
+                if (CollectionReport::where('user_id', $user->id)
+                    ->whereDate('created_at', $reportedAt->toDateString())
+                    ->exists()) {
+                    $result['skipped']++;
                     continue;
                 }
 
