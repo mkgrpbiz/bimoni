@@ -16,9 +16,7 @@ class ImportController extends Controller
 
     public function index(): View
     {
-        $campaigns = Campaign::whereIn('status', ['published', 'paused'])
-            ->orderBy('title')
-            ->get();
+        $campaigns = Campaign::orderBy('title')->get();
 
         // 代理店一覧（親 > 子の構造で）
         $parentAgents = Agent::whereNull('parent_id')->with('children.codes')->orderBy('name')->get();
