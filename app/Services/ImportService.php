@@ -11,6 +11,7 @@ use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\Point;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ImportService
@@ -315,6 +316,10 @@ class ImportService
                     continue;
                 }
 
+                // 報告日時（空欄は現在時刻）
+                $reportedAtRaw = trim($row['報告日時'] ?? '');
+                $reportedAt = $reportedAtRaw !== '' ? Carbon::parse($reportedAtRaw) : now();
+
                 // 初回か継続
                 $purchaseRaw  = $row['初回か継続'] ?? '';
                 $purchaseType = str_contains($purchaseRaw, '継続') || $purchaseRaw === 'continuation'
@@ -335,7 +340,7 @@ class ImportService
                 // 応募レコードを確保（なければ作成）
                 $application = Application::firstOrCreate(
                     ['user_id' => $user->id, 'campaign_id' => $campaign->id],
-                    ['status' => 'completed', 'applied_at' => now(), 'completed_at' => now(),
+                    ['status' => 'completed', 'applied_at' => $reportedAt, 'completed_at' => $reportedAt,
                      'bonus_amount' => $hasBonus ? 300 : null, 'imported_from' => 'spreadsheet']
                 );
                 if ($application->wasRecentlyCreated === false && $hasBonus && !$application->bonus_amount) {
@@ -344,7 +349,7 @@ class ImportService
 
                 $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['モニター経費'] ?? $row['商品金額'] ?? '0');
 
-                MonitorReport::create([
+                $report = MonitorReport::create([
                     'user_id'         => $user->id,
                     'campaign_id'     => $campaign->id,
                     'application_id'  => $application->id,
@@ -354,13 +359,7 @@ class ImportService
                     'payment_status'  => 'pending',
                 ]);
 
-                // 継続報告の場合は応募の継続可能フラグもONにする（継続率計算に反映）
-                if ($purchaseType === 'continuation' && $application->continuation_response !== 'possible') {
-                    $application->update([
-                        'continuation_response'      => 'possible',
-                        'continuation_responded_at'  => now(),
-                    ]);
-                }
+                DB::table('monitor_reports')->where('id', $report->id)->update(['created_at' => $reportedAt]);
 
                 $result['success']++;
             }
@@ -538,6 +537,9 @@ class ImportService
             foreach ($rows as $i => $row) {
                 $line = $i + 2;
 
+                $reportedAtRaw = trim($row['報告日時'] ?? '');
+                $reportedAt    = $reportedAtRaw !== '' ? Carbon::parse($reportedAtRaw) : now();
+
                 $ermeId    = $row['回答者ID'] ?? null;
                 $name      = $row['名前'] ?? $row['回答者名'] ?? null;
                 $kana      = $row['フリガナ'] ?? null;
@@ -578,15 +580,17 @@ class ImportService
                     continue;
                 }
 
-                CollectionReport::create([
-                    'user_id'        => $user->id,
-                    'campaign_ids'   => [],
+                $cr = CollectionReport::create([
+                    'user_id'         => $user->id,
+                    'campaign_ids'    => [],
                     'tracking_number' => $tracking,
-                    'shipping_fee'   => $shipping,
-                    'item_count'     => $itemCount,
+                    'shipping_fee'    => $shipping,
+                    'item_count'      => $itemCount,
                     'cooperation_fee' => CollectionReport::calcFee($itemCount, $shipping),
-                    'status'         => 'approved',
+                    'status'          => 'approved',
                 ]);
+
+                DB::table('collection_reports')->where('id', $cr->id)->update(['created_at' => $reportedAt]);
 
                 $result['success']++;
             }

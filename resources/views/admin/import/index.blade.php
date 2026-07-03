@@ -100,7 +100,8 @@
     <div class="bg-white rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 mb-1">報告インポート</h2>
         <div class="text-xs text-gray-500 mb-3 space-y-0.5">
-            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費, キャンペーン</code></p>
+            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">報告日時, 回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費, キャンペーン</code></p>
+            <p>・報告日時が空欄の場合はインポート実行時の日時が使われます</p>
             <p>・初回か継続：<code class="bg-gray-100 px-1 rounded">初回</code> または <code class="bg-gray-100 px-1 rounded">継続</code></p>
             <p>・ステータスは承認済みで登録されます</p>
             <p>・回答者IDでユーザーを検索、なければ名前+フリガナで検索します（新規作成はしません）</p>
@@ -128,7 +129,8 @@
     <div class="bg-white rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 mb-1">回収インポート</h2>
         <div class="text-xs text-gray-500 mb-3 space-y-0.5">
-            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号</code></p>
+            <p>CSVヘッダー：<code class="bg-gray-100 px-1 rounded">報告日時, 回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号</code></p>
+            <p>・報告日時が空欄の場合はインポート実行時の日時が使われます</p>
             <p>・追跡番号が重複する行はスキップされます</p>
             <p>・回答者IDでユーザーを検索、なければ名前+フリガナで検索します（新規作成はしません）</p>
             <p>・協力金は自動計算（800円×商品数、5個以下は送料を差し引き）</p>
