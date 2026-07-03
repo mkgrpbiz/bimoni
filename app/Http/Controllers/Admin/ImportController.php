@@ -55,6 +55,7 @@ class ImportController extends Controller
         ]);
 
         $content = file_get_contents($request->file('csv_file')->getRealPath());
+        $content = $this->importer->skipToApplicationHeader($content);
         $rows    = $this->importer->parseCsv($content);
 
         if (empty($rows)) {

@@ -238,9 +238,11 @@ class ImportService
             '採用日'           => 'completed_date',
             '採用時間'         => 'completed_time',
             '継続'             => 'continuation_flag',
+            '奨学'             => 'continuation_flag',
             '案内日'           => 'completed_date',
             '備考'             => 'notes',
             'ｷｬﾝﾍﾟｰﾝ'         => 'campaign_name',
+            'キャンペーン'     => 'campaign_name',
         ];
 
         $firstKeys = array_keys($rows[0]);
@@ -523,6 +525,18 @@ class ImportService
             return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
         }
         return $value;
+    }
+
+    public function skipToApplicationHeader(string $content): string
+    {
+        $content = ltrim($content, "\xEF\xBB\xBF");
+        $lines   = preg_split('/\r\n|\r|\n/', $content);
+        foreach ($lines as $i => $line) {
+            if (str_contains($line, '回答者ID')) {
+                return implode("\n", array_slice($lines, $i));
+            }
+        }
+        return $content;
     }
 
     public function parseCsv(string $content): array
