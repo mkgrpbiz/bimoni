@@ -15,26 +15,40 @@ use Illuminate\View\View;
 
 class PointController extends Controller
 {
+    private function monitorFee(MonitorReport $r): int
+    {
+        return ($r->purchase_amount ?? 0)
+            + ($r->campaign?->cooperation_fee ?? 0)
+            + ($r->application?->bonus_amount ?? 0);
+    }
+
     public function index(Request $request): View
     {
-        $calcFee = function ($r) {
-            $fee = ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0);
-            return $fee + ($r->application?->bonus_amount ?? 0);
-        };
-
         // 先月・当月ブロック
         $blocks = [];
         foreach ([Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->startOfMonth()] as $m) {
-            $reports = MonitorReport::with(['campaign', 'application'])
+            $start = $m->copy()->startOfMonth();
+            $end   = $m->copy()->endOfMonth();
+
+            $monitors = MonitorReport::with(['campaign', 'application'])
                 ->where('status', 'approved')
-                ->whereBetween('created_at', [$m->copy()->startOfMonth(), $m->copy()->endOfMonth()])
+                ->whereBetween('created_at', [$start, $end])
                 ->get();
+
+            $collectionFee = CollectionReport::where('status', 'approved')
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('cooperation_fee');
+
+            $hasPendingCollection = CollectionReport::where('status', 'approved')
+                ->where('payment_status', 'pending')
+                ->whereBetween('created_at', [$start, $end])
+                ->exists();
 
             $blocks[] = [
                 'month'      => $m->copy(),
-                'total'      => $reports->sum($calcFee),
-                'count'      => $reports->count(),
-                'hasPending' => $reports->contains('payment_status', 'pending'),
+                'total'      => $monitors->sum(fn($r) => $this->monitorFee($r)) + $collectionFee,
+                'count'      => $monitors->count(),
+                'hasPending' => $monitors->contains('payment_status', 'pending') || $hasPendingCollection,
             ];
         }
 
@@ -51,41 +65,70 @@ class PointController extends Controller
             ->map(fn($r) => ['year' => (int)$r->y, 'month' => (int)$r->m, 'label' => Carbon::createFromDate($r->y, $r->m, 1)->format('Y年n月')])
             ->toArray();
 
-        $query = MonitorReport::with(['user', 'campaign', 'application'])
+        $monitorQuery = MonitorReport::with(['user', 'campaign', 'application'])
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
+
+        $collectionQuery = CollectionReport::with('user')
             ->where('status', 'approved')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
 
         if ($request->filled('q')) {
-            $q = $request->q;
+            $q       = $request->q;
             $userIds = User::where('bimoni_user_id', 'like', '%' . $q . '%')
                 ->orWhere('line_display_name', 'like', '%' . $q . '%')
                 ->orWhere('name', 'like', '%' . $q . '%')
                 ->orWhere('name_kana', 'like', '%' . $q . '%')
                 ->pluck('id');
-            $query->whereIn('user_id', $userIds);
+            $monitorQuery->whereIn('user_id', $userIds);
+            $collectionQuery->whereIn('user_id', $userIds);
         }
 
-        $reports = $query->get();
+        $monitorReports     = $monitorQuery->get();
+        $collectionReports  = $collectionQuery->get();
 
-        $userSummary = $reports->groupBy('user_id')->map(fn($rows) => [
-            'user'   => $rows->first()->user,
-            'total'  => $rows->sum($calcFee),
-            'count'  => $rows->count(),
-            'status' => $rows->contains('payment_status', 'pending') ? 'pending' : 'reserved',
-        ])->sortByDesc('total')->values();
+        // ユーザー別集計
+        $userMap = [];
 
-        $totalAmount = $reports->sum($calcFee);
+        foreach ($monitorReports->groupBy('user_id') as $uid => $rows) {
+            $userMap[$uid] = [
+                'user'            => $rows->first()->user,
+                'monitorTotal'    => $rows->sum(fn($r) => $this->monitorFee($r)),
+                'monitorCount'    => $rows->count(),
+                'collectionTotal' => 0,
+                'collectionCount' => 0,
+                'status'          => $rows->contains('payment_status', 'pending') ? 'pending' : 'reserved',
+            ];
+        }
 
-        $summaryUserIds = $userSummary->pluck('user.id')->filter();
-        $collectionCounts = CollectionReport::whereIn('user_id', $summaryUserIds)
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
-            ->selectRaw('user_id, count(*) as cnt')
-            ->groupBy('user_id')
-            ->pluck('cnt', 'user_id');
+        foreach ($collectionReports as $cr) {
+            $uid = $cr->user_id;
+            if (!isset($userMap[$uid])) {
+                $userMap[$uid] = [
+                    'user'            => $cr->user,
+                    'monitorTotal'    => 0,
+                    'monitorCount'    => 0,
+                    'collectionTotal' => 0,
+                    'collectionCount' => 0,
+                    'status'          => 'reserved',
+                ];
+            }
+            $userMap[$uid]['collectionTotal'] += $cr->cooperation_fee;
+            $userMap[$uid]['collectionCount'] += 1;
+            if ($cr->payment_status === 'pending') {
+                $userMap[$uid]['status'] = 'pending';
+            }
+        }
+
+        $userSummary = collect($userMap)
+            ->map(fn($r) => array_merge($r, ['total' => $r['monitorTotal'] + $r['collectionTotal']]))
+            ->sortByDesc('total')
+            ->values();
+
+        $totalAmount = $userSummary->sum('total');
 
         return view('admin.points.index', compact(
-            'blocks', 'month', 'year', 'mon', 'months', 'userSummary', 'totalAmount', 'collectionCounts'
+            'blocks', 'month', 'year', 'mon', 'months', 'userSummary', 'totalAmount'
         ));
     }
 
@@ -105,6 +148,11 @@ class PointController extends Controller
             ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
             ->update(['payment_status' => 'reserved']);
 
+        CollectionReport::where('status', 'approved')
+            ->where('payment_status', 'pending')
+            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->update(['payment_status' => 'reserved']);
+
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
             ->with('success', $month->format('Y年n月') . 'の支払いを予約済みにしました。');
     }
@@ -119,6 +167,11 @@ class PointController extends Controller
             ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
+        CollectionReport::where('status', 'approved')
+            ->whereIn('payment_status', ['pending', 'reserved'])
+            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->update(['payment_status' => 'paid', 'paid_at' => now()]);
+
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
             ->with('success', $month->format('Y年n月') . 'の支払いを支払済みにしました。');
     }
@@ -129,18 +182,23 @@ class PointController extends Controller
 
         $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
 
-        $reports = MonitorReport::with(['user', 'campaign'])
+        $monitors = MonitorReport::with(['user', 'campaign'])
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->orderBy('created_at')
+            ->get();
+
+        $collections = CollectionReport::with('user')
             ->where('status', 'approved')
             ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
             ->orderBy('created_at')
             ->get();
 
         $rows   = [];
-        $rows[] = ['日時', 'ユーザーID', 'ユーザー名', 'ステータス', 'モニター名', '協力金'];
+        $rows[] = ['日時', 'ユーザーID', 'ユーザー名', 'ステータス', '種別/案件名', '協力金'];
 
-        foreach ($reports as $r) {
-            $fee = ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0);
-            $fee += ($r->application?->bonus_amount ?? 0);
+        foreach ($monitors as $r) {
+            $fee = ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
             $rows[] = [
                 $r->created_at->format('Y/m/d'),
                 $r->user?->bimoni_user_id ?? '',
@@ -148,6 +206,17 @@ class PointController extends Controller
                 $r->payment_status === 'paid' ? '支払済' : '支払待ち',
                 $r->campaign?->title ?? '',
                 $fee,
+            ];
+        }
+
+        foreach ($collections as $r) {
+            $rows[] = [
+                $r->created_at->format('Y/m/d'),
+                $r->user?->bimoni_user_id ?? '',
+                $r->user?->name ?? '',
+                $r->payment_status === 'paid' ? '支払済' : '支払待ち',
+                '【回収】' . $r->item_count . '点',
+                $r->cooperation_fee,
             ];
         }
 
@@ -172,27 +241,40 @@ class PointController extends Controller
         ]);
 
         $month        = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
-        $transferDate = Carbon::parse($request->transfer_date)->format('md'); // MMDD
+        $transferDate = Carbon::parse($request->transfer_date)->format('md');
 
-        $reports = MonitorReport::with(['user', 'campaign', 'application'])
+        $monitors = MonitorReport::with(['user', 'campaign', 'application'])
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
             ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
             ->get();
 
-        // ユーザーごとに協力金を合計
+        $collections = CollectionReport::with('user')
+            ->where('status', 'approved')
+            ->where('payment_status', 'pending')
+            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->get();
+
         $userTotals = [];
-        foreach ($reports as $r) {
+
+        foreach ($monitors as $r) {
             $uid = $r->user_id;
             if (!isset($userTotals[$uid])) {
                 $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
             }
-            $rowFee = ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0);
-            $rowFee += ($r->application?->bonus_amount ?? 0);
-            $userTotals[$uid]['amount'] += $rowFee;
+            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0)
+                + ($r->campaign?->cooperation_fee ?? 0)
+                + ($r->application?->bonus_amount ?? 0);
         }
 
-        // 口座情報未登録・金額ゼロを除外
+        foreach ($collections as $r) {
+            $uid = $r->user_id;
+            if (!isset($userTotals[$uid])) {
+                $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
+            }
+            $userTotals[$uid]['amount'] += $r->cooperation_fee;
+        }
+
         $userTotals = array_filter($userTotals, fn($u) =>
             $u['user']?->bank_code &&
             $u['user']?->bank_account_number &&
@@ -204,7 +286,6 @@ class PointController extends Controller
 
         $lines = [];
 
-        // ヘッダーレコード
         $lines[] = implode(',', [
             '1', '21', '0',
             env('ZENGIN_CLIENT_CODE', '2017496001'),
@@ -216,10 +297,8 @@ class PointController extends Controller
             env('ZENGIN_ACCOUNT_NUMBER', '2965755'),
         ]);
 
-        // データレコード
         foreach ($userTotals as $data) {
             $user = $data['user'];
-            // 全角カナ→半角カナ変換
             $name = mb_convert_kana($user->bank_account_name ?? '', 'k', 'UTF-8');
 
             $lines[] = implode(',', [
@@ -239,10 +318,7 @@ class PointController extends Controller
             ]);
         }
 
-        // トレーラーレコード
         $lines[] = implode(',', ['8', $totalCount, $totalAmount]);
-
-        // エンドレコード
         $lines[] = '9';
 
         $content  = implode("\r\n", $lines);
@@ -268,7 +344,6 @@ class PointController extends Controller
             return back()->withErrors(['bimoni_user_id' => 'ユーザーIDが見つかりません。'])->withInput();
         }
 
-        // 手動調整は Point レコードに記録
         $user->points()->create([
             'type'       => 'adjust',
             'amount'     => $request->amount,

@@ -156,8 +156,8 @@ function syncMonth(sel) {
                 <td class="px-4 py-3 text-gray-700">{{ $u?->line_display_name ?? '-' }}</td>
                 <td class="px-4 py-3 font-medium text-gray-800">{{ $u?->name ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $u?->name_kana ?? '-' }}</td>
-                <td class="px-4 py-3 text-right text-gray-600">{{ $row['count'] }}件</td>
-                <td class="px-4 py-3 text-right text-blue-600">{{ $collectionCounts->get($u?->id, 0) }}件</td>
+                <td class="px-4 py-3 text-right text-gray-600">{{ $row['monitorCount'] }}件</td>
+                <td class="px-4 py-3 text-right text-blue-600">{{ $row['collectionCount'] }}件</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($row['total']) }}</td>
                 <td class="px-4 py-3 text-center">
                     @if($row['total'] === 0)

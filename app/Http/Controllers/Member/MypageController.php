@@ -30,12 +30,20 @@ class MypageController extends Controller
             ->whereIn('status', ['approved'])
             ->filter(fn($a) => $a->approved_at?->between($lastMonthStart, $lastMonthEnd))
             ->sum(fn($a) => ($a->campaign->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+        $payCurrentMonth += CollectionReport::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereBetween('reviewed_at', [$lastMonthStart, $lastMonthEnd])
+            ->sum('cooperation_fee');
 
         // 今月承認 → 来月10日支払い
         $payNextMonth = $applications
             ->whereIn('status', ['approved'])
             ->filter(fn($a) => $a->approved_at?->between($thisMonthStart, $thisMonthEnd))
             ->sum(fn($a) => ($a->campaign->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+        $payNextMonth += CollectionReport::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereBetween('reviewed_at', [$thisMonthStart, $thisMonthEnd])
+            ->sum('cooperation_fee');
 
         $payCurrentDate = $now->copy()->day(10)->format('n月j日');
         $payNextDate    = $now->copy()->addMonth()->day(10)->format('n月j日');
