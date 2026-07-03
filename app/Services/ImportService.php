@@ -350,13 +350,15 @@ class ImportService
                     $application->update(['bonus_amount' => 300]);
                 }
 
+                $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['モニター経費'] ?? $row['商品金額'] ?? '0');
+
                 $report = MonitorReport::create([
                     'user_id'         => $user->id,
                     'campaign_id'     => $campaign->id,
                     'application_id'  => $application->id,
                     'status'          => 'approved',
                     'purchase_type'   => $purchaseType,
-                    'purchase_amount' => null,
+                    'purchase_amount' => $purchaseAmount,
                     'payment_status'  => 'pending',
                 ]);
 
