@@ -106,7 +106,7 @@
             <p>・継続購入希望（はい/いいえ）と継続打診承諾（TRUE/FALSE）を自動マッピング</p>
             <p>・採用日が入力されているとステータスが実施完了の場合に <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">completed_at</code> に設定されます</p>
             <p>・回答者IDでユーザーを検索。見つからない場合は新規ユーザーとして登録します</p>
-            <p>・重複チェック：同一ユーザー×同一案件×同一応募日時の場合はスキップ</p>
+            <p>・重複チェック：同一回答者ID×同一応募日時が既にある場合は上書き更新（スキップしません）</p>
         </div>
         <form method="POST" action="{{ route('admin.import.applications') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
             @csrf
