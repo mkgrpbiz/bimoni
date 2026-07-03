@@ -176,8 +176,7 @@ class ImportService
                 $invitedDate = trim($row['invited_date'] ?? '');
                 $invitedTime = trim($row['invited_time'] ?? '');
                 $invitedAt = null;
-                // 打診中は未確定なので案内日/案内時間（ステータス共有由来）を invited_at にセットしない
-                if ($invitedDate !== '' && $status !== 'line_contacted') {
+                if ($invitedDate !== '') {
                     $str = $invitedDate . ($invitedTime !== '' ? ' ' . $invitedTime : '');
                     $invitedAt = $this->parseDateTime($str) ?? $this->parseDate($invitedDate);
                 }
