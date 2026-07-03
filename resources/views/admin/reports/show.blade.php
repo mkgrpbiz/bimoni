@@ -136,11 +136,12 @@
         @endif
 
         {{-- 重複申請チェック --}}
-        @if($duplicates->isNotEmpty())
-        <div class="border-2 border-orange-300 rounded-lg p-5 bg-orange-50 dark:bg-orange-900/20">
-            <h2 class="font-bold text-orange-700 dark:text-orange-400 mb-4">
-                ⚠ 重複申請チェック（同一ユーザー・同一案件の過去申請 {{ $duplicates->count() }}件）
+        @php $dupCount = $duplicates->count(); @endphp
+        <div class="{{ $dupCount > 0 ? 'border-2 border-orange-300 bg-orange-50 dark:bg-orange-900/20' : 'border border-gray-200 bg-gray-50 dark:bg-gray-800' }} rounded-lg p-5">
+            <h2 class="font-bold {{ $dupCount > 0 ? 'text-orange-700 dark:text-orange-400' : 'text-gray-500 dark:text-gray-400' }} mb-4">
+                {{ $dupCount > 0 ? '⚠ 重複申請チェック（同一ユーザー・同一案件の過去申請 ' . $dupCount . '件）' : '✓ 重複申請なし' }}
             </h2>
+            @if($dupCount > 0)
             <div class="space-y-4">
                 @foreach($duplicates as $dup)
                 @php
@@ -189,8 +190,8 @@
                 </div>
                 @endforeach
             </div>
+            @endif
         </div>
-        @endif
 
     </div>
 
