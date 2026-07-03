@@ -142,7 +142,8 @@ php8.3 artisan route:clear
 ### インポート機能
 - **応募リストインポート**: エルメのCSVをそのまま投入。案件を選択してインポート
   - `ImportService::skipToApplicationHeader()` でサマリー行（集計情報）を自動スキップし「回答者ID」を含む行をヘッダーとして使用
-  - `parseCsv()` で重複ヘッダーは `_2` `_3` でリネーム（最初の列を優先）→ 「ステータス共有」など他シートの列が正規ステータスを上書きしない
+  - `parseCsv()` で重複ヘッダーは `_2` `_3` でリネーム（最初の列を優先）
+  - `normalizeApplicationRows()` で `ステータス共有` 列は明示的にスキップ（列名がそのままでも読み込み対象外）
   - 重複チェック: 同一ユーザー × 同一応募日時 → 上書き更新（この定義は触らない）
   - ステータスマッピング: 実施完了→completed / 実施確認中→confirming / キャンセル→cancelled / 予約中→scheduled / 打診中→line_contacted / 空欄→pending
   - `invited_at`: 採用日+採用時間 または 案内日+案内時間 から設定
