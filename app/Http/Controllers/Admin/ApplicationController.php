@@ -119,7 +119,9 @@ class ApplicationController extends Controller
 
     public function campaignIndex(Campaign $campaign, Request $request): View
     {
-        $query = $campaign->applications()->with(['user', 'statusLogs.changedBy', 'lineMessageJobs'])->latest('applied_at');
+        $query = $campaign->applications()->with(['user', 'statusLogs.changedBy', 'lineMessageJobs'])
+            ->orderByRaw("CASE WHEN status IN ('completed','cancelled') THEN 1 ELSE 0 END ASC")
+            ->orderBy('applied_at', 'asc');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
