@@ -326,14 +326,11 @@ class ImportService
                     ? 'continuation'
                     : 'initial';
 
-                // 重複チェック: 初回=ユーザー×案件、継続=ユーザー×案件×報告日時
-                $dupQuery = MonitorReport::where('user_id', $user->id)
+                // 重複チェック: ユーザー×案件×報告日時
+                if (MonitorReport::where('user_id', $user->id)
                     ->where('campaign_id', $campaign->id)
-                    ->where('purchase_type', $purchaseType);
-                if ($purchaseType === 'continuation') {
-                    $dupQuery->whereDate('created_at', $reportedAt->toDateString());
-                }
-                if ($dupQuery->exists()) {
+                    ->whereDate('created_at', $reportedAt->toDateString())
+                    ->exists()) {
                     $result['skipped']++;
                     continue;
                 }
@@ -559,8 +556,10 @@ class ImportService
                     continue;
                 }
 
-                // 追跡番号が既に存在すればスキップ
-                if (CollectionReport::where('tracking_number', $tracking)->exists()) {
+                // 重複チェック: ユーザー×報告日時
+                if (CollectionReport::where('user_id', $user->id)
+                    ->whereDate('created_at', $reportedAt->toDateString())
+                    ->exists()) {
                     $result['skipped']++;
                     continue;
                 }
