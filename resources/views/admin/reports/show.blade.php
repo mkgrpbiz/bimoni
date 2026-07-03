@@ -18,12 +18,54 @@
 
     <div class="lg:col-span-2 space-y-4">
 
-        {{-- 報告内容 --}}
+        {{-- 報告詳細 --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
-            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">報告内容</h2>
-            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {{ $report->report_body ?? '（報告本文なし）' }}
-            </p>
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">報告詳細</h2>
+            @php
+                $purchaseTypeLabel = match($report->purchase_type) {
+                    'initial'      => '初回購入',
+                    'continuation' => '継続購入',
+                    'other'        => 'その他',
+                    default        => $report->purchase_type ?? '-',
+                };
+                $paymentLabel = match(true) {
+                    str_starts_with($report->payment_method ?? '', 'other:') => 'その他: ' . substr($report->payment_method, 6),
+                    $report->payment_method === 'credit_card' => 'クレジットカード',
+                    $report->payment_method === 'cod'         => '代引き',
+                    $report->payment_method === 'deferred'    => '後払い',
+                    $report->payment_method === 'bank'        => '銀行振込',
+                    $report->payment_method === 'none'        => 'お支払い無し',
+                    default => $report->payment_method ?? '-',
+                };
+                $coopFee = $report->campaign?->cooperation_fee ?? 0;
+                $purchaseAmt = $report->purchase_amount ?? 0;
+            @endphp
+            <dl class="grid grid-cols-2 gap-y-3 text-sm">
+                <dt class="text-gray-500 dark:text-gray-400">BIMONI ID</dt>
+                <dd class="font-medium dark:text-gray-200">{{ $report->user?->bimoni_user_id ?? '-' }}</dd>
+                <dt class="text-gray-500 dark:text-gray-400">名前</dt>
+                <dd class="dark:text-gray-200">{{ $report->user?->name ?? '-' }}</dd>
+                <dt class="text-gray-500 dark:text-gray-400">フリガナ</dt>
+                <dd class="dark:text-gray-200">{{ $report->user?->name_kana ?? '-' }}</dd>
+                <dt class="text-gray-500 dark:text-gray-400">報告種別</dt>
+                <dd class="font-medium dark:text-gray-200">{{ $purchaseTypeLabel }}</dd>
+                @if($report->purchase_type !== 'other')
+                <dt class="text-gray-500 dark:text-gray-400">モニター経費</dt>
+                <dd class="dark:text-gray-200">¥{{ number_format($purchaseAmt) }}</dd>
+                <dt class="text-gray-500 dark:text-gray-400">モニター協力金</dt>
+                <dd class="text-pink-600 dark:text-pink-400 font-medium">¥{{ number_format($coopFee) }}</dd>
+                <dt class="text-gray-500 dark:text-gray-400">支払合計</dt>
+                <dd class="font-bold dark:text-gray-200">¥{{ number_format($purchaseAmt + $coopFee) }}</dd>
+                <dt class="text-gray-500 dark:text-gray-400">お支払方法</dt>
+                <dd class="dark:text-gray-200">{{ $paymentLabel }}</dd>
+                @endif
+            </dl>
+            @if($report->purchase_type === 'other' && $report->report_body)
+            <div class="mt-4 pt-4 border-t dark:border-gray-600">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">報告内容</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{{ $report->report_body }}</p>
+            </div>
+            @endif
         </div>
 
         {{-- 報告画像 --}}
@@ -33,7 +75,7 @@
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 @foreach($report->images as $image)
                 <img src="{{ Storage::url($image->image_path) }}"
-                     class="w-full h-32 object-cover rounded border dark:border-gray-600 cursor-pointer hover:opacity-80 transition"
+                     class="w-full rounded-lg border dark:border-gray-600 cursor-pointer hover:opacity-80 transition"
                      onclick="openLightbox(this.src)">
                 @endforeach
             </div>

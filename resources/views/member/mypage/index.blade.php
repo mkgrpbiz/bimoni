@@ -96,7 +96,7 @@
                         @php
                             $subStatus = match($app->status) {
                                 'completed'     => ['label' => '未報告',    'color' => 'bg-orange-100 text-orange-600'],
-                                'reported'      => ['label' => '報告済',    'color' => 'bg-green-100 text-green-600'],
+                                'reported'      => ['label' => '承認待ち',  'color' => 'bg-blue-100 text-blue-600'],
                                 'approved'      => ['label' => '支払い待ち', 'color' => 'bg-yellow-100 text-yellow-700'],
                                 'point_granted' => ['label' => '支払い済',  'color' => 'bg-teal-100 text-teal-700'],
                                 default         => null,

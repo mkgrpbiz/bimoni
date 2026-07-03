@@ -42,8 +42,8 @@ class MypageController extends Controller
 
         $groups = [
             '応募中'   => $applications->filter(fn($a) => in_array($a->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming'])),
-            '実施完了' => $applications->filter(fn($a) => in_array($a->status, ['completed', 'reported'])),
-            '報告済'   => $applications->filter(fn($a) => in_array($a->status, ['approved', 'point_granted'])),
+            '実施完了' => $applications->filter(fn($a) => in_array($a->status, ['completed'])),
+            '報告済'   => $applications->filter(fn($a) => in_array($a->status, ['reported', 'approved', 'point_granted'])),
             'キャンセル' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'cancelled'])),
         ];
 
