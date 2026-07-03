@@ -326,11 +326,14 @@ class ImportService
                     ? 'continuation'
                     : 'initial';
 
-                // 初回のみ重複チェック（継続は複数回インポート可）
-                if ($purchaseType === 'initial' && MonitorReport::where('user_id', $user->id)
+                // 重複チェック: 初回=ユーザー×案件、継続=ユーザー×案件×報告日時
+                $dupQuery = MonitorReport::where('user_id', $user->id)
                     ->where('campaign_id', $campaign->id)
-                    ->where('purchase_type', 'initial')
-                    ->exists()) {
+                    ->where('purchase_type', $purchaseType);
+                if ($purchaseType === 'continuation') {
+                    $dupQuery->whereDate('created_at', $reportedAt->toDateString());
+                }
+                if ($dupQuery->exists()) {
                     $result['skipped']++;
                     continue;
                 }
