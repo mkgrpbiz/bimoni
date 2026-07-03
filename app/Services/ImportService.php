@@ -196,9 +196,15 @@ class ImportService
                     default => null,
                 };
 
+                $completedAt = null;
+                if (in_array($status, ['completed', 'reported', 'approved', 'point_granted'])) {
+                    $completedAt = $invitedAt ?? $appliedAtStr;
+                }
+
                 $data = [
                     'status'                => $status,
                     'invited_at'            => $invitedAt,
+                    'completed_at'          => $completedAt,
                     'continuation_wish'     => $continuationWish,
                     'continuation_response' => $continuationResponse,
                     'imported_from'         => 'spreadsheet',
