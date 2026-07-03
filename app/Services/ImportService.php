@@ -181,10 +181,10 @@ class ImportService
                     $invitedAt = $this->parseDateTime($str) ?? $this->parseDate($invitedDate);
                 }
 
-                // 継続購入希望（はい/いいえ → 1/0）
+                // 継続購入希望（はい→希望 / いいえ→不可）
                 $continuationWish = match($row['wants_continuation'] ?? '') {
-                    'はい'   => 1,
-                    'いいえ' => 0,
+                    'はい'   => '希望',
+                    'いいえ' => '不可',
                     default  => null,
                 };
 
