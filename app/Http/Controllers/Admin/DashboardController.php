@@ -209,10 +209,10 @@ class DashboardController extends Controller
             }
         }
 
-        // 打診予約: ダブルブッキング（直近・今後のみ）
+        // 打診予約: ダブルブッキング（今後のみ）
         $duplicates = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->whereNotNull('invited_at')
-            ->where('invited_at', '>=', $today->copy()->subDay()->startOfDay())
+            ->where('invited_at', '>=', now())
             ->select('campaign_id', 'invited_at', DB::raw('COUNT(*) as cnt'))
             ->groupBy('campaign_id', 'invited_at')
             ->havingRaw('COUNT(*) > 1')

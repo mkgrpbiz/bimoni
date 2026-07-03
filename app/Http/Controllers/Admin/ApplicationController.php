@@ -438,19 +438,19 @@ class ApplicationController extends Controller
             return $app;
         });
 
-        // アラート1: 同案件・同時刻ダブルブッキング（直近・今後のみ）
+        // アラート1: 同案件・同時刻ダブルブッキング（今後のみ）
         $duplicateAlerts = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->whereNotNull('invited_at')
-            ->where('invited_at', '>=', now()->subDays(1)->startOfDay())
+            ->where('invited_at', '>=', now())
             ->select('campaign_id', 'invited_at', \Illuminate\Support\Facades\DB::raw('COUNT(*) as cnt'))
             ->groupBy('campaign_id', 'invited_at')
             ->having('cnt', '>', 1)
             ->with('campaign:id,title')
             ->get();
 
-        // アラート2: 同案件・日次目標件数オーバー
+        // アラート2: 同案件・日次目標件数オーバー（active予約のみカウント）
         $overCapacityAlerts = collect();
-        $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+        $activeStatuses = ['line_contacted', 'scheduled', 'confirming'];
         $dailySlots = CampaignDailySlot::where('target_date', '>=', now()->subDays(1)->toDateString())
             ->where('target_date', '<=', now()->addDays(7)->toDateString())
             ->where('planned_count', '>', 0)
