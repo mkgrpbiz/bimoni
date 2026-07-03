@@ -265,6 +265,7 @@ class ImportService
         return array_map(function ($row) use ($headerMap) {
             $normalized = [];
             foreach ($row as $key => $value) {
+                if ($key === 'ステータス共有') continue;
                 $normalized[$headerMap[$key] ?? $key] = $value;
             }
             return $normalized;
