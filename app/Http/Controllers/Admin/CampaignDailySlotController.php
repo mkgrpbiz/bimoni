@@ -31,8 +31,8 @@ class CampaignDailySlotController extends Controller
                 $now->copy()->endOfMonth()->toDateString(),
             ])
             ->get()
-            ->each(fn($s) => $s->target_date = $s->target_date->toDateString())
-            ->groupBy('campaign_id');
+            ->groupBy('campaign_id')
+            ->map(fn($cs) => $cs->keyBy(fn($s) => $s->target_date->toDateString()));
 
         $statusCounts = Campaign::selectRaw('status, count(*) as count')
             ->groupBy('status')

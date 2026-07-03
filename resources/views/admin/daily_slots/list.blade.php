@@ -76,9 +76,9 @@ $tabs = [
             @php
                 $campaignSlots = $slots->get($campaign->id, collect());
                 $monthTotal    = $campaignSlots->sum('planned_count');
-                $todaySlot     = $campaignSlots->firstWhere('target_date', $today);
-                $tomorrowSlot  = $campaignSlots->firstWhere('target_date', $tomorrow);
-                $dayAfterSlot  = $campaignSlots->firstWhere('target_date', $dayAfter);
+                $todaySlot     = $campaignSlots->get($today);
+                $tomorrowSlot  = $campaignSlots->get($tomorrow);
+                $dayAfterSlot  = $campaignSlots->get($dayAfter);
             @endphp
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-3 font-medium">{{ $campaign->title }}</td>
