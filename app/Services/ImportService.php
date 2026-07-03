@@ -141,7 +141,7 @@ class ImportService
 
                 // ユーザー検索（なければ作成）
                 $times = null;
-                if (!empty($row['available_times']) && $row['available_times'] !== 'いつでもOK') {
+                if (!empty($row['available_times'])) {
                     $times = array_values(array_filter(array_map('trim', explode(',', $row['available_times']))));
                 }
 
