@@ -18,11 +18,9 @@ class PointController extends Controller
     public function index(Request $request): View
     {
         $calcFee = function ($r) {
-            $c = $r->campaign;
-            if ($r->purchase_type === 'continuation') {
-                $fee = ($c?->recurring_purchase_fee ?? 0) + ($c?->continuation_cooperation_fee ?? 0);
-            } else {
-                $fee = ($c?->initial_purchase_fee ?? 0) + ($c?->cooperation_fee ?? 0);
+            $fee = $r->purchase_amount ?? 0;
+            if ($r->purchase_type !== 'continuation') {
+                $fee += ($r->campaign?->cooperation_fee ?? 0);
             }
             return $fee + ($r->application?->bonus_amount ?? 0);
         };
@@ -144,10 +142,10 @@ class PointController extends Controller
         $rows[] = ['日時', 'ユーザーID', 'ユーザー名', 'ステータス', 'モニター名', '協力金'];
 
         foreach ($reports as $r) {
-            $c = $r->campaign;
-            $fee = $r->purchase_type === 'continuation'
-                ? ($c?->recurring_purchase_fee ?? 0) + ($c?->continuation_cooperation_fee ?? 0)
-                : ($c?->initial_purchase_fee ?? 0) + ($c?->cooperation_fee ?? 0);
+            $fee = $r->purchase_amount ?? 0;
+            if ($r->purchase_type !== 'continuation') {
+                $fee += ($r->campaign?->cooperation_fee ?? 0);
+            }
             $fee += ($r->application?->bonus_amount ?? 0);
             $rows[] = [
                 $r->created_at->format('Y/m/d'),
@@ -195,7 +193,12 @@ class PointController extends Controller
             if (!isset($userTotals[$uid])) {
                 $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
             }
-            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
+            $rowFee = $r->purchase_amount ?? 0;
+            if ($r->purchase_type !== 'continuation') {
+                $rowFee += ($r->campaign?->cooperation_fee ?? 0);
+            }
+            $rowFee += ($r->application?->bonus_amount ?? 0);
+            $userTotals[$uid]['amount'] += $rowFee;
         }
 
         // 口座情報未登録・金額ゼロを除外
