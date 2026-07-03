@@ -343,7 +343,9 @@ class ImportService
                     ['status' => 'completed', 'applied_at' => $reportedAt, 'completed_at' => $reportedAt,
                      'bonus_amount' => $hasBonus ? 300 : null, 'imported_from' => 'spreadsheet']
                 );
-                if ($application->wasRecentlyCreated === false && $hasBonus && !$application->bonus_amount) {
+                if ($application->wasRecentlyCreated) {
+                    DB::table('applications')->where('id', $application->id)->update(['created_at' => $reportedAt]);
+                } elseif ($hasBonus && !$application->bonus_amount) {
                     $application->update(['bonus_amount' => 300]);
                 }
 
