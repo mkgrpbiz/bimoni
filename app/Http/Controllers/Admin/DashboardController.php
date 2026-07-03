@@ -61,6 +61,17 @@ class DashboardController extends Controller
         ));
     }
 
+    public function dismissAlert(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $key = $request->input('alert_key', '');
+        if ($key !== '') {
+            $dismissed = session('dismissed_alerts', []);
+            $dismissed[$key] = true;
+            session(['dismissed_alerts' => $dismissed]);
+        }
+        return back();
+    }
+
     private function calcMetrics(int $year, int $month, string $mode): array
     {
         $appQuery = Application::query();
@@ -138,19 +149,22 @@ class DashboardController extends Controller
 
     private function buildAlerts(): array
     {
-        $alerts = [];
-        $today  = Carbon::today();
+        $alerts    = [];
+        $today     = Carbon::today();
+        $dismissed = session('dismissed_alerts', []);
 
         // LINEエラー: 過去24時間以内に failed な通知がある
         $lineErrors = LineNotification::where('status', 'failed')
             ->where('sent_at', '>=', $today->copy()->subDay())
             ->count();
-        if ($lineErrors > 0) {
+        $lineKey = 'line_error_' . $today->toDateString();
+        if ($lineErrors > 0 && !($dismissed[$lineKey] ?? false)) {
             $alerts[] = [
-                'level'   => 'error',
-                'message' => "LINEの自動送信でエラーが発生しています（{$lineErrors}件）。",
-                'link'    => route('admin.notifications.line'),
-                'label'   => 'LINE通知管理',
+                'level'       => 'error',
+                'message'     => "LINEの自動送信でエラーが発生しています（{$lineErrors}件）。",
+                'link'        => route('admin.notifications.line'),
+                'label'       => 'LINE通知管理',
+                'dismiss_key' => $lineKey,
             ];
         }
 
@@ -161,12 +175,14 @@ class DashboardController extends Controller
                 ->where('payment_status', 'pending')
                 ->whereBetween('created_at', [$prevMonth, $prevMonth->copy()->endOfMonth()])
                 ->count();
-            if ($unpaidCount > 0) {
+            $coopKey = 'coop_' . $prevMonth->format('Y_m');
+            if ($unpaidCount > 0 && !($dismissed[$coopKey] ?? false)) {
                 $alerts[] = [
-                    'level'   => 'warning',
-                    'message' => "前月（{$prevMonth->format('Y年n月')}）の協力金 {$unpaidCount}件 が予約待ちのままです（毎月5日までに対応してください）。",
-                    'link'    => route('admin.points.index', ['month' => $prevMonth->format('Y-m')]),
-                    'label'   => '協力金管理',
+                    'level'       => 'warning',
+                    'message'     => "前月（{$prevMonth->format('Y年n月')}）の協力金 {$unpaidCount}件 が予約待ちのままです（毎月5日までに対応してください）。",
+                    'link'        => route('admin.points.index', ['month' => $prevMonth->format('Y-m')]),
+                    'label'       => '協力金管理',
+                    'dismiss_key' => $coopKey,
                 ];
             }
         }
@@ -199,31 +215,38 @@ class DashboardController extends Controller
                 ->where('status', 'done')->pluck('agent_id');
             $undoneCount  = $agentIdsWithReports->diff($doneAgentIds)->count();
 
-            if ($undoneCount > 0) {
+            $refKey = 'referral_' . $py . '_' . $pm;
+            if ($undoneCount > 0 && !($dismissed[$refKey] ?? false)) {
                 $alerts[] = [
-                    'level'   => 'warning',
-                    'message' => "前月（{$prevMonth->format('Y年n月')}）の紹介報酬 {$undoneCount}代理店 が処理済みになっていません（毎月25日までに対応してください）。",
-                    'link'    => route('admin.referrals.index', ['month' => $prevMonth->format('Y-m')]),
-                    'label'   => '紹介報酬管理',
+                    'level'       => 'warning',
+                    'message'     => "前月（{$prevMonth->format('Y年n月')}）の紹介報酬 {$undoneCount}代理店 が処理済みになっていません（毎月25日までに対応してください）。",
+                    'link'        => route('admin.referrals.index', ['month' => $prevMonth->format('Y-m')]),
+                    'label'       => '紹介報酬管理',
+                    'dismiss_key' => $refKey,
                 ];
             }
         }
 
-        // 打診予約: ダブルブッキング（今後のみ）
-        $duplicates = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
+        // 打診予約: ダブルブッキング（今後のみ・案件別）
+        $duplicateGroups = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->whereNotNull('invited_at')
             ->where('invited_at', '>=', now())
             ->select('campaign_id', 'invited_at', DB::raw('COUNT(*) as cnt'))
             ->groupBy('campaign_id', 'invited_at')
             ->havingRaw('COUNT(*) > 1')
-            ->get()
-            ->count();
-        if ($duplicates > 0) {
+            ->with('campaign:id,title')
+            ->get();
+        foreach ($duplicateGroups as $dup) {
+            $key = 'dup_' . $dup->campaign_id . '_' . Carbon::parse($dup->invited_at)->timestamp;
+            if ($dismissed[$key] ?? false) continue;
             $alerts[] = [
-                'level'   => 'error',
-                'message' => "打診予約でダブルブッキングが {$duplicates}件 発生しています。",
-                'link'    => route('admin.proposal_reservations.index'),
-                'label'   => '打診予約管理',
+                'level'         => 'error',
+                'message'       => Carbon::parse($dup->invited_at)->format('m/d H:i') . " に {$dup->cnt}件入っています",
+                'link'          => route('admin.proposal_reservations.index'),
+                'label'         => '状況確認',
+                'dismiss_key'   => $key,
+                'campaign_name' => $dup->campaign?->title,
+                'campaign_link' => $dup->campaign_id ? route('admin.campaigns.applications', $dup->campaign_id) : null,
             ];
         }
 
@@ -244,12 +267,14 @@ class DashboardController extends Controller
                 $underCount++;
             }
         }
-        if ($underCount > 0) {
+        $underKey = 'under_' . $tomorrowDate;
+        if ($underCount > 0 && !($dismissed[$underKey] ?? false)) {
             $alerts[] = [
-                'level'   => 'warning',
-                'message' => "翌日（{$today->copy()->addDay()->format('m/d')}）の打診が目標に達していない案件が {$underCount}件 あります。",
-                'link'    => route('admin.proposal_reservations.index'),
-                'label'   => '打診予約管理',
+                'level'       => 'warning',
+                'message'     => "翌日（{$today->copy()->addDay()->format('m/d')}）の打診が目標に達していない案件が {$underCount}件 あります。",
+                'link'        => route('admin.proposal_reservations.index'),
+                'label'       => '打診予約管理',
+                'dismiss_key' => $underKey,
             ];
         }
 

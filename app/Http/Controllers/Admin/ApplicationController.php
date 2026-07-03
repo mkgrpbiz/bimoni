@@ -438,6 +438,8 @@ class ApplicationController extends Controller
             return $app;
         });
 
+        $dismissed = session('dismissed_alerts', []);
+
         // アラート1: 同案件・同時刻ダブルブッキング（今後のみ）
         $duplicateAlerts = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->whereNotNull('invited_at')
@@ -446,17 +448,20 @@ class ApplicationController extends Controller
             ->groupBy('campaign_id', 'invited_at')
             ->having('cnt', '>', 1)
             ->with('campaign:id,title')
-            ->get();
+            ->get()
+            ->filter(fn($d) => !($dismissed['dup_' . $d->campaign_id . '_' . \Carbon\Carbon::parse($d->invited_at)->timestamp] ?? false));
 
         // アラート2: 同案件・日次目標件数オーバー（active予約のみカウント）
         $overCapacityAlerts = collect();
         $activeStatuses = ['line_contacted', 'scheduled', 'confirming'];
-        $dailySlots = CampaignDailySlot::where('target_date', '>=', now()->subDays(1)->toDateString())
+        $dailySlots = CampaignDailySlot::where('target_date', '>=', now()->toDateString())
             ->where('target_date', '<=', now()->addDays(7)->toDateString())
             ->where('planned_count', '>', 0)
             ->get();
 
         foreach ($dailySlots as $slot) {
+            $overKey = 'over_' . $slot->campaign_id . '_' . $slot->target_date->toDateString();
+            if ($dismissed[$overKey] ?? false) continue;
             $bookedCount = Application::where('campaign_id', $slot->campaign_id)
                 ->whereIn('status', $activeStatuses)
                 ->whereNotNull('invited_at')
@@ -467,6 +472,7 @@ class ApplicationController extends Controller
                     'slot'        => $slot,
                     'booked'      => $bookedCount,
                     'planned'     => $slot->planned_count,
+                    'dismiss_key' => $overKey,
                 ]);
             }
         }

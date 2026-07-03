@@ -17,19 +17,37 @@
 <div class="space-y-2 mb-4">
     @foreach($duplicateAlerts as $dup)
     @php
-        $dupCampaign = \App\Models\Campaign::find($dup->campaign_id);
-        $dupTime = \Carbon\Carbon::parse($dup->invited_at)->format('m/d H:i');
+        $dupTime    = \Carbon\Carbon::parse($dup->invited_at)->format('m/d H:i');
+        $dupKey     = 'dup_' . $dup->campaign_id . '_' . \Carbon\Carbon::parse($dup->invited_at)->timestamp;
+        $dupCampUrl = route('admin.campaigns.applications', $dup->campaign_id);
     @endphp
     <div class="bg-red-50 border border-red-300 rounded-lg px-4 py-2 text-sm text-red-700 flex items-center gap-2">
-        <span class="font-bold">⚠ ダブルブッキング</span>
-        <span>{{ $dupCampaign?->title ?? '不明' }} / {{ $dupTime }} に {{ $dup->cnt }}件入っています</span>
+        <span class="font-bold shrink-0">⚠ ダブルブッキング</span>
+        <span class="flex-1">
+            <a href="{{ $dupCampUrl }}" class="font-bold underline">{{ $dup->campaign?->title ?? '不明' }}</a>
+            / {{ $dupTime }} に {{ $dup->cnt }}件入っています
+        </span>
+        <form action="{{ route('admin.alerts.dismiss') }}" method="POST" class="shrink-0">
+            @csrf
+            <input type="hidden" name="alert_key" value="{{ $dupKey }}">
+            <button type="submit" class="text-xs px-2 py-0.5 border border-red-400 rounded opacity-50 hover:opacity-100 transition-opacity">無視</button>
+        </form>
     </div>
     @endforeach
 
     @foreach($overCapacityAlerts as $over)
+    @php $campUrl = route('admin.campaigns.applications', $over['slot']->campaign_id); @endphp
     <div class="bg-orange-50 border border-orange-300 rounded-lg px-4 py-2 text-sm text-orange-700 flex items-center gap-2">
-        <span class="font-bold">⚠ 目標件数オーバー</span>
-        <span>{{ $over['slot']->campaign?->title ?? '不明' }} / {{ $over['slot']->target_date->format('m/d') }} — 目標 {{ $over['planned'] }}件に対し {{ $over['booked'] }}件</span>
+        <span class="font-bold shrink-0">⚠ 目標件数オーバー</span>
+        <span class="flex-1">
+            <a href="{{ $campUrl }}" class="font-bold underline">{{ $over['slot']->campaign?->title ?? '不明' }}</a>
+            / {{ $over['slot']->target_date->format('m/d') }} — 目標 {{ $over['planned'] }}件に対し {{ $over['booked'] }}件
+        </span>
+        <form action="{{ route('admin.alerts.dismiss') }}" method="POST" class="shrink-0">
+            @csrf
+            <input type="hidden" name="alert_key" value="{{ $over['dismiss_key'] }}">
+            <button type="submit" class="text-xs px-2 py-0.5 border border-orange-400 rounded opacity-50 hover:opacity-100 transition-opacity">無視</button>
+        </form>
     </div>
     @endforeach
 </div>
