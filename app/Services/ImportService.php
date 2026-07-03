@@ -170,6 +170,14 @@ class ImportService
                     ? ($statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'pending'))
                     : 'pending';
 
+                $invitedDate = trim($row['invited_date'] ?? '');
+                $invitedTime = trim($row['invited_time'] ?? '');
+                $invitedAt = null;
+                if ($invitedDate !== '') {
+                    $str = $invitedDate . ($invitedTime !== '' ? ' ' . $invitedTime : '');
+                    $invitedAt = $this->parseDateTime($str) ?? $this->parseDate($invitedDate);
+                }
+
                 // 継続購入希望（はい/いいえ → 1/0）
                 $continuationWish = match($row['wants_continuation'] ?? '') {
                     'はい'   => 1,
@@ -187,6 +195,7 @@ class ImportService
 
                 $data = [
                     'status'                => $status,
+                    'invited_at'            => $invitedAt,
                     'continuation_wish'     => $continuationWish,
                     'continuation_response' => $continuationResponse,
                     'imported_from'         => 'spreadsheet',
@@ -231,6 +240,10 @@ class ImportService
             '購入可能時間を選択して下さい' => 'available_times',
             '継続購入がある場合、複数回の購入を希望されますか？' => 'wants_continuation',
             'ステータス'       => 'status',
+            '採用日'           => 'invited_date',
+            '採用時間'         => 'invited_time',
+            '案内日'           => 'invited_date',
+            '案内時間'         => 'invited_time',
             '継続'             => 'continuation_flag',
             '奨学'             => 'continuation_flag',
             '備考'             => 'notes',
