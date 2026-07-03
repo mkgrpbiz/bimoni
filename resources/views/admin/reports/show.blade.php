@@ -98,11 +98,10 @@
                     </button>
                 </form>
 
-                <form method="POST" action="{{ route('admin.reports.reject', $report) }}" class="flex-1 min-w-64">
+                <form method="POST" action="{{ route('admin.reports.reject', $report) }}">
                     @csrf @method('PATCH')
-                    <textarea name="reject_reason" rows="2" required placeholder="差戻し理由を入力..."
-                              class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm mb-2"></textarea>
                     <button type="submit"
+                            onclick="return confirm('差戻しますか？')"
                             class="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600 text-sm">
                         差戻す
                     </button>

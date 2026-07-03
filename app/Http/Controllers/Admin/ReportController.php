@@ -62,13 +62,10 @@ class ReportController extends Controller
 
     public function reject(Request $request, MonitorReport $report): RedirectResponse
     {
-        $request->validate(['reject_reason' => 'required|string']);
-
         $report->update([
-            'status'        => 'rejected',
-            'reviewed_by'   => Auth::guard('web')->id(),
-            'reviewed_at'   => now(),
-            'reject_reason' => $request->reject_reason,
+            'status'      => 'rejected',
+            'reviewed_by' => Auth::guard('web')->id(),
+            'reviewed_at' => now(),
         ]);
 
         $report->application->update(['status' => 'reported']);
