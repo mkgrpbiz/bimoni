@@ -326,10 +326,10 @@ class ImportService
                     ? 'continuation'
                     : 'initial';
 
-                // 同一ユーザー×案件×購入タイプの報告が既にあればスキップ
-                if (MonitorReport::where('user_id', $user->id)
+                // 初回のみ重複チェック（継続は複数回インポート可）
+                if ($purchaseType === 'initial' && MonitorReport::where('user_id', $user->id)
                     ->where('campaign_id', $campaign->id)
-                    ->where('purchase_type', $purchaseType)
+                    ->where('purchase_type', 'initial')
                     ->exists()) {
                     $result['skipped']++;
                     continue;
