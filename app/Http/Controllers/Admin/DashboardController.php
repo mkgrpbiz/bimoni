@@ -24,12 +24,12 @@ class DashboardController extends Controller
         $month = (int)($request->input('month', now()->month));
         $mode  = $request->input('mode', 'monthly');
 
-        // 承認待ちアラート（審査中 = reported ステータスのもの）
-        $pendingReports = Application::where('status', 'reported')
+        // 承認待ちアラート（MonitorReport が pending のもの）
+        $pendingReports = MonitorReport::where('status', 'pending')
             ->with('campaign')
             ->get();
         $pendingReportsCount  = $pendingReports->count();
-        $pendingReportsAmount = $pendingReports->sum(fn($a) => $a->campaign?->cooperation_fee ?? 0);
+        $pendingReportsAmount = $pendingReports->sum(fn($r) => $r->campaign?->cooperation_fee ?? 0);
 
         // ダッシュボードアラート
         $alerts = $this->buildAlerts();
