@@ -354,6 +354,14 @@ class ImportService
                     'payment_status'  => 'pending',
                 ]);
 
+                // 継続報告の場合は応募の継続可能フラグもONにする（継続率計算に反映）
+                if ($purchaseType === 'continuation' && $application->continuation_response !== 'possible') {
+                    $application->update([
+                        'continuation_response'      => 'possible',
+                        'continuation_responded_at'  => now(),
+                    ]);
+                }
+
                 $result['success']++;
             }
         });
