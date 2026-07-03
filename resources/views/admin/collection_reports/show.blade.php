@@ -128,6 +128,51 @@
             </form>
         </div>
         @endif
+        {{-- 重複申請チェック --}}
+        @if($duplicates->isNotEmpty())
+        <div class="border-2 border-orange-300 rounded-lg p-5 bg-orange-50">
+            <h2 class="font-bold text-orange-700 mb-4">
+                ⚠ 重複申請チェック（同一ユーザー・同一案件の過去申請 {{ $duplicates->count() }}件）
+            </h2>
+            <div class="space-y-4">
+                @foreach($duplicates as $dup)
+                <div class="bg-white rounded-lg border border-orange-200 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xs text-gray-500">{{ $dup->created_at->format('Y/m/d H:i') }}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $dup->getStatusColor() }}">{{ $dup->getStatusLabel() }}</span>
+                        <a href="{{ route('admin.collection_reports.show', $dup) }}" class="ml-auto text-xs text-blue-500 hover:underline">→ 詳細</a>
+                    </div>
+                    <dl class="grid grid-cols-2 gap-y-2 text-sm mb-3">
+                        <dt class="text-gray-500">商品数</dt><dd>{{ $dup->item_count }}点</dd>
+                        <dt class="text-gray-500">協力金</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->cooperation_fee) }}</dd>
+                        <dt class="text-gray-500">送料</dt><dd>¥{{ number_format($dup->shipping_fee) }}</dd>
+                        <dt class="text-gray-500">追跡番号</dt><dd class="font-mono text-xs">{{ $dup->tracking_number }}</dd>
+                        <dt class="text-gray-500">到着予定日</dt><dd>{{ $dup->estimated_arrival_date?->format('Y/m/d') ?? '-' }}</dd>
+                    </dl>
+                    <div class="flex gap-2 flex-wrap">
+                        @if($dup->box_image)
+                        <div>
+                            <p class="text-xs text-gray-400 mb-1">段ボール</p>
+                            <img src="{{ asset('storage/' . $dup->box_image) }}"
+                                 class="h-20 w-20 object-cover rounded border cursor-pointer hover:opacity-80"
+                                 onclick="openLightbox(this.src)">
+                        </div>
+                        @endif
+                        @if($dup->label_image)
+                        <div>
+                            <p class="text-xs text-gray-400 mb-1">伝票</p>
+                            <img src="{{ asset('storage/' . $dup->label_image) }}"
+                                 class="h-20 w-20 object-cover rounded border cursor-pointer hover:opacity-80"
+                                 onclick="openLightbox(this.src)">
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
     </div>
 
     {{-- ユーザー情報 --}}

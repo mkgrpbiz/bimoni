@@ -42,7 +42,15 @@ class CollectionReportController extends Controller
     {
         $collectionReport->load('user', 'reviewer');
         $campaigns = $collectionReport->campaigns();
-        return view('admin.collection_reports.show', compact('collectionReport', 'campaigns'));
+
+        $currentIds = $collectionReport->campaign_ids ?? [];
+        $duplicates = CollectionReport::where('user_id', $collectionReport->user_id)
+            ->where('id', '!=', $collectionReport->id)
+            ->get()
+            ->filter(fn($cr) => count(array_intersect($cr->campaign_ids ?? [], $currentIds)) > 0)
+            ->values();
+
+        return view('admin.collection_reports.show', compact('collectionReport', 'campaigns', 'duplicates'));
     }
 
     public function approve(CollectionReport $collectionReport): RedirectResponse

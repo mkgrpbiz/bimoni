@@ -135,6 +135,63 @@
         </div>
         @endif
 
+        {{-- 重複申請チェック --}}
+        @if($duplicates->isNotEmpty())
+        <div class="border-2 border-orange-300 rounded-lg p-5 bg-orange-50 dark:bg-orange-900/20">
+            <h2 class="font-bold text-orange-700 dark:text-orange-400 mb-4">
+                ⚠ 重複申請チェック（同一ユーザー・同一案件の過去申請 {{ $duplicates->count() }}件）
+            </h2>
+            <div class="space-y-4">
+                @foreach($duplicates as $dup)
+                @php
+                    $dupPurchaseLabel = match($dup->purchase_type) {
+                        'initial'      => '初回購入',
+                        'continuation' => '継続購入',
+                        'other'        => 'その他',
+                        default        => $dup->purchase_type ?? '-',
+                    };
+                    $dupPayLabel = match(true) {
+                        str_starts_with($dup->payment_method ?? '', 'other:') => 'その他: ' . substr($dup->payment_method, 6),
+                        $dup->payment_method === 'credit_card' => 'クレジットカード',
+                        $dup->payment_method === 'cod'         => '代引き',
+                        $dup->payment_method === 'deferred'    => '後払い',
+                        $dup->payment_method === 'bank'        => '銀行振込',
+                        $dup->payment_method === 'none'        => 'お支払い無し',
+                        default => $dup->payment_method ?? '-',
+                    };
+                @endphp
+                <div class="bg-white dark:bg-gray-800 rounded-lg border border-orange-200 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xs text-gray-500">{{ $dup->created_at->format('Y/m/d H:i') }}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $dup->getStatusColor() }}">{{ $dup->getStatusLabel() }}</span>
+                        <a href="{{ route('admin.reports.show', $dup) }}" class="ml-auto text-xs text-blue-500 hover:underline">→ 詳細</a>
+                    </div>
+                    <dl class="grid grid-cols-2 gap-y-2 text-sm">
+                        <dt class="text-gray-500">報告種別</dt><dd>{{ $dupPurchaseLabel }}</dd>
+                        @if($dup->purchase_type !== 'other')
+                        <dt class="text-gray-500">モニター経費</dt><dd>¥{{ number_format($dup->purchase_amount ?? 0) }}</dd>
+                        <dt class="text-gray-500">協力金</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->campaign?->cooperation_fee ?? 0) }}</dd>
+                        <dt class="text-gray-500">支払方法</dt><dd>{{ $dupPayLabel }}</dd>
+                        @endif
+                    </dl>
+                    @if($dup->images->isNotEmpty())
+                    <div class="flex gap-2 mt-3 flex-wrap">
+                        @foreach($dup->images as $img)
+                        <img src="{{ Storage::url($img->image_path) }}"
+                             class="h-20 w-20 object-cover rounded border cursor-pointer hover:opacity-80"
+                             onclick="openLightbox(this.src)">
+                        @endforeach
+                    </div>
+                    @endif
+                    @if($dup->purchase_type === 'other' && $dup->report_body)
+                    <p class="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{{ $dup->report_body }}</p>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
     </div>
 
     {{-- サイドバー --}}

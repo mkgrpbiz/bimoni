@@ -40,7 +40,17 @@ class ReportController extends Controller
     public function show(MonitorReport $report): View
     {
         $report->load(['user', 'campaign', 'application', 'images', 'reviewedBy']);
-        return view('admin.reports.show', compact('report'));
+
+        $duplicates = $report->campaign_id
+            ? MonitorReport::with('images')
+                ->where('user_id', $report->user_id)
+                ->where('campaign_id', $report->campaign_id)
+                ->where('id', '!=', $report->id)
+                ->latest()
+                ->get()
+            : collect();
+
+        return view('admin.reports.show', compact('report', 'duplicates'));
     }
 
     public function approve(MonitorReport $report): RedirectResponse
