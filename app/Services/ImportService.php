@@ -165,15 +165,6 @@ class ImportService
                     ]);
                 }
 
-                // 重複チェック: 同一ユーザー×同一案件×同一応募日時
-                if (Application::where('user_id', $user->id)
-                    ->where('campaign_id', $campaign->id)
-                    ->where('applied_at', $appliedAtStr)
-                    ->exists()) {
-                    $result['skipped']++;
-                    continue;
-                }
-
                 $rawStatus = trim($row['status'] ?? '');
                 $status = $rawStatus !== ''
                     ? ($statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'pending'))
@@ -197,18 +188,31 @@ class ImportService
                     default => null,
                 };
 
-                $application = Application::create([
-                    'user_id'               => $user->id,
-                    'campaign_id'           => $campaign->id,
+                $data = [
                     'status'                => $status,
-                    'applied_at'            => $appliedAtStr,
                     'completed_at'          => $completedAt,
                     'continuation_wish'     => $continuationWish,
                     'continuation_response' => $continuationResponse,
                     'imported_from'         => 'spreadsheet',
-                ]);
+                ];
 
-                DB::table('applications')->where('id', $application->id)->update(['created_at' => $appliedAtCarbon]);
+                // 同一ユーザー×同一案件×同一応募日時 → 上書き更新、なければ新規作成
+                $existing = Application::where('user_id', $user->id)
+                    ->where('campaign_id', $campaign->id)
+                    ->where('applied_at', $appliedAtStr)
+                    ->first();
+
+                if ($existing) {
+                    $existing->update($data);
+                    $application = $existing;
+                } else {
+                    $application = Application::create(array_merge($data, [
+                        'user_id'     => $user->id,
+                        'campaign_id' => $campaign->id,
+                        'applied_at'  => $appliedAtStr,
+                    ]));
+                    DB::table('applications')->where('id', $application->id)->update(['created_at' => $appliedAtCarbon]);
+                }
 
                 $result['success']++;
             }
