@@ -51,46 +51,57 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         返送する商品の案件を選択 <span class="text-red-500 text-xs">必須</span>
                     </label>
-                    <p class="text-xs text-amber-600 mb-2">※5つ以下は送料がご負担になります。</p>
+                    <p class="text-xs text-amber-600 mb-2">※4つ以下は送料がご負担になります。</p>
 
                     @error('initial_app_ids')
                         <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
                     @enderror
 
-                    {{-- 初回分 --}}
+                    {{-- 初回分（アコーディオン） --}}
                     @if($initialApplications->isNotEmpty())
-                    <p class="text-xs font-medium text-gray-500 mb-1 mt-1">初回分</p>
-                    <div class="space-y-2">
-                        @foreach($initialApplications as $app)
-                        <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
-                            <input type="checkbox" name="initial_app_ids[]" value="{{ $app->id }}"
-                                   data-fee="800"
-                                   class="rounded border-gray-300 text-pink-500"
-                                   onchange="updateCollectionFee()">
-                            <span class="text-sm text-gray-800">{{ $app->campaign->title }}</span>
-                        </label>
-                        @endforeach
+                    <div x-data="{ open: false }" class="mt-1">
+                        <button type="button" @click="open = !open"
+                                class="flex items-center justify-between w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm font-medium text-gray-700">
+                            <span>初回分（{{ $initialApplications->count() }}件）</span>
+                            <span x-text="open ? '▲' : '▼'" class="text-xs text-gray-400"></span>
+                        </button>
+                        <div x-show="open" x-cloak class="mt-2 space-y-2">
+                            @foreach($initialApplications as $app)
+                            <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
+                                <input type="checkbox" name="initial_app_ids[]" value="{{ $app->id }}"
+                                       data-fee="800"
+                                       class="rounded border-gray-300 text-pink-500"
+                                       onchange="updateCollectionFee()">
+                                <span class="text-sm text-gray-800">{{ $app->campaign->title }}</span>
+                            </label>
+                            @endforeach
+                        </div>
                     </div>
                     @endif
 
-                    {{-- 継続分 --}}
+                    {{-- 継続分（アコーディオン） --}}
                     @if($continuationApplications->isNotEmpty())
-                    <p class="text-xs font-medium text-gray-500 mb-1 mt-3">継続分</p>
-                    <div class="space-y-2">
-                        @foreach($continuationApplications as $app)
-                        @php
-                            $contCount = $app->campaign->collection_count_judgment ?? 1;
-                            $contFee   = 800 * $contCount;
-                        @endphp
-                        <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
-                            <input type="checkbox" name="continuation_app_ids[]" value="{{ $app->id }}"
-                                   data-fee="{{ $contFee }}"
-                                   class="rounded border-gray-300 text-pink-500"
-                                   onchange="updateCollectionFee()">
-                            <span class="text-sm text-gray-800">{{ $app->campaign->title }}（継続分）@if($contCount >= 2)×{{ $contCount }}@endif
-                            </span>
-                        </label>
-                        @endforeach
+                    <div x-data="{ open: false }" class="mt-2">
+                        <button type="button" @click="open = !open"
+                                class="flex items-center justify-between w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm font-medium text-gray-700">
+                            <span>継続分（{{ $continuationApplications->count() }}件）</span>
+                            <span x-text="open ? '▲' : '▼'" class="text-xs text-gray-400"></span>
+                        </button>
+                        <div x-show="open" x-cloak class="mt-2 space-y-2">
+                            @foreach($continuationApplications as $app)
+                            @php
+                                $contCount = $app->campaign->collection_count_judgment ?? 1;
+                                $contFee   = 800 * $contCount;
+                            @endphp
+                            <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
+                                <input type="checkbox" name="continuation_app_ids[]" value="{{ $app->id }}"
+                                       data-fee="{{ $contFee }}"
+                                       class="rounded border-gray-300 text-pink-500"
+                                       onchange="updateCollectionFee()">
+                                <span class="text-sm text-gray-800">{{ $app->campaign->title }}@if($contCount >= 2)×{{ $contCount }}@endif</span>
+                            </label>
+                            @endforeach
+                        </div>
                     </div>
                     @endif
 
@@ -215,7 +226,7 @@
                         <option value="{{ $app->id }}"
                                 data-fee="{{ $app->campaign->cooperation_fee ?? 0 }}"
                                 data-bonus="{{ $app->bonus_amount ?? 0 }}">
-                            {{ $app->campaign->title }}（継続分）
+                            {{ $app->campaign->title }}
                         </option>
                         @endforeach
                         <option value="other" data-fee="0" data-bonus="0">その他報告</option>

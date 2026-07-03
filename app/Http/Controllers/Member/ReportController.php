@@ -38,13 +38,12 @@ class ReportController extends Controller
 
         $monitorInitialApps      = $allCompleted->whereNotIn('id', $reportedInitialIds)->values();
         $monitorContinuationApps = $allCompleted
-            ->where('continuation_response', 'possible')
             ->whereNotIn('id', $reportedContinuationIds)
             ->values();
 
         // 回収サービス用
         $initialApplications      = $allCompleted->values();
-        $continuationApplications = $allCompleted->where('continuation_response', 'possible')->values();
+        $continuationApplications = $allCompleted->values();
 
         $reportType = $request->input('report_type', 'monitor');
 
