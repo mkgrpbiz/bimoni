@@ -204,9 +204,10 @@ class ImportService
                     'imported_from'         => 'spreadsheet',
                 ];
 
-                // 同一ユーザー×同一案件 → 上書き更新、なければ新規作成（DB unique制約に合わせる）
+                // 同一ユーザー×同一案件×同一応募日時 → 上書き更新、なければ新規作成
                 $existing = Application::where('user_id', $user->id)
                     ->where('campaign_id', $campaign->id)
+                    ->where('applied_at', $appliedAtStr)
                     ->first();
 
                 if ($existing) {
