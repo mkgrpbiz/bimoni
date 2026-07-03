@@ -140,6 +140,11 @@ class ImportService
                 $appliedAtCarbon = Carbon::parse($appliedAtStr);
 
                 // ユーザー検索（なければ作成）
+                $times = null;
+                if (!empty($row['available_times']) && $row['available_times'] !== 'いつでもOK') {
+                    $times = array_values(array_filter(array_map('trim', explode(',', $row['available_times']))));
+                }
+
                 $user = User::where('erme_respondent_id', $ermeId)->first();
                 if (!$user) {
                     $gender = match($row['gender'] ?? '') {
@@ -147,10 +152,6 @@ class ImportService
                         '男性' => 'male',
                         default => null,
                     };
-                    $times = null;
-                    if (!empty($row['available_times']) && $row['available_times'] !== 'いつでもOK') {
-                        $times = array_values(array_filter(array_map('trim', explode(',', $row['available_times']))));
-                    }
                     $user = User::create([
                         'line_user_id'         => 'IMPORT_' . uniqid(),
                         'erme_respondent_id'   => $ermeId,
@@ -163,6 +164,8 @@ class ImportService
                         'imported_from'        => 'spreadsheet',
                         'profile_completed_at' => $appliedAtCarbon,
                     ]);
+                } elseif ($times) {
+                    $user->update(['available_times' => $times]);
                 }
 
                 $rawStatus = trim($row['status'] ?? '');
@@ -201,9 +204,9 @@ class ImportService
                     'imported_from'         => 'spreadsheet',
                 ];
 
-                // 同一ユーザー×同一応募日時 → 上書き更新、なければ新規作成
+                // 同一ユーザー×同一案件 → 上書き更新、なければ新規作成（DB unique制約に合わせる）
                 $existing = Application::where('user_id', $user->id)
-                    ->where('applied_at', $appliedAtStr)
+                    ->where('campaign_id', $campaign->id)
                     ->first();
 
                 if ($existing) {
