@@ -62,7 +62,11 @@ class ImportController extends Controller
             return redirect()->route('admin.import.index')->with('error', 'CSVの読み込みに失敗しました。フォーマットを確認してください。');
         }
 
-        $result = $this->importer->importApplications($rows, (int) $request->input('campaign_id'));
+        try {
+            $result = $this->importer->importApplications($rows, (int) $request->input('campaign_id'));
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.import.index')->with('error', 'インポートエラー: ' . $e->getMessage());
+        }
 
         return redirect()->route('admin.import.index')->with('import_result', $result)->with('import_type', '応募リスト');
     }
