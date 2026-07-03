@@ -84,7 +84,9 @@
             $totalReflected += $reflectCount;
             @endphp
             <tr class="hover:bg-gray-50 {{ $isAllDenied ? 'bg-red-50' : '' }} {{ $campaign->is_visible ? '' : 'opacity-50' }}"
-                data-campaign="{{ $campaign->id }}">
+                data-campaign="{{ $campaign->id }}"
+                data-unit-price="{{ (int)($campaign->campaign_unit_price ?? 0) }}"
+                data-gross-profit="{{ (int)($campaign->gross_profit ?? 0) }}">
                 <td class="px-2 py-3 text-center text-gray-400 drag-handle cursor-grab select-none text-base">≡</td>
                 <td class="px-4 py-3">
                     <span class="font-medium text-gray-800">{{ $campaign->title }}</span>
@@ -109,10 +111,8 @@
                                 class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">保存</button>
                     </div>
                 </td>
-                <td class="px-3 py-3 text-right font-medium">¥{{ number_format($sales) }}</td>
-                <td class="px-3 py-3 text-right font-medium {{ $gross < 0 ? 'text-red-600' : 'text-green-700' }}">
-                    ¥{{ number_format($gross) }}
-                </td>
+                <td class="px-3 py-3 text-right font-medium cell-sales">¥{{ number_format($sales) }}</td>
+                <td class="px-3 py-3 text-right font-medium cell-gross {{ $gross < 0 ? 'text-red-600' : 'text-green-700' }}">¥{{ number_format($gross) }}</td>
                 <td class="px-3 py-3 text-center">
                     <button onclick="openDeniedModal({{ $campaign->id }}, {{ $year }}, {{ $month }}, {{ $isAllDenied ? 'true' : 'false' }}, '{{ addslashes($campaign->title) }}')"
                             class="text-xs {{ $isAllDenied ? 'bg-red-500 text-white' : 'bg-gray-500 text-white' }} px-2 py-1 rounded hover:opacity-80">
@@ -136,8 +136,8 @@
                 <td class="px-3 py-3 text-center">{{ $totalCompleted }}</td>
                 <td class="px-3 py-3 text-center">{{ $totalReported }}</td>
                 <td class="px-3 py-3 text-center">{{ $totalReflected }}</td>
-                <td class="px-3 py-3 text-right">¥{{ number_format($totalSales) }}</td>
-                <td class="px-3 py-3 text-right {{ $totalGross < 0 ? 'text-red-600' : 'text-green-700' }}">¥{{ number_format($totalGross) }}</td>
+                <td class="px-3 py-3 text-right" id="total-sales">¥{{ number_format($totalSales) }}</td>
+                <td class="px-3 py-3 text-right {{ $totalGross < 0 ? 'text-red-600' : 'text-green-700' }}" id="total-gross">¥{{ number_format($totalGross) }}</td>
                 <td></td>
                 <td></td>
             </tr>
@@ -168,6 +168,21 @@ new Sortable(document.getElementById('campaign-tbody'), {
     ghostClass: 'bg-blue-50',
 });
 
+function updateTotals() {
+    let totalSales = 0, totalGross = 0;
+    document.querySelectorAll('#campaign-tbody tr[data-campaign]').forEach(row => {
+        const salesText = row.querySelector('.cell-sales')?.textContent ?? '¥0';
+        const grossText = row.querySelector('.cell-gross')?.textContent ?? '¥0';
+        totalSales += parseInt(salesText.replace(/[¥,]/g, '')) || 0;
+        totalGross += parseInt(grossText.replace(/[¥,]/g, '')) || 0;
+    });
+    document.getElementById('total-sales').textContent = '¥' + totalSales.toLocaleString();
+    const tg = document.getElementById('total-gross');
+    tg.textContent = '¥' + totalGross.toLocaleString();
+    tg.className = tg.className.replace(/text-(red|green)-\d+/, '');
+    tg.classList.add(totalGross < 0 ? 'text-red-600' : 'text-green-700');
+}
+
 function syncMonth(sel) {
     const [y, m] = sel.value.split('-');
     document.getElementById('inp-year').value  = y;
@@ -194,6 +209,19 @@ async function saveReflection(campaignId, btn) {
     });
 
     if (res.ok) {
+        const unitPrice   = parseInt(row.dataset.unitPrice)   || 0;
+        const grossProfit = parseInt(row.dataset.grossProfit) || 0;
+        const sales = count * unitPrice;
+        const gross = count * grossProfit;
+
+        row.querySelector('.cell-sales').textContent = '¥' + sales.toLocaleString();
+        const grossCell = row.querySelector('.cell-gross');
+        grossCell.textContent = '¥' + gross.toLocaleString();
+        grossCell.className = grossCell.className.replace(/text-(red|green)-\d+/, '');
+        grossCell.classList.add(gross < 0 ? 'text-red-600' : 'text-green-700');
+
+        updateTotals();
+
         btn.textContent = '✓';
         btn.classList.replace('bg-pink-500', 'bg-green-500');
         setTimeout(() => { btn.textContent = '保存'; btn.classList.replace('bg-green-500', 'bg-pink-500'); btn.disabled = false; }, 1500);
