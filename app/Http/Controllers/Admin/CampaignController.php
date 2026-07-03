@@ -154,9 +154,17 @@ class CampaignController extends Controller
     public function reorder(Request $request): JsonResponse
     {
         $validated = $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
-        foreach ($validated['ids'] as $order => $id) {
+        $ids = $validated['ids'];
+
+        foreach ($ids as $order => $id) {
             Campaign::where('id', $id)->update(['sort_order' => $order]);
         }
+
+        // リストにない案件は末尾に
+        $offset = count($ids);
+        Campaign::whereNotIn('id', $ids)->orderBy('sort_order')->get()
+            ->each(fn($c, $i) => $c->update(['sort_order' => $offset + $i]));
+
         return response()->json(['ok' => true]);
     }
 
