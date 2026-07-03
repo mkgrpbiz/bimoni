@@ -170,9 +170,6 @@ class ImportService
                     ? ($statusMap[$rawStatus] ?? (in_array($rawStatus, $validStatuses) ? $rawStatus : 'pending'))
                     : 'pending';
 
-                $completedDate = $this->parseDate($row['completed_date'] ?? $row['selected_at'] ?? '');
-                $completedAt = ($status === 'completed' && $completedDate) ? $completedDate : null;
-
                 // 継続購入希望（はい/いいえ → 1/0）
                 $continuationWish = match($row['wants_continuation'] ?? '') {
                     'はい'   => 1,
@@ -190,7 +187,6 @@ class ImportService
 
                 $data = [
                     'status'                => $status,
-                    'completed_at'          => $completedAt,
                     'continuation_wish'     => $continuationWish,
                     'continuation_response' => $continuationResponse,
                     'imported_from'         => 'spreadsheet',
@@ -235,11 +231,8 @@ class ImportService
             '購入可能時間を選択して下さい' => 'available_times',
             '継続購入がある場合、複数回の購入を希望されますか？' => 'wants_continuation',
             'ステータス'       => 'status',
-            '採用日'           => 'completed_date',
-            '採用時間'         => 'completed_time',
             '継続'             => 'continuation_flag',
             '奨学'             => 'continuation_flag',
-            '案内日'           => 'completed_date',
             '備考'             => 'notes',
             'ｷｬﾝﾍﾟｰﾝ'         => 'campaign_name',
             'キャンペーン'     => 'campaign_name',
