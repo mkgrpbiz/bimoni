@@ -117,7 +117,13 @@
                                 </p>
                                 <div class="flex items-center gap-2 mt-0.5">
                                     <p class="text-xs text-gray-400">
-                                        応募：{{ $app->applied_at->format('Y/m/d') }}
+                                        @if($label === '実施完了' && $app->completed_at)
+                                            実施：{{ $app->completed_at->format('Y/m/d') }}
+                                        @elseif($label === '報告済' && $app->reported_at)
+                                            報告：{{ $app->reported_at->format('Y/m/d') }}
+                                        @else
+                                            応募：{{ $app->applied_at->format('Y/m/d') }}
+                                        @endif
                                     </p>
                                     @if($subStatus)
                                         <span class="text-xs px-1.5 py-0.5 rounded-full {{ $subStatus['color'] }}">

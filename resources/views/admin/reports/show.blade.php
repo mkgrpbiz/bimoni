@@ -43,6 +43,8 @@
             <dl class="grid grid-cols-2 gap-y-3 text-sm">
                 <dt class="text-gray-500 dark:text-gray-400">BIMONI ID</dt>
                 <dd class="font-medium dark:text-gray-200">{{ $report->user?->bimoni_user_id ?? '-' }}</dd>
+                <dt class="text-gray-500 dark:text-gray-400">LINE表示名</dt>
+                <dd class="dark:text-gray-200">{{ $report->user?->line_display_name ?? '-' }}</dd>
                 <dt class="text-gray-500 dark:text-gray-400">名前</dt>
                 <dd class="dark:text-gray-200">{{ $report->user?->name ?? '-' }}</dd>
                 <dt class="text-gray-500 dark:text-gray-400">フリガナ</dt>
