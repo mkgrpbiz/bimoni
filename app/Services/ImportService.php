@@ -264,9 +264,15 @@ class ImportService
         $hasJapanese = collect($firstKeys)->contains(fn($k) => isset($headerMap[$k]));
         if (!$hasJapanese) return $rows;
 
-        return array_map(function ($row) use ($headerMap) {
+        // 採用日/採用時間がある場合は案内日/案内時間を無視（ステータス共有由来の日付が混入するのを防ぐ）
+        $skipKeys = [];
+        if (in_array('採用日', $firstKeys, true))   $skipKeys[] = '案内日';
+        if (in_array('採用時間', $firstKeys, true)) $skipKeys[] = '案内時間';
+
+        return array_map(function ($row) use ($headerMap, $skipKeys) {
             $normalized = [];
             foreach ($row as $key => $value) {
+                if (in_array($key, $skipKeys, true)) continue;
                 $normalized[$headerMap[$key] ?? $key] = $value;
             }
             return $normalized;
