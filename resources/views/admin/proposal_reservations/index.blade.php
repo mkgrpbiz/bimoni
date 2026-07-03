@@ -79,7 +79,6 @@
         <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
             <tr>
                 <th class="px-3 py-2 text-left whitespace-nowrap">応募日時</th>
-                <th class="px-3 py-2 text-left whitespace-nowrap">ユーザーID</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">LINE表示名</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">名前</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">フリガナ</th>
@@ -113,7 +112,6 @@
             @endphp
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
                 <td class="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-400">{{ $app->applied_at?->format('m/d H:i') ?? '-' }}</td>
-                <td class="px-3 py-2 text-gray-700 dark:text-gray-400">{{ $user?->erme_respondent_id ?? '-' }}</td>
                 <td class="px-3 py-2 text-gray-700 dark:text-gray-400">{{ $user?->line_display_name ?? '-' }}</td>
                 <td class="px-3 py-2 font-medium whitespace-nowrap dark:text-gray-200">{{ $user?->name ?? '（未登録）' }}</td>
                 <td class="px-3 py-2 text-gray-700 dark:text-gray-400">{{ $user?->name_kana ?? '-' }}</td>
@@ -246,7 +244,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="17" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">打診中・予約中・実施確認中の応募がありません</td>
+                <td colspan="16" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">打診中・予約中・実施確認中の応募がありません</td>
             </tr>
             @endforelse
         </tbody>
