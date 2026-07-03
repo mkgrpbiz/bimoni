@@ -148,7 +148,7 @@ php8.3 artisan route:clear
   - `cooperation_fee` 列はMonitorReportに存在しない（Campaignから取得するため保存しない）
 - **回収インポート**: 列 = 回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号
   - 追跡番号重複スキップ
-  - 協力金は `CollectionReport::calcFee()` で自動計算（800円×商品数、5個以下は送料を差し引き）
+  - 協力金は `CollectionReport::calcFee()` で自動計算（800円×商品数、4個以下は送料を差し引き）
   - ステータスは `approved`
 
 ---

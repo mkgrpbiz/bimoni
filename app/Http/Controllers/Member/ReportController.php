@@ -192,7 +192,7 @@ class ReportController extends Controller
             $itemCount++;
         }
 
-        $fee = $itemCount <= 5 ? $grossFee - $shippingFee : $grossFee;
+        $fee = $itemCount < 5 ? $grossFee - $shippingFee : $grossFee;
 
         $boxPath   = $request->file('box_image')->store('collection', 'public');
         $labelPath = $request->file('label_image')->store('collection', 'public');
