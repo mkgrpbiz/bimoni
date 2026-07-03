@@ -562,7 +562,12 @@ class ImportService
         while (($data = fgetcsv($handle)) !== false) {
             $data = array_map('trim', $data);
             if ($headers === null) {
-                $headers = $data;
+                // 重複ヘッダーは _2, _3 ... でリネーム（最初の列を優先）
+                $seen = [];
+                $headers = array_map(function ($h) use (&$seen) {
+                    if (!isset($seen[$h])) { $seen[$h] = 1; return $h; }
+                    return $h . '_' . (++$seen[$h]);
+                }, $data);
                 continue;
             }
             if (count($data) !== count($headers)) continue;
