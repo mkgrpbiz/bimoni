@@ -140,12 +140,24 @@ php8.3 artisan route:clear
 - 承認ユーザー一覧CSVダウンロード機能あり（`referrals.csv` ルート）
 
 ### インポート機能
+- **応募リストインポート**: エルメのCSVをそのまま投入。案件を選択してインポート
+  - `ImportService::skipToApplicationHeader()` でサマリー行（集計情報）を自動スキップし「回答者ID」を含む行をヘッダーとして使用
+  - `parseCsv()` で重複ヘッダーは `_2` `_3` でリネーム（最初の列を優先）→ 「ステータス共有」など他シートの列が正規ステータスを上書きしない
+  - 重複チェック: 同一ユーザー × 同一応募日時 → 上書き更新（この定義は触らない）
+  - ステータスマッピング: 実施完了→completed / 実施確認中→confirming / キャンセル→cancelled / 予約中→scheduled / 打診中→line_contacted / 空欄→pending
+  - `invited_at`: 採用日+採用時間 または 案内日+案内時間 から設定
+  - `available_times`: 購入可能時間を選択 列から設定（いつでもOK含む）。既存ユーザーも更新
+  - `continuation_flag`: 継続 / 奨学 列の TRUE/FALSE → possible/not_possible
+  - `campaign_name`: ｷｬﾝﾍﾟｰﾝ（半角）/ キャンペーン（全角）両対応
+  - applications テーブルの `(user_id, campaign_id)` unique制約は削除済み（同一ユーザーが複数回応募可）
+  - 案件別インポートデータ削除スクリプト: `php8.3 fix_delete_campaign_applications.php {campaign_id}`
 - **報告インポート**: 列 = 回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費, キャンペーン
   - ステータスは常に `approved`
   - キャンペーン列に値があれば `bonus_amount=300`
   - 重複チェック: ユーザー×案件×報告日時（同日同案件同ユーザーはスキップ）
   - `purchase_amount` = モニター経費（¥・カンマ除去）
   - `cooperation_fee` 列はMonitorReportに存在しない（Campaignから取得するため保存しない）
+  - 応募管理とは完全に切り離し（application_id は既存応募があれば紐付け、なければ null）
 - **回収インポート**: 列 = 回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号
   - 重複チェック: ユーザー×報告日時（同日同ユーザーはスキップ）
   - 協力金は `CollectionReport::calcFee()` で自動計算（800円×商品数、4個以下は送料を差し引き）
