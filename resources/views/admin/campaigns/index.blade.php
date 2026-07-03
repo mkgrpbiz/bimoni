@@ -79,6 +79,7 @@ $tabs = [
             <tr>
                 <th class="px-3 py-3 w-6"></th>
                 <th class="px-4 py-3 text-left">案件名</th>
+                <th class="px-3 py-3 text-left">ステータス</th>
                 <th class="px-3 py-3 text-left">PR媒体</th>
                 <th class="px-3 py-3 text-left">種別</th>
                 <th class="px-3 py-3 text-right">初回費</th>
@@ -93,8 +94,26 @@ $tabs = [
             <tr class="hover:bg-gray-50 cursor-default" data-id="{{ $campaign->id }}">
                 <td class="px-3 py-3 text-center cursor-grab text-gray-800 drag-handle select-none">⠿</td>
                 <td class="px-4 py-3 font-medium max-w-xs">
-                    <a href="{{ route('admin.campaigns.show', $campaign) }}"
+                    <a href="{{ route('admin.campaigns.edit', $campaign) }}"
                        class="font-medium text-pink-600 hover:text-pink-800 hover:underline">{{ $campaign->title }}</a>
+                </td>
+                <td class="px-3 py-3">
+                    <form method="POST" action="{{ route('admin.campaigns.update_status', $campaign) }}">
+                        @csrf @method('PATCH')
+                        <select name="status" onchange="this.form.submit()"
+                                class="border rounded px-1.5 py-0.5 text-xs
+                                    {{ match($campaign->status) {
+                                        'published' => 'border-green-300 text-green-700 bg-green-50',
+                                        'paused'    => 'border-orange-300 text-orange-700 bg-orange-50',
+                                        'closed'    => 'border-gray-300 text-gray-600 bg-gray-50',
+                                        default     => 'border-yellow-300 text-yellow-700 bg-yellow-50',
+                                    } }}">
+                            <option value="published" @selected($campaign->status === 'published')>公開中</option>
+                            <option value="paused"    @selected($campaign->status === 'paused')>一時停止</option>
+                            <option value="closed"    @selected($campaign->status === 'closed')>終了</option>
+                            <option value="draft"     @selected($campaign->status === 'draft')>下書き</option>
+                        </select>
+                    </form>
                 </td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->getPrMediaLabel() }}</td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->getTypeLabel() }}</td>
@@ -110,8 +129,6 @@ $tabs = [
                 </td>
                 <td class="px-3 py-3">
                     <div class="flex gap-1 justify-center flex-wrap">
-                        <a href="{{ route('admin.campaigns.edit', $campaign) }}"
-                           class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">編集</a>
                         <form method="POST" action="{{ route('admin.campaigns.duplicate', $campaign) }}" class="inline">
                             @csrf
                             <button type="submit"
@@ -127,7 +144,7 @@ $tabs = [
                 </td>
             </tr>
             @empty
-            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
+            <tr><td colspan="10" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
             @endforelse
         </tbody>
     </table>

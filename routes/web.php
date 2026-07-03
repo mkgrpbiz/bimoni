@@ -73,6 +73,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('campaigns/{campaign}/duplicate', [CampaignController::class, 'duplicate'])->name('campaigns.duplicate');
         Route::post('campaigns/reorder', [CampaignController::class, 'reorder'])->name('campaigns.reorder');
         Route::patch('campaigns/{campaign}/toggle-visible', [CampaignController::class, 'toggleVisible'])->name('campaigns.toggle_visible');
+        Route::patch('campaigns/{campaign}/status', [CampaignController::class, 'updateStatus'])->name('campaigns.update_status');
         // 承認反映管理
         Route::get('approval-reflections', [ApprovalReflectionController::class, 'index'])->name('approval_reflections.index');
         Route::patch('approval-reflections/{campaign}', [ApprovalReflectionController::class, 'update'])->name('approval_reflections.update');

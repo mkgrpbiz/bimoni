@@ -109,6 +109,13 @@ class CampaignController extends Controller
         return redirect()->route('admin.campaigns.index')->with('success', '案件を更新しました。');
     }
 
+    public function updateStatus(Request $request, Campaign $campaign): RedirectResponse
+    {
+        $request->validate(['status' => 'required|in:published,paused,closed,draft']);
+        $campaign->update(['status' => $request->status]);
+        return back()->with('success', 'ステータスを更新しました。');
+    }
+
     public function destroy(Campaign $campaign): RedirectResponse
     {
         $campaign->delete();
