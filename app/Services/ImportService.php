@@ -176,7 +176,8 @@ class ImportService
                 $invitedDate = trim($row['invited_date'] ?? '');
                 $invitedTime = trim($row['invited_time'] ?? '');
                 $invitedAt = null;
-                if ($invitedDate !== '') {
+                // 打診中は未確定なので案内日/案内時間（ステータス共有由来）を invited_at にセットしない
+                if ($invitedDate !== '' && $status !== 'line_contacted') {
                     $str = $invitedDate . ($invitedTime !== '' ? ' ' . $invitedTime : '');
                     $invitedAt = $this->parseDateTime($str) ?? $this->parseDate($invitedDate);
                 }
@@ -249,8 +250,6 @@ class ImportService
             '購入可能時間を選択して下さい' => 'available_times',
             '継続購入がある場合、複数回の購入を希望されますか？' => 'wants_continuation',
             'ステータス'       => 'status',
-            '採用日'           => 'invited_date',
-            '採用時間'         => 'invited_time',
             '案内日'           => 'invited_date',
             '案内時間'         => 'invited_time',
             '継続'             => 'continuation_flag',
@@ -264,15 +263,9 @@ class ImportService
         $hasJapanese = collect($firstKeys)->contains(fn($k) => isset($headerMap[$k]));
         if (!$hasJapanese) return $rows;
 
-        // 採用日/採用時間がある場合は案内日/案内時間を無視（ステータス共有由来の日付が混入するのを防ぐ）
-        $skipKeys = [];
-        if (in_array('採用日', $firstKeys, true))   $skipKeys[] = '案内日';
-        if (in_array('採用時間', $firstKeys, true)) $skipKeys[] = '案内時間';
-
-        return array_map(function ($row) use ($headerMap, $skipKeys) {
+        return array_map(function ($row) use ($headerMap) {
             $normalized = [];
             foreach ($row as $key => $value) {
-                if (in_array($key, $skipKeys, true)) continue;
                 $normalized[$headerMap[$key] ?? $key] = $value;
             }
             return $normalized;
