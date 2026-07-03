@@ -104,8 +104,7 @@
             <p>・ヘッダー行（日本語）に対応：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">回答日時, 回答者ID, 回答者, お名前(漢字フルネーム), フリガナ, 生年月日をご入力ください, 性別を選択してください, 購入可能時間を選択して下さい, 継続購入がある場合〜, ステータス, 採用日, 継続</code></p>
             <p>・ステータス：実施完了 / キャンセル / 予約中 / 実施確認中 / 打診中 / 空欄（応募のみ）</p>
             <p>・継続購入希望（はい/いいえ）と継続打診承諾（TRUE/FALSE）を自動マッピング</p>
-            <p>・採用日が入力されているとステータスが実施完了の場合に <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">completed_at</code> に設定されます</p>
-            <p>・回答者IDでユーザーを検索。見つからない場合は新規ユーザーとして登録します</p>
+<p>・回答者IDでユーザーを検索。見つからない場合は新規ユーザーとして登録します</p>
             <p>・重複チェック：同一回答者ID×同一応募日時が既にある場合は上書き更新（スキップしません）</p>
         </div>
         <form method="POST" action="{{ route('admin.import.applications') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
