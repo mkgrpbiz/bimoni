@@ -338,11 +338,12 @@ class ImportService
                     continue;
                 }
 
-                // ユーザー特定: 回答者IDで検索 → なければ名前+フリガナで検索（新規作成なし）
-                $ermeId = $row['回答者ID'] ?? null;
-                $name   = $row['名前'] ?? $row['回答者名'] ?? null;
-                $kana   = $row['フリガナ'] ?? null;
+                $ermeId          = trim($row['回答者ID'] ?? '');
+                $lineDisplayName = $row['回答者名(任意)'] ?? $row['回答者名（任意）'] ?? $row['回答者名'] ?? null;
+                $name            = $row['名前'] ?? null;
+                $kana            = $row['フリガナ'] ?? null;
 
+                // ユーザー特定: 回答者IDで検索 → なければ名前+フリガナで検索 → なければ新規作成
                 $user = null;
                 if ($ermeId) {
                     $user = User::where('erme_respondent_id', $ermeId)->first();
@@ -356,30 +357,43 @@ class ImportService
                     }
                 }
                 if (!$user) {
-                    $result['errors'][] = "{$line}行目: ユーザーが特定できません（{$name}）";
-                    continue;
+                    if (empty($name)) {
+                        $result['errors'][] = "{$line}行目: 名前が空のためユーザーを作成できません";
+                        continue;
+                    }
+                    $user = User::create([
+                        'line_user_id'         => 'IMPORT_' . uniqid(),
+                        'erme_respondent_id'   => $ermeId ?: null,
+                        'line_display_name'    => $lineDisplayName ?: null,
+                        'name'                 => $name,
+                        'name_kana'            => $kana,
+                        'profile_completed_at' => now(),
+                        'imported_from'        => 'spreadsheet',
+                    ]);
                 }
 
                 // 報告日時（空欄は現在時刻）
                 $reportedAtRaw = trim($row['報告日時'] ?? '');
-                $reportedAt = $reportedAtRaw !== '' ? Carbon::parse($reportedAtRaw) : now();
+                $reportedAt    = $reportedAtRaw !== '' ? Carbon::parse($reportedAtRaw) : now();
 
-                // 初回か継続
-                $purchaseRaw  = $row['初回か継続'] ?? '';
-                $purchaseType = str_contains($purchaseRaw, '継続') || $purchaseRaw === 'continuation'
-                    ? 'continuation'
-                    : 'initial';
-
-                // 重複チェック: ユーザー×案件×報告日時
+                // 重複チェック: ユーザー×案件×報告日時（完全一致）
                 if (MonitorReport::where('user_id', $user->id)
                     ->where('campaign_id', $campaign->id)
-                    ->whereDate('created_at', $reportedAt->toDateString())
+                    ->where('created_at', $reportedAt->toDateTimeString())
                     ->exists()) {
                     $result['skipped']++;
                     continue;
                 }
 
+                // 初回か継続（完全一致）
+                $purchaseRaw  = $row['初回か継続'] ?? '';
+                $purchaseType = $purchaseRaw === '継続' ? 'continuation' : 'initial';
+
                 $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['モニター経費'] ?? $row['商品金額'] ?? '0');
+
+                // キャンペーン列 → bonus_amount
+                $bonusRaw    = trim($row['キャンペーン'] ?? '');
+                $bonusAmount = $bonusRaw !== '' ? (int) preg_replace('/[^\d]/', '', $bonusRaw) : null;
 
                 // 既存の応募レコードを探すだけ（作成しない）
                 $application = Application::where('user_id', $user->id)
@@ -393,6 +407,7 @@ class ImportService
                     'status'          => 'approved',
                     'purchase_type'   => $purchaseType,
                     'purchase_amount' => $purchaseAmount,
+                    'bonus_amount'    => $bonusAmount,
                     'payment_status'  => 'pending',
                 ]);
 
