@@ -47,8 +47,8 @@ class DashboardController extends Controller
         $chartData = $this->getChartData();
 
         // 月一覧（旧体制期間を除外）
-        $months = Application::selectRaw('YEAR(created_at) as y, MONTH(created_at) as m')
-            ->whereRaw(sprintf(self::EXCLUDE_DATE_SQL, 'created_at', 'created_at', 'created_at', 'created_at'))
+        $months = Application::selectRaw('YEAR(applied_at) as y, MONTH(applied_at) as m')
+            ->whereRaw(sprintf(self::EXCLUDE_DATE_SQL, 'applied_at', 'applied_at', 'applied_at', 'applied_at'))
             ->groupBy('y', 'm')
             ->orderByDesc('y')->orderByDesc('m')
             ->get()
@@ -83,15 +83,15 @@ class DashboardController extends Controller
 
         $appQuery = Application::query();
         if ($mode === 'monthly') {
-            $appQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+            $appQuery->whereYear('applied_at', $year)->whereMonth('applied_at', $month);
         } else {
-            $appQuery->whereRaw($exDate('created_at'));
+            $appQuery->whereRaw($exDate('applied_at'));
         }
 
-        $members     = User::when($mode === 'monthly', fn($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))->count();
-        $applied     = (clone $appQuery)->count();
-        $completed   = (clone $appQuery)->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])->count();
-        $reported    = (clone $appQuery)->whereIn('status', ['approved', 'point_granted'])->count();
+        $members   = User::when($mode === 'monthly', fn($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))->count();
+        $applied   = (clone $appQuery)->count();
+        $completed = (clone $appQuery)->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])->count();
+        $reported  = (clone $appQuery)->whereIn('status', ['approved', 'point_granted'])->count();
 
         // 承認反映データ
         $reflectionQuery = CampaignApprovalReflection::with('campaign');
@@ -129,10 +129,11 @@ class DashboardController extends Controller
         foreach ($reflections as $r) {
             $c = $campaigns->get($r->campaign_id);
             if (!$c) continue;
+            // 承認反映の period を使って絞る（日付カラムではなく確実な期間指定）
             $completedForCampaign = Application::where('campaign_id', $r->campaign_id)
                 ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
-                ->when($mode === 'monthly', fn($q) => $q->whereYear('completed_at', $year)->whereMonth('completed_at', $month))
-                ->when($mode !== 'monthly', fn($q) => $q->whereRaw($exDate('completed_at')))
+                ->whereYear('completed_at', $r->period_year)
+                ->whereMonth('completed_at', $r->period_month)
                 ->count();
 
             // 全否認コスト = 実施完了数 × (初回+継続×率 + 協力金)
