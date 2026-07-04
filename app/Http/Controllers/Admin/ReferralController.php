@@ -32,9 +32,10 @@ class ReferralController extends Controller
         $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
             ->pluck('campaign_id')->unique();
 
-        // 月内の承認済み報告
+        // 月内の承認済み報告（初回のみ。継続・回収は紹介報酬なし）
         $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referred_by_code', 'campaign:id,title,referral_fee,cooperation_fee'])
             ->where('status', 'approved')
+            ->where('purchase_type', 'initial')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->get();
 
@@ -105,6 +106,7 @@ class ReferralController extends Controller
         $prevMonth = $month->copy()->subMonth();
         $prevTotal = MonitorReport::with('campaign:id,referral_fee')
             ->where('status', 'approved')
+            ->where('purchase_type', 'initial')
             ->whereBetween('created_at', [$prevMonth->copy()->startOfMonth(), $prevMonth->copy()->endOfMonth()])
             ->whereHas('user', fn($q) => $q->whereNotNull('referred_by_code'))
             ->get()
@@ -178,12 +180,14 @@ class ReferralController extends Controller
         $approvedReports = MonitorReport::with(['campaign:id,referral_fee'])
             ->whereIn('user_id', $referredUserIds)
             ->where('status', 'approved')
+            ->where('purchase_type', 'initial')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->get();
 
         $rejectedReports = MonitorReport::with(['campaign:id,referral_fee'])
             ->whereIn('user_id', $referredUserIds)
             ->where('status', 'rejected')
+            ->where('purchase_type', 'initial')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->get();
 
@@ -239,6 +243,7 @@ class ReferralController extends Controller
         $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referred_by_code', 'campaign:id,title,cooperation_fee,referral_fee'])
             ->whereIn('user_id', $referredUserIds)
             ->where('status', 'approved')
+            ->where('purchase_type', 'initial')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->orderBy('created_at')
             ->get();
@@ -246,6 +251,7 @@ class ReferralController extends Controller
         $rejectedReports = MonitorReport::with(['campaign:id,referral_fee'])
             ->whereIn('user_id', $referredUserIds)
             ->where('status', 'rejected')
+            ->where('purchase_type', 'initial')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->get();
 
