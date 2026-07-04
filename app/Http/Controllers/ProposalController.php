@@ -261,6 +261,18 @@ class ProposalController extends Controller
         $guideMsg = $campaign->monitor_invite_message
             ?? "【モニターご案内】\n{$campaign->title}\n\n実施時間になりました。モニターを開始してください。";
 
+        // {{案内日時}} を invited_at〜invited_end_at で置換
+        if ($application->invited_at) {
+            $invitedLabel = $application->invited_at->format('n月j日 H:i');
+            if ($application->invited_end_at) {
+                $invitedLabel .= '〜' . $application->invited_end_at->format('H:i');
+            }
+            $guideMsg = str_replace('{{案内日時}}', $invitedLabel, $guideMsg);
+        }
+
+        // その他のキャンペーン変数を置換
+        $guideMsg = $campaign->resolveTemplate($guideMsg);
+
         LineMessageJob::create([
             'application_id' => $application->id,
             'user_id'        => $application->user_id,

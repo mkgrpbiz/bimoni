@@ -309,6 +309,7 @@
             <span>@{{解約について}}</span><span class="text-gray-400">→ 解約についての内容</span>
             <span>@{{モニター案内文}}</span><span class="text-gray-400">→ モニター案内文の内容</span>
             <span>@{{リンク}}</span><span class="text-gray-400">→ リンクURL</span>
+            <span>@{{案内日時}}</span><span class="text-gray-400">→ 案内日時（例: 7月4日 10:00〜11:00）</span>
         </div>
     </div>
 
