@@ -90,7 +90,11 @@ class DashboardController extends Controller
 
         $members   = User::when($mode === 'monthly', fn($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))->count();
         $applied   = (clone $appQuery)->count();
-        $completed = (clone $appQuery)->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])->count();
+        // 実施数は案内日時ベース
+        $completed = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
+            ->when($mode === 'monthly', fn($q) => $q->whereYear('invited_at', $year)->whereMonth('invited_at', $month))
+            ->when($mode !== 'monthly', fn($q) => $q->whereRaw($exDate('invited_at')))
+            ->count();
         $reported  = (clone $appQuery)->whereIn('status', ['approved', 'point_granted'])->count();
 
         // 承認反映データ
@@ -102,7 +106,8 @@ class DashboardController extends Controller
         }
         $reflections = $reflectionQuery->get();
 
-        $approvedCount = $reflections->sum('reflection_count');
+        // 全否認キャンペーンは承認数から除外
+        $approvedCount = $reflections->filter(fn($r) => !$r->is_all_denied)->sum('reflection_count');
 
         // 協力金 = 承認済み報告の初回費/継続費 + 協力金の実績合計
         $reportQuery = MonitorReport::with(['campaign', 'application'])->where('status', 'approved');
@@ -129,11 +134,11 @@ class DashboardController extends Controller
         foreach ($reflections as $r) {
             $c = $campaigns->get($r->campaign_id);
             if (!$c) continue;
-            // 承認反映の period を使って絞る（日付カラムではなく確実な期間指定）
+            // 実施数は案内日時 × 承認反映の period で確実に取得
             $completedForCampaign = Application::where('campaign_id', $r->campaign_id)
                 ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
-                ->whereYear('completed_at', $r->period_year)
-                ->whereMonth('completed_at', $r->period_month)
+                ->whereYear('invited_at', $r->period_year)
+                ->whereMonth('invited_at', $r->period_month)
                 ->count();
 
             // 全否認コスト = 実施完了数 × (初回+継続×率 + 協力金)
