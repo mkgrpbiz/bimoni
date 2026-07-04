@@ -95,7 +95,11 @@ class DashboardController extends Controller
             ->when($mode === 'monthly', fn($q) => $q->whereYear('invited_at', $year)->whereMonth('invited_at', $month))
             ->when($mode !== 'monthly', fn($q) => $q->whereRaw($exDate('invited_at')))
             ->count();
-        $reported  = (clone $appQuery)->whereIn('status', ['approved', 'point_granted'])->count();
+        // 報告数 = 報告管理の承認済み（報告提出日で期間フィルタ）
+        $reported = MonitorReport::where('status', 'approved')
+            ->when($mode === 'monthly', fn($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))
+            ->when($mode !== 'monthly', fn($q) => $q->whereRaw($exDate('created_at')))
+            ->count();
 
         // 承認反映データ
         $reflectionQuery = CampaignApprovalReflection::with('campaign');
