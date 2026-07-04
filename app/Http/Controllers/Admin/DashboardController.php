@@ -213,7 +213,7 @@ class DashboardController extends Controller
                 $alerts[] = [
                     'level'       => 'warning',
                     'message'     => "前月（{$prevMonth->format('Y年n月')}）の協力金 {$unpaidCount}件 が予約待ちのままです（毎月5日までに対応してください）。",
-                    'link'        => route('admin.points.index', ['month' => $prevMonth->format('Y-m')]),
+                    'link'        => route('admin.points.index', ['year' => $prevMonth->year, 'month' => $prevMonth->month]),
                     'label'       => '協力金管理',
                     'dismiss_key' => $coopKey,
                 ];
