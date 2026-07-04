@@ -98,12 +98,25 @@ class ApprovalReflectionController extends Controller
         ]);
 
         if (($validated['mode'] ?? 'monthly') === 'cumulative') {
-            // 累計モード: そのキャンペーンの全期間を一括更新
-            $current = CampaignApprovalReflection::where('campaign_id', $campaign->id)
-                ->max('is_all_denied');
-            $newVal = !$current;
+            $current = CampaignApprovalReflection::where('campaign_id', $campaign->id)->max('is_all_denied');
+            $newVal  = !$current;
+
+            // completed_at がある全月のレコードを確保（月次でも見えるように）
+            \App\Models\Application::where('campaign_id', $campaign->id)
+                ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
+                ->whereRaw("completed_at >= '2026-02-01'")
+                ->selectRaw('YEAR(completed_at) as y, MONTH(completed_at) as m')
+                ->groupBy('y', 'm')
+                ->get()
+                ->each(fn($p) => CampaignApprovalReflection::firstOrCreate(
+                    ['campaign_id' => $campaign->id, 'period_year' => $p->y, 'period_month' => $p->m],
+                    ['reflection_count' => 0, 'updated_by' => Auth::id()]
+                ));
+
+            // 全レコードを一括更新
             CampaignApprovalReflection::where('campaign_id', $campaign->id)
                 ->update(['is_all_denied' => $newVal, 'updated_by' => Auth::id()]);
+
             return response()->json(['is_all_denied' => $newVal]);
         }
 
