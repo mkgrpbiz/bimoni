@@ -38,7 +38,7 @@ class UserController extends Controller
 
         // 集計
         $appQuery    = Application::whereIn('user_id', $userIds);
-        $reportQuery = MonitorReport::whereIn('user_id', $userIds)->where('status', 'approved');
+        $reportQuery = MonitorReport::whereIn('user_id', $userIds)->where('status', 'approved')->where('purchase_type', 'initial');
 
         if ($mode === 'month') {
             $s = $month->copy()->startOfMonth();
@@ -54,7 +54,7 @@ class UserController extends Controller
         $totalReports = $reportQuery->count();
 
         $appCounts    = Application::whereIn('user_id', $userIds)->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->pluck('cnt', 'user_id');
-        $reportCounts = MonitorReport::whereIn('user_id', $userIds)->where('status', 'approved')->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->pluck('cnt', 'user_id');
+        $reportCounts = MonitorReport::whereIn('user_id', $userIds)->where('status', 'approved')->where('purchase_type', 'initial')->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->pluck('cnt', 'user_id');
 
         // コードプルダウン
         $codeOptions = collect();

@@ -41,7 +41,8 @@ class PortalService
 
         $query = MonitorReport::with(['user:id,name,name_kana,referred_by_code', 'campaign:id,title,cooperation_fee,referral_fee'])
             ->whereIn('user_id', $userIds)
-            ->where('status', 'approved');
+            ->where('status', 'approved')
+            ->where('purchase_type', 'initial');
 
         if ($month) {
             $query->whereBetween('created_at', [
