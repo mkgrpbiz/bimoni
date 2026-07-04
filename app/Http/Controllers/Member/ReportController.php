@@ -117,6 +117,7 @@ class ReportController extends Controller
             'application_id'       => $application->id,
             'purchase_type'        => $request->purchase_type,
             'purchase_amount'      => $request->purchase_amount,
+            'bonus_amount'         => $application->bonus_amount,
             'payment_method'       => $request->payment_method === 'other'
                                         ? 'other:' . $request->payment_method_other
                                         : $request->payment_method,

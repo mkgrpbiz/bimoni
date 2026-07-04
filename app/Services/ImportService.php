@@ -387,7 +387,10 @@ class ImportService
 
                 // 初回か継続（完全一致）
                 $purchaseRaw  = $row['初回か継続'] ?? '';
-                $purchaseType = $purchaseRaw === '継続' ? 'continuation' : 'initial';
+                $purchaseType = match($purchaseRaw) {
+                    '継続'  => 'continuation',
+                    default => 'initial',
+                };
 
                 $purchaseAmount = (int) preg_replace('/[^\d]/', '', $row['モニター経費'] ?? $row['商品金額'] ?? '0');
 
