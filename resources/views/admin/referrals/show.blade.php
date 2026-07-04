@@ -72,7 +72,9 @@
 
     {{-- 当月サマリー --}}
     @php
-        $expectedPay = $reports->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+        $expectedPay = $reports->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
+            - $reports->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
+                      ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
     @endphp
     <div class="bg-white rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 mb-3">{{ $month->format('Y年n月') }} サマリー</h2>
@@ -185,7 +187,9 @@
                 $approved1000  = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
                 $rejected500   = $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
                 $rejected1000  = $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
-                $total         = $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+                $total         = $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
+                               - $userApproved->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
+                                              ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
             @endphp
             <tr class="hover:bg-gray-50">
                 <td class="px-3 py-3 text-xs text-gray-500">{{ $ru->created_at?->format('Y/m/d') }}</td>

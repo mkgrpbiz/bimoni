@@ -275,9 +275,12 @@ class ReferralController extends Controller
             return $child;
         });
 
+        $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
+            ->pluck('campaign_id')->unique();
+
         return view('admin.referrals.show', compact(
             'agent', 'referredUsers', 'reports', 'rejectedReports', 'month', 'codeStrings', 'payStatus',
-            'sortedCodes', 'userCounts', 'childrenWithSortedCodes'
+            'sortedCodes', 'userCounts', 'childrenWithSortedCodes', 'allDeniedCampaignIds'
         ));
     }
 }
