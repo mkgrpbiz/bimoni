@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\CampaignDailySlotController;
 use App\Http\Controllers\Admin\CollectionReportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FormFieldController;
-use App\Http\Controllers\Admin\LineMessageDefaultController;
 use App\Http\Controllers\Admin\AdminManagerController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\ImportController;
@@ -167,9 +166,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('collection-reports/{collectionReport}', [CollectionReportController::class, 'show'])->name('collection_reports.show');
         Route::patch('collection-reports/{collectionReport}/approve', [CollectionReportController::class, 'approve'])->name('collection_reports.approve');
         Route::patch('collection-reports/{collectionReport}/reject', [CollectionReportController::class, 'reject'])->name('collection_reports.reject');
-
-        // LINEデフォルトメッセージ管理（表示は form-fields に統合）
-        Route::patch('line-message-defaults/{prMedia}', [LineMessageDefaultController::class, 'update'])->name('line_message_defaults.update');
 
         // フォーム項目管理（ページ編集）
         Route::get('form-fields', [FormFieldController::class, 'index'])->name('form_fields.index');

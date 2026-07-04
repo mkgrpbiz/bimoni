@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Category;
-use App\Models\LineMessageDefault;
 use App\Models\Tag;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -45,9 +44,7 @@ class CampaignController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         $tags = Tag::orderBy('name')->get();
-        $lineMessageDefaults = LineMessageDefault::all()->keyBy('pr_media')
-            ->map(fn($d) => ['monitor_invite_message' => $d->monitor_invite_message, 'monitor_end_message' => $d->monitor_end_message]);
-        return view('admin.campaigns.create', compact('categories', 'tags', 'lineMessageDefaults'));
+        return view('admin.campaigns.create', compact('categories', 'tags'));
     }
 
     public function store(Request $request): RedirectResponse
