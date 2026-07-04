@@ -46,7 +46,7 @@
             <option value="cumulative" @selected($mode === 'cumulative')>累計</option>
         </select>
         @if($mode === 'monthly')
-        <select name="month_key" onchange="this.form.submit()"
+        <select name="month_key" onchange="syncMonth(this); this.form.submit()"
                 class="border rounded px-2 py-1.5 text-sm bg-white">
             @foreach($months as $m)
                 <option value="{{ $m['year'] }}-{{ $m['month'] }}"
@@ -56,8 +56,8 @@
                 </option>
             @endforeach
         </select>
-        <input type="hidden" name="year"  value="{{ $year }}">
-        <input type="hidden" name="month" value="{{ $month }}">
+        <input type="hidden" name="year"  id="inp-year"  value="{{ $year }}">
+        <input type="hidden" name="month" id="inp-month" value="{{ $month }}">
         @endif
     </form>
 </div>
@@ -150,6 +150,12 @@ $pm = $prevMetrics;
 </div>
 
 <script>
+function syncMonth(sel) {
+    const [y, m] = sel.value.split('-');
+    document.getElementById('inp-year').value  = y;
+    document.getElementById('inp-month').value = m;
+}
+
 const chartData = @json($chartData);
 
 // 売上・協力金
