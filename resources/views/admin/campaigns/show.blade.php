@@ -63,12 +63,6 @@
         <p class="whitespace-pre-wrap">{{ $campaign->cancellation_info }}</p>
     </div>
     @endif
-    @if($campaign->collection_info)
-    <div class="md:col-span-2">
-        <p class="text-gray-700 mb-1">回収について：</p>
-        <p class="whitespace-pre-wrap">{{ $campaign->collection_info }}</p>
-    </div>
-    @endif
     @if($campaign->notes)
     <div class="md:col-span-2">
         <p class="text-gray-700 mb-1">注意事項：</p>

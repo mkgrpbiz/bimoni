@@ -68,13 +68,6 @@
         </div>
         @endif
 
-        @if($campaign->collection_info)
-        <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs font-bold text-gray-500 mb-2">回収について</p>
-            <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $campaign->collection_info }}</div>
-        </div>
-        @endif
-
         @if($campaign->notes)
         <div class="bg-amber-50 rounded-xl border border-amber-100 p-4">
             <p class="text-xs font-bold text-amber-600 mb-2">注意事項</p>
