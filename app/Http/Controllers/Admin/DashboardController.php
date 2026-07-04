@@ -131,33 +131,36 @@ class DashboardController extends Controller
         // 売上 = 承認数 × 案件単価
         $sales = $reflections->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
 
-        // 漏れ経費・全否認コストをループで同時計算
+        // 実施数を承認反映ページと同じロジックで取得（completed_at ベース）
+        $appStats = Application::selectRaw('
+                campaign_id,
+                SUM(CASE WHEN status IN (\'completed\',\'reported\',\'approved\',\'point_granted\') THEN 1 ELSE 0 END) as completed_count
+            ')
+            ->when($mode === 'monthly', fn($q) => $q->whereYear('completed_at', $year)->whereMonth('completed_at', $month))
+            ->when($mode !== 'monthly', fn($q) => $q->whereRaw("completed_at >= '2026-02-01'"))
+            ->groupBy('campaign_id')
+            ->get()->keyBy('campaign_id');
+
+        // 漏れ経費・全否認コスト（キャンペーン単位で集計してから計算）
         $leakCost  = 0;
         $allDenied = 0;
         $campaigns = Campaign::all()->keyBy('id');
-        foreach ($reflections as $r) {
-            $c = $campaigns->get($r->campaign_id);
+        foreach ($reflections->groupBy('campaign_id') as $campaignId => $recs) {
+            $c = $campaigns->get($campaignId);
             if (!$c) continue;
-            // 実施数は案内日時 × 承認反映の period で確実に取得
-            $completedForCampaign = Application::where('campaign_id', $r->campaign_id)
-                ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
-                ->whereYear('invited_at', $r->period_year)
-                ->whereMonth('invited_at', $r->period_month)
-                ->count();
 
-            // 全否認コスト = 実施完了数 × (初回+継続×率 + 協力金)
-            if ($r->is_all_denied) {
+            $completedCount  = $appStats->get($campaignId)?->completed_count ?? 0;
+            $totalReflected  = $recs->filter(fn($r) => !$r->is_all_denied)->sum('reflection_count');
+            $isAllDenied     = $recs->contains('is_all_denied', true);
+
+            if ($isAllDenied) {
+                // 全否認コスト = 実施数 × (初回+継続×率 + 協力金)
                 $productCost = ($c->initial_purchase_fee ?? 0) + ($c->recurring_purchase_fee ?? 0) * (($c->continuation_rate ?? 0) / 100);
-                $allDenied += $completedForCampaign * ($productCost + ($c->cooperation_fee ?? 0));
-            }
-
-            // 漏れ経費 = (実施数 - 承認数) × (初回購入費 + 協力金 + 紹介単価)
-            // 全否認は allDenied で処理済みのため除外
-            if (!$r->is_all_denied) {
-                $diff = max(0, $completedForCampaign - $r->reflection_count);
-                $perUnit = ($c->initial_purchase_fee ?? 0)
-                    + ($c->cooperation_fee ?? 0)
-                    + ($c->referral_fee ?? 0);
+                $allDenied  += $completedCount * ($productCost + ($c->cooperation_fee ?? 0));
+            } else {
+                // 漏れ経費 = (実施数 - 承認数) × (初回購入費 + 協力金 + 紹介単価)
+                $diff     = max(0, $completedCount - $totalReflected);
+                $perUnit  = ($c->initial_purchase_fee ?? 0) + ($c->cooperation_fee ?? 0) + ($c->referral_fee ?? 0);
                 $leakCost += $diff * $perUnit;
             }
         }
