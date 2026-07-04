@@ -94,8 +94,20 @@ class ApprovalReflectionController extends Controller
         $validated = $request->validate([
             'year'  => 'required|integer',
             'month' => 'required|integer',
+            'mode'  => 'nullable|string',
         ]);
 
+        if (($validated['mode'] ?? 'monthly') === 'cumulative') {
+            // 累計モード: そのキャンペーンの全期間を一括更新
+            $current = CampaignApprovalReflection::where('campaign_id', $campaign->id)
+                ->max('is_all_denied');
+            $newVal = !$current;
+            CampaignApprovalReflection::where('campaign_id', $campaign->id)
+                ->update(['is_all_denied' => $newVal, 'updated_by' => Auth::id()]);
+            return response()->json(['is_all_denied' => $newVal]);
+        }
+
+        // 月次モード: 指定月のレコードを更新
         $reflection = CampaignApprovalReflection::firstOrCreate(
             [
                 'campaign_id'  => $campaign->id,

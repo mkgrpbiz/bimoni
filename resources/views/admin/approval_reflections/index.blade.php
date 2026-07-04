@@ -247,7 +247,7 @@ async function confirmToggleDenied() {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
         },
-        body: JSON.stringify({ year: _deniedYear, month: _deniedMonth }),
+        body: JSON.stringify({ year: _deniedYear, month: _deniedMonth, mode: '{{ $mode }}' }),
     });
     if (res.ok) location.reload();
 }
