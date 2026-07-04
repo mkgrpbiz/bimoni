@@ -19,7 +19,11 @@ class ApprovalReflectionController extends Controller
         $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get();
 
         // 月次: 選択月のデータ
-        // 月次: 選択月の1レコード / 累計: campaign_id ごとに合計
+        // 旧体制期間（2025-11, 2025-12, 2026-01）を除外するSQL条件
+        $excludePeriodSql = "NOT ((period_year = 2025 AND period_month IN (11,12)) OR (period_year = 2026 AND period_month = 1))";
+        $excludeDateSql   = "NOT ((YEAR(completed_at) = 2025 AND MONTH(completed_at) IN (11,12)) OR (YEAR(completed_at) = 2026 AND MONTH(completed_at) = 1))";
+
+        // 月次: 選択月の1レコード / 累計: campaign_id ごとに合計（旧体制期間除外）
         if ($mode === 'monthly') {
             $reflections = CampaignApprovalReflection::where('period_year', $year)
                 ->where('period_month', $month)
@@ -31,12 +35,13 @@ class ApprovalReflectionController extends Controller
                      SUM(reflection_count) as reflection_count,
                      MAX(is_all_denied) as is_all_denied'
                 )
+                ->whereRaw($excludePeriodSql)
                 ->groupBy('campaign_id')
                 ->get()
                 ->keyBy('campaign_id');
         }
 
-        // 応募の実施完了数・承認済数 (期間フィルター)
+        // 応募の実施完了数・承認済数 (期間フィルター・旧体制期間除外)
         $applicationStats = \App\Models\Application::selectRaw('
                 campaign_id,
                 SUM(CASE WHEN status IN (\'completed\',\'reported\',\'approved\',\'point_granted\') THEN 1 ELSE 0 END) as completed_count,
@@ -44,6 +49,9 @@ class ApprovalReflectionController extends Controller
             ')
             ->when($mode === 'monthly', function ($q) use ($year, $month) {
                 $q->whereYear('completed_at', $year)->whereMonth('completed_at', $month);
+            })
+            ->when($mode !== 'monthly', function ($q) use ($excludeDateSql) {
+                $q->whereRaw($excludeDateSql);
             })
             ->groupBy('campaign_id')
             ->get()
@@ -108,6 +116,7 @@ class ApprovalReflectionController extends Controller
     private function getAvailableMonths(): array
     {
         return \App\Models\Application::whereNotNull('completed_at')
+            ->whereRaw("NOT ((YEAR(completed_at) = 2025 AND MONTH(completed_at) IN (11,12)) OR (YEAR(completed_at) = 2026 AND MONTH(completed_at) = 1))")
             ->selectRaw('YEAR(completed_at) as y, MONTH(completed_at) as m')
             ->groupBy('y', 'm')
             ->orderByDesc('y')->orderByDesc('m')

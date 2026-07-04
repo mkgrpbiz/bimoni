@@ -46,8 +46,9 @@ class DashboardController extends Controller
         // グラフ用データ（直近12ヶ月）
         $chartData = $this->getChartData();
 
-        // 月一覧
+        // 月一覧（旧体制期間を除外）
         $months = Application::selectRaw('YEAR(created_at) as y, MONTH(created_at) as m')
+            ->whereRaw(sprintf(self::EXCLUDE_DATE_SQL, 'created_at', 'created_at', 'created_at', 'created_at'))
             ->groupBy('y', 'm')
             ->orderByDesc('y')->orderByDesc('m')
             ->get()
@@ -72,11 +73,19 @@ class DashboardController extends Controller
         return back();
     }
 
+    // 旧体制期間（2025-11, 2025-12, 2026-01）を除外するSQL条件
+    private const EXCLUDE_PERIOD_SQL = "NOT ((period_year = 2025 AND period_month IN (11,12)) OR (period_year = 2026 AND period_month = 1))";
+    private const EXCLUDE_DATE_SQL   = "NOT ((YEAR(%s) = 2025 AND MONTH(%s) IN (11,12)) OR (YEAR(%s) = 2026 AND MONTH(%s) = 1))";
+
     private function calcMetrics(int $year, int $month, string $mode): array
     {
+        $exDate = fn(string $col) => sprintf(self::EXCLUDE_DATE_SQL, $col, $col, $col, $col);
+
         $appQuery = Application::query();
         if ($mode === 'monthly') {
             $appQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        } else {
+            $appQuery->whereRaw($exDate('created_at'));
         }
 
         $members     = User::when($mode === 'monthly', fn($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))->count();
@@ -88,6 +97,8 @@ class DashboardController extends Controller
         $reflectionQuery = CampaignApprovalReflection::with('campaign');
         if ($mode === 'monthly') {
             $reflectionQuery->where('period_year', $year)->where('period_month', $month);
+        } else {
+            $reflectionQuery->whereRaw(self::EXCLUDE_PERIOD_SQL);
         }
         $reflections = $reflectionQuery->get();
 
@@ -97,6 +108,8 @@ class DashboardController extends Controller
         $reportQuery = MonitorReport::with(['campaign', 'application'])->where('status', 'approved');
         if ($mode === 'monthly') {
             $reportQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        } else {
+            $reportQuery->whereRaw($exDate('created_at'));
         }
         $cooperationFee = $reportQuery->get()->sum(function ($r) {
             $c = $r->campaign;
@@ -119,6 +132,7 @@ class DashboardController extends Controller
             $completedForCampaign = Application::where('campaign_id', $r->campaign_id)
                 ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                 ->when($mode === 'monthly', fn($q) => $q->whereYear('completed_at', $year)->whereMonth('completed_at', $month))
+                ->when($mode !== 'monthly', fn($q) => $q->whereRaw($exDate('completed_at')))
                 ->count();
 
             // 全否認コスト = 実施完了数 × (初回+継続×率 + 協力金)
