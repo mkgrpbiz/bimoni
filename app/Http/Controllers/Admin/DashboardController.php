@@ -128,12 +128,15 @@ class DashboardController extends Controller
             }
 
             // 漏れ経費 = (実施数 - 承認数) × (粗利 + 商品金額 + 協力金 - 紹介単価)
-            $diff = max(0, $completedForCampaign - $r->reflection_count);
-            $perUnit = ($c->gross_profit ?? 0)
-                + ($c->initial_purchase_fee ?? 0) + ($c->recurring_purchase_fee ?? 0) * (($c->continuation_rate ?? 0) / 100)
-                + ($c->cooperation_fee ?? 0)
-                - ($c->referral_fee ?? 0);
-            $leakCost += $diff * $perUnit;
+            // 全否認は allDenied で処理済みのため除外
+            if (!$r->is_all_denied) {
+                $diff = max(0, $completedForCampaign - $r->reflection_count);
+                $perUnit = ($c->gross_profit ?? 0)
+                    + ($c->initial_purchase_fee ?? 0) + ($c->recurring_purchase_fee ?? 0) * (($c->continuation_rate ?? 0) / 100)
+                    + ($c->cooperation_fee ?? 0)
+                    - ($c->referral_fee ?? 0);
+                $leakCost += $diff * $perUnit;
+            }
         }
 
         // 粗利 = 承認数 × 案件粗利 - 漏れ経費 - 全否認
