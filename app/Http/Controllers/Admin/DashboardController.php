@@ -48,7 +48,7 @@ class DashboardController extends Controller
 
         // 月一覧（旧体制期間を除外）
         $months = Application::selectRaw('YEAR(applied_at) as y, MONTH(applied_at) as m')
-            ->whereRaw(sprintf(self::EXCLUDE_DATE_SQL, 'applied_at', 'applied_at', 'applied_at', 'applied_at'))
+            ->whereRaw(sprintf(self::EXCLUDE_DATE_SQL, 'applied_at'))
             ->groupBy('y', 'm')
             ->orderByDesc('y')->orderByDesc('m')
             ->get()
@@ -73,13 +73,13 @@ class DashboardController extends Controller
         return back();
     }
 
-    // 旧体制期間（2025-11, 2025-12, 2026-01）を除外するSQL条件
-    private const EXCLUDE_PERIOD_SQL = "NOT ((period_year = 2025 AND period_month IN (11,12)) OR (period_year = 2026 AND period_month = 1))";
-    private const EXCLUDE_DATE_SQL   = "NOT ((YEAR(%s) = 2025 AND MONTH(%s) IN (11,12)) OR (YEAR(%s) = 2026 AND MONTH(%s) = 1))";
+    // 2026-02より前を除外するSQL条件
+    private const EXCLUDE_PERIOD_SQL = "(period_year > 2026 OR (period_year = 2026 AND period_month >= 2))";
+    private const EXCLUDE_DATE_SQL   = "%s >= '2026-02-01'";
 
     private function calcMetrics(int $year, int $month, string $mode): array
     {
-        $exDate = fn(string $col) => sprintf(self::EXCLUDE_DATE_SQL, $col, $col, $col, $col);
+        $exDate = fn(string $col) => sprintf(self::EXCLUDE_DATE_SQL, $col);
 
         $appQuery = Application::query();
         if ($mode === 'monthly') {
@@ -320,8 +320,8 @@ class DashboardController extends Controller
             $y = (int)$d->format('Y');
             $m = (int)$d->format('n');
 
-            // 旧体制期間をチャートからも除外
-            if (($y === 2025 && in_array($m, [11, 12])) || ($y === 2026 && $m === 1)) {
+            // 2026-02より前を除外
+            if ($y < 2026 || ($y === 2026 && $m < 2)) {
                 continue;
             }
 

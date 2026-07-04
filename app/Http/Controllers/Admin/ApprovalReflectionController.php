@@ -19,9 +19,9 @@ class ApprovalReflectionController extends Controller
         $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get();
 
         // 月次: 選択月のデータ
-        // 旧体制期間（2025-11, 2025-12, 2026-01）を除外するSQL条件
-        $excludePeriodSql = "NOT ((period_year = 2025 AND period_month IN (11,12)) OR (period_year = 2026 AND period_month = 1))";
-        $excludeDateSql   = "NOT ((YEAR(completed_at) = 2025 AND MONTH(completed_at) IN (11,12)) OR (YEAR(completed_at) = 2026 AND MONTH(completed_at) = 1))";
+        // 2026-02より前を除外するSQL条件
+        $excludePeriodSql = "(period_year > 2026 OR (period_year = 2026 AND period_month >= 2))";
+        $excludeDateSql   = "completed_at >= '2026-02-01'";
 
         // 月次: 選択月の1レコード / 累計: campaign_id ごとに合計（旧体制期間除外）
         if ($mode === 'monthly') {
@@ -116,7 +116,7 @@ class ApprovalReflectionController extends Controller
     private function getAvailableMonths(): array
     {
         return \App\Models\Application::whereNotNull('completed_at')
-            ->whereRaw("NOT ((YEAR(completed_at) = 2025 AND MONTH(completed_at) IN (11,12)) OR (YEAR(completed_at) = 2026 AND MONTH(completed_at) = 1))")
+            ->whereRaw("completed_at >= '2026-02-01'")
             ->selectRaw('YEAR(completed_at) as y, MONTH(completed_at) as m')
             ->groupBy('y', 'm')
             ->orderByDesc('y')->orderByDesc('m')
