@@ -57,12 +57,16 @@ class ApprovalReflectionController extends Controller
             ->get()
             ->keyBy('campaign_id');
 
+        // 全否認キャンペーンID（月次/累計を問わず、いずれかの期間でis_all_denied=trueがあれば対象）
+        $allDeniedCampaignIds = CampaignApprovalReflection::where('is_all_denied', true)
+            ->pluck('campaign_id')->unique();
+
         // 月一覧（セレクトボックス用）
         $months = $this->getAvailableMonths();
 
         return view('admin.approval_reflections.index', compact(
             'campaigns', 'reflections', 'applicationStats',
-            'year', 'month', 'mode', 'months'
+            'year', 'month', 'mode', 'months', 'allDeniedCampaignIds'
         ));
     }
 
@@ -97,45 +101,21 @@ class ApprovalReflectionController extends Controller
             'mode'  => 'nullable|string',
         ]);
 
-        if (($validated['mode'] ?? 'monthly') === 'cumulative') {
-            $current = CampaignApprovalReflection::where('campaign_id', $campaign->id)->max('is_all_denied');
-            $newVal  = !$current;
+        // 全否認はキャンペーン単位のフラグ: 月次/累計関係なく全期間を一括更新
+        $current = CampaignApprovalReflection::where('campaign_id', $campaign->id)->max('is_all_denied');
+        $newVal  = !$current;
 
-            // completed_at がある全月のレコードを確保（月次でも見えるように）
-            \App\Models\Application::where('campaign_id', $campaign->id)
-                ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
-                ->whereRaw("completed_at >= '2026-02-01'")
-                ->selectRaw('YEAR(completed_at) as y, MONTH(completed_at) as m')
-                ->groupBy('y', 'm')
-                ->get()
-                ->each(fn($p) => CampaignApprovalReflection::firstOrCreate(
-                    ['campaign_id' => $campaign->id, 'period_year' => $p->y, 'period_month' => $p->m],
-                    ['reflection_count' => 0, 'updated_by' => Auth::id()]
-                ));
-
-            // 全レコードを一括更新
-            CampaignApprovalReflection::where('campaign_id', $campaign->id)
-                ->update(['is_all_denied' => $newVal, 'updated_by' => Auth::id()]);
-
-            return response()->json(['is_all_denied' => $newVal]);
-        }
-
-        // 月次モード: 指定月のレコードを更新
-        $reflection = CampaignApprovalReflection::firstOrCreate(
-            [
-                'campaign_id'  => $campaign->id,
-                'period_year'  => $validated['year'],
-                'period_month' => $validated['month'],
-            ],
+        // 指定月のレコードを確保（月次から操作した場合）
+        CampaignApprovalReflection::firstOrCreate(
+            ['campaign_id' => $campaign->id, 'period_year' => $validated['year'], 'period_month' => $validated['month']],
             ['reflection_count' => 0, 'updated_by' => Auth::id()]
         );
 
-        $reflection->update([
-            'is_all_denied' => !$reflection->is_all_denied,
-            'updated_by'    => Auth::id(),
-        ]);
+        // 全レコードを一括更新
+        CampaignApprovalReflection::where('campaign_id', $campaign->id)
+            ->update(['is_all_denied' => $newVal, 'updated_by' => Auth::id()]);
 
-        return response()->json(['is_all_denied' => $reflection->is_all_denied]);
+        return response()->json(['is_all_denied' => $newVal]);
     }
 
     private function getAvailableMonths(): array

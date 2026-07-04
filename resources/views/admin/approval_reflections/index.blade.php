@@ -71,11 +71,11 @@
             $completedCount = $appStat?->completed_count ?? 0;
             $approvedCount  = $appStat?->approved_count ?? 0;
             $reflectCount   = $ref?->reflection_count ?? 0;
-            $isAllDenied    = $ref?->is_all_denied ?? false;
+            $isAllDenied    = $allDeniedCampaignIds->contains($campaign->id);
             $sales          = $reflectCount * ($campaign->campaign_unit_price ?? 0);
             $gross          = $reflectCount * ($campaign->gross_profit ?? 0);
             @endphp
-            @if($completedCount >= 1)
+            @if($completedCount >= 1 || $isAllDenied)
             @php
             $totalSales     += $sales;
             $totalGross     += $gross;
