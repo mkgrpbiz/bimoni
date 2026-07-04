@@ -306,12 +306,16 @@ class DashboardController extends Controller
         $approvals = [];
 
         for ($i = 11; $i >= 0; $i--) {
-            $d     = now()->subMonths($i);
-            $y     = (int)$d->format('Y');
-            $m     = (int)$d->format('n');
-            $label = $d->format('n月');
+            $d = now()->subMonths($i);
+            $y = (int)$d->format('Y');
+            $m = (int)$d->format('n');
 
-            $labels[] = $label;
+            // 旧体制期間をチャートからも除外
+            if (($y === 2025 && in_array($m, [11, 12])) || ($y === 2026 && $m === 1)) {
+                continue;
+            }
+
+            $labels[] = $d->format('n月');
 
             $refs = CampaignApprovalReflection::with('campaign')
                 ->where('period_year', $y)->where('period_month', $m)
