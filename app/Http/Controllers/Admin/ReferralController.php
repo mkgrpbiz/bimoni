@@ -28,6 +28,10 @@ class ReferralController extends Controller
         // 全AgentReferralCodeを取得してマッピング
         $allCodes = AgentReferralCode::with('agent.parent')->get()->keyBy('code');
 
+        // 全否認キャンペーンID（承認反映の is_all_denied=true）
+        $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
+            ->pluck('campaign_id')->unique();
+
         // 月内の承認済み報告
         $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referred_by_code', 'campaign:id,title,referral_fee,cooperation_fee'])
             ->where('status', 'approved')
@@ -43,7 +47,7 @@ class ReferralController extends Controller
             ->get();
 
         // 代理店別集計（親代理店単位）
-        $summary = $agents->map(function (Agent $agent) use ($reports, $allReferredUsers, $allApplications, $allCodes, $year, $mon) {
+        $summary = $agents->map(function (Agent $agent) use ($reports, $allReferredUsers, $allApplications, $allCodes, $year, $mon, $allDeniedCampaignIds) {
             $codeStrings = $agent->getAllCodeStrings();
 
             $referredUsers   = collect();
@@ -65,8 +69,9 @@ class ReferralController extends Controller
 
             $totalApps = $allApplications->filter(fn($a) => $referredUserIds->contains($a->user_id))->count();
 
-            $allDenied = $monthReports->groupBy('user_id')
-                ->filter(fn($userReports) => $userReports->every(fn($r) => $r->status === 'rejected'))
+            // 全否認 = 承認反映で is_all_denied=true のキャンペーンに紐づく報告数
+            $allDenied = $monthReports->where('status', 'approved')
+                ->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
                 ->count();
 
             $expectedPay = $monthReports->where('status', 'approved')

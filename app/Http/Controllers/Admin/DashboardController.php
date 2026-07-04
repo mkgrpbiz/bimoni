@@ -141,6 +141,10 @@ class DashboardController extends Controller
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
 
+        // 全否認キャンペーンID（承認反映ページと同じ判定）
+        $allDeniedCampaignIds = CampaignApprovalReflection::where('is_all_denied', true)
+            ->pluck('campaign_id')->unique();
+
         // 漏れ経費・全否認コスト（キャンペーン単位で集計してから計算）
         $leakCost  = 0;
         $allDenied = 0;
@@ -151,7 +155,7 @@ class DashboardController extends Controller
 
             $completedCount  = $appStats->get($campaignId)?->completed_count ?? 0;
             $totalReflected  = $recs->filter(fn($r) => !$r->is_all_denied)->sum('reflection_count');
-            $isAllDenied     = $recs->contains('is_all_denied', true);
+            $isAllDenied     = $allDeniedCampaignIds->contains($campaignId);
 
             if ($isAllDenied) {
                 // 全否認コスト = 実施数 × (初回+継続×率 + 協力金)
