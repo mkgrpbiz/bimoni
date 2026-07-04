@@ -15,6 +15,18 @@
         <h2 class="font-bold text-gray-700 mb-4">{{ $label }}</h2>
         <form method="POST" action="{{ route('admin.line_message_defaults.update', $value) }}">
             @csrf @method('PATCH')
+            <div class="bg-gray-50 border border-gray-200 rounded p-3 mb-3 text-xs text-gray-600">
+                <p class="font-medium text-gray-700 mb-1">使用できるコード</p>
+                <div class="grid grid-cols-2 gap-1 font-mono">
+                    <span>@{{商品名}}</span><span class="text-gray-400">→ 商品名</span>
+                    <span>@{{初回購入費}}</span><span class="text-gray-400">→ 初回購入費（円）</span>
+                    <span>@{{モニター協力金}}</span><span class="text-gray-400">→ モニター協力金（円）</span>
+                    <span>@{{解約について}}</span><span class="text-gray-400">→ 解約についての内容</span>
+                    <span>@{{モニター案内文}}</span><span class="text-gray-400">→ モニター案内文の内容</span>
+                    <span>@{{リンク}}</span><span class="text-gray-400">→ リンクURL</span>
+                    <span>@{{案内日時}}</span><span class="text-gray-400">→ 案内日時（例: 7月4日 10:00〜11:00）</span>
+                </div>
+            </div>
             <div class="mb-3">
                 <label class="block text-xs font-medium text-gray-600 mb-1">モニター案内メッセージ</label>
                 <textarea name="monitor_invite_message" rows="6"
