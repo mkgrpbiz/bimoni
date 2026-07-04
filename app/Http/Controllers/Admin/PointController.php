@@ -143,14 +143,17 @@ class PointController extends Controller
         $request->validate(['month' => 'required|date_format:Y-m']);
         $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
 
+        $start = $month->copy()->startOfMonth();
+        $end   = $month->copy()->endOfMonth();
+
         MonitorReport::where('status', 'approved')
             ->where('payment_status', 'pending')
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'reserved']);
 
         CollectionReport::where('status', 'approved')
             ->where('payment_status', 'pending')
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'reserved']);
 
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
@@ -162,14 +165,17 @@ class PointController extends Controller
         $request->validate(['month' => 'required|date_format:Y-m']);
         $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
 
+        $start = $month->copy()->startOfMonth();
+        $end   = $month->copy()->endOfMonth();
+
         MonitorReport::where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'reserved'])
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
         CollectionReport::where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'reserved'])
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
