@@ -127,14 +127,13 @@ class DashboardController extends Controller
                 $allDenied += $completedForCampaign * ($productCost + ($c->cooperation_fee ?? 0));
             }
 
-            // 漏れ経費 = (実施数 - 承認数) × (粗利 + 商品金額 + 協力金 - 紹介単価)
+            // 漏れ経費 = (実施数 - 承認数) × (初回購入費 + 協力金 + 紹介単価)
             // 全否認は allDenied で処理済みのため除外
             if (!$r->is_all_denied) {
                 $diff = max(0, $completedForCampaign - $r->reflection_count);
-                $perUnit = ($c->gross_profit ?? 0)
-                    + ($c->initial_purchase_fee ?? 0) + ($c->recurring_purchase_fee ?? 0) * (($c->continuation_rate ?? 0) / 100)
+                $perUnit = ($c->initial_purchase_fee ?? 0)
                     + ($c->cooperation_fee ?? 0)
-                    - ($c->referral_fee ?? 0);
+                    + ($c->referral_fee ?? 0);
                 $leakCost += $diff * $perUnit;
             }
         }
