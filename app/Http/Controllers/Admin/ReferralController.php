@@ -119,6 +119,13 @@ class ReferralController extends Controller
             ->map(fn($r) => ['year' => (int)$r->y, 'month' => (int)$r->m, 'label' => Carbon::createFromDate($r->y, $r->m, 1)->format('Y年n月')])
             ->toArray();
 
+        // 当月が含まれていない場合は先頭に追加
+        $nowY = now()->year;
+        $nowM = now()->month;
+        if (!collect($months)->contains(fn($m) => $m['year'] === $nowY && $m['month'] === $nowM)) {
+            array_unshift($months, ['year' => $nowY, 'month' => $nowM, 'label' => now()->format('Y年n月')]);
+        }
+
         return view('admin.referrals.index', compact('summary', 'month', 'year', 'mon', 'months', 'currentTotal', 'prevTotal'));
     }
 
