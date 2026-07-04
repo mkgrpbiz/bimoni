@@ -19,12 +19,22 @@ class ApprovalReflectionController extends Controller
         $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get();
 
         // 月次: 選択月のデータ
-        // 累計: campaign_approval_reflections の合計
-        $reflections = CampaignApprovalReflection::when($mode === 'monthly', function ($q) use ($year, $month) {
-                $q->where('period_year', $year)->where('period_month', $month);
-            })
-            ->get()
-            ->keyBy('campaign_id');
+        // 月次: 選択月の1レコード / 累計: campaign_id ごとに合計
+        if ($mode === 'monthly') {
+            $reflections = CampaignApprovalReflection::where('period_year', $year)
+                ->where('period_month', $month)
+                ->get()
+                ->keyBy('campaign_id');
+        } else {
+            $reflections = CampaignApprovalReflection::selectRaw(
+                    'campaign_id,
+                     SUM(reflection_count) as reflection_count,
+                     MAX(is_all_denied) as is_all_denied'
+                )
+                ->groupBy('campaign_id')
+                ->get()
+                ->keyBy('campaign_id');
+        }
 
         // 応募の実施完了数・承認済数 (期間フィルター)
         $applicationStats = \App\Models\Application::selectRaw('
