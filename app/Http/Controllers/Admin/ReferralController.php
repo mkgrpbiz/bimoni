@@ -60,9 +60,12 @@ class ReferralController extends Controller
 
             $monthReports = $reports->filter(fn($r) => $referredUserIds->contains($r->user_id));
 
-            // 報告数・応募数を単価別
-            $reportsByFee = $monthReports->where('status', 'approved')
-                ->groupBy(fn($r) => $r->campaign?->referral_fee ?? 0);
+            // 全否認を除いた承認済み報告（紹介報酬対象）
+            $payableReports = $monthReports->where('status', 'approved')
+                ->filter(fn($r) => !$allDeniedCampaignIds->contains($r->campaign_id));
+
+            // 報告数・応募数を単価別（全否認除く）
+            $reportsByFee = $payableReports->groupBy(fn($r) => $r->campaign?->referral_fee ?? 0);
             $appsByFee = $allApplications
                 ->filter(fn($a) => $referredUserIds->contains($a->user_id))
                 ->groupBy(fn($a) => 0); // 単価は案件が必要なので件数のみ
@@ -74,8 +77,7 @@ class ReferralController extends Controller
                 ->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
                 ->count();
 
-            $expectedPay = $monthReports->where('status', 'approved')
-                ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+            $expectedPay = $payableReports->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
 
             $payStatus = ReferralPaymentStatus::getStatus($agent->id, $year, $mon);
 
@@ -85,7 +87,7 @@ class ReferralController extends Controller
                 'registered'     => $referredUsers->count(),
                 'applications'   => $totalApps,
                 'reports_by_fee' => $reportsByFee,
-                'reports_total'  => $monthReports->where('status', 'approved')->count(),
+                'reports_total'  => $payableReports->count(),
                 'all_denied'     => $allDenied,
                 'expected_pay'   => $expectedPay,
                 'pay_status'     => $payStatus,
