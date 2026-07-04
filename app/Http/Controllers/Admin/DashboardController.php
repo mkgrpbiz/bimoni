@@ -121,11 +121,11 @@ class DashboardController extends Controller
             $reportQuery->whereRaw($exDate('created_at'));
         }
         $cooperationFee = $reportQuery->get()->sum(function ($r) {
-            $c = $r->campaign;
-            $fee = $r->purchase_type === 'continuation'
-                ? ($c?->recurring_purchase_fee ?? 0) + ($c?->continuation_cooperation_fee ?? 0)
-                : ($c?->initial_purchase_fee ?? 0) + ($c?->cooperation_fee ?? 0);
-            return $fee + ($r->application?->bonus_amount ?? 0);
+            $c        = $r->campaign;
+            $coopFee  = $r->purchase_type === 'continuation'
+                ? ($c?->continuation_cooperation_fee ?? 0)
+                : ($c?->cooperation_fee ?? 0);
+            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
         });
 
         // 売上 = 承認数 × 案件単価
