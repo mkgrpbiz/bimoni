@@ -95,7 +95,7 @@
         })
         .catch(err => {
             document.getElementById('liff-loading').innerHTML =
-                '<p class="text-red-500">エラー: ' + (err && err.message ? err.message : String(err)) + '</p>';
+                '<p class="text-red-500">ログインに失敗しました。再度お試しください。</p>';
         });
     </script>
     @endif
