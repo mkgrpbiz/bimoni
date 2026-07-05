@@ -19,7 +19,7 @@ class PointController extends Controller
     {
         return ($r->purchase_amount ?? 0)
             + ($r->campaign?->cooperation_fee ?? 0)
-            + ($r->application?->bonus_amount ?? 0);
+            + ($r->bonus_amount ?? 0);
     }
 
     public function index(Request $request): View
@@ -188,15 +188,18 @@ class PointController extends Controller
 
         $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
 
+        $csvStart = $month->copy()->startOfMonth();
+        $csvEnd   = $month->copy()->endOfMonth();
+
         $monitors = MonitorReport::with(['user', 'campaign'])
             ->where('status', 'approved')
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$csvStart, $csvEnd])
             ->orderBy('created_at')
             ->get();
 
         $collections = CollectionReport::with('user')
             ->where('status', 'approved')
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$csvStart, $csvEnd])
             ->orderBy('created_at')
             ->get();
 
@@ -204,7 +207,7 @@ class PointController extends Controller
         $rows[] = ['日時', 'ユーザーID', 'ユーザー名', 'ステータス', '種別/案件名', '協力金'];
 
         foreach ($monitors as $r) {
-            $fee = ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->application?->bonus_amount ?? 0);
+            $fee = ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->bonus_amount ?? 0);
             $rows[] = [
                 $r->created_at->format('Y/m/d'),
                 $r->user?->bimoni_user_id ?? '',
@@ -249,16 +252,19 @@ class PointController extends Controller
         $month        = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
         $transferDate = Carbon::parse($request->transfer_date)->format('md');
 
-        $monitors = MonitorReport::with(['user', 'campaign', 'application'])
+        $zenginStart = $month->copy()->startOfMonth();
+        $zenginEnd   = $month->copy()->endOfMonth();
+
+        $monitors = MonitorReport::with(['user', 'campaign'])
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$zenginStart, $zenginEnd])
             ->get();
 
         $collections = CollectionReport::with('user')
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
-            ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereBetween('created_at', [$zenginStart, $zenginEnd])
             ->get();
 
         $userTotals = [];
@@ -270,7 +276,7 @@ class PointController extends Controller
             }
             $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0)
                 + ($r->campaign?->cooperation_fee ?? 0)
-                + ($r->application?->bonus_amount ?? 0);
+                + ($r->bonus_amount ?? 0);
         }
 
         foreach ($collections as $r) {
