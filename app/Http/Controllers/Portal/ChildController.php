@@ -95,7 +95,7 @@ class ChildController extends Controller
     {
         $agent = \App\Services\PortalService::agent();
         $child = $code->agent;
-        if ($child->parent_id !== $agent->id) abort(403);
+        if (!$child || $child->parent_id !== $agent->id) abort(403);
 
         if (User::where('referred_by_code', $code->code)->exists()) {
             return back()->withErrors(['error' => 'このコードには登録者がいるため削除できません。']);

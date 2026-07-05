@@ -62,7 +62,7 @@ class ReportController extends Controller
             'reject_reason' => null,
         ]);
 
-        $report->application->update([
+        $report->application?->update([
             'status'      => 'approved',
             'approved_at' => now(),
         ]);
@@ -78,7 +78,7 @@ class ReportController extends Controller
             'reviewed_at' => now(),
         ]);
 
-        $report->application->update(['status' => 'reported']);
+        $report->application?->update(['status' => 'reported']);
 
         return back()->with('success', '差戻しました。');
     }

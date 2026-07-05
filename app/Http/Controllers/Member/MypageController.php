@@ -29,7 +29,7 @@ class MypageController extends Controller
         $payCurrentMonth = $applications
             ->whereIn('status', ['approved'])
             ->filter(fn($a) => $a->approved_at?->between($lastMonthStart, $lastMonthEnd))
-            ->sum(fn($a) => ($a->campaign->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+            ->sum(fn($a) => ($a->campaign?->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
         $payCurrentMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
             ->whereBetween('reviewed_at', [$lastMonthStart, $lastMonthEnd])
@@ -39,7 +39,7 @@ class MypageController extends Controller
         $payNextMonth = $applications
             ->whereIn('status', ['approved'])
             ->filter(fn($a) => $a->approved_at?->between($thisMonthStart, $thisMonthEnd))
-            ->sum(fn($a) => ($a->campaign->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+            ->sum(fn($a) => ($a->campaign?->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
         $payNextMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
             ->whereBetween('reviewed_at', [$thisMonthStart, $thisMonthEnd])
