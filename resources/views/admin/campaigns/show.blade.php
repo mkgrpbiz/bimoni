@@ -27,7 +27,8 @@
     <div>
         <span class="text-gray-700">継続モニター協力金：</span>
         @if($campaign->continuation_cooperation_fee_formula)
-            {{ $campaign->continuation_cooperation_fee_formula }} = ¥{{ number_format($campaign->continuation_cooperation_fee) }}
+            @php $formula = preg_replace('/^0\+/', '', $campaign->continuation_cooperation_fee_formula); @endphp
+            {{ $formula }} = ¥{{ number_format($campaign->continuation_cooperation_fee) }}
         @elseif($campaign->continuation_cooperation_fee)
             ¥{{ number_format($campaign->continuation_cooperation_fee) }}
         @else

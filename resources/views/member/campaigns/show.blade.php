@@ -139,7 +139,7 @@
                         <span class="text-gray-500">継続モニター協力金</span>
                         <span class="text-pink-600 font-bold">
                             @if($campaign->continuation_cooperation_fee)
-                                {{ number_format($campaign->recurring_purchase_fee ?? 0) }}+{{ number_format($campaign->continuation_cooperation_fee) }}円
+                                @if($campaign->recurring_purchase_fee){{ number_format($campaign->recurring_purchase_fee) }}+@endif{{ number_format($campaign->continuation_cooperation_fee) }}円
                             @else
                                 {{ number_format($campaign->recurring_purchase_fee ?? 0) }}円
                             @endif
