@@ -77,7 +77,7 @@ class ProposalController extends Controller
             return response()->view('proposals.expired', compact('application'), 410);
         }
 
-        if (!in_array($application->status, ['line_contacted', 'scheduled'])) {
+        if ($application->status !== 'line_contacted') {
             return response()->view('proposals.expired', compact('application'), 410);
         }
 
@@ -129,11 +129,15 @@ class ProposalController extends Controller
     }
 
     // いいえ → 候補日時表示
-    public function declineNo(string $token): View
+    public function declineNo(string $token): View|\Illuminate\Http\Response
     {
         $application = Application::where('proposal_token', $token)
             ->with(['campaign', 'user'])
             ->firstOrFail();
+
+        if ($application->status !== 'line_contacted') {
+            return response()->view('proposals.expired', compact('application'), 410);
+        }
 
         $isPrIf = $application->isPrIfCampaign();
 
