@@ -67,10 +67,18 @@ php8.3 artisan route:clear
 - `box_image` / `label_image`: 添付画像パス（null許容）
 - `estimated_arrival_date`: 到着予定日（null許容、`?->format()` でnull安全に）
 
+### MonitorReport
+- `purchase_type`: ENUM('initial', 'continuation', 'other')
+- `bonus_amount`: nullable unsignedInteger。キャンペーン列の金額（インポート時）またはapplication.bonus_amountからコピー（会員報告時）
+- `purchase_amount`: 実際にかかったモニター経費
+- 協力金の表示・計算: `purchase_amount + (cooperation_fee or continuation_cooperation_fee) + bonus_amount`
+
 ### Campaign
 - `collection_requirement`: ENUM('回収前提', '回収不要') nullable
   - 条件チェックは必ず `=== '回収前提'`（truthy判定だと'回収不要'でも引っかかる）
   - 回収前提の場合、応募フォームに警告メッセージ表示
+- `collection_info`: DBカラムは残存しているがフォーム・会員ページからは削除済み（未使用）
+- LINE自動送信設定（`monitor_invite_message` / `monitor_end_message`）は案件ごとに設定。新規案件は既存案件を複製して作成する想定（デフォルト機能は廃止）
 
 ---
 
@@ -88,6 +96,10 @@ php8.3 artisan route:clear
 - **登録フォームページ（`member.register*`）は除外**（登録前に飛ばされると導線が崩れるため）
 - **必須設定**: LINEデベロッパーコンソールのLIFFアプリで「Add friend option」をONにして `@204zmull` を紐付けること（これがないと全員に表示される）
 
+### LINE自動送信（`monitor_invite_message` / `monitor_end_message`）
+- 使用できるコード: `{{商品名}}` `{{初回購入費}}` `{{モニター協力金}}` `{{解約について}}` `{{モニター案内文}}` `{{リンク}}` `{{案内日時}}`
+- `{{案内日時}}`: `invited_at->format('n月j日 H:i')` + `〜invited_end_at->format('H:i')` の形式で置換（ProposalController::createMonitorGuideJob）
+
 ---
 
 ## ポータル（代理店ポータル）
@@ -97,12 +109,13 @@ php8.3 artisan route:clear
 - 子代理店フィルター（親代理店のみ表示）
 - コード別プルダウン（コードが複数ある場合）
 - ユーザー一覧は `profile_completed_at` not null のみ表示（LIFF登録だけのユーザーを除外）
+- **継続報告（purchase_type='continuation'）は表示・集計しない**（紹介報酬対象外）
 
 ### ページ構成
 | ページ | 内容 |
 |--------|------|
 | ユーザー管理 | 登録者一覧・集計（登録/応募/報告数） |
-| 報告管理 | 承認済み報告一覧 |
+| 報告管理 | 承認済み報告一覧（初回報告のみ） |
 | 報酬管理 | 案件別報酬集計 |
 | 子代理店管理 | 子代理店一覧・コード管理（親のみ） |
 
@@ -121,6 +134,8 @@ php8.3 artisan route:clear
 ### 紹介報酬管理
 - 月次の報酬一覧・承認/支払い処理
 - 詳細: 代理店のコード別登録者・承認済み報告を表示
+- **初回報告のみ対象**（`purchase_type='initial'`）。継続・回収は紹介報酬なし
+- 全否認案件（`CampaignApprovalReflection.is_all_denied=true`）の金額は期待報酬から除外
 
 ### ユーザー管理
 - 登録コード（`referred_by_code`）を表示
@@ -139,6 +154,11 @@ php8.3 artisan route:clear
 - 期待報酬0円の場合は「処理不要」バッジ表示
 - 承認ユーザー一覧CSVダウンロード機能あり（`referrals.csv` ルート）
 
+### 協力金管理（`admin/points`）
+- 先月・当月ブロックで予約済み・支払済み処理
+- ダッシュボードのリンクは `['year' => $prevMonth->year, 'month' => $prevMonth->month]` 形式で渡す（`'Y-m'` 形式はNG→500エラー）
+- `markReserved` / `markPaid` の `whereBetween` は必ず `copy()` を使う（同一Carbonオブジェクトに連続で呼ぶと両方が月末になるバグあり）
+
 ### インポート機能
 - **応募リストインポート**: エルメのCSVをそのまま投入。案件を選択してインポート
   - `ImportService::skipToApplicationHeader()` でサマリー行（集計情報）を自動スキップし「回答者ID」を含む行をヘッダーとして使用
@@ -154,9 +174,11 @@ php8.3 artisan route:clear
   - 案件別インポートデータ削除スクリプト: `php8.3 fix_delete_campaign_applications.php {campaign_id}`
 - **報告インポート**: 列 = 回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費, キャンペーン
   - ステータスは常に `approved`
-  - キャンペーン列に値があれば `bonus_amount=300`
-  - 重複チェック: ユーザー×案件×報告日時（同日同案件同ユーザーはスキップ）
+  - キャンペーン列の値を `bonus_amount` として保存（空欄は null）
+  - 重複チェック: ユーザー×案件×報告日時の**完全一致**（日付のみでなく時間まで一致した場合のみスキップ）
+  - `purchase_type`: `=== '継続'` の完全一致で `continuation`、それ以外は `initial`
   - `purchase_amount` = モニター経費（¥・カンマ除去）
+  - ユーザーが見つからない場合は `line_user_id='IMPORT_xxx'` で新規作成
   - `cooperation_fee` 列はMonitorReportに存在しない（Campaignから取得するため保存しない）
   - 応募管理とは完全に切り離し（application_id は既存応募があれば紐付け、なければ null）
 - **回収インポート**: 列 = 回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号
@@ -186,8 +208,9 @@ php8.3 artisan route:clear
 
 ### 打診ページ（`/proposals/{token}`）
 - 期限切れ・無効なリンクは全て「このリンクは無効になりました」ページ（410）
-- キャンセル（「いいえ」→断る）に48h制限・他案件ロックなし
+- **`line_contacted` 以外のステータスはすべて expired ページ**（回答済みのリンクを再度開いても変更・キャンセル不可）
 - 「いいえ」→別日程選択にも制限なし（管理画面側での打診送信時のみロックチェック）
+- `declineNo` にもステータスチェックあり（`line_contacted` 以外は expired ページ）
 
 ---
 
@@ -202,3 +225,5 @@ php8.3 artisan route:clear
 - ライトボックスは純JS実装（`openLightbox(src)` / `closeLightbox()`）、クリックまたはEscで閉じる。回収詳細・報告詳細で使用
 - CSVインポートはBOM付きUTF-8（`"\xEF\xBB\xBF"`プレフィックス）でExcel対応
 - ¥・カンマ除去は `preg_replace('/[^\d]/', '', $value)` を使う
+- Carbon の `whereBetween` で同一オブジェクトに `startOfMonth()` → `endOfMonth()` と連続して呼ぶと両方が月末になるバグ → 必ず `copy()` を使う
+- MonitorReport を全削除すると Application の status が `reported` のまま残る。再報告は可能だがマイページ表示がおかしくなるので application の status も `completed` に戻す必要がある
