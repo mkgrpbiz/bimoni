@@ -128,6 +128,19 @@ function hiraToKata(str) {
         return String.fromCharCode(ch.charCodeAt(0) + 0x60);
     });
 }
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('input[name="name_kana"]').forEach(function (el) {
+        var composing = false;
+        el.addEventListener('compositionstart', function () { composing = true; });
+        el.addEventListener('compositionend', function () {
+            composing = false;
+            this.value = hiraToKata(this.value);
+        });
+        el.addEventListener('input', function () {
+            if (!composing) this.value = hiraToKata(this.value);
+        });
+    });
+});
 </script>
 </body>
 </html>

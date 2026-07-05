@@ -32,7 +32,6 @@
             </label>
             <input type="text" name="name_kana" value="{{ old('name_kana') }}"
                    placeholder="ヤマダ タロウ"
-                   oninput="this.value=hiraToKata(this.value)"
                    class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm @error('name_kana') border-red-400 @enderror">
             @error('name_kana')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
