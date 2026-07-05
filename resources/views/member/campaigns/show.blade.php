@@ -146,7 +146,7 @@
                         </span>
                     </div>
                 </div>
-                <p class="text-xs text-gray-400 mb-3">※支払い方法などで多少前後する場合があります。</p>
+                @if($campaign->recurring_purchase_fee)<p class="text-xs text-gray-400 mb-3">※支払い方法などで多少前後する場合があります。</p>@endif
                 <div class="grid grid-cols-2 gap-3">
                     @foreach(['希望' => '継続希望', '不可' => '継続不可'] as $val => $lbl)
                     <label class="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
