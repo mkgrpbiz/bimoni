@@ -85,7 +85,7 @@ class Campaign extends Model
         return str_replace(
             ['{{商品名}}', '{{初回購入費}}', '{{モニター協力金}}', '{{解約について}}', '{{モニター案内文}}', '{{リンク}}'],
             [
-                $this->product_name ?? '',
+                $this->title ?? '',
                 $this->initial_purchase_fee ? number_format($this->initial_purchase_fee) . '円' : '',
                 number_format($this->cooperation_fee) . '円',
                 $this->cancellation_info ?? '',
