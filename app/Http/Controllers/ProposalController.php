@@ -292,6 +292,13 @@ class ProposalController extends Controller
             $endMsg = $campaign->monitor_end_message
                 ?? "【モニター終了】\n{$campaign->title}\n\nモニター時間が終了しました。ご報告をお願いします。";
 
+            // {{案内日時}} を置換（guideMsg と同様）
+            if ($application->invited_at) {
+                $invitedLabel = $application->invited_at->format('n月j日 H:i')
+                    . '〜' . $application->invited_end_at->format('H:i');
+                $endMsg = str_replace('{{案内日時}}', $invitedLabel, $endMsg);
+            }
+
             $endMsg = $campaign->resolveTemplate($endMsg);
 
             LineMessageJob::create([
