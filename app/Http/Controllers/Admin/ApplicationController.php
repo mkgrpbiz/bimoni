@@ -289,7 +289,7 @@ class ApplicationController extends Controller
                 }
             }
 
-            // 案内日時を保存
+            // 案内日時を保存（未指定の場合は古いinvited_atをクリア→旧日時残存で即期限切れになるバグ防止）
             if ($request->filled('invited_at')) {
                 $application->update([
                     'invited_at'     => $request->invited_at,
@@ -297,7 +297,10 @@ class ApplicationController extends Controller
                 ]);
             } elseif ($isPrIf && $request->filled('invited_end_at')) {
                 // PR打診：締め切り日時のみ設定（invited_atはユーザー確認後にセット）
-                $application->update(['invited_end_at' => $request->invited_end_at]);
+                $application->update(['invited_at' => null, 'invited_end_at' => $request->invited_end_at]);
+            } else {
+                // invited_at 未指定：古い値が残っていると打診リンクが即期限切れになるためクリア
+                $application->update(['invited_at' => null, 'invited_end_at' => null]);
             }
 
             // 打診トークンを生成（再打診時は新しいトークンで上書き→旧リンクを無効化）
