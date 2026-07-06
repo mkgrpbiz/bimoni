@@ -33,7 +33,7 @@ class CollectionReport extends Model
     public static function calcFee(int $itemCount, int $shippingFee): int
     {
         $gross = $itemCount * 800;
-        return $itemCount < 5 ? $gross - $shippingFee : $gross;
+        return $itemCount >= 5 ? $gross + $shippingFee : $gross;
     }
 
     public function getStatusLabel(): string

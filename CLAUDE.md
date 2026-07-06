@@ -74,7 +74,7 @@ php8.3 artisan route:clear
 - 月次の紹介報酬支払い状況を管理
 
 ### CollectionReport（回収報告）
-- `cooperation_fee`: 自動計算（`calcFee($itemCount, $shippingFee)`: 800円×商品数、4個以下は送料を差し引き）
+- `cooperation_fee`: 自動計算（`calcFee($itemCount, $shippingFee)`: **5個以上は 800円×商品数＋送料**、4個以下は 800円×商品数のみ（送料なし））
 - `tracking_number`: 追跡番号（重複スキップキー）
 - `box_image` / `label_image`: 添付画像パス（null許容）
 - `estimated_arrival_date`: 到着予定日（null許容、`?->format()` でnull安全に）
@@ -198,7 +198,7 @@ php8.3 artisan route:clear
   - 応募管理とは完全に切り離し（application_id は既存応募があれば紐付け、なければ null）
 - **回収インポート**: 列 = 回答者ID, 回答者名, 名前, フリガナ, 商品数, 送料, 追跡番号
   - 重複チェック: ユーザー×報告日時（同日同ユーザーはスキップ）
-  - 協力金は `CollectionReport::calcFee()` で自動計算（800円×商品数、4個以下は送料を差し引き）
+  - 協力金は `CollectionReport::calcFee()` で自動計算（5個以上は 800円×商品数＋送料、4個以下は 800円×商品数のみ）
   - ステータスは `approved`
 
 ---
