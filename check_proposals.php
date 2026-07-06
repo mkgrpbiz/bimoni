@@ -35,6 +35,15 @@ foreach ($apps as $a) {
     echo "\n";
 }
 
+// Application 5057 のステータスログも表示
+echo "\n=== Application 5057 の履歴 ===\n";
+$app5057 = Application::find(5057);
+if ($app5057) {
+    foreach ($app5057->statusLogs as $log) {
+        echo "  {$log->created_at} {$log->from_status} → {$log->to_status} ({$log->memo})\n";
+    }
+}
+
 echo "\n=== 直近24時間にキャンセルされた応募 ===\n";
 foreach ($cancelledApps as $a) {
     echo "ID: {$a->id}\n";
