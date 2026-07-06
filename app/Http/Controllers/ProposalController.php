@@ -292,6 +292,8 @@ class ProposalController extends Controller
             $endMsg = $campaign->monitor_end_message
                 ?? "【モニター終了】\n{$campaign->title}\n\nモニター時間が終了しました。ご報告をお願いします。";
 
+            $endMsg = $campaign->resolveTemplate($endMsg);
+
             LineMessageJob::create([
                 'application_id' => $application->id,
                 'user_id'        => $application->user_id,
