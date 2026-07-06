@@ -17,7 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // member/* へのアクセスは member.login へリダイレクト
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('member/*') || $request->is('member')) {
-                return route('member.login');
+                $loginUrl = route('member.login');
+                if ($request->is('member/transfer')) {
+                    $loginUrl .= '?from=transfer';
+                }
+                return $loginUrl;
             }
             return route('admin.login');
         });

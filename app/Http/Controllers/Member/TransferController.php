@@ -77,21 +77,22 @@ class TransferController extends Controller
 
         if ($existing) {
             $existing->update([
-                'line_user_id'         => $liffUser->line_user_id,
-                'line_display_name'    => $liffUser->line_display_name ?? $existing->line_display_name,
-                'name'                 => $request->name,
-                'name_kana'            => $request->name_kana,
-                'gender'               => $request->gender,
-                'birthdate'            => $request->birthdate,
-                'email'                => $request->email,
-                'profile_completed_at' => $existing->profile_completed_at ?? now(),
-                'bank_name'            => $request->bank_name,
-                'bank_code'            => $request->bank_code ?: null,
-                'bank_branch_name'     => $request->bank_branch_name,
-                'bank_branch_code'     => $request->bank_branch_code ?: null,
-                'bank_account_type'    => $request->bank_account_type,
-                'bank_account_number'  => $request->bank_account_number,
-                'bank_account_name'    => preg_replace('/\s+/', '', $request->bank_account_name),
+                'line_user_id'           => $liffUser->line_user_id,
+                'line_display_name'      => $liffUser->line_display_name ?? $existing->line_display_name,
+                'name'                   => $request->name,
+                'name_kana'              => $request->name_kana,
+                'gender'                 => $request->gender,
+                'birthdate'              => $request->birthdate,
+                'email'                  => $request->email,
+                'profile_completed_at'   => $existing->profile_completed_at ?? now(),
+                'transfer_registered_at' => $existing->transfer_registered_at ?? now(),
+                'bank_name'              => $request->bank_name,
+                'bank_code'              => $request->bank_code ?: null,
+                'bank_branch_name'       => $request->bank_branch_name,
+                'bank_branch_code'       => $request->bank_branch_code ?: null,
+                'bank_account_type'      => $request->bank_account_type,
+                'bank_account_number'    => $request->bank_account_number,
+                'bank_account_name'      => preg_replace('/\s+/', '', $request->bank_account_name),
             ]);
 
             $liffUser->delete();

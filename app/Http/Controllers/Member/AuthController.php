@@ -44,11 +44,10 @@ class AuthController extends Controller
 
         if ($user->profile_completed_at) {
             $redirect = route('member.campaigns.index');
+        } elseif ($request->input('redirect_to') === 'transfer') {
+            $redirect = route('member.transfer');
         } else {
-            $intended = session()->pull('url.intended');
-            $redirect = ($intended === route('member.transfer'))
-                ? route('member.transfer')
-                : route('member.register');
+            $redirect = route('member.register');
         }
 
         return response()->json(['redirect' => $redirect]);

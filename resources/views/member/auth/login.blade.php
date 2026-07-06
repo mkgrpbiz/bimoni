@@ -74,6 +74,7 @@
             if (!profile) return;
             const params = new URLSearchParams(window.location.search);
             const referralCode = params.get('referral_code') || '';
+            const fromPage = params.get('from') || '';
             return fetch('{{ route("member.auth.liff") }}', {
                 method: 'POST',
                 headers: {
@@ -84,6 +85,7 @@
                     line_user_id: profile.userId,
                     line_display_name: profile.displayName,
                     referral_code: referralCode,
+                    redirect_to: fromPage,
                 }),
             });
         })
