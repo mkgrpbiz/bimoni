@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\CollectionReport;
+use App\Models\MonitorReport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -25,24 +26,35 @@ class MypageController extends Controller
         $thisMonthStart = $now->copy()->startOfMonth();
         $thisMonthEnd   = $now->copy()->endOfMonth();
 
-        // 先月承認 → 今月10日支払い
-        $payCurrentMonth = $applications
-            ->whereIn('status', ['approved'])
-            ->filter(fn($a) => $a->approved_at?->between($lastMonthStart, $lastMonthEnd))
-            ->sum(fn($a) => ($a->campaign?->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+        $calcMonitorFee = function (MonitorReport $r): int {
+            $coopFee = $r->purchase_type === 'continuation'
+                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
+                : ($r->campaign?->cooperation_fee ?? 0);
+            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+        };
+
+        // 先月報告（created_at）→ 今月10日支払い
+        $lastMonthReports = MonitorReport::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->with('campaign')
+            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+            ->get();
+        $payCurrentMonth = $lastMonthReports->sum($calcMonitorFee);
         $payCurrentMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->whereBetween('reviewed_at', [$lastMonthStart, $lastMonthEnd])
+            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
             ->sum('cooperation_fee');
 
-        // 今月承認 → 来月10日支払い
-        $payNextMonth = $applications
-            ->whereIn('status', ['approved'])
-            ->filter(fn($a) => $a->approved_at?->between($thisMonthStart, $thisMonthEnd))
-            ->sum(fn($a) => ($a->campaign?->cooperation_fee ?? 0) + ($a->bonus_amount ?? 0));
+        // 今月報告（created_at）→ 来月10日支払い
+        $thisMonthReports = MonitorReport::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->with('campaign')
+            ->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])
+            ->get();
+        $payNextMonth = $thisMonthReports->sum($calcMonitorFee);
         $payNextMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->whereBetween('reviewed_at', [$thisMonthStart, $thisMonthEnd])
+            ->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])
             ->sum('cooperation_fee');
 
         $payCurrentDate = $now->copy()->day(10)->format('n月j日');
