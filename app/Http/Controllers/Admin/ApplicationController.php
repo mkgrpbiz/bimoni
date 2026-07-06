@@ -81,6 +81,7 @@ class ApplicationController extends Controller
         $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
         $tomorrowSlots = CampaignDailySlot::where('target_date', $tomorrowDate)
             ->where('planned_count', '>', 0)
+            ->whereHas('campaign', fn($q) => $q->whereIn('status', ['published', 'paused']))
             ->with('campaign:id,title')
             ->get();
         $tomorrowUnderAlerts = collect();
@@ -96,7 +97,7 @@ class ApplicationController extends Controller
         }
 
         // アラート: 未達成目標継続率（実施完了以上のデータで計算）
-        $contCampaigns = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->get();
+        $contCampaigns = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->whereIn('status', ['published', 'paused'])->get();
         $contCompletedStatuses = ['completed', 'reported', 'approved', 'point_granted'];
         $contStats = Application::whereIn('campaign_id', $contCampaigns->pluck('id'))
             ->whereIn('status', $contCompletedStatuses)
@@ -204,6 +205,7 @@ class ApplicationController extends Controller
         $activeStatuses2 = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
         $tomorrowSlots2 = CampaignDailySlot::where('target_date', $tomorrowDate2)
             ->where('planned_count', '>', 0)
+            ->whereHas('campaign', fn($q) => $q->whereIn('status', ['published', 'paused']))
             ->with('campaign:id,title')
             ->get();
         $tomorrowUnderAlerts = collect();
@@ -219,7 +221,7 @@ class ApplicationController extends Controller
         }
 
         // アラート: 未達成目標継続率（実施完了以上のデータで計算）
-        $contCampaigns2 = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->get();
+        $contCampaigns2 = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->whereIn('status', ['published', 'paused'])->get();
         $contCompletedStatuses2 = ['completed', 'reported', 'approved', 'point_granted'];
         $contStats2 = Application::whereIn('campaign_id', $contCampaigns2->pluck('id'))
             ->whereIn('status', $contCompletedStatuses2)
