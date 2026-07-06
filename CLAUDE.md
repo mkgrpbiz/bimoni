@@ -18,7 +18,7 @@
 ssh -i "$env:USERPROFILE\.ssh\xserver.key" -p 10022 mkgrp@sv16576.xserver.jp
 ```
 
-### デプロイ手順（STGサーバー）
+### デプロイ手順（STG）
 自動デプロイは廃止（GitHub Actionsのワークフローは削除済み）。mainにpushしたあと、毎回SSHで手動デプロイが必要：
 ```bash
 cd /home/mkgrp/bimoni
@@ -27,10 +27,22 @@ php8.3 artisan migrate --force
 php8.3 artisan view:clear
 php8.3 artisan route:clear
 ```
-> STGのURLは `https://stg.bimoni.online`（本番 `bimoni.online` とは別。本番に反映するには本番サーバーでも別途git pull等が必要）
-> **注意**: サーバーのデフォルトPHPは8.0。必ず `php8.3` を使う。
+> STGのURL: `https://stg.bimoni.online` / DB: `mkgrp_bimonistg` / LINE公式: `@204zmull`
 > STGのcronは `schedule:run` を毎分実行。`proposals:auto-cancel`（5分ごと）と `line:send-messages`（毎分）が動く。
-> cron設定: `/opt/php-8.3/bin/php /home/mkgrp/bimoni/artisan schedule:run`
+
+### デプロイ手順（本番）
+```bash
+cd /home/mkgrp/bimoni_prod
+git pull
+php8.3 artisan migrate --force
+php8.3 artisan view:clear
+php8.3 artisan route:clear
+```
+> 本番URL: `https://app.bimoni.online` / DB: `mkgrp_bimoni` / LINE公式: `@367styyv`
+> 本番cronも同様に `schedule:run` を毎分実行。
+
+> **注意**: サーバーのデフォルトPHPは8.0。必ず `php8.3` を使う。
+> **STGと本番のLINEチャンネル・トークンは絶対に混ぜない**（チャンネルが別々）
 
 ### Git（ローカル）
 ```powershell
@@ -92,9 +104,12 @@ php8.3 artisan route:clear
 
 ### LINE友だち未追加モーダル（`resources/views/layouts/member.blade.php`）
 - ログイン済みユーザーに対し `liff.getFriendship()` で友だち追加状態を確認
-- 未追加の場合はモーダルを表示して `@204zmull` へ誘導
-- **登録フォームページ（`member.register*`）は除外**（登録前に飛ばされると導線が崩れるため）
-- **必須設定**: LINEデベロッパーコンソールのLIFFアプリで「Add friend option」をONにして `@204zmull` を紐付けること（これがないと全員に表示される）
+- 未追加・ブロック中（どちらも `friendFlag: false`）の場合はモーダルを表示
+- 誘導先は `config('services.line.official_account_id')`（環境変数 `LINE_OFFICIAL_ACCOUNT_ID`）で切り替え
+  - 本番: `@367styyv` / STG: `@204zmull`
+- **登録フォームページ（`member.register*`）と引継ぎページ（`member.transfer*`）は除外**
+- **必須設定**: LINEデベロッパーコンソールのLIFFアプリで「Add friend option」をONにして公式アカウントを紐付けること（これがないと全員に表示される）
+- LIFFチャンネルはエルメのLINEデベロッパーコンソール（チャンネルID: 2007390214）で管理
 
 ### LINE自動送信（`monitor_invite_message` / `monitor_end_message`）
 - 使用できるコード: `{{商品名}}` `{{初回購入費}}` `{{モニター協力金}}` `{{解約について}}` `{{モニター案内文}}` `{{リンク}}` `{{案内日時}}`
@@ -216,6 +231,9 @@ php8.3 artisan route:clear
 
 ## 注意事項・過去のミス
 
+- LIFF WebView（iOS WKWebView）はCSRFセッションが引き継がれないため、`member/auth/liff-callback` と `member/register` をCSRF除外している（`bootstrap/app.php` の `validateCsrfTokens(except: [...])` で設定）
+- LINEチャンネルアクセストークンはbase64文字列で大文字・小文字が区別される。.envに貼るときはコピーミスに注意（`O`と`o`など）。貼った後に401エラーが出たらまず文字を目視確認
+- フリガナ入力はIME変換中に `oninput` が発火するバグがある → `compositionstart`/`compositionend` で変換中フラグを管理し、変換確定後に `hiraToKata()` を呼ぶ（`layouts/member.blade.php` でグローバル処理済み）
 - `alert()` を Promise の `.then()/.catch()` 内で呼ぶとブラウザにブロックされる → `document.execCommand('copy')` で同期コピー後に `alert()` を呼ぶ
 - コピーボタンは必ず同期処理 + `alert('コピーしました')` のセットで実装
 - SSHの秘密鍵は `C:\Users\user\.ssh\xserver.key`

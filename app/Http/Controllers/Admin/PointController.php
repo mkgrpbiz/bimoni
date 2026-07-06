@@ -17,9 +17,10 @@ class PointController extends Controller
 {
     private function monitorFee(MonitorReport $r): int
     {
-        return ($r->purchase_amount ?? 0)
-            + ($r->campaign?->cooperation_fee ?? 0)
-            + ($r->bonus_amount ?? 0);
+        $coopFee = $r->purchase_type === 'continuation'
+            ? ($r->campaign?->continuation_cooperation_fee ?? 0)
+            : ($r->campaign?->cooperation_fee ?? 0);
+        return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
     }
 
     public function index(Request $request): View
@@ -207,7 +208,10 @@ class PointController extends Controller
         $rows[] = ['日時', 'ユーザーID', 'ユーザー名', 'ステータス', '種別/案件名', '協力金'];
 
         foreach ($monitors as $r) {
-            $fee = ($r->purchase_amount ?? 0) + ($r->campaign?->cooperation_fee ?? 0) + ($r->bonus_amount ?? 0);
+            $coopFee = $r->purchase_type === 'continuation'
+                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
+                : ($r->campaign?->cooperation_fee ?? 0);
+            $fee = ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
             $rows[] = [
                 $r->created_at->format('Y/m/d'),
                 $r->user?->bimoni_user_id ?? '',
@@ -274,9 +278,10 @@ class PointController extends Controller
             if (!isset($userTotals[$uid])) {
                 $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
             }
-            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0)
-                + ($r->campaign?->cooperation_fee ?? 0)
-                + ($r->bonus_amount ?? 0);
+            $coopFee = $r->purchase_type === 'continuation'
+                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
+                : ($r->campaign?->cooperation_fee ?? 0);
+            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
         }
 
         foreach ($collections as $r) {
