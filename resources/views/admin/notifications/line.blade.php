@@ -73,10 +73,22 @@
                         <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">{{ $log->notification_type }}</td>
                         <td class="px-4 py-3 text-gray-800 dark:text-gray-400 max-w-xs truncate">{{ $log->message }}</td>
                         <td class="px-4 py-3">
-                            <span class="text-xs px-1.5 py-0.5 rounded
-                                {{ $log->status === 'sent' ? 'bg-green-500 text-white' : 'bg-red-500 text-white' }}">
-                                {{ $log->status === 'sent' ? '送信済' : '失敗' }}
-                            </span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs px-1.5 py-0.5 rounded
+                                    {{ $log->status === 'sent' ? 'bg-green-500 text-white' : ($log->status === 'resolved' ? 'bg-gray-400 text-white' : 'bg-red-500 text-white') }}">
+                                    {{ $log->status === 'sent' ? '送信済' : ($log->status === 'resolved' ? '対応済' : '失敗') }}
+                                </span>
+                                @if($log->status === 'failed')
+                                <form method="POST" action="{{ route('admin.notifications.line.resend', $log) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-xs px-2 py-0.5 bg-blue-500 text-white rounded hover:bg-blue-600">再送信</button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.notifications.line.resolve', $log) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-xs px-2 py-0.5 bg-gray-500 text-white rounded hover:bg-gray-600">対応済み</button>
+                                </form>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @empty

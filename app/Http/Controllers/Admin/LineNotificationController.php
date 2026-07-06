@@ -22,6 +22,34 @@ class LineNotificationController extends Controller
         return view('admin.notifications.line', compact('logs', 'users'));
     }
 
+    public function resend(LineNotification $notification): RedirectResponse
+    {
+        $user = $notification->user;
+        if (!$user || !$user->line_user_id) {
+            return back()->with('error', 'LINE IDが未設定のため再送信できません。');
+        }
+
+        $token = config('services.line.channel_access_token');
+        $response = \Illuminate\Support\Facades\Http::withToken($token)
+            ->post('https://api.line.me/v2/bot/message/push', [
+                'to'       => $user->line_user_id,
+                'messages' => [['type' => 'text', 'text' => $notification->message]],
+            ]);
+
+        $notification->update([
+            'status'  => $response->successful() ? 'sent' : 'failed',
+            'sent_at' => now(),
+        ]);
+
+        return back()->with('success', $response->successful() ? '再送信しました。' : '再送信に失敗しました。');
+    }
+
+    public function resolve(LineNotification $notification): RedirectResponse
+    {
+        $notification->update(['status' => 'resolved']);
+        return back()->with('success', '対応済みにしました。');
+    }
+
     // 個別送信
     public function send(Request $request): RedirectResponse
     {

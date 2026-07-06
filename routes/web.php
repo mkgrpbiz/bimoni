@@ -136,6 +136,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('settlements/{settlement}/paid', [SettlementController::class, 'markPaid'])->name('settlements.paid');
         Route::get('notifications/line', [LineNotificationController::class, 'index'])->name('notifications.line');
         Route::post('notifications/line', [LineNotificationController::class, 'send'])->name('notifications.line.send');
+        Route::post('notifications/line/{notification}/resend', [LineNotificationController::class, 'resend'])->name('notifications.line.resend');
+        Route::post('notifications/line/{notification}/resolve', [LineNotificationController::class, 'resolve'])->name('notifications.line.resolve');
         Route::get('import', [ImportController::class, 'index'])->name('import.index');
         Route::post('import/users', [ImportController::class, 'importUsers'])->name('import.users');
         Route::post('import/reports', [ImportController::class, 'importReports'])->name('import.reports');
