@@ -8,6 +8,7 @@ use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\CampaignApprovalReflection;
 use App\Models\CampaignDailySlot;
+use App\Models\CollectionReport;
 use App\Models\LineNotification;
 use App\Models\MonitorReport;
 use App\Models\ReferralPaymentStatus;
@@ -113,12 +114,18 @@ class DashboardController extends Controller
         // 全否認キャンペーンは承認数から除外
         $approvedCount = $reflections->filter(fn($r) => !$r->is_all_denied)->sum('reflection_count');
 
-        // 協力金 = 承認済み報告の初回費/継続費 + 協力金の実績合計
+        // 協力金 = 承認済み報告の初回費/継続費 + 協力金の実績合計（回収報告含む）
         $reportQuery = MonitorReport::with(['campaign', 'application'])->where('status', 'approved');
         if ($mode === 'monthly') {
             $reportQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
         } else {
             $reportQuery->whereRaw($exDate('created_at'));
+        }
+        $collectionQuery = CollectionReport::where('status', 'approved');
+        if ($mode === 'monthly') {
+            $collectionQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        } else {
+            $collectionQuery->whereRaw($exDate('created_at'));
         }
         $cooperationFee = $reportQuery->get()->sum(function ($r) {
             $c        = $r->campaign;
@@ -126,7 +133,7 @@ class DashboardController extends Controller
                 ? ($c?->continuation_cooperation_fee ?? 0)
                 : ($c?->cooperation_fee ?? 0);
             return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
-        });
+        }) + $collectionQuery->sum('cooperation_fee');
 
         // 売上 = 承認数 × 案件単価
         $sales = $reflections->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
