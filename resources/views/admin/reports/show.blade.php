@@ -80,7 +80,6 @@
         </div>
 
         {{-- 金額修正 --}}
-        @if($report->purchase_type !== 'other')
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">金額修正</h2>
             @if($report->adjustment_amount)
@@ -112,7 +111,6 @@
                 </button>
             </form>
         </div>
-        @endif
 
         {{-- 報告画像 --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
