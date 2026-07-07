@@ -90,10 +90,14 @@ class ReportController extends Controller
 
         if ($isOther) {
             $report = MonitorReport::create([
-                'user_id'       => $user->id,
-                'purchase_type' => 'other',
-                'report_body'   => $request->report_body,
-                'status'        => 'pending',
+                'user_id'          => $user->id,
+                'purchase_type'    => 'other',
+                'report_body'      => $request->report_body,
+                'purchase_amount'  => $request->purchase_amount ?? 0,
+                'payment_method'   => $request->payment_method === 'other'
+                                        ? 'other:' . $request->payment_method_other
+                                        : $request->payment_method,
+                'status'           => 'pending',
             ]);
 
             foreach (['report_image_1', 'report_image_2', 'report_image_3'] as $i => $key) {

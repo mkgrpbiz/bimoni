@@ -52,17 +52,21 @@
                 <dd class="dark:text-gray-200">{{ $report->user?->name_kana ?? '-' }}</dd>
                 <dt class="text-gray-500 dark:text-gray-400">報告種別</dt>
                 <dd class="font-medium dark:text-gray-200">{{ $purchaseTypeLabel }}</dd>
-                @if($report->purchase_type !== 'other')
                 <dt class="text-gray-500 dark:text-gray-400">モニター経費</dt>
                 <dd class="dark:text-gray-200">¥{{ number_format($purchaseAmt) }}</dd>
+                @if($report->purchase_type !== 'other')
                 <dt class="text-gray-500 dark:text-gray-400">モニター協力金</dt>
                 <dd class="text-pink-600 dark:text-pink-400 font-medium">¥{{ number_format($coopFee) }}</dd>
+                @endif
                 @if($adjustAmt)
                 <dt class="text-gray-500 dark:text-gray-400">修正金額</dt>
                 <dd class="dark:text-gray-200 {{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}¥{{ number_format($adjustAmt) }}</dd>
                 @endif
+                @if($report->purchase_type !== 'other')
                 <dt class="text-gray-500 dark:text-gray-400">支払合計</dt>
                 <dd class="font-bold dark:text-gray-200">¥{{ number_format($purchaseAmt + $coopFee + $adjustAmt) }}</dd>
+                @endif
+                @if($paymentLabel !== '-')
                 <dt class="text-gray-500 dark:text-gray-400">お支払方法</dt>
                 <dd class="dark:text-gray-200">{{ $paymentLabel }}</dd>
                 @endif
