@@ -30,7 +30,12 @@ class DashboardController extends Controller
             ->with('campaign')
             ->get();
         $pendingReportsCount  = $pendingReports->count();
-        $pendingReportsAmount = $pendingReports->sum(fn($r) => $r->campaign?->cooperation_fee ?? 0);
+        $pendingReportsAmount = $pendingReports->sum(function ($r) {
+            $coopFee = $r->purchase_type === 'continuation'
+                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
+                : ($r->campaign?->cooperation_fee ?? 0);
+            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
+        });
 
         // ダッシュボードアラート
         $alerts = $this->buildAlerts();

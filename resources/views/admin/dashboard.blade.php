@@ -71,7 +71,7 @@
             <p class="font-bold text-yellow-800">モニター報告 承認待ち</p>
             <p class="text-sm text-yellow-700">
                 {{ $pendingReportsCount }}件　¥{{ number_format($pendingReportsAmount) }}
-                （協力金合計）
+                （モニター経費＋協力金 合計）
             </p>
         </div>
     </div>
