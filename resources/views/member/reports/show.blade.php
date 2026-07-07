@@ -64,27 +64,44 @@
     {{-- 報告内容 --}}
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
         <h2 class="font-bold text-gray-700 mb-3 text-sm">報告内容</h2>
-        @if($report->purchase_type === 'other')
-            <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $report->report_body }}</p>
-        @else
         <dl class="grid grid-cols-2 gap-y-3 text-sm">
             <dt class="text-gray-500">報告種別</dt>
             <dd class="font-medium text-gray-800">{{ $purchaseTypeLabel }}</dd>
             <dt class="text-gray-500">モニター経費</dt>
             <dd class="text-gray-800">¥{{ number_format($purchaseAmt) }}</dd>
+            @if($report->purchase_type !== 'other')
             <dt class="text-gray-500">モニター協力金</dt>
             <dd class="text-pink-600 font-medium">¥{{ number_format($coopFee) }}</dd>
-            @if($report->bonus_amount)
-            <dt class="text-gray-500">ボーナス</dt>
-            <dd class="text-gray-800">¥{{ number_format($report->bonus_amount) }}</dd>
             @endif
             @if($adjustAmt)
             <dt class="text-gray-500">調整金額</dt>
             <dd class="{{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}¥{{ number_format($adjustAmt) }}</dd>
             @endif
+            @if($report->purchase_type !== 'other')
             <dt class="text-gray-500 font-medium">合計</dt>
             <dd class="font-bold text-gray-800">¥{{ number_format($total) }}</dd>
+            @endif
+            @if($report->payment_method)
+            @php
+                $paymentLabel = match(true) {
+                    str_starts_with($report->payment_method, 'other:') => 'その他: ' . substr($report->payment_method, 6),
+                    $report->payment_method === 'credit_card' => 'クレジットカード',
+                    $report->payment_method === 'cod'         => '代引き',
+                    $report->payment_method === 'deferred'    => '後払い',
+                    $report->payment_method === 'bank'        => '銀行振込',
+                    $report->payment_method === 'none'        => 'お支払い無し',
+                    default => $report->payment_method,
+                };
+            @endphp
+            <dt class="text-gray-500">お支払方法</dt>
+            <dd class="text-gray-800">{{ $paymentLabel }}</dd>
+            @endif
         </dl>
+        @if($report->purchase_type === 'other' && $report->report_body)
+        <div class="mt-3 pt-3 border-t border-gray-100">
+            <p class="text-xs text-gray-500 mb-1">報告内容</p>
+            <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $report->report_body }}</p>
+        </div>
         @endif
     </div>
 
