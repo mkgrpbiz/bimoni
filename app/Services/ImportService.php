@@ -36,7 +36,7 @@ class ImportService
             foreach ($rows as $i => $row) {
                 $line = $i + 2;
 
-                $name = $row['name'] ?? $row['名前'] ?? '';
+                $name = preg_replace('/[\s\x{3000}]+/u', '', $row['name'] ?? $row['名前'] ?? '');
                 if (empty($name)) {
                     $result['errors'][] = "{$line}行目: 氏名が空です";
                     continue;
@@ -82,6 +82,9 @@ class ImportService
                     : null;
 
                 $nameKana = $row['name_kana'] ?? $row['フリガナ'] ?? null;
+                if ($nameKana !== null) {
+                    $nameKana = preg_replace('/[\s\x{3000}]+/u', '', $nameKana) ?: null;
+                }
 
                 $lineDisplayName = $row['line_display_name'] ?? $row['回答者名（任意）'] ?? null;
 
@@ -340,8 +343,8 @@ class ImportService
 
                 $ermeId          = trim($row['回答者ID'] ?? '');
                 $lineDisplayName = $row['回答者名(任意)'] ?? $row['回答者名（任意）'] ?? $row['回答者名'] ?? null;
-                $name            = $row['名前'] ?? null;
-                $kana            = $row['フリガナ'] ?? null;
+                $name            = preg_replace('/[\s\x{3000}]+/u', '', $row['名前'] ?? '') ?: null;
+                $kana            = preg_replace('/[\s\x{3000}]+/u', '', $row['フリガナ'] ?? '') ?: null;
 
                 // ユーザー特定: 回答者IDで検索 → なければ名前+フリガナで検索 → なければ新規作成
                 $user = null;
@@ -618,8 +621,8 @@ class ImportService
                 $reportedAt    = $reportedAtRaw !== '' ? Carbon::parse($reportedAtRaw) : now();
 
                 $ermeId    = $row['回答者ID'] ?? null;
-                $name      = $row['名前'] ?? $row['回答者名'] ?? null;
-                $kana      = $row['フリガナ'] ?? null;
+                $name      = preg_replace('/[\s\x{3000}]+/u', '', $row['名前'] ?? $row['回答者名'] ?? '') ?: null;
+                $kana      = preg_replace('/[\s\x{3000}]+/u', '', $row['フリガナ'] ?? '') ?: null;
                 $itemCount = (int) ($row['商品数'] ?? 0);
                 $shipping  = (int) preg_replace('/[^\d]/', '', $row['送料'] ?? '0');
                 $tracking  = trim($row['追跡番号'] ?? '');

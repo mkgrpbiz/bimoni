@@ -53,8 +53,8 @@ class TransferController extends Controller
         ]);
 
         $target = [
-            'name'      => $request->name,
-            'name_kana' => mb_convert_kana($request->name_kana, 'C', 'UTF-8'),
+            'name'      => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
+            'name_kana' => preg_replace('/[\s\x{3000}]+/u', '', mb_convert_kana($request->name_kana, 'C', 'UTF-8')),
             'birthdate' => $request->birthdate,
             'email'     => $request->email ? strtolower($request->email) : null,
         ];
@@ -90,8 +90,8 @@ class TransferController extends Controller
                     $existing->update([
                         'line_user_id'           => $lineUserId,
                         'line_display_name'      => $lineDisplayName ?? $existing->line_display_name,
-                        'name'                   => $request->name,
-                        'name_kana'              => $request->name_kana,
+                        'name'                   => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
+                        'name_kana'              => preg_replace('/[\s\x{3000}]+/u', '', $request->name_kana),
                         'gender'                 => $request->gender,
                         'birthdate'              => $request->birthdate,
                         'email'                  => $request->email,

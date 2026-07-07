@@ -57,8 +57,8 @@ class RegisterController extends Controller
         }
 
         $user->update([
-            'name'                => $request->name,
-            'name_kana'           => mb_convert_kana($request->name_kana, 'C', 'UTF-8'),
+            'name'                => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
+            'name_kana'           => preg_replace('/[\s\x{3000}]+/u', '', mb_convert_kana($request->name_kana, 'C', 'UTF-8')),
             'gender'              => $request->gender,
             'birthdate'           => $request->birthdate,
             'email'               => $request->email,
@@ -97,8 +97,8 @@ class RegisterController extends Controller
         ]);
 
         $user->update([
-            'name'      => $request->name,
-            'name_kana' => $request->name_kana,
+            'name'      => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
+            'name_kana' => preg_replace('/[\s\x{3000}]+/u', '', $request->name_kana),
             'gender'    => $request->gender,
             'birthdate' => $request->birthdate,
             'email'     => $request->email,
@@ -112,8 +112,8 @@ class RegisterController extends Controller
     private function tryLinkExistingUser(User $liffUser, Request $request): ?User
     {
         $target = [
-            'name'      => $request->name,
-            'name_kana' => $request->name_kana,
+            'name'      => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
+            'name_kana' => preg_replace('/[\s\x{3000}]+/u', '', $request->name_kana),
             'birthdate' => $request->birthdate,
             'email'     => $request->email ? strtolower($request->email) : null,
         ];
@@ -143,8 +143,8 @@ class RegisterController extends Controller
         $existing->update([
             'line_user_id'        => $liffUser->line_user_id,
             'line_display_name'   => $liffUser->line_display_name,
-            'name'                => $request->name,
-            'name_kana'           => mb_convert_kana($request->name_kana, 'C', 'UTF-8'),
+            'name'                => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
+            'name_kana'           => preg_replace('/[\s\x{3000}]+/u', '', mb_convert_kana($request->name_kana, 'C', 'UTF-8')),
             'gender'              => $request->gender,
             'birthdate'           => $request->birthdate,
             'email'               => $request->email,
