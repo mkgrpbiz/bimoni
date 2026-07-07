@@ -42,21 +42,12 @@ class ImportService
                     continue;
                 }
 
-                // erme_respondent_id / 回答者ID 重複チェック
+                // erme_respondent_id / 回答者ID 重複チェック（一致すれば上書き更新）
                 $ermeId = $row['erme_respondent_id'] ?? $row['回答者ID'] ?? $row['respondent_id'] ?? null;
-                if (!empty($ermeId)) {
-                    if (User::where('erme_respondent_id', $ermeId)->exists()) {
-                        $result['skipped']++;
-                        continue;
-                    }
-                }
+                $existingByErme = !empty($ermeId) ? User::where('erme_respondent_id', $ermeId)->first() : null;
 
                 // メールアドレス重複チェック
                 $email = $row['email'] ?? $row['メールアドレス'] ?? null;
-                if ($email && User::where('email', $email)->exists()) {
-                    $result['skipped']++;
-                    continue;
-                }
 
                 // 紹介コード（行内指定 > デフォルト > なし）
                 $csvCode      = $row['referred_by_code'] ?? $row['紹介コード'] ?? null;
@@ -88,21 +79,40 @@ class ImportService
 
                 $lineDisplayName = $row['line_display_name'] ?? $row['回答者名（任意）'] ?? null;
 
-                User::create([
-                    'line_user_id'         => 'IMPORT_' . uniqid(),
-                    'erme_respondent_id'   => $ermeId ?: null,
-                    'line_display_name'    => $lineDisplayName ?: null,
-                    'name'                 => $name,
-                    'name_kana'            => $nameKana,
-                    'gender'               => $gender,
-                    'birthdate'            => $birthdate,
-                    'email'                => $email ?: null,
-                    'referred_by_code'     => $referralCode,
-                    'profile_completed_at' => now(),
-                    'imported_from'        => 'spreadsheet',
-                ]);
+                if ($existingByErme) {
+                    // erme_respondent_id 一致 → 上書き更新
+                    $existingByErme->update([
+                        'line_display_name' => $lineDisplayName ?: $existingByErme->line_display_name,
+                        'name'              => $name,
+                        'name_kana'         => $nameKana ?? $existingByErme->name_kana,
+                        'gender'            => $gender ?? $existingByErme->gender,
+                        'birthdate'         => $birthdate ?? $existingByErme->birthdate,
+                        'email'             => $email ?: $existingByErme->email,
+                        'referred_by_code'  => $referralCode ?: $existingByErme->referred_by_code,
+                    ]);
+                    $result['success']++;
+                } else {
+                    // メール重複チェック（erme不一致の場合のみ）
+                    if ($email && User::where('email', $email)->exists()) {
+                        $result['skipped']++;
+                        continue;
+                    }
 
-                $result['success']++;
+                    User::create([
+                        'line_user_id'         => 'IMPORT_' . uniqid(),
+                        'erme_respondent_id'   => $ermeId ?: null,
+                        'line_display_name'    => $lineDisplayName ?: null,
+                        'name'                 => $name,
+                        'name_kana'            => $nameKana,
+                        'gender'               => $gender,
+                        'birthdate'            => $birthdate,
+                        'email'                => $email ?: null,
+                        'referred_by_code'     => $referralCode,
+                        'profile_completed_at' => now(),
+                        'imported_from'        => 'spreadsheet',
+                    ]);
+                    $result['success']++;
+                }
             }
         });
 
