@@ -252,7 +252,7 @@ $tabs = [
                     <div class="flex gap-1 flex-wrap">
                         @if($app->status === 'pending' && !$isLocked)
                         <button type="button"
-                                onclick="openProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.status', $app) }}')"
+                                onclick="openProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.status', $app) }}', {{ ($app->campaign?->campaign_type === 'pr' && $app->campaign?->pr_media === 'IF') ? 'true' : 'false' }})"
                                 class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">
                             打診
                         </button>
@@ -297,59 +297,108 @@ $tabs = [
 <div id="proposalModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-xl shadow-xl p-6 w-96">
         <h3 class="font-bold text-gray-800 mb-1">打診送信</h3>
-        <p id="proposalUserName" class="text-sm text-gray-700 mb-4"></p>
+        <p id="proposalUserName" class="text-sm text-gray-700 mb-3"></p>
+
+        {{-- PR+IF案件のみ表示するタブ --}}
+        <div id="proposalTabs" class="hidden flex border-b border-gray-200 mb-4">
+            <button type="button" id="modalTabNormal" onclick="switchModalTab('normal')"
+                    class="flex-1 py-2 text-sm font-medium border-b-2 border-pink-500 text-pink-600">
+                通常打診
+            </button>
+            <button type="button" id="modalTabPr" onclick="switchModalTab('pr')"
+                    class="flex-1 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                PR打診
+            </button>
+        </div>
+
         <form id="proposalForm" method="POST" class="space-y-4">
             @csrf @method('PATCH')
             <input type="hidden" name="status" value="line_contacted">
             <input type="hidden" name="invited_at" id="hiddenInvitedAt">
             <input type="hidden" name="invited_end_at" id="hiddenInvitedEndAt">
-            <div>
-                <label class="block text-xs text-gray-700 mb-1">案内予定日 <span class="text-red-400">*</span></label>
-                <input type="date" id="proposalDate" required
-                       class="w-full border rounded px-3 py-2 text-sm"
-                       value="{{ now()->addDay()->format('Y-m-d') }}"
-                       onchange="buildDatetimes()">
-            </div>
-            <div>
-                <label class="block text-xs text-gray-700 mb-2">時間帯 <span class="text-red-400">*</span></label>
-                <div class="grid grid-cols-2 gap-2" id="slotButtons">
-                    @php
-                    $slots = [
-                        ['label'=>'10:00〜13:00','start'=>'10:00','end'=>'13:00'],
-                        ['label'=>'14:00〜17:00','start'=>'14:00','end'=>'17:00'],
-                        ['label'=>'18:00〜20:00','start'=>'18:00','end'=>'20:00'],
-                        ['label'=>'21:00〜24:00','start'=>'21:00','end'=>'23:59'],
-                    ];
-                    @endphp
-                    @foreach($slots as $slot)
-                    <button type="button"
-                            class="slot-btn border rounded px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:border-pink-400"
-                            data-start="{{ $slot['start'] }}"
-                            data-end="{{ $slot['end'] }}"
-                            onclick="selectSlot(this)">
-                        {{ $slot['label'] }}
-                    </button>
-                    @endforeach
+
+            {{-- 通常打診フォーム --}}
+            <div id="normalProposalForm">
+                <div>
+                    <label class="block text-xs text-gray-700 mb-1">案内予定日 <span class="text-red-400">*</span></label>
+                    <input type="date" id="proposalDate"
+                           class="w-full border rounded px-3 py-2 text-sm"
+                           value="{{ now()->addDay()->format('Y-m-d') }}"
+                           onchange="buildDatetimes()">
                 </div>
-                <input type="hidden" id="selectedSlotStart" required>
+                <div class="mt-3">
+                    <label class="block text-xs text-gray-700 mb-2">時間帯 <span class="text-red-400">*</span></label>
+                    <div class="grid grid-cols-2 gap-2" id="slotButtons">
+                        @php
+                        $slots = [
+                            ['label'=>'10:00〜13:00','start'=>'10:00','end'=>'13:00'],
+                            ['label'=>'14:00〜17:00','start'=>'14:00','end'=>'17:00'],
+                            ['label'=>'18:00〜20:00','start'=>'18:00','end'=>'20:00'],
+                            ['label'=>'21:00〜24:00','start'=>'21:00','end'=>'23:59'],
+                        ];
+                        @endphp
+                        @foreach($slots as $slot)
+                        <button type="button"
+                                class="slot-btn border rounded px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:border-pink-400"
+                                data-start="{{ $slot['start'] }}"
+                                data-end="{{ $slot['end'] }}"
+                                onclick="selectModalSlot(this)">
+                            {{ $slot['label'] }}
+                        </button>
+                        @endforeach
+                    </div>
+                    <input type="hidden" id="selectedSlotStart">
+                </div>
+                <p id="slotError" class="hidden text-xs text-red-500 mt-1">時間帯を選択してください</p>
             </div>
+
+            {{-- PR打診フォーム（PR+IFのみ表示） --}}
+            <div id="prProposalForm" class="hidden">
+                <div class="bg-pink-50 border border-pink-200 rounded-lg p-3 text-xs text-pink-700 mb-3">
+                    期限内に実施可能な場合すぐに案内を送るパターンです。<br>
+                    ユーザーが確認した時点で開始時間がセットされます。
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-700 mb-1">実施期限（締め切り日時） <span class="text-red-400">*</span></label>
+                    <input type="date" id="prDeadlineDate"
+                           class="w-full border rounded px-3 py-2 text-sm mb-2"
+                           value="{{ now()->format('Y-m-d') }}"
+                           onchange="buildPrDeadline()">
+                    <select id="prDeadlineHour"
+                            class="w-full border rounded px-3 py-2 text-sm"
+                            onchange="buildPrDeadline()">
+                        @for($h = 0; $h < 24; $h++)
+                        <option value="{{ $h }}" @selected($h === now()->addHours(3)->hour)>
+                            〜{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}:00
+                        </option>
+                        @endfor
+                    </select>
+                </div>
+                <p id="prDeadlineError" class="hidden text-xs text-red-500 mt-1">締め切り日時を入力してください</p>
+            </div>
+
             <div>
                 <label class="block text-xs text-gray-700 mb-1">メモ</label>
                 <input type="text" name="memo" class="w-full border rounded px-3 py-2 text-sm">
             </div>
-            <p id="slotError" class="hidden text-xs text-red-500">時間帯を選択してください</p>
             <div class="flex gap-2 pt-1">
-                <button type="button" onclick="submitProposal()" class="flex-1 bg-pink-500 text-white py-2 rounded text-sm hover:bg-pink-600 font-medium">打診送信</button>
+                <button type="button" onclick="submitProposal()"
+                        class="flex-1 bg-pink-500 text-white py-2 rounded text-sm hover:bg-pink-600 font-medium">
+                    打診送信
+                </button>
                 <button type="button" onclick="closeProposalModal()"
-                        class="flex-1 bg-gray-500 text-white py-2 rounded text-sm hover:bg-gray-600">キャンセル</button>
+                        class="flex-1 bg-gray-500 text-white py-2 rounded text-sm hover:bg-gray-600">
+                    キャンセル
+                </button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-let _selectedSlotStart = null, _selectedSlotEnd = null;
-function selectSlot(btn) {
+let _selectedSlotStart = null, _selectedSlotEnd = null, _modalTab = 'normal', _modalIsPrIf = false;
+
+function selectModalSlot(btn) {
     document.querySelectorAll('.slot-btn').forEach(b => {
         b.classList.remove('bg-pink-500','text-white','border-pink-500');
         b.classList.add('text-gray-700');
@@ -361,32 +410,89 @@ function selectSlot(btn) {
     document.getElementById('selectedSlotStart').value = _selectedSlotStart;
     buildDatetimes();
 }
+
 function buildDatetimes() {
     const date = document.getElementById('proposalDate').value;
     if (!date || !_selectedSlotStart) return;
     document.getElementById('hiddenInvitedAt').value    = date + ' ' + _selectedSlotStart + ':00';
     document.getElementById('hiddenInvitedEndAt').value = date + ' ' + _selectedSlotEnd   + ':00';
 }
-function openProposalModal(appId, userName, actionUrl) {
+
+function buildPrDeadline() {
+    const date = document.getElementById('prDeadlineDate').value;
+    const hour = document.getElementById('prDeadlineHour').value;
+    document.getElementById('hiddenInvitedAt').value    = '';
+    document.getElementById('hiddenInvitedEndAt').value = (date && hour !== '')
+        ? date + ' ' + String(hour).padStart(2, '0') + ':00:00'
+        : '';
+}
+
+function switchModalTab(tab) {
+    _modalTab = tab;
+    var isNormal = tab === 'normal';
+    document.getElementById('normalProposalForm').classList.toggle('hidden', !isNormal);
+    document.getElementById('prProposalForm').classList.toggle('hidden', isNormal);
+    document.getElementById('modalTabNormal').className = isNormal
+        ? 'flex-1 py-2 text-sm font-medium border-b-2 border-pink-500 text-pink-600'
+        : 'flex-1 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+    document.getElementById('modalTabPr').className = isNormal
+        ? 'flex-1 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700'
+        : 'flex-1 py-2 text-sm font-medium border-b-2 border-pink-500 text-pink-600';
+    if (isNormal) {
+        document.getElementById('hiddenInvitedAt').value    = '';
+        document.getElementById('hiddenInvitedEndAt').value = '';
+        buildDatetimes();
+    } else {
+        buildPrDeadline();
+    }
+}
+
+function openProposalModal(appId, userName, actionUrl, isPrIf) {
+    _modalIsPrIf = !!isPrIf;
     document.getElementById('proposalUserName').textContent = '対象: ' + userName;
     document.getElementById('proposalForm').action = actionUrl;
+
     _selectedSlotStart = null; _selectedSlotEnd = null;
     document.getElementById('selectedSlotStart').value = '';
     document.querySelectorAll('.slot-btn').forEach(b => {
         b.classList.remove('bg-pink-500','text-white','border-pink-500');
         b.classList.add('text-gray-700');
     });
+    document.getElementById('hiddenInvitedAt').value    = '';
+    document.getElementById('hiddenInvitedEndAt').value = '';
+
+    var tabs = document.getElementById('proposalTabs');
+    if (_modalIsPrIf) {
+        tabs.classList.remove('hidden');
+        tabs.classList.add('flex');
+    } else {
+        tabs.classList.add('hidden');
+        tabs.classList.remove('flex');
+    }
+    switchModalTab('normal');
+
     document.getElementById('proposalModal').classList.remove('hidden');
 }
+
 function closeProposalModal() {
     document.getElementById('proposalModal').classList.add('hidden');
 }
+
 function submitProposal() {
-    if (!_selectedSlotStart) {
-        document.getElementById('slotError').classList.remove('hidden');
-        return;
+    if (_modalTab === 'normal') {
+        if (!_selectedSlotStart) {
+            document.getElementById('slotError').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('slotError').classList.add('hidden');
+    } else {
+        const deadline = document.getElementById('hiddenInvitedEndAt').value;
+        if (!deadline) {
+            document.getElementById('prDeadlineError').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('prDeadlineError').classList.add('hidden');
     }
-    document.getElementById('slotError').classList.add('hidden');
     document.getElementById('proposalForm').submit();
 }
 </script>
