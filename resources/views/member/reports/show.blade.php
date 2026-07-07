@@ -78,6 +78,10 @@
             @if($adjustAmt)
             <dt class="text-gray-500">調整金額</dt>
             <dd class="{{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}¥{{ number_format($adjustAmt) }}</dd>
+            @if($report->adjustment_reason)
+            <dt class="text-gray-500">調整理由</dt>
+            <dd class="text-gray-800">{{ $report->adjustment_reason }}</dd>
+            @endif
             @endif
             @if($report->purchase_type !== 'other')
             <dt class="text-gray-500 font-medium">合計</dt>
