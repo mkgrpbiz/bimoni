@@ -9,6 +9,7 @@ use App\Services\UserMatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class TransferController extends Controller
@@ -75,34 +76,41 @@ class TransferController extends Controller
         // 名前・フリガナ・生年月日・メールのうち3項目以上一致がただ1件の場合のみ自動紐付け
         $existing = UserMatcher::findUniqueTopMatch($candidates, $target);
 
-        if ($existing) {
+        // 同じ LINE ID が他のユーザーに既登録の場合は自動マッチをスキップ（ユニーク制約違反を防ぐ）
+        $lineIdConflict = $existing && User::where('line_user_id', $liffUser->line_user_id)
+            ->where('id', '!=', $liffUser->id)
+            ->exists();
+
+        if ($existing && !$lineIdConflict) {
             // line_user_id にユニーク制約があるため、liffUser を先に削除してから existing を更新する
             $lineUserId      = $liffUser->line_user_id;
             $lineDisplayName = $liffUser->line_display_name;
 
-            $liffUser->applications()->update(['user_id' => $existing->id]);
-            $liffUser->monitorReports()->update(['user_id' => $existing->id]);
-            $liffUser->points()->update(['user_id' => $existing->id]);
-            $liffUser->delete();
+            DB::transaction(function () use ($liffUser, $existing, $lineUserId, $lineDisplayName, $request) {
+                $liffUser->applications()->update(['user_id' => $existing->id]);
+                $liffUser->monitorReports()->update(['user_id' => $existing->id]);
+                $liffUser->points()->update(['user_id' => $existing->id]);
+                $liffUser->delete();
 
-            $existing->update([
-                'line_user_id'           => $lineUserId,
-                'line_display_name'      => $lineDisplayName ?? $existing->line_display_name,
-                'name'                   => $request->name,
-                'name_kana'              => $request->name_kana,
-                'gender'                 => $request->gender,
-                'birthdate'              => $request->birthdate,
-                'email'                  => $request->email,
-                'profile_completed_at'   => $existing->profile_completed_at ?? now(),
-                'transfer_registered_at' => $existing->transfer_registered_at ?? now(),
-                'bank_name'              => $request->bank_name,
-                'bank_code'              => $request->bank_code ?: null,
-                'bank_branch_name'       => $request->bank_branch_name,
-                'bank_branch_code'       => $request->bank_branch_code ?: null,
-                'bank_account_type'      => $request->bank_account_type,
-                'bank_account_number'    => $request->bank_account_number,
-                'bank_account_name'      => preg_replace('/\s+/', '', $request->bank_account_name),
-            ]);
+                $existing->update([
+                    'line_user_id'           => $lineUserId,
+                    'line_display_name'      => $lineDisplayName ?? $existing->line_display_name,
+                    'name'                   => $request->name,
+                    'name_kana'              => $request->name_kana,
+                    'gender'                 => $request->gender,
+                    'birthdate'              => $request->birthdate,
+                    'email'                  => $request->email,
+                    'profile_completed_at'   => $existing->profile_completed_at ?? now(),
+                    'transfer_registered_at' => $existing->transfer_registered_at ?? now(),
+                    'bank_name'              => $request->bank_name,
+                    'bank_code'              => $request->bank_code ?: null,
+                    'bank_branch_name'       => $request->bank_branch_name,
+                    'bank_branch_code'       => $request->bank_branch_code ?: null,
+                    'bank_account_type'      => $request->bank_account_type,
+                    'bank_account_number'    => $request->bank_account_number,
+                    'bank_account_name'      => preg_replace('/\s+/', '', $request->bank_account_name),
+                ]);
+            });
 
             Auth::guard('liff')->login($existing);
 
