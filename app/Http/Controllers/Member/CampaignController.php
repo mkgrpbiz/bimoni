@@ -51,15 +51,16 @@ class CampaignController extends Controller
 
     public function show(Campaign $campaign): View|RedirectResponse
     {
-        if ($campaign->status !== 'published') {
-            abort(404);
-        }
-
         $user        = Auth::guard('liff')->user();
         $application = Application::where('user_id', $user->id)
             ->where('campaign_id', $campaign->id)
             ->whereNotIn('status', ['cancelled'])
             ->first();
+
+        // 非公開案件は応募歴がある場合のみ閲覧可
+        if ($campaign->status !== 'published' && !$application) {
+            abort(404);
+        }
 
         $now = now();
         $activeBonus = \App\Models\CampaignBonus::where('campaign_id', $campaign->id)

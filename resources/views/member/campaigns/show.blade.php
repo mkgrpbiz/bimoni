@@ -84,6 +84,12 @@
         </div>
         <p class="text-xs text-gray-400 text-center">ステータス：{{ $application->getStatusLabel() }}</p>
 
+    @elseif($campaign->status !== 'published')
+        {{-- 募集終了 --}}
+        <div class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl text-center font-bold mb-2">
+            この案件の募集は終了しました
+        </div>
+
     @else
         {{-- 応募フォーム --}}
         <form method="POST" action="{{ route('member.campaigns.apply', $campaign) }}"
