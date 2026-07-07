@@ -139,14 +139,12 @@ function syncMonth(sel) {
 
 <div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600 flex items-center gap-4">
     <span>{{ $month->format('Y年n月') }} 合計: <strong>¥{{ number_format($totalAmount) }}</strong></span>
-    @if($totalAmount > 0)
     <form method="POST" action="{{ route('admin.points.mark_paid') }}"
           onsubmit="return confirm('{{ $month->format('Y年n月') }}の協力金をすべて支払い済にしますか？')">
         @csrf @method('PATCH')
         <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
         <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">→ 支払い済にする</button>
     </form>
-    @endif
 </div>
 
 <div class="bg-white rounded-lg shadow overflow-x-auto">
