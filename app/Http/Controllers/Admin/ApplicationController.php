@@ -261,7 +261,7 @@ class ApplicationController extends Controller
     public function updateStatus(Request $request, Application $application): RedirectResponse
     {
         $request->validate([
-            'status'         => 'required|in:line_contacted,scheduled,confirming,completed,reported,approved,point_granted,cancelled',
+            'status'         => 'required|in:pending,line_contacted,scheduled,confirming,completed,reported,approved,point_granted,cancelled',
             'memo'           => 'nullable|string|max:500',
             'invited_at'     => 'nullable|date',
             'invited_end_at' => 'nullable|date',

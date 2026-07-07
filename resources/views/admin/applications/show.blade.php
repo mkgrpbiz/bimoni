@@ -43,6 +43,7 @@
             <form method="POST" action="{{ route('admin.applications.status', $application) }}" class="flex flex-wrap gap-2">
                 @csrf @method('PATCH')
                 @foreach([
+                    'pending'        => ['応募中にする',     'bg-gray-500 hover:bg-gray-600'],
                     'line_contacted' => ['打診中にする',     'bg-pink-500 hover:bg-pink-600'],
                     'scheduled'      => ['予約中にする',     'bg-pink-500 hover:bg-pink-600'],
                     'confirming'     => ['実施確認中にする', 'bg-pink-500 hover:bg-pink-600'],
