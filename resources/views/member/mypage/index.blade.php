@@ -169,7 +169,7 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-800 truncate">
-                                    {{ $report->campaign->title ?? '削除済み案件' }}
+                                    {{ $report->campaign->title ?? ($report->purchase_type === 'other' ? 'その他報告' : '削除済み案件') }}
                                 </p>
                                 <div class="flex items-center gap-2 mt-0.5">
                                     <p class="text-xs text-gray-400">報告：{{ $report->created_at->format('Y/m/d') }}</p>
