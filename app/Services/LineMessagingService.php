@@ -39,6 +39,37 @@ class LineMessagingService
         return $response->successful();
     }
 
+    public function sendVideo(int $userId, string $videoPath, string $previewPath, string $type, ?int $applicationId): bool
+    {
+        $user = User::find($userId);
+
+        if (!$user || !$user->line_user_id) {
+            return false;
+        }
+
+        $token = config('services.line.channel_access_token');
+
+        if (empty($token)) {
+            Log::info("LINE動画（未設定のためスキップ）: [{$type}] {$user->name} → {$videoPath}");
+            return true;
+        }
+
+        $videoUrl   = url('storage/' . $videoPath);
+        $previewUrl = url('storage/' . $previewPath);
+
+        $response = Http::withToken($token)
+            ->post('https://api.line.me/v2/bot/message/push', [
+                'to'       => $user->line_user_id,
+                'messages' => [[
+                    'type'                => 'video',
+                    'originalContentUrl'  => $videoUrl,
+                    'previewImageUrl'     => $previewUrl,
+                ]],
+            ]);
+
+        return $response->successful();
+    }
+
     public function sendBulk(array $userIds, string $message): array
     {
         $results = ['sent' => 0, 'failed' => 0];

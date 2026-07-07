@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Campaign;
 use App\Models\LineMessageJob;
 use App\Services\LineMessagingService;
 use Illuminate\Console\Command;
@@ -49,6 +50,21 @@ class SendLineMessages extends Command
                 ? "送信済み: job#{$job->id} [{$job->send_type}]"
                 : "失敗: job#{$job->id} [{$job->send_type}]"
             );
+
+            // monitor_guide 送信成功時に案内動画があれば追送
+            if ($success && $job->send_type === 'monitor_guide' && $job->campaign_id) {
+                $campaign = Campaign::find($job->campaign_id);
+                if ($campaign?->monitor_video && $campaign->thumbnail) {
+                    $lineService->sendVideo(
+                        $job->user_id,
+                        $campaign->monitor_video,
+                        $campaign->thumbnail,
+                        $job->send_type,
+                        $job->application_id
+                    );
+                    $this->line("動画追送: job#{$job->id} campaign#{$job->campaign_id}");
+                }
+            }
         }
 
         return self::SUCCESS;
