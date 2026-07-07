@@ -62,6 +62,23 @@
     </form>
 </div>
 
+{{-- 回収報告 承認待ちアラート --}}
+@if($pendingCollectionCount > 0)
+<div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+        <span class="text-yellow-500 text-xl">⚠️</span>
+        <div>
+            <p class="font-bold text-yellow-800">回収報告 承認待ち</p>
+            <p class="text-sm text-yellow-700">{{ $pendingCollectionCount }}件</p>
+        </div>
+    </div>
+    <a href="{{ route('admin.collection_reports.index') }}"
+       class="bg-pink-500 text-white px-4 py-1.5 rounded text-sm hover:bg-pink-600">
+        回収報告を確認する
+    </a>
+</div>
+@endif
+
 {{-- 承認待ちアラート --}}
 @if($pendingReportsCount > 0)
 <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-5 flex items-center justify-between">

@@ -37,6 +37,9 @@ class DashboardController extends Controller
             return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
         });
 
+        // 承認待ちアラート（CollectionReport が pending のもの）
+        $pendingCollectionCount = CollectionReport::where('status', 'pending')->count();
+
         // ダッシュボードアラート
         $alerts = $this->buildAlerts();
 
@@ -63,6 +66,7 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'pendingReportsCount', 'pendingReportsAmount',
+            'pendingCollectionCount',
             'metrics', 'prevMetrics', 'chartData',
             'year', 'month', 'mode', 'months', 'alerts'
         ));
