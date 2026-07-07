@@ -17,7 +17,8 @@ class AuthController extends Controller
         // liff.state 経由のパラメータを server 側でデコード
         $from = $request->get('from', '');
         if (!$from) {
-            $liffState = $request->get('liff.state', '');
+            // PHPはクエリパラメータ名のドットをアンダースコアに変換するため liff_state で取得
+            $liffState = $request->get('liff_state', '');
             parse_str(ltrim($liffState, '?'), $stateParams);
             $from = $stateParams['from'] ?? '';
         }
