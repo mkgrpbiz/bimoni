@@ -16,7 +16,7 @@ class MypageController extends Controller
         $user = Auth::guard('liff')->user();
 
         $applications = Application::where('user_id', $user->id)
-            ->with('campaign')
+            ->with(['campaign', 'report'])
             ->latest('applied_at')
             ->get();
 

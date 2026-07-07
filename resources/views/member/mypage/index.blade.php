@@ -94,13 +94,16 @@
                     <div class="divide-y divide-gray-50">
                         @foreach($apps as $app)
                         @php
-                            $subStatus = match($app->status) {
-                                'completed'     => ['label' => '未報告',    'color' => 'bg-orange-100 text-orange-600'],
-                                'reported'      => ['label' => '承認待ち',  'color' => 'bg-blue-100 text-blue-600'],
-                                'approved'      => ['label' => '支払い待ち', 'color' => 'bg-yellow-100 text-yellow-700'],
-                                'point_granted' => ['label' => '支払い済',  'color' => 'bg-teal-100 text-teal-700'],
-                                default         => null,
-                            };
+                            $isRejected = $app->status === 'reported' && $app->report?->status === 'rejected';
+                            $subStatus = $isRejected
+                                ? ['label' => '差戻し', 'color' => 'bg-red-100 text-red-600']
+                                : match($app->status) {
+                                    'completed'     => ['label' => '未報告',    'color' => 'bg-orange-100 text-orange-600'],
+                                    'reported'      => ['label' => '承認待ち',  'color' => 'bg-blue-100 text-blue-600'],
+                                    'approved'      => ['label' => '支払い待ち', 'color' => 'bg-yellow-100 text-yellow-700'],
+                                    'point_granted' => ['label' => '支払い済',  'color' => 'bg-teal-100 text-teal-700'],
+                                    default         => null,
+                                };
                         @endphp
                         <div class="px-4 py-3 flex items-center gap-3">
                             <div class="w-10 h-10 bg-pink-50 rounded-lg flex-shrink-0 overflow-hidden">
