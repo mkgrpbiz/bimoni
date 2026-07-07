@@ -3,7 +3,13 @@
 @section('title', '状況確認')
 
 @section('content')
-<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">状況確認</h1>
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">状況確認</h1>
+    <a href="{{ route('admin.notifications.line') }}"
+       class="text-sm px-3 py-1.5 bg-green-500 text-white rounded hover:bg-green-600">
+        LINE通知履歴
+    </a>
+</div>
 
 @if(session('success'))
     <div class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
