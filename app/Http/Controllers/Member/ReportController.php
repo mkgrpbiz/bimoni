@@ -51,9 +51,10 @@ class ReportController extends Controller
             ->whereNotIn('id', $reportedContinuationIds)
             ->values();
 
-        // 回収サービス用
-        $initialApplications      = $allCompleted->values();
-        $continuationApplications = $allCompleted->values();
+        // 回収サービス用（体験モニターは除外）
+        $collectionTargets        = $allCompleted->filter(fn($a) => $a->campaign?->campaign_type !== 'experience');
+        $initialApplications      = $collectionTargets->values();
+        $continuationApplications = $collectionTargets->values();
 
         $reportType = $request->input('report_type', 'monitor');
 
