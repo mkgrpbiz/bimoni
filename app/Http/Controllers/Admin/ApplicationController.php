@@ -267,6 +267,14 @@ class ApplicationController extends Controller
             'invited_end_at' => 'nullable|date',
         ]);
 
+        // 応募中に戻す場合は案内日時をクリア
+        if ($request->status === 'pending') {
+            $application->update([
+                'invited_at'     => null,
+                'invited_end_at' => null,
+            ]);
+        }
+
         // 打診中への変更処理
         if ($request->status === 'line_contacted') {
             $application->loadMissing('campaign');
