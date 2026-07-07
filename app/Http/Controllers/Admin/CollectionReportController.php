@@ -84,4 +84,16 @@ class CollectionReportController extends Controller
 
         return back()->with('success', '差戻し・LINE通知を送信しました。');
     }
+
+    public function revert(CollectionReport $collectionReport): RedirectResponse
+    {
+        $collectionReport->update([
+            'status'           => 'pending',
+            'reviewed_by'      => null,
+            'reviewed_at'      => null,
+            'rejection_reason' => null,
+        ]);
+
+        return back()->with('success', '承認待ちに戻しました。');
+    }
 }

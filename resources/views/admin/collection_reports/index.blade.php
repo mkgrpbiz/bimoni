@@ -52,7 +52,8 @@ $tabs = [
                 <th class="px-3 py-3 text-right whitespace-nowrap">商品数</th>
                 <th class="px-3 py-3 text-left whitespace-nowrap">到着予定日</th>
                 <th class="px-3 py-3 text-left whitespace-nowrap">追跡番号</th>
-                <th class="px-3 py-3 text-center whitespace-nowrap">ステータス</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">協力金合計</th>
+                <th class="px-3 py-3 text-left whitespace-nowrap">ステータス</th>
                 <th class="px-3 py-3 text-center whitespace-nowrap">詳細</th>
             </tr>
         </thead>
@@ -68,10 +69,25 @@ $tabs = [
                 <td class="px-3 py-3 text-right font-bold">{{ $report->item_count }}</td>
                 <td class="px-3 py-3 whitespace-nowrap">{{ $report->estimated_arrival_date?->format('m/d') ?? '-' }}</td>
                 <td class="px-3 py-3 font-mono text-xs">{{ $report->tracking_number ?? '-' }}</td>
-                <td class="px-3 py-3 text-center">
-                    <span class="text-xs px-2 py-0.5 rounded-full {{ $report->getStatusColor() }}">
-                        {{ $report->getStatusLabel() }}
-                    </span>
+                <td class="px-3 py-3 text-right whitespace-nowrap font-medium text-pink-600">
+                    ¥{{ number_format($report->cooperation_fee ?? 0) }}
+                </td>
+                <td class="px-3 py-3 whitespace-nowrap">
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-xs {{ $report->getStatusColor() }}">
+                            {{ $report->getStatusLabel() }}
+                        </span>
+                        @if(in_array($report->status, ['approved', 'rejected']))
+                        <form method="POST" action="{{ route('admin.collection_reports.revert', $report) }}">
+                            @csrf @method('PATCH')
+                            <button type="submit"
+                                    onclick="return confirm('承認待ちに戻しますか？')"
+                                    class="text-xs text-gray-500 border border-gray-300 rounded px-1.5 py-0.5 hover:bg-gray-100">
+                                戻す
+                            </button>
+                        </form>
+                        @endif
+                    </div>
                 </td>
                 <td class="px-3 py-3 text-center">
                     <a href="{{ route('admin.collection_reports.show', $report) }}"
@@ -82,7 +98,7 @@ $tabs = [
             </tr>
             @empty
             <tr>
-                <td colspan="11" class="px-4 py-8 text-center text-gray-400">回収報告がありません</td>
+                <td colspan="12" class="px-4 py-8 text-center text-gray-400">回収報告がありません</td>
             </tr>
             @endforelse
         </tbody>

@@ -170,6 +170,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('collection-reports/{collectionReport}', [CollectionReportController::class, 'show'])->name('collection_reports.show');
         Route::patch('collection-reports/{collectionReport}/approve', [CollectionReportController::class, 'approve'])->name('collection_reports.approve');
         Route::patch('collection-reports/{collectionReport}/reject', [CollectionReportController::class, 'reject'])->name('collection_reports.reject');
+        Route::patch('collection-reports/{collectionReport}/revert', [CollectionReportController::class, 'revert'])->name('collection_reports.revert');
 
         // フォーム項目管理（ページ編集）
         Route::get('form-fields', [FormFieldController::class, 'index'])->name('form_fields.index');
