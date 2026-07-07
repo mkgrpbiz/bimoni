@@ -62,24 +62,9 @@
     </div>
 
     <script>
-    // liff.login() でリダイレクトが発生してもパラメータが消えないよう先に保存
-    (function() {
-        function readParam(key) {
-            const p = new URLSearchParams(window.location.search);
-            const v = p.get(key);
-            if (v) return v;
-            const state = p.get('liff.state');
-            if (state) {
-                const sp = new URLSearchParams(state.replace(/^\?/, ''));
-                return sp.get(key) || '';
-            }
-            return '';
-        }
-        const from = readParam('from');
-        const ref  = readParam('referral_code');
-        if (from) localStorage.setItem('_liff_from', from);
-        if (ref)  localStorage.setItem('_liff_ref', ref);
-    })();
+    // サーバー側で liff.state をデコード済みの値を使う（URL読み取り不要）
+    const _serverFrom = '{{ $from }}';
+    if (_serverFrom) localStorage.setItem('_liff_from', _serverFrom);
 
     liff.init({ liffId: '{{ config("services.line.liff_id") }}' })
         .then(() => {
@@ -92,10 +77,9 @@
         .then(profile => {
             if (!profile) return;
             const params = new URLSearchParams(window.location.search);
-            const fromPage     = params.get('from')           || localStorage.getItem('_liff_from') || '';
-            const referralCode = params.get('referral_code')  || localStorage.getItem('_liff_ref')  || '';
+            const fromPage     = _serverFrom || localStorage.getItem('_liff_from') || params.get('from') || '';
+            const referralCode = params.get('referral_code') || '';
             localStorage.removeItem('_liff_from');
-            localStorage.removeItem('_liff_ref');
             return fetch('{{ route("member.auth.liff") }}', {
                 method: 'POST',
                 headers: {

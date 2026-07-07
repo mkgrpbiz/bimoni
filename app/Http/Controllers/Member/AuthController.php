@@ -12,16 +12,28 @@ use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function login(): View|RedirectResponse
+    public function login(Request $request): View|RedirectResponse
     {
+        // liff.state 経由のパラメータを server 側でデコード
+        $from = $request->get('from', '');
+        if (!$from) {
+            $liffState = $request->get('liff.state', '');
+            parse_str(ltrim($liffState, '?'), $stateParams);
+            $from = $stateParams['from'] ?? '';
+        }
+
         if (Auth::guard('liff')->check()) {
-            return $this->redirectAfterLogin(Auth::guard('liff')->user());
+            $user = Auth::guard('liff')->user();
+            if (!$user->profile_completed_at && $from === 'transfer') {
+                return redirect()->route('member.transfer');
+            }
+            return $this->redirectAfterLogin($user);
         }
 
         $devMode = empty(config('services.line.liff_id'));
         $testUsers = $devMode ? User::whereNotNull('name')->orderBy('name')->get() : collect();
 
-        return view('member.auth.login', compact('devMode', 'testUsers'));
+        return view('member.auth.login', compact('devMode', 'testUsers', 'from'));
     }
 
     // 本番LIFF: JavaScript から POST される
