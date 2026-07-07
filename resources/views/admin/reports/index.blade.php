@@ -66,16 +66,30 @@ $tabs = [
                 <td class="px-3 py-2 text-gray-700">{{ $user?->name_kana ?? '-' }}</td>
                 <td class="px-3 py-2 text-gray-700 whitespace-nowrap">{{ $report->campaign?->title ?? '-' }}</td>
                 <td class="px-3 py-2 text-right whitespace-nowrap font-medium text-pink-600">
-                    @if($report->campaign?->cooperation_fee)
-                        ¥{{ number_format($report->campaign->cooperation_fee) }}
-                    @else
-                        -
-                    @endif
+                    @php
+                        $coopFee = $report->purchase_type === 'continuation'
+                            ? ($report->campaign?->continuation_cooperation_fee ?? 0)
+                            : ($report->campaign?->cooperation_fee ?? 0);
+                        $total = ($report->purchase_amount ?? 0) + $coopFee + ($report->bonus_amount ?? 0) + ($report->adjustment_amount ?? 0);
+                    @endphp
+                    ¥{{ number_format($total) }}
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap">
-                    <span class="px-1.5 py-0.5 rounded text-xs {{ $report->getStatusColor() }}">
-                        {{ $report->getStatusLabel() }}
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-xs {{ $report->getStatusColor() }}">
+                            {{ $report->getStatusLabel() }}
+                        </span>
+                        @if(in_array($report->status, ['approved', 'rejected']))
+                        <form method="POST" action="{{ route('admin.reports.revert', $report) }}">
+                            @csrf @method('PATCH')
+                            <button type="submit"
+                                    onclick="return confirm('承認待ちに戻しますか？')"
+                                    class="text-xs text-gray-500 border border-gray-300 rounded px-1.5 py-0.5 hover:bg-gray-100">
+                                戻す
+                            </button>
+                        </form>
+                        @endif
+                    </div>
                 </td>
                 <td class="px-3 py-2 text-center">
                     <a href="{{ route('admin.reports.show', $report) }}"

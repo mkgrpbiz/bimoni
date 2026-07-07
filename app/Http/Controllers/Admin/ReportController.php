@@ -94,6 +94,20 @@ class ReportController extends Controller
         return back()->with('success', '差戻し・LINE通知を送信しました。');
     }
 
+    public function revert(MonitorReport $report): RedirectResponse
+    {
+        $report->update([
+            'status'        => 'pending',
+            'reviewed_by'   => null,
+            'reviewed_at'   => null,
+            'reject_reason' => null,
+        ]);
+
+        $report->application?->update(['status' => 'reported']);
+
+        return back()->with('success', '承認待ちに戻しました。');
+    }
+
     public function adjust(Request $request, MonitorReport $report): RedirectResponse
     {
         $request->validate([
