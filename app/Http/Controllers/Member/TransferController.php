@@ -76,9 +76,15 @@ class TransferController extends Controller
         $existing = UserMatcher::findUniqueTopMatch($candidates, $target);
 
         if ($existing) {
+            // line_user_id にユニーク制約があるため、liffUser を先に削除してから existing を更新する
+            $lineUserId      = $liffUser->line_user_id;
+            $lineDisplayName = $liffUser->line_display_name;
+
+            $liffUser->delete();
+
             $existing->update([
-                'line_user_id'           => $liffUser->line_user_id,
-                'line_display_name'      => $liffUser->line_display_name ?? $existing->line_display_name,
+                'line_user_id'           => $lineUserId,
+                'line_display_name'      => $lineDisplayName ?? $existing->line_display_name,
                 'name'                   => $request->name,
                 'name_kana'              => $request->name_kana,
                 'gender'                 => $request->gender,
@@ -94,8 +100,6 @@ class TransferController extends Controller
                 'bank_account_number'    => $request->bank_account_number,
                 'bank_account_name'      => preg_replace('/\s+/', '', $request->bank_account_name),
             ]);
-
-            $liffUser->delete();
 
             Auth::guard('liff')->login($existing);
 
