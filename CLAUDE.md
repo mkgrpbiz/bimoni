@@ -60,6 +60,9 @@ php8.3 artisan route:clear
 - `bimoni_user_id`: 独自ID（例: BMN010001）。BMN + 6桁、10001スタート、登録順自動採番
 - `referred_by_code`: 登録時に使った招待コード（どのコードから来たか）
 - `referral_code` は**廃止**。ユーザー個人の紹介コードは存在しない
+- `imported_from`: `'spreadsheet'`（CSVインポート）/ `'new'`（LINE通常登録）
+- `transfer_registered_at`: 引き継ぎ登録フロー（`member.transfer`）を経由して登録した日時
+- `new_register_confirmed_at`: 通常新規登録ユーザーを管理画面で「確定済み」にした日時
 
 ### Agent（代理店）
 - 親子構造（`parent_id`）。親は子を複数持てる
@@ -84,6 +87,7 @@ php8.3 artisan route:clear
 - `bonus_amount`: nullable unsignedInteger。キャンペーン列の金額（インポート時）またはapplication.bonus_amountからコピー（会員報告時）
 - `purchase_amount`: 実際にかかったモニター経費
 - 協力金の表示・計算: `purchase_amount + (cooperation_fee or continuation_cooperation_fee) + bonus_amount`
+- **継続報告（`purchase_type='continuation'`）の協力金は必ず `campaign.continuation_cooperation_fee` を使う**（`cooperation_fee` を使うと初回金額になるバグ）
 
 ### Campaign
 - `collection_requirement`: ENUM('回収前提', '回収不要') nullable
@@ -174,7 +178,16 @@ php8.3 artisan route:clear
 - ダッシュボードのリンクは `['year' => $prevMonth->year, 'month' => $prevMonth->month]` 形式で渡す（`'Y-m'` 形式はNG→500エラー）
 - `markReserved` / `markPaid` の `whereBetween` は必ず `copy()` を使う（同一Carbonオブジェクトに連続で呼ぶと両方が月末になるバグあり）
 
+### LINE紐付け管理（`admin/line-links`）
+- **未完了（インポートデータ）**: `imported_from='spreadsheet'` かつ `line_user_id` が null または `IMPORT_` 始まり。新しい順にソート
+- **紐付け登録（新規登録データ）**: `transfer_registered_at` not null かつ未紐付け（スプレッドシートユーザーとして実LINE IDが紐いた自動マッチ済みは除外）
+- **新規登録（通常登録データ）**: `imported_from='new'` かつ `profile_completed_at` not null かつ `transfer_registered_at` null かつ `new_register_confirmed_at` null
+- **完了**: `imported_from='spreadsheet'` かつ実LINE ID保持
+- 「紐付け」ボタン: `link()` → liffUserのデータをimportUserに移行しliffUserを削除。`DB::transaction()` 内で先にliffUserを delete してからimportUserを update（unique制約対策）
+- 「新規として確定」: `new_register_confirmed_at = now()` をセット → 新規登録タブから消える
+
 ### インポート機能
+- **ユーザーインポート**: erme_respondent_idが既存ユーザーと一致→上書き更新（スキップしない）。メールのみ一致→スキップ
 - **応募リストインポート**: エルメのCSVをそのまま投入。案件を選択してインポート
   - `ImportService::skipToApplicationHeader()` でサマリー行（集計情報）を自動スキップし「回答者ID」を含む行をヘッダーとして使用
   - `parseCsv()` で重複ヘッダーは `_2` `_3` でリネーム（最初の列を優先）
@@ -232,6 +245,8 @@ php8.3 artisan route:clear
 ## 注意事項・過去のミス
 
 - LIFF WebView（iOS WKWebView）はCSRFセッションが引き継がれないため、`member/auth/liff-callback` と `member/register` をCSRF除外している（`bootstrap/app.php` の `validateCsrfTokens(except: [...])` で設定）
+- **PHPはURLクエリパラメータ名のドットをアンダースコアに変換する**（例: `?liff.state=xxx` → `$request->get('liff_state')`）。`$request->get('liff.state')` は常にnullを返すので注意
+- 引き継ぎ登録リンクは `https://liff.line.me/{LIFF_ID}?from=transfer`。サーバー側で `liff_state` を `parse_str` でデコードして `$from` を取得し、PHP変数としてBladeに渡す（JSのURL読み取りに依存しない）
 - LINEチャンネルアクセストークンはbase64文字列で大文字・小文字が区別される。.envに貼るときはコピーミスに注意（`O`と`o`など）。貼った後に401エラーが出たらまず文字を目視確認
 - フリガナ入力はIME変換中に `oninput` が発火するバグがある → `compositionstart`/`compositionend` で変換中フラグを管理し、変換確定後に `hiraToKata()` を呼ぶ（`layouts/member.blade.php` でグローバル処理済み）
 - `alert()` を Promise の `.then()/.catch()` 内で呼ぶとブラウザにブロックされる → `document.execCommand('copy')` で同期コピー後に `alert()` を呼ぶ
