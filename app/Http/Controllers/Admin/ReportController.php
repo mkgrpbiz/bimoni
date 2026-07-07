@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MonitorReport;
+use App\Services\LineMessagingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,17 +71,27 @@ class ReportController extends Controller
         return back()->with('success', '報告を承認しました。');
     }
 
-    public function reject(Request $request, MonitorReport $report): RedirectResponse
+    public function reject(Request $request, MonitorReport $report, LineMessagingService $lineService): RedirectResponse
     {
+        $request->validate(['reject_reason' => 'required|string|max:500']);
+
         $report->update([
-            'status'      => 'rejected',
-            'reviewed_by' => Auth::guard('web')->id(),
-            'reviewed_at' => now(),
+            'status'        => 'rejected',
+            'reject_reason' => $request->reject_reason,
+            'reviewed_by'   => Auth::guard('web')->id(),
+            'reviewed_at'   => now(),
         ]);
 
         $report->application?->update(['status' => 'reported']);
 
-        return back()->with('success', '差戻しました。');
+        $msg = "【モニター報告について】\n"
+            . "差戻しとなりました。\n\n"
+            . "理由：{$request->reject_reason}\n\n"
+            . "お手数ですが、内容をご確認の上、再度報告フォームよりご報告ください。";
+
+        $lineService->sendPush($report->user_id, $msg, 'report_rejection');
+
+        return back()->with('success', '差戻し・LINE通知を送信しました。');
     }
 
     public function adjust(Request $request, MonitorReport $report): RedirectResponse

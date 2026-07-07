@@ -132,7 +132,7 @@
         @if($report->status === 'pending')
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">審査</h2>
-            <div class="flex gap-3 flex-wrap">
+            <div class="flex gap-3 flex-wrap mb-3">
                 <form method="POST" action="{{ route('admin.reports.approve', $report) }}">
                     @csrf @method('PATCH')
                     <button type="submit"
@@ -141,16 +141,26 @@
                         ✓ 承認する
                     </button>
                 </form>
-
-                <form method="POST" action="{{ route('admin.reports.reject', $report) }}">
-                    @csrf @method('PATCH')
-                    <button type="submit"
-                            onclick="return confirm('差戻しますか？')"
-                            class="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600 text-sm">
-                        差戻す
-                    </button>
-                </form>
+                <button type="button" onclick="document.getElementById('reject-form').classList.toggle('hidden')"
+                        class="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600 text-sm">
+                    差戻す
+                </button>
             </div>
+            <form id="reject-form" method="POST" action="{{ route('admin.reports.reject', $report) }}"
+                  class="hidden border-t pt-4">
+                @csrf @method('PATCH')
+                @error('reject_reason')
+                    <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
+                @enderror
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">差戻し理由</label>
+                <textarea name="reject_reason" rows="3" required
+                          class="w-full border rounded px-3 py-2 text-sm mb-3 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                          placeholder="差戻しの理由を入力してください">{{ old('reject_reason') }}</textarea>
+                <button type="submit"
+                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm">
+                    差戻しを確定
+                </button>
+            </form>
         </div>
         @elseif($report->status === 'rejected' && $report->reject_reason)
         <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
