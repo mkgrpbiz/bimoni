@@ -126,7 +126,7 @@
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">インポートデータを名前で検索</label>
                 <div class="flex gap-2">
-                    <input type="text" x-model="searchName" placeholder="名前・フリガナ・エルメID"
+                    <input type="text" x-model="searchName" placeholder="名前・フリガナ・LINE名・エルメID"
                            class="border rounded px-3 py-2 text-sm flex-1">
                     <button type="button" @click="search()"
                             class="bg-pink-500 text-white px-4 py-2 rounded text-sm hover:bg-pink-600">検索</button>
@@ -139,6 +139,9 @@
                         <div>
                             <span class="font-medium text-sm" x-text="u.name"></span>
                             <span class="text-xs text-gray-400 ml-2" x-text="u.name_kana"></span>
+                            <template x-if="u.line_display_name">
+                                <span class="text-xs text-blue-400 ml-2" x-text="'LINE: ' + u.line_display_name"></span>
+                            </template>
                             <span class="text-xs text-gray-400 ml-2" x-text="u.birthdate ?? ''"></span>
                         </div>
                         <button type="button" @click="selectUser(u)"
