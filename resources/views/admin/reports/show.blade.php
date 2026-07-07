@@ -37,7 +37,9 @@
                     $report->payment_method === 'none'        => 'お支払い無し',
                     default => $report->payment_method ?? '-',
                 };
-                $coopFee = $report->campaign?->cooperation_fee ?? 0;
+                $coopFee = $report->purchase_type === 'continuation'
+                    ? ($report->campaign?->continuation_cooperation_fee ?? 0)
+                    : ($report->campaign?->cooperation_fee ?? 0);
                 $purchaseAmt = $report->purchase_amount ?? 0;
                 $adjustAmt = $report->adjustment_amount ?? 0;
             @endphp
@@ -205,7 +207,7 @@
                         <dt class="text-gray-500">報告種別</dt><dd>{{ $dupPurchaseLabel }}</dd>
                         @if($dup->purchase_type !== 'other')
                         <dt class="text-gray-500">モニター経費</dt><dd>¥{{ number_format($dup->purchase_amount ?? 0) }}</dd>
-                        <dt class="text-gray-500">協力金</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->campaign?->cooperation_fee ?? 0) }}</dd>
+                        <dt class="text-gray-500">協力金</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->purchase_type === 'continuation' ? ($dup->campaign?->continuation_cooperation_fee ?? 0) : ($dup->campaign?->cooperation_fee ?? 0)) }}</dd>
                         <dt class="text-gray-500">支払方法</dt><dd>{{ $dupPayLabel }}</dd>
                         @endif
                     </dl>
@@ -241,7 +243,7 @@
                 <dt class="text-gray-700 dark:text-gray-400">種別</dt>
                 <dd class="dark:text-gray-200">{{ $report->campaign?->getTypeLabel() ?? '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">協力金</dt>
-                <dd class="font-medium text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign?->cooperation_fee ?? 0) }}</dd>
+                <dd class="font-medium text-pink-600 dark:text-pink-400">¥{{ number_format($report->purchase_type === 'continuation' ? ($report->campaign?->continuation_cooperation_fee ?? 0) : ($report->campaign?->cooperation_fee ?? 0)) }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">報告日</dt>
                 <dd class="dark:text-gray-200">{{ $report->created_at->format('Y/m/d H:i') }}</dd>
                 @if($report->reviewed_at)

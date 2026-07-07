@@ -91,8 +91,11 @@
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">実績サマリー</h2>
         @php
             $approvedReports = $reports->where('status', 'approved');
-            $pendingPay = $approvedReports->where('payment_status', 'pending')->sum(fn($r) => $r->campaign?->cooperation_fee ?? 0);
-            $paidTotal  = $approvedReports->where('payment_status', 'paid')->sum(fn($r) => $r->campaign?->cooperation_fee ?? 0);
+            $getCoopFee = fn($r) => $r->purchase_type === 'continuation'
+                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
+                : ($r->campaign?->cooperation_fee ?? 0);
+            $pendingPay = $approvedReports->where('payment_status', 'pending')->sum($getCoopFee);
+            $paidTotal  = $approvedReports->where('payment_status', 'paid')->sum($getCoopFee);
         @endphp
         <dl class="text-sm space-y-2">
             <div class="flex justify-between">
@@ -155,7 +158,7 @@
                 </td>
                 <td class="px-4 py-3 text-right font-medium text-gray-800 dark:text-gray-200">
                     @if($report->status === 'approved')
-                        ¥{{ number_format($report->campaign?->cooperation_fee ?? 0) }}
+                        ¥{{ number_format($report->purchase_type === 'continuation' ? ($report->campaign?->continuation_cooperation_fee ?? 0) : ($report->campaign?->cooperation_fee ?? 0)) }}
                     @else
                         -
                     @endif
