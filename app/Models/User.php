@@ -42,6 +42,7 @@ class User extends Authenticatable
         'status',
         'profile_completed_at',
         'transfer_registered_at',
+        'new_register_confirmed_at',
         'imported_from',
         'bank_name',
         'bank_code',
@@ -63,6 +64,7 @@ class User extends Authenticatable
             'birthdate'           => 'date',
             'profile_completed_at' => 'datetime',
             'transfer_registered_at' => 'datetime',
+            'new_register_confirmed_at' => 'datetime',
         ];
     }
 
