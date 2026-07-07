@@ -379,15 +379,16 @@ function updateCollectionFee() {
     let gross = 0;
     checked.forEach(cb => { gross += parseInt(cb.dataset.fee || 800); });
 
-    const fee = count < 5 ? gross - shippingFee : gross;
+    const effectiveCount = gross / 800;
+    const fee = effectiveCount >= 5 ? gross + shippingFee : gross;
 
     document.getElementById('collection-fee-display').textContent = fee.toLocaleString() + '円';
 
-    if (count > 0 && count < 5) {
+    if (count > 0 && effectiveCount >= 5) {
         document.getElementById('collection-fee-note').textContent =
-            gross.toLocaleString() + '円 - 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + '円';
+            gross.toLocaleString() + '円 + 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + '円';
     } else if (count > 0) {
-        document.getElementById('collection-fee-note').textContent = gross.toLocaleString() + '円';
+        document.getElementById('collection-fee-note').textContent = gross.toLocaleString() + '円（送料なし）';
     } else {
         document.getElementById('collection-fee-note').textContent = '';
     }
