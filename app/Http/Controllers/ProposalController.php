@@ -47,10 +47,12 @@ class ProposalController extends Controller
             return response()->view('proposals.expired', compact('application'), 410);
         }
 
-        // 実施案内日時が過ぎていたら自動キャンセル
+        // 実施案内日時が過ぎていたら自動キャンセル（invited_end_at があれば終了時間、なければ開始時間）
+        $cancelAt = $application->invited_end_at ?? $application->invited_at;
         if ($application->status === 'line_contacted'
             && $application->invited_at
-            && now()->gte($application->invited_at)
+            && $cancelAt
+            && now()->gte($cancelAt)
         ) {
             $application->update([
                 'status'               => 'cancelled',
@@ -62,13 +64,13 @@ class ProposalController extends Controller
                 'from_status'    => 'line_contacted',
                 'to_status'      => 'cancelled',
                 'changed_by'     => null,
-                'memo'           => '実施案内日時までに回答なし・自動キャンセル',
+                'memo'           => '実施案内日時終了までに回答なし・自動キャンセル',
             ]);
             return response()->view('proposals.expired', compact('application'), 410);
         }
 
         // 案内日時・期限を過ぎたリンクはステータス問わず無効
-        if ($application->invited_at && now()->gte($application->invited_at)) {
+        if ($application->invited_at && $cancelAt && now()->gte($cancelAt)) {
             return response()->view('proposals.expired', compact('application'), 410);
         }
         if ($application->isPrIfCampaign() && !$application->invited_at

@@ -13,11 +13,20 @@ class AutoCancelExpiredProposals extends Command
 
     public function handle(): void
     {
-        // 通常打診：invited_at を過ぎても未回答
-        $expired = Application::where('status', 'line_contacted')
+        // 通常打診：invited_end_at があれば終了時間、なければ invited_at でキャンセル
+        $expiredWithEnd = Application::where('status', 'line_contacted')
             ->whereNotNull('invited_at')
+            ->whereNotNull('invited_end_at')
+            ->where('invited_end_at', '<=', now())
+            ->get();
+
+        $expiredNoEnd = Application::where('status', 'line_contacted')
+            ->whereNotNull('invited_at')
+            ->whereNull('invited_end_at')
             ->where('invited_at', '<=', now())
             ->get();
+
+        $expired = $expiredWithEnd->concat($expiredNoEnd);
 
         foreach ($expired as $app) {
             $app->update([
