@@ -106,7 +106,14 @@ class LineLinkController extends Controller
             ->where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
             ->get();
 
-        $query = User::whereNotNull('transfer_registered_at')->orderByDesc('transfer_registered_at');
+        // transfer_registered_at があっても spreadsheet ユーザーとして実LINE IDで紐付き済みなら除外
+        $query = User::whereNotNull('transfer_registered_at')
+            ->where(function ($q) {
+                $q->where('imported_from', '!=', 'spreadsheet')
+                  ->orWhereNull('line_user_id')
+                  ->orWhere('line_user_id', 'like', 'IMPORT_%');
+            })
+            ->orderByDesc('transfer_registered_at');
 
         if ($request->filled('name')) {
             $query->where(function ($q) use ($request) {
