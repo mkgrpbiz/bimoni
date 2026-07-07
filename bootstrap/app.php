@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['portal.auth' => \App\Http\Middleware\PortalAuth::class]);
-        $middleware->validateCsrfTokens(except: ['member/auth/liff-callback', 'member/register']);
+        $middleware->validateCsrfTokens(except: ['member/auth/liff-callback', 'member/register', 'member/transfer']);
         // member/* へのアクセスは member.login へリダイレクト
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('member/*') || $request->is('member')) {
