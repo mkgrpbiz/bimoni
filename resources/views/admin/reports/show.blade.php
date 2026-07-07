@@ -110,24 +110,6 @@
                 </form>
             </div>
         </div>
-        @elseif($report->status === 'approved')
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
-            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">協力金付与</h2>
-            @if($report->application?->status === 'approved')
-            <p class="text-sm text-gray-800 dark:text-gray-400 mb-3">
-                付与金額：<span class="font-bold text-pink-600 dark:text-pink-400">¥{{ number_format($report->campaign?->cooperation_fee ?? 0) }}</span>
-            </p>
-            <form method="POST" action="{{ route('admin.points.grant', $report) }}"
-                  onsubmit="return confirm('協力金を付与しますか？')">
-                @csrf @method('PATCH')
-                <button type="submit" class="bg-pink-600 text-white px-5 py-2 rounded hover:bg-pink-700 text-sm">
-                    協力金を付与する
-                </button>
-            </form>
-            @else
-            <p class="text-sm text-green-600 dark:text-green-400">✓ 協力金付与済み</p>
-            @endif
-        </div>
         @elseif($report->status === 'rejected' && $report->reject_reason)
         <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p class="text-sm font-medium text-red-700 dark:text-red-400 mb-1">差戻し理由</p>

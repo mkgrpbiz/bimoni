@@ -95,6 +95,13 @@
                 <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
                 <button type="submit" class="bg-green-500 text-white px-3 py-1.5 rounded text-sm hover:bg-green-600">→ 予約済にする</button>
             </form>
+            @elseif(!$block['hasPending'] && $block['total'] > 0)
+            <form method="POST" action="{{ route('admin.points.mark_paid') }}"
+                  onsubmit="return confirm('{{ $block['month']->format('Y年n月') }}の協力金をすべて支払い済にしますか？')">
+                @csrf @method('PATCH')
+                <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
+                <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">→ 支払い済にする</button>
+            </form>
             @endif
         </div>
     </div>

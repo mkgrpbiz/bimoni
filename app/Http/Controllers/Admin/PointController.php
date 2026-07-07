@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Application;
 use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\User;
@@ -169,10 +170,19 @@ class PointController extends Controller
         $start = $month->copy()->startOfMonth();
         $end   = $month->copy()->endOfMonth();
 
-        MonitorReport::where('status', 'approved')
+        $reports = MonitorReport::where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'reserved'])
             ->whereBetween('created_at', [$start, $end])
+            ->get();
+
+        MonitorReport::whereIn('id', $reports->pluck('id'))
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
+
+        // 紐づく応募を point_granted に更新
+        $applicationIds = $reports->pluck('application_id')->filter();
+        Application::whereIn('id', $applicationIds)
+            ->where('status', 'approved')
+            ->update(['status' => 'point_granted']);
 
         CollectionReport::where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'reserved'])
