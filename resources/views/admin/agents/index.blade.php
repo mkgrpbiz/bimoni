@@ -34,7 +34,7 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
                         </button>
                     </div>
-                    <form id="form-{{ $agent->id }}" class="hidden flex items-center gap-1"
+                    <form id="form-{{ $agent->id }}" style="display:none" class="items-center gap-1"
                           method="POST" action="{{ route('admin.agents.update', $agent) }}">
                         @csrf @method('PATCH')
                         <input type="text" name="name" value="{{ $agent->name }}"
@@ -73,18 +73,15 @@
 @push('scripts')
 <script>
 function startEdit(id, name) {
-    document.getElementById('disp-' + id).classList.add('hidden');
+    document.getElementById('disp-' + id).style.display = 'none';
     const form = document.getElementById('form-' + id);
-    form.classList.remove('hidden');
-    form.classList.add('flex');
+    form.style.display = 'flex';
     form.querySelector('input[name=name]').value = name;
     form.querySelector('input[name=name]').focus();
 }
 function cancelEdit(id) {
-    document.getElementById('disp-' + id).classList.remove('hidden');
-    const form = document.getElementById('form-' + id);
-    form.classList.add('hidden');
-    form.classList.remove('flex');
+    document.getElementById('disp-' + id).style.display = '';
+    document.getElementById('form-' + id).style.display = 'none';
 }
 </script>
 @endpush
