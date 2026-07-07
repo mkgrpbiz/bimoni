@@ -39,6 +39,7 @@
                 };
                 $coopFee = $report->campaign?->cooperation_fee ?? 0;
                 $purchaseAmt = $report->purchase_amount ?? 0;
+                $adjustAmt = $report->adjustment_amount ?? 0;
             @endphp
             <dl class="grid grid-cols-2 gap-y-3 text-sm">
                 <dt class="text-gray-500 dark:text-gray-400">BIMONI ID</dt>
@@ -56,8 +57,12 @@
                 <dd class="dark:text-gray-200">¥{{ number_format($purchaseAmt) }}</dd>
                 <dt class="text-gray-500 dark:text-gray-400">モニター協力金</dt>
                 <dd class="text-pink-600 dark:text-pink-400 font-medium">¥{{ number_format($coopFee) }}</dd>
+                @if($adjustAmt)
+                <dt class="text-gray-500 dark:text-gray-400">修正金額</dt>
+                <dd class="dark:text-gray-200 {{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}¥{{ number_format($adjustAmt) }}</dd>
+                @endif
                 <dt class="text-gray-500 dark:text-gray-400">支払合計</dt>
-                <dd class="font-bold dark:text-gray-200">¥{{ number_format($purchaseAmt + $coopFee) }}</dd>
+                <dd class="font-bold dark:text-gray-200">¥{{ number_format($purchaseAmt + $coopFee + $adjustAmt) }}</dd>
                 <dt class="text-gray-500 dark:text-gray-400">お支払方法</dt>
                 <dd class="dark:text-gray-200">{{ $paymentLabel }}</dd>
                 @endif
@@ -69,6 +74,41 @@
             </div>
             @endif
         </div>
+
+        {{-- 金額修正 --}}
+        @if($report->purchase_type !== 'other')
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">金額修正</h2>
+            @if($report->adjustment_amount)
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                現在の修正: <span class="font-bold text-pink-600">{{ $report->adjustment_amount > 0 ? '+' : '' }}¥{{ number_format($report->adjustment_amount) }}</span>
+                <span class="text-gray-400 ml-2">（{{ $report->adjustment_reason }}）</span>
+            </p>
+            @endif
+            <form method="POST" action="{{ route('admin.reports.adjust', $report) }}" class="space-y-3">
+                @csrf @method('PATCH')
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">修正理由</label>
+                    <input type="text" name="adjustment_reason" required maxlength="255"
+                           value="{{ old('adjustment_reason', $report->adjustment_reason) }}"
+                           placeholder="例: 送料補填、特別ボーナス"
+                           class="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">修正金額（±）</label>
+                    <input type="number" name="adjustment_amount" required
+                           value="{{ old('adjustment_amount', $report->adjustment_amount) }}"
+                           placeholder="例: 500 または -500"
+                           class="w-40 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                </div>
+                <button type="submit"
+                        onclick="return confirm('金額を修正しますか？')"
+                        class="bg-gray-700 text-white px-5 py-2 rounded hover:bg-gray-800 text-sm">
+                    修正する
+                </button>
+            </form>
+        </div>
+        @endif
 
         {{-- 報告画像 --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">

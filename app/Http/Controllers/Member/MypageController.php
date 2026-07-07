@@ -30,7 +30,7 @@ class MypageController extends Controller
             $coopFee = $r->purchase_type === 'continuation'
                 ? ($r->campaign?->continuation_cooperation_fee ?? 0)
                 : ($r->campaign?->cooperation_fee ?? 0);
-            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
         };
 
         // 先月報告（created_at）→ 今月10日支払い
@@ -61,18 +61,24 @@ class MypageController extends Controller
         $payNextDate    = $now->copy()->addMonth()->day(10)->format('n月j日');
 
         $groups = [
-            '応募中'   => $applications->filter(fn($a) => in_array($a->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming'])),
-            '実施完了' => $applications->filter(fn($a) => in_array($a->status, ['completed'])),
-            '報告済'   => $applications->filter(fn($a) => in_array($a->status, ['reported', 'approved', 'point_granted'])),
+            '応募中'     => $applications->filter(fn($a) => in_array($a->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming'])),
+            '実施完了'   => $applications->filter(fn($a) => in_array($a->status, ['completed'])),
             'キャンセル' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'cancelled'])),
         ];
+
+        // 報告済はMonitorReportベース（差戻し＋再報告が別行で表示される）
+        $monitorReports = MonitorReport::where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'approved', 'rejected'])
+            ->with('campaign')
+            ->latest()
+            ->get();
 
         $collectionReports = CollectionReport::where('user_id', $user->id)
             ->latest()
             ->get();
 
         return view('member.mypage.index', compact(
-            'user', 'groups', 'collectionReports',
+            'user', 'groups', 'monitorReports', 'collectionReports',
             'payCurrentMonth', 'payNextMonth',
             'payCurrentDate', 'payNextDate'
         ));

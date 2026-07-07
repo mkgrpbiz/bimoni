@@ -103,6 +103,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::patch('reports/{report}/approve', [ReportController::class, 'approve'])->name('reports.approve');
         Route::patch('reports/{report}/reject', [ReportController::class, 'reject'])->name('reports.reject');
+        Route::patch('reports/{report}/adjust', [ReportController::class, 'adjust'])->name('reports.adjust');
         Route::get('agents', [AgentController::class, 'index'])->name('agents.index');
         Route::get('agents/create', [AgentController::class, 'create'])->name('agents.create');
         Route::post('agents', [AgentController::class, 'store'])->name('agents.store');
@@ -209,6 +210,7 @@ Route::prefix('member')->name('member.')->group(function () {
             Route::get('profile/edit', [MemberRegister::class, 'edit'])->name('profile.edit');
             Route::patch('profile', [MemberRegister::class, 'updateProfile'])->name('profile.update');
             Route::get('reports/create', [\App\Http\Controllers\Member\ReportController::class, 'create'])->name('reports.create');
+            Route::get('reports/{report}', [\App\Http\Controllers\Member\ReportController::class, 'show'])->name('reports.show');
             Route::post('reports', [\App\Http\Controllers\Member\ReportController::class, 'store'])->name('reports.store');
             Route::post('reports/collection', [\App\Http\Controllers\Member\ReportController::class, 'storeCollection'])->name('reports.store_collection');
         });

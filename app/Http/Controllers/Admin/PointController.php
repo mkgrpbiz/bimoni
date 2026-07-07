@@ -21,7 +21,7 @@ class PointController extends Controller
         $coopFee = $r->purchase_type === 'continuation'
             ? ($r->campaign?->continuation_cooperation_fee ?? 0)
             : ($r->campaign?->cooperation_fee ?? 0);
-        return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+        return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
     }
 
     public function index(Request $request): View
@@ -221,7 +221,7 @@ class PointController extends Controller
             $coopFee = $r->purchase_type === 'continuation'
                 ? ($r->campaign?->continuation_cooperation_fee ?? 0)
                 : ($r->campaign?->cooperation_fee ?? 0);
-            $fee = ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+            $fee = ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
             $rows[] = [
                 $r->created_at->format('Y/m/d'),
                 $r->user?->bimoni_user_id ?? '',
@@ -291,7 +291,7 @@ class PointController extends Controller
             $coopFee = $r->purchase_type === 'continuation'
                 ? ($r->campaign?->continuation_cooperation_fee ?? 0)
                 : ($r->campaign?->cooperation_fee ?? 0);
-            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
         }
 
         foreach ($collections as $r) {

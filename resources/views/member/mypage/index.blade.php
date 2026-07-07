@@ -47,6 +47,7 @@
 
     @php
         $tabKeys = array_keys($groups);
+        $allTabs = array_merge($tabKeys, ['報告済', '回収']);
     @endphp
 
     <div x-data="{ tab: '{{ $tabKeys[0] }}' }">
@@ -68,6 +69,20 @@
                 </span>
             </button>
             @endforeach
+            {{-- 報告済タブ --}}
+            <button
+                @click="tab = '報告済'"
+                :class="tab === '報告済'
+                    ? 'border-b-2 border-pink-500 text-pink-600 font-semibold'
+                    : 'text-gray-500'"
+                class="flex-1 min-w-0 py-2.5 px-1 text-xs whitespace-nowrap flex flex-col items-center gap-0.5 transition-colors">
+                <span>報告済</span>
+                <span
+                    :class="tab === '報告済' ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'"
+                    class="text-xs font-bold px-1.5 py-0.5 rounded-full leading-none transition-colors">
+                    {{ $monitorReports->count() }}
+                </span>
+            </button>
             {{-- 回収タブ --}}
             <button
                 @click="tab = '回収'"
@@ -84,7 +99,7 @@
             </button>
         </div>
 
-        {{-- モニター履歴タブコンテンツ --}}
+        {{-- 応募中・実施完了・キャンセル タブコンテンツ --}}
         @foreach($groups as $label => $apps)
         <div x-show="tab === '{{ $label }}'" x-cloak>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -93,18 +108,6 @@
                 @else
                     <div class="divide-y divide-gray-50">
                         @foreach($apps as $app)
-                        @php
-                            $isRejected = $app->status === 'reported' && $app->report?->status === 'rejected';
-                            $subStatus = $isRejected
-                                ? ['label' => '差戻し', 'color' => 'bg-red-100 text-red-600']
-                                : match($app->status) {
-                                    'completed'     => ['label' => '未報告',    'color' => 'bg-orange-100 text-orange-600'],
-                                    'reported'      => ['label' => '承認待ち',  'color' => 'bg-blue-100 text-blue-600'],
-                                    'approved'      => ['label' => '支払い待ち', 'color' => 'bg-yellow-100 text-yellow-700'],
-                                    'point_granted' => ['label' => '支払い済',  'color' => 'bg-teal-100 text-teal-700'],
-                                    default         => null,
-                                };
-                        @endphp
                         <div class="px-4 py-3 flex items-center gap-3">
                             <div class="w-10 h-10 bg-pink-50 rounded-lg flex-shrink-0 overflow-hidden">
                                 @if($app->campaign && $app->campaign->thumbnail)
@@ -118,22 +121,9 @@
                                 <p class="text-sm font-medium text-gray-800 truncate">
                                     {{ $app->campaign->title ?? '削除済み案件' }}
                                 </p>
-                                <div class="flex items-center gap-2 mt-0.5">
-                                    <p class="text-xs text-gray-400">
-                                        @if($label === '実施完了' && $app->completed_at)
-                                            実施：{{ $app->completed_at->format('Y/m/d') }}
-                                        @elseif($label === '報告済' && $app->reported_at)
-                                            報告：{{ $app->reported_at->format('Y/m/d') }}
-                                        @else
-                                            応募：{{ $app->applied_at->format('Y/m/d') }}
-                                        @endif
-                                    </p>
-                                    @if($subStatus)
-                                        <span class="text-xs px-1.5 py-0.5 rounded-full {{ $subStatus['color'] }}">
-                                            {{ $subStatus['label'] }}
-                                        </span>
-                                    @endif
-                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    応募：{{ $app->applied_at->format('Y/m/d') }}
+                                </p>
                             </div>
                             @if($app->campaign)
                             <a href="{{ route('member.campaigns.show', $app->campaign) }}"
@@ -148,6 +138,56 @@
             </div>
         </div>
         @endforeach
+
+        {{-- 報告済タブコンテンツ（MonitorReportベース） --}}
+        <div x-show="tab === '報告済'" x-cloak>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                @if($monitorReports->isEmpty())
+                    <p class="text-xs text-gray-400 text-center py-8">報告履歴がありません</p>
+                @else
+                    <div class="divide-y divide-gray-50">
+                        @foreach($monitorReports as $report)
+                        @php
+                            $badge = match($report->status) {
+                                'pending'  => ['label' => '承認待ち',  'color' => 'bg-blue-100 text-blue-600'],
+                                'approved' => ['label' => '支払い待ち', 'color' => 'bg-yellow-100 text-yellow-700'],
+                                'rejected' => ['label' => '差戻し',    'color' => 'bg-red-100 text-red-600'],
+                                default    => null,
+                            };
+                            if ($report->status === 'approved' && $report->payment_status === 'paid') {
+                                $badge = ['label' => '支払い済', 'color' => 'bg-teal-100 text-teal-700'];
+                            }
+                        @endphp
+                        <div class="px-4 py-3 flex items-center gap-3">
+                            <div class="w-10 h-10 bg-pink-50 rounded-lg flex-shrink-0 overflow-hidden">
+                                @if($report->campaign?->thumbnail)
+                                    <img src="{{ asset('storage/' . $report->campaign->thumbnail) }}"
+                                         class="w-full h-full object-cover">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center text-lg">💄</div>
+                                @endif
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">
+                                    {{ $report->campaign->title ?? '削除済み案件' }}
+                                </p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <p class="text-xs text-gray-400">報告：{{ $report->created_at->format('Y/m/d') }}</p>
+                                    @if($badge)
+                                        <span class="text-xs px-1.5 py-0.5 rounded-full {{ $badge['color'] }}">{{ $badge['label'] }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <a href="{{ route('member.reports.show', $report) }}"
+                               class="text-xs text-pink-500 flex-shrink-0">
+                                詳細 →
+                            </a>
+                        </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
 
         {{-- 回収タブコンテンツ --}}
         <div x-show="tab === '回収'" x-cloak>

@@ -15,6 +15,16 @@ use Illuminate\View\View;
 
 class ReportController extends Controller
 {
+    public function show(MonitorReport $report): View|RedirectResponse
+    {
+        $user = Auth::guard('liff')->user();
+        if ($report->user_id !== $user->id) {
+            abort(403);
+        }
+        $report->load(['campaign', 'images']);
+        return view('member.reports.show', compact('report'));
+    }
+
     public function create(Request $request): View
     {
         $user = Auth::guard('liff')->user();
