@@ -3,7 +3,21 @@
 @section('content')
 <div class="flex items-center gap-3 mb-6">
     <a href="{{ route('admin.agents.index') }}" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">← 代理店一覧</a>
-    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ $agent->name }}</h1>
+    <div id="disp-{{ $agent->id }}" class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ $agent->name }}</h1>
+        <button type="button" onclick="startEdit({{ $agent->id }}, @json($agent->name))"
+                class="text-gray-400 hover:text-pink-500" title="名前を変更">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
+        </button>
+    </div>
+    <form id="form-{{ $agent->id }}" class="hidden items-center gap-1"
+          method="POST" action="{{ route('admin.agents.update', $agent) }}">
+        @csrf @method('PATCH')
+        <input type="text" name="name" value="{{ $agent->name }}"
+               class="border rounded px-2 py-1 text-lg font-bold w-64" required maxlength="100">
+        <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1 rounded hover:bg-pink-600">保存</button>
+        <button type="button" onclick="cancelEdit({{ $agent->id }})" class="text-sm text-gray-400 hover:text-gray-600 px-2 py-1">×</button>
+    </form>
     @php $agentHasUsers = \App\Models\User::whereIn('referred_by_code', $agent->getAllCodeStrings())->exists(); @endphp
     @if(!$agentHasUsers)
     <form method="POST" action="{{ route('admin.agents.destroy', $agent) }}" class="ml-auto"
@@ -102,7 +116,23 @@
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($agent->children as $child)
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
-                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ $child->name }}</td>
+                <td class="px-4 py-3">
+                    <div id="disp-{{ $child->id }}" class="flex items-center gap-1">
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ $child->name }}</span>
+                        <button type="button" onclick="startEdit({{ $child->id }}, @json($child->name))"
+                                class="text-gray-400 hover:text-pink-500 shrink-0" title="名前を変更">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
+                        </button>
+                    </div>
+                    <form id="form-{{ $child->id }}" class="hidden items-center gap-1"
+                          method="POST" action="{{ route('admin.agents.update', $child) }}">
+                        @csrf @method('PATCH')
+                        <input type="text" name="name" value="{{ $child->name }}"
+                               class="border rounded px-2 py-0.5 text-sm font-medium w-40" required maxlength="100">
+                        <button type="submit" class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">保存</button>
+                        <button type="button" onclick="cancelEdit({{ $child->id }})" class="text-xs text-gray-400 px-1">×</button>
+                    </form>
+                </td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-800 dark:text-gray-200">
                     {{ $child->codes->pluck('code')->join(', ') }}
                 </td>
@@ -177,6 +207,20 @@
     </a>
 </nav>
 <script>
+function startEdit(id, name) {
+    document.getElementById('disp-' + id).classList.add('hidden');
+    const form = document.getElementById('form-' + id);
+    form.classList.remove('hidden');
+    form.classList.add('flex');
+    form.querySelector('input[name=name]').value = name;
+    form.querySelector('input[name=name]').focus();
+}
+function cancelEdit(id) {
+    document.getElementById('disp-' + id).classList.remove('hidden');
+    const form = document.getElementById('form-' + id);
+    form.classList.add('hidden');
+    form.classList.remove('flex');
+}
 function toggleCodes() {
     const extras = document.querySelectorAll('.code-extra');
     const btn = document.getElementById('toggle-codes-btn');

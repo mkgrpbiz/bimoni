@@ -26,7 +26,23 @@
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($agents as $agent)
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
-                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ $agent->name }}</td>
+                <td class="px-4 py-3">
+                    <div id="disp-{{ $agent->id }}" class="flex items-center gap-2">
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ $agent->name }}</span>
+                        <button type="button" onclick="startEdit({{ $agent->id }}, @json($agent->name))"
+                                class="text-gray-400 hover:text-pink-500 shrink-0" title="名前を変更">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
+                        </button>
+                    </div>
+                    <form id="form-{{ $agent->id }}" class="hidden flex items-center gap-1"
+                          method="POST" action="{{ route('admin.agents.update', $agent) }}">
+                        @csrf @method('PATCH')
+                        <input type="text" name="name" value="{{ $agent->name }}"
+                               class="border rounded px-2 py-0.5 text-sm font-medium w-48" required maxlength="100">
+                        <button type="submit" class="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600">保存</button>
+                        <button type="button" onclick="cancelEdit({{ $agent->id }})" class="text-xs text-gray-400 hover:text-gray-600 px-2 py-1">×</button>
+                    </form>
+                </td>
                 <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{{ $agent->children->count() }}</td>
                 <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{{ $agent->codes->count() }}</td>
                 <td class="px-4 py-3 text-right text-gray-800 dark:text-gray-200">{{ $registeredMap[$agent->id] ?? 0 }}</td>
@@ -54,4 +70,22 @@
         </tbody>
     </table>
 </div>
+@push('scripts')
+<script>
+function startEdit(id, name) {
+    document.getElementById('disp-' + id).classList.add('hidden');
+    const form = document.getElementById('form-' + id);
+    form.classList.remove('hidden');
+    form.classList.add('flex');
+    form.querySelector('input[name=name]').value = name;
+    form.querySelector('input[name=name]').focus();
+}
+function cancelEdit(id) {
+    document.getElementById('disp-' + id).classList.remove('hidden');
+    const form = document.getElementById('form-' + id);
+    form.classList.add('hidden');
+    form.classList.remove('flex');
+}
+</script>
+@endpush
 @endsection

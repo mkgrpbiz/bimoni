@@ -109,6 +109,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('agents/create', [AgentController::class, 'create'])->name('agents.create');
         Route::post('agents', [AgentController::class, 'store'])->name('agents.store');
         Route::get('agents/{agent}', [AgentController::class, 'show'])->name('agents.show');
+        Route::patch('agents/{agent}', [AgentController::class, 'update'])->name('agents.update');
         Route::post('agents/{agent}/code', [AgentController::class, 'addCode'])->name('agents.add_code');
         Route::delete('agents/code/{code}', [AgentController::class, 'deleteCode'])->name('agents.delete_code');
         Route::delete('agents/{agent}', [AgentController::class, 'destroy'])->name('agents.destroy');

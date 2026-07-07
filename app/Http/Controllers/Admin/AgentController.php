@@ -90,6 +90,13 @@ class AgentController extends Controller
         return view('admin.agents.show', compact('agent', 'sortedCodes', 'userCounts'));
     }
 
+    public function update(Agent $agent, Request $request): RedirectResponse
+    {
+        $request->validate(['name' => 'required|string|max:100']);
+        $agent->update(['name' => $request->name]);
+        return back()->with('success', '代理店名を変更しました。');
+    }
+
     public function addCode(Agent $agent, Request $request): RedirectResponse
     {
         $request->validate([
