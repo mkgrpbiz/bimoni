@@ -58,6 +58,9 @@ class CampaignController extends Controller
         if ($request->hasFile('monitor_video')) {
             $validated['monitor_video'] = $request->file('monitor_video')->store('campaigns/videos', 'public');
         }
+        if ($request->hasFile('monitor_video_thumbnail')) {
+            $validated['monitor_video_thumbnail'] = $request->file('monitor_video_thumbnail')->store('campaigns/video_thumbnails', 'public');
+        }
 
         $this->applyCooperationFormula($validated, $request);
         $campaign = Campaign::create($validated);
@@ -95,6 +98,12 @@ class CampaignController extends Controller
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($campaign->monitor_video);
             }
             $validated['monitor_video'] = $request->file('monitor_video')->store('campaigns/videos', 'public');
+        }
+        if ($request->hasFile('monitor_video_thumbnail')) {
+            if ($campaign->monitor_video_thumbnail) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($campaign->monitor_video_thumbnail);
+            }
+            $validated['monitor_video_thumbnail'] = $request->file('monitor_video_thumbnail')->store('campaigns/video_thumbnails', 'public');
         }
 
         $validated['capacity'] = $request->filled('capacity') ? (int) $request->capacity : null;
@@ -216,7 +225,8 @@ class CampaignController extends Controller
             'link'                   => 'nullable|url|max:500',
             'monitor_invite_message' => 'nullable|string',
             'monitor_end_message'    => 'nullable|string',
-            'monitor_video'          => 'nullable|mimes:mp4,mov,avi,webm|max:204800',
+            'monitor_video'           => 'nullable|mimes:mp4,mov,avi,webm|max:204800',
+            'monitor_video_thumbnail' => 'nullable|image|max:5120',
             'product_name'           => 'nullable|string|max:255',
             'product_price'          => 'nullable|integer|min:0',
             'cooperation_fee'              => 'nullable|integer|min:0',

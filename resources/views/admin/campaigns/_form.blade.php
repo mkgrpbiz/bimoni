@@ -330,6 +330,21 @@
     </div>
 
     <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">動画サムネイル画像 <span class="text-gray-400 text-xs font-normal">※LINE送信時のプレビュー画像（必須）</span></label>
+        @if($isEdit && $campaign->monitor_video_thumbnail)
+        <div class="mb-2 flex items-center gap-3">
+            <img src="{{ asset('storage/' . $campaign->monitor_video_thumbnail) }}"
+                 class="w-24 h-16 object-cover rounded border" alt="動画サムネイル">
+            <p class="text-xs text-gray-500">新しい画像を選択すると置き換わります</p>
+        </div>
+        @endif
+        <input type="file" name="monitor_video_thumbnail" accept="image/*"
+               class="w-full border rounded px-3 py-2 text-sm">
+        <p class="text-xs text-gray-400 mt-0.5">JPEG・PNG・GIF、最大5MB。動画未設定の場合は不要です。</p>
+        @error('monitor_video_thumbnail')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+    </div>
+
+    <div class="mt-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">モニター終了案内文</label>
         <textarea name="monitor_end_message" rows="5"
                   class="w-full border rounded px-3 py-2 text-sm font-mono"

@@ -54,15 +54,18 @@ class SendLineMessages extends Command
             // monitor_guide 送信成功時に案内動画があれば追送
             if ($success && $job->send_type === 'monitor_guide' && $job->campaign_id) {
                 $campaign = Campaign::find($job->campaign_id);
-                if ($campaign?->monitor_video && $campaign->thumbnail) {
+                $previewPath = $campaign?->monitor_video_thumbnail ?? $campaign?->thumbnail;
+                if ($campaign?->monitor_video && $previewPath) {
                     $lineService->sendVideo(
                         $job->user_id,
                         $campaign->monitor_video,
-                        $campaign->thumbnail,
+                        $previewPath,
                         $job->send_type,
                         $job->application_id
                     );
                     $this->line("動画追送: job#{$job->id} campaign#{$job->campaign_id}");
+                } elseif ($campaign?->monitor_video) {
+                    $this->warn("動画スキップ（サムネイル未設定）: job#{$job->id} campaign#{$job->campaign_id}");
                 }
             }
         }

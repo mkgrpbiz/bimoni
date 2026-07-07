@@ -9,7 +9,7 @@ class Campaign extends Model
     protected $fillable = [
         'category_id', 'title', 'campaign_type', 'status', 'pr_media',
         'description', 'requirements', 'notes',
-        'cancellation_info', 'monitor_guide', 'link', 'monitor_video',
+        'cancellation_info', 'monitor_guide', 'link', 'monitor_video', 'monitor_video_thumbnail',
         'monitor_invite_message', 'monitor_end_message',
         'product_name', 'product_price',
         'cooperation_fee', 'cooperation_fee_formula',
