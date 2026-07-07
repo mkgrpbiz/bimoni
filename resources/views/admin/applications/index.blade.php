@@ -135,7 +135,8 @@ $tabs = [
                 $guideJob    = $lineJobs->where('send_type','monitor_guide')->where('status','pending')->first()
                             ?? $lineJobs->where('send_type','monitor_guide')->sortByDesc('created_at')->first();
             @endphp
-            <tr class="hover:bg-gray-50 {{ $isLocked ? 'opacity-70' : '' }}">
+            @php $unlinked = str_starts_with($user?->line_user_id ?? '', 'IMPORT_'); @endphp
+            <tr class="{{ $unlinked ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50' }} {{ $isLocked ? 'opacity-70' : '' }}">
                 <td class="px-3 py-2 whitespace-nowrap text-gray-700">{{ $app->applied_at->format('m/d H:i') }}</td>
                 <td class="px-3 py-2 text-gray-700">{{ $user?->line_display_name ?? '-' }}</td>
                 <td class="px-3 py-2 font-medium whitespace-nowrap">{{ $user?->name ?? '（未登録）' }}</td>
