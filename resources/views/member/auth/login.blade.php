@@ -73,8 +73,17 @@
         .then(profile => {
             if (!profile) return;
             const params = new URLSearchParams(window.location.search);
-            const referralCode = params.get('referral_code') || '';
-            const fromPage = params.get('from') || '';
+            let referralCode = params.get('referral_code') || '';
+            let fromPage = params.get('from') || '';
+            // liff.line.me 経由で開くとパラメータが liff.state に入る
+            if (!fromPage && !referralCode) {
+                const liffState = params.get('liff.state');
+                if (liffState) {
+                    const sp = new URLSearchParams(liffState.replace(/^\?/, ''));
+                    referralCode = sp.get('referral_code') || '';
+                    fromPage = sp.get('from') || '';
+                }
+            }
             return fetch('{{ route("member.auth.liff") }}', {
                 method: 'POST',
                 headers: {
