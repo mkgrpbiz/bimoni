@@ -26,7 +26,7 @@ class ApplicationController extends Controller
 
         $query = Application::with(['user', 'campaign', 'lineMessageJobs'])
             ->whereHas('campaign', fn($q) => $q->where('status', $campaignStatus))
-            ->latest('applied_at');
+            ->oldest('applied_at');
 
         if ($request->filled('campaign_id')) {
             $query->where('campaign_id', $request->campaign_id);
