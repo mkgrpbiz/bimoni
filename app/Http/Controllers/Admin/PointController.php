@@ -46,11 +46,17 @@ class PointController extends Controller
                 ->whereBetween('created_at', [$start, $end])
                 ->exists();
 
+            $hasPending = $monitors->contains('payment_status', 'pending') || $hasPendingCollection;
+            $allPaid    = $monitors->count() > 0
+                && $monitors->every(fn($r) => $r->payment_status === 'paid')
+                && !$hasPendingCollection;
+
             $blocks[] = [
                 'month'      => $m->copy(),
                 'total'      => $monitors->sum(fn($r) => $this->monitorFee($r)) + $collectionFee,
                 'count'      => $monitors->count(),
-                'hasPending' => $monitors->contains('payment_status', 'pending') || $hasPendingCollection,
+                'hasPending' => $hasPending,
+                'allPaid'    => $allPaid,
             ];
         }
 
@@ -93,13 +99,20 @@ class PointController extends Controller
         $userMap = [];
 
         foreach ($monitorReports->groupBy('user_id') as $uid => $rows) {
+            if ($rows->contains('payment_status', 'pending')) {
+                $status = 'pending';
+            } elseif ($rows->every(fn($r) => $r->payment_status === 'paid')) {
+                $status = 'paid';
+            } else {
+                $status = 'reserved';
+            }
             $userMap[$uid] = [
                 'user'            => $rows->first()->user,
                 'monitorTotal'    => $rows->sum(fn($r) => $this->monitorFee($r)),
                 'monitorCount'    => $rows->count(),
                 'collectionTotal' => 0,
                 'collectionCount' => 0,
-                'status'          => $rows->contains('payment_status', 'pending') ? 'pending' : 'reserved',
+                'status'          => $status,
             ];
         }
 
@@ -112,13 +125,15 @@ class PointController extends Controller
                     'monitorCount'    => 0,
                     'collectionTotal' => 0,
                     'collectionCount' => 0,
-                    'status'          => 'reserved',
+                    'status'          => $cr->payment_status === 'paid' ? 'paid' : 'reserved',
                 ];
             }
             $userMap[$uid]['collectionTotal'] += $cr->cooperation_fee;
             $userMap[$uid]['collectionCount'] += 1;
             if ($cr->payment_status === 'pending') {
                 $userMap[$uid]['status'] = 'pending';
+            } elseif ($cr->payment_status !== 'paid' && $userMap[$uid]['status'] === 'paid') {
+                $userMap[$uid]['status'] = 'reserved';
             }
         }
 

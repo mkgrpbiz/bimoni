@@ -66,6 +66,10 @@
                     <span class="inline-flex items-center gap-1.5 bg-yellow-100 text-yellow-700 text-xs font-medium px-2.5 py-1 rounded-full">
                         <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>予約待ち
                     </span>
+                @elseif($block['allPaid'])
+                    <span class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>支払い済
+                    </span>
                 @else
                     <span class="inline-flex items-center gap-1.5 bg-green-100 text-green-700 text-xs font-medium px-2.5 py-1 rounded-full">
                         <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>予約済
@@ -177,6 +181,8 @@ function syncMonth(sel) {
                         <span class="bg-gray-100 text-gray-400 text-xs px-2 py-0.5 rounded-full">予約不要</span>
                     @elseif($row['status'] === 'pending')
                         <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">予約待ち</span>
+                    @elseif($row['status'] === 'paid')
+                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">支払い済</span>
                     @else
                         <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">予約済</span>
                     @endif
