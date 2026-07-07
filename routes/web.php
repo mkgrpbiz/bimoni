@@ -121,6 +121,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('line-links/link', [LineLinkController::class, 'link'])->name('line_links.link');
         Route::post('line-links/skip', [LineLinkController::class, 'skip'])->name('line_links.skip');
         Route::post('line-links/confirm-new', [LineLinkController::class, 'confirmNew'])->name('line_links.confirm_new');
+        Route::post('line-links/confirm-new-register', [LineLinkController::class, 'confirmNewRegister'])->name('line_links.confirm_new_register');
         Route::get('referrals', [ReferralController::class, 'index'])->name('referrals.index');
         Route::patch('referrals/mark-done', [ReferralController::class, 'markDone'])->name('referrals.mark_done');
         Route::patch('referrals/mark-pending', [ReferralController::class, 'markPending'])->name('referrals.mark_pending');
