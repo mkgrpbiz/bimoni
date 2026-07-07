@@ -80,6 +80,9 @@ class TransferController extends Controller
             $lineUserId      = $liffUser->line_user_id;
             $lineDisplayName = $liffUser->line_display_name;
 
+            $liffUser->applications()->update(['user_id' => $existing->id]);
+            $liffUser->monitorReports()->update(['user_id' => $existing->id]);
+            $liffUser->points()->update(['user_id' => $existing->id]);
             $liffUser->delete();
 
             $existing->update([
