@@ -200,13 +200,13 @@ class ReportController extends Controller
         foreach ($continuationIds as $appId) {
             $app = $applications->get($appId);
             if (!$app) continue;
-            $count     = (int) ($app->campaign?->collection_count_judgment ?? 1);
-            $grossFee += 800 * $count;
+            $count      = (int) ($app->campaign?->collection_count_judgment ?? 1);
+            $grossFee  += 800 * $count;
+            $itemCount += $count;
             $campaignIds[] = $app->campaign_id;
-            $itemCount++;
         }
 
-        $fee = $itemCount < 5 ? $grossFee - $shippingFee : $grossFee;
+        $fee = CollectionReport::calcFee($itemCount, $shippingFee);
 
         $boxPath   = $request->file('box_image')->store('collection', 'public');
         $labelPath = $request->file('label_image')->store('collection', 'public');
