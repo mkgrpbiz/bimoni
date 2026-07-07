@@ -416,6 +416,11 @@ class ImportService
 
                 DB::table('monitor_reports')->where('id', $report->id)->update(['created_at' => $reportedAt]);
 
+                // 紐づく応募のステータスを報告済みに更新
+                if ($application && in_array($application->status, ['completed', 'confirming'])) {
+                    $application->update(['status' => 'approved']);
+                }
+
                 $result['success']++;
             }
         });
