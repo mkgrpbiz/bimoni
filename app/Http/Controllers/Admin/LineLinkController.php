@@ -40,7 +40,7 @@ class LineLinkController extends Controller
             $query->where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'));
         }
 
-        $query->orderBy('name');
+        $query->orderByDesc('created_at');
 
         if ($request->filled('name')) {
             $query->where(function ($q) use ($request) {
