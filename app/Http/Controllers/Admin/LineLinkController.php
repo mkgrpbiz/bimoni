@@ -97,17 +97,19 @@ class LineLinkController extends Controller
             ->whereNotNull('profile_completed_at')
             ->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->name . '%')
-                  ->orWhere('name_kana', 'like', '%' . $request->name . '%');
+                  ->orWhere('name_kana', 'like', '%' . $request->name . '%')
+                  ->orWhere('line_display_name', 'like', '%' . $request->name . '%');
             })
             ->orderBy('name')
             ->limit(20)
-            ->get(['id', 'name', 'name_kana', 'birthdate', 'gender'])
+            ->get(['id', 'name', 'name_kana', 'line_display_name', 'birthdate', 'gender'])
             ->map(fn ($u) => [
-                'id'         => $u->id,
-                'name'       => $u->name,
-                'name_kana'  => $u->name_kana,
-                'birthdate'  => $u->birthdate?->format('Y-m-d'),
-                'gender'     => $u->gender,
+                'id'               => $u->id,
+                'name'             => $u->name,
+                'name_kana'        => $u->name_kana,
+                'line_display_name' => $u->line_display_name,
+                'birthdate'        => $u->birthdate?->format('Y-m-d'),
+                'gender'           => $u->gender,
             ]);
 
         return response()->json($liffUsers);
