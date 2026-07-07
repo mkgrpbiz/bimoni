@@ -7,12 +7,21 @@ use Illuminate\Support\Collection;
 
 class UserMatcher
 {
+    // 名前・フリガナはスペース除去して正規化（インポートデータと登録データのスペース有無の差を吸収）
+    private static function normalize(string $key, string $value): string
+    {
+        if (in_array($key, ['name', 'name_kana'], true)) {
+            return preg_replace('/[\s\x{3000}]+/u', '', $value);
+        }
+        return $value;
+    }
+
     // 名前・フリガナ・生年月日・メールのうち一致した項目数
     public static function score(array $a, array $b): int
     {
         $score = 0;
         foreach (['name', 'name_kana', 'birthdate', 'email'] as $key) {
-            if (!empty($a[$key]) && !empty($b[$key]) && $a[$key] === $b[$key]) {
+            if (!empty($a[$key]) && !empty($b[$key]) && self::normalize($key, $a[$key]) === self::normalize($key, $b[$key])) {
                 $score++;
             }
         }
