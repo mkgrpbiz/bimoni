@@ -108,7 +108,7 @@ $tabs = [
                 <th class="px-3 py-2 text-left whitespace-nowrap">フリガナ</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">年齢</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">性別</th>
-                <th class="px-3 py-2 text-left whitespace-nowrap">継続可否</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">継続希望</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">実施可能時間</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">案件名</th>
                 <th class="px-3 py-2 text-center whitespace-nowrap">CP</th>
@@ -143,9 +143,11 @@ $tabs = [
                 <td class="px-3 py-2 text-gray-700">{{ $user?->name_kana ?? '-' }}</td>
                 <td class="px-3 py-2 text-center">{{ $age }}</td>
                 <td class="px-3 py-2 text-center">{{ $genderLabel }}</td>
-                <td class="px-3 py-2 text-center">
-                    @if($user?->wants_continuation)
-                        <span class="text-green-600">○</span>
+                <td class="px-3 py-2 text-center whitespace-nowrap">
+                    @if($app->continuation_wish === '希望')
+                        <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">希望</span>
+                    @elseif($app->continuation_wish === '不可')
+                        <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">不可</span>
                     @else
                         <span class="text-gray-400">-</span>
                     @endif
