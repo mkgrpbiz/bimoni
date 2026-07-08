@@ -38,8 +38,9 @@ class Application extends Model
             'invited_at'              => 'datetime',
             'invited_end_at'          => 'datetime',
             'continuation_invite_date' => 'date',
-            'proposal_answered_at'      => 'datetime',
-            'proposal_sent_at'          => 'datetime',
+            'proposal_answered_at'        => 'datetime',
+            'proposal_sent_at'            => 'datetime',
+            'continuation_responded_at'   => 'datetime',
             'purchase_available_times'  => 'array',
             'is_re_proposal'            => 'boolean',
         ];
