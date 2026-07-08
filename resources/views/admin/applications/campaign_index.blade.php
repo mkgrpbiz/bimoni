@@ -340,7 +340,7 @@ $statusTabs = [
                         <form method="POST" action="{{ route('admin.applications.status', $app) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="completed">
-                            <button type="submit" class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">完了</button>
+                            <button type="submit" class="bg-teal-500 text-white px-1.5 py-0.5 rounded hover:bg-teal-600 text-xs">完了</button>
                         </form>
                         @endif
                         @if(!in_array($app->status, ['cancelled','completed','reported','approved','point_granted']))
@@ -360,7 +360,7 @@ $statusTabs = [
                         </button>
                         @endif
                         <a href="{{ route('admin.applications.show', $app) }}"
-                           class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">詳細</a>
+                           class="bg-gray-500 text-white px-1.5 py-0.5 rounded hover:bg-gray-600 text-xs">詳細</a>
                     </div>
                 </td>
             </tr>
