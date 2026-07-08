@@ -108,6 +108,17 @@ class ReportController extends Controller
         return back()->with('success', '承認待ちに戻しました。');
     }
 
+    public function updatePurchaseType(Request $request, MonitorReport $report): RedirectResponse
+    {
+        $request->validate([
+            'purchase_type' => 'required|in:initial,continuation,other',
+        ]);
+
+        $report->update(['purchase_type' => $request->purchase_type]);
+
+        return back()->with('success', '報告種別を変更しました。');
+    }
+
     public function adjust(Request $request, MonitorReport $report): RedirectResponse
     {
         $request->validate([

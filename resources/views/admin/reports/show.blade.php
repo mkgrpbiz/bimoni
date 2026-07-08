@@ -81,6 +81,24 @@
             @endif
         </div>
 
+        {{-- 報告種別変更 --}}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">報告種別変更</h2>
+            <form method="POST" action="{{ route('admin.reports.purchase_type', $report) }}" class="flex items-center gap-3">
+                @csrf @method('PATCH')
+                <select name="purchase_type" class="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="initial"      @selected($report->purchase_type === 'initial')>初回購入</option>
+                    <option value="continuation" @selected($report->purchase_type === 'continuation')>継続購入</option>
+                    <option value="other"        @selected($report->purchase_type === 'other')>その他</option>
+                </select>
+                <button type="submit"
+                        onclick="return confirm('報告種別を変更しますか？')"
+                        class="bg-gray-700 text-white px-5 py-2 rounded hover:bg-gray-800 text-sm">
+                    変更する
+                </button>
+            </form>
+        </div>
+
         {{-- 金額修正 --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">金額修正</h2>
