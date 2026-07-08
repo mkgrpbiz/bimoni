@@ -256,7 +256,7 @@ $tabs = [
                         @if($app->status === 'pending' && !$isLocked)
                         <button type="button"
                                 onclick="openProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.status', $app) }}', {{ ($app->campaign?->campaign_type === 'pr' && $app->campaign?->pr_media === 'IF') ? 'true' : 'false' }})"
-                                class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">
+                                class="bg-purple-500 text-white px-1.5 py-0.5 rounded hover:bg-purple-600 text-xs">
                             打診
                         </button>
                         @endif
@@ -264,14 +264,14 @@ $tabs = [
                         <form method="POST" action="{{ route('admin.applications.status', $app) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="scheduled">
-                            <button type="submit" class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">予約</button>
+                            <button type="submit" class="bg-indigo-500 text-white px-1.5 py-0.5 rounded hover:bg-indigo-600 text-xs">予約</button>
                         </form>
                         @endif
                         @if($app->status === 'scheduled')
                         <form method="POST" action="{{ route('admin.applications.status', $app) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="confirming">
-                            <button type="submit" class="bg-pink-500 text-white px-1.5 py-0.5 rounded hover:bg-pink-600 text-xs">実施確認</button>
+                            <button type="submit" class="bg-orange-500 text-white px-1.5 py-0.5 rounded hover:bg-orange-600 text-xs">実施確認</button>
                         </form>
                         @endif
                         @if($app->status === 'confirming')
