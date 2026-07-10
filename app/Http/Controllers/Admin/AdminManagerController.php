@@ -27,6 +27,7 @@ class AdminManagerController extends Controller
             'campaign_bonuses'      => 'キャンペーン',
             'applications'          => '応募管理',
             'proposal_reservations' => '打診予約',
+            'manual_addition'       => '手動追加',
             'reports'               => '報告管理',
             'collection_reports'    => '回収管理',
             'users'                 => 'ユーザー管理',

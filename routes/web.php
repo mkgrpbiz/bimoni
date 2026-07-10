@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\CollectionReportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EndCancelSettingController;
 use App\Http\Controllers\Admin\FormFieldController;
+use App\Http\Controllers\Admin\ManualAdditionController;
 use App\Http\Controllers\Admin\AdminManagerController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\ImportController;
@@ -92,6 +93,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // 応募管理
         Route::get('applications', [ApplicationController::class, 'index'])->name('applications.index');
         Route::get('proposal-reservations', [ApplicationController::class, 'proposalReservationIndex'])->name('proposal_reservations.index');
+        Route::get('manual-addition', [ManualAdditionController::class, 'index'])->name('manual_addition.index');
+        Route::post('manual-addition', [ManualAdditionController::class, 'store'])->name('manual_addition.store');
         Route::post('applications/{application}/re-proposal', [ApplicationController::class, 'sendReProposal'])->name('applications.re_proposal');
         Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
         Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus'])->name('applications.status');

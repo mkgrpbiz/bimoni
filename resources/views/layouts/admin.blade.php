@@ -22,6 +22,7 @@
             '応募・打診関連' => [
                 'applications'          => ['label' => '応募管理', 'route' => 'admin.applications.index'],
                 'proposal_reservations' => ['label' => '状況確認', 'route' => 'admin.proposal_reservations.index'],
+                'manual_addition'       => ['label' => '手動追加', 'route' => 'admin.manual_addition.index'],
             ],
             '協力金関連' => [
                 'reports'            => ['label' => '報告管理',   'route' => 'admin.reports.index'],
