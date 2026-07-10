@@ -60,10 +60,10 @@
     <div class="bg-white rounded-lg shadow p-4">
         <p class="text-xs text-gray-500 mb-1">{{ $b['month']->format('Y年n月') }}分</p>
         @if($isCombinedParentView)
-        <p class="text-xs text-gray-500">支払総額</p>
+        <p class="text-xs text-gray-500">全体紹介報酬</p>
         <p class="text-lg font-bold text-gray-800">¥{{ number_format($b['total']) }}</p>
-        <p class="text-xs text-gray-500 mt-1">自分の取り分（利益）</p>
-        <p class="text-lg font-bold text-pink-600">¥{{ number_format($b['parent_profit']) }}</p>
+        <p class="text-xs text-gray-500 mt-1">子支払総額</p>
+        <p class="text-lg font-bold text-pink-600">¥{{ number_format($b['child_payout']) }}</p>
         @else
         <p class="text-xl font-bold text-gray-800">¥{{ number_format($b['total']) }}</p>
         @endif
@@ -81,8 +81,8 @@
                 <th class="px-4 py-3 text-left">案件名</th>
                 <th class="px-4 py-3 text-right">件数</th>
                 @if($isCombinedParentView)
-                <th class="px-4 py-3 text-right">支払総額</th>
-                <th class="px-4 py-3 text-right">自分の取り分（利益）</th>
+                <th class="px-4 py-3 text-right">全体紹介報酬</th>
+                <th class="px-4 py-3 text-right">子支払総額</th>
                 @else
                 <th class="px-4 py-3 text-right">紹介単価</th>
                 @if($targetAgent->parent_id)
@@ -101,7 +101,7 @@
                 <td class="px-4 py-3 text-right text-gray-700">{{ $row['count'] }}件</td>
                 @if($isCombinedParentView)
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($isAllDenied ? 0 : $row['total']) }}</td>
-                <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($isAllDenied ? 0 : $row['parent_profit']) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($isAllDenied ? 0 : $row['child_payout']) }}</td>
                 @else
                 <td class="px-4 py-3 text-right text-gray-700">¥{{ number_format($row['reward']) }}</td>
                 @if($targetAgent->parent_id)
@@ -129,7 +129,7 @@
                 @if($isCombinedParentView)
                 <td colspan="2" class="px-4 py-3 text-right font-bold text-gray-700">合計</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($grandTotal) }}</td>
-                <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($grandParentProfit) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($grandChildPayout) }}</td>
                 @else
                 <td colspan="{{ $targetAgent->parent_id ? 4 : 3 }}" class="px-4 py-3 text-right font-bold text-gray-700">合計</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($grandTotal) }}</td>
@@ -154,12 +154,12 @@
         </div>
         @if($isCombinedParentView)
         <div class="flex items-center justify-between mt-2 text-sm">
-            <span class="text-xs text-gray-500">{{ $row['count'] }}件・支払総額</span>
+            <span class="text-xs text-gray-500">{{ $row['count'] }}件・全体紹介報酬</span>
             <span class="font-bold text-gray-800">¥{{ number_format($isAllDenied ? 0 : $row['total']) }}</span>
         </div>
         <div class="flex items-center justify-between mt-1 text-sm">
-            <span class="text-xs text-gray-500">自分の取り分（利益）</span>
-            <span class="font-bold text-pink-600">¥{{ number_format($isAllDenied ? 0 : $row['parent_profit']) }}</span>
+            <span class="text-xs text-gray-500">子支払総額</span>
+            <span class="font-bold text-pink-600">¥{{ number_format($isAllDenied ? 0 : $row['child_payout']) }}</span>
         </div>
         @else
         <div class="flex items-center justify-between mt-2 text-sm">
@@ -178,12 +178,12 @@
     <div class="bg-gray-800 text-white rounded-lg px-4 py-3">
         @if($isCombinedParentView)
         <div class="flex justify-between">
-            <span class="font-medium">合計（支払総額）</span>
+            <span class="font-medium">合計（全体紹介報酬）</span>
             <span class="font-bold text-lg">¥{{ number_format($grandTotal) }}</span>
         </div>
         <div class="flex justify-between mt-1">
-            <span class="font-medium">自分の取り分（利益）</span>
-            <span class="font-bold text-lg text-pink-300">¥{{ number_format($grandParentProfit) }}</span>
+            <span class="font-medium">子支払総額</span>
+            <span class="font-bold text-lg text-pink-300">¥{{ number_format($grandChildPayout) }}</span>
         </div>
         @else
         <div class="flex justify-between">

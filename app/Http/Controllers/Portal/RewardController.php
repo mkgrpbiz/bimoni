@@ -51,17 +51,15 @@ class RewardController extends Controller
         }
         $resolveOwner = fn($report) => $codeOwnerMap[$report->user?->referred_by_code] ?? $targetAgent;
 
-        // レコード1件ごとの「支払額（受け取り側の実際の取り分）」と「親の取り分（利益）」
+        // レコード1件ごとの「支払額（受け取り側の実際の取り分）」と「子への支払額」
         $payoutFor = function ($report) use ($isCombinedParentView, $resolveOwner, $targetAgent) {
             $owner = $isCombinedParentView ? $resolveOwner($report) : $targetAgent;
             return \App\Services\PortalService::calcReward($owner, $report);
         };
-        $parentProfitFor = function ($report) use ($isCombinedParentView, $resolveOwner, $targetAgent) {
-            $owner  = $isCombinedParentView ? $resolveOwner($report) : $targetAgent;
-            $reward = \App\Services\PortalService::calcReward($owner, $report);
-            $fee    = (int) ($report->campaign?->referral_fee ?? 0);
-            // 子経由なら差額（親の利益）、親自身の紹介ならその受け取り額そのもの
-            return $owner->parent_id ? ($fee - $reward) : $reward;
+        $childPayoutFor = function ($report) use ($isCombinedParentView, $resolveOwner, $payoutFor) {
+            $owner = $isCombinedParentView ? $resolveOwner($report) : null;
+            // 子経由の紹介のみ集計（親自身の紹介分は含めない）
+            return ($owner && $owner->parent_id) ? $payoutFor($report) : 0;
         };
 
         // 2ヶ月ブロック用データ（月次モード時）
@@ -74,13 +72,13 @@ class RewardController extends Controller
             $block[] = [
                 'month'        => $bm,
                 'total'        => $bReports->sum($payoutFor),
-                'parent_profit' => $isCombinedParentView ? $bReports->sum($parentProfitFor) : null,
+                'child_payout' => $isCombinedParentView ? $bReports->sum($childPayoutFor) : null,
                 'pay_date'     => $bm->copy()->addMonth()->endOfMonth(),
             ];
         }
 
         // 案件別集計
-        $campaignGroups = $reports->groupBy('campaign_id')->map(function ($rows) use ($targetAgent, $isCombinedParentView, $payoutFor, $parentProfitFor) {
+        $campaignGroups = $reports->groupBy('campaign_id')->map(function ($rows) use ($targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor) {
             $fee       = $rows->first()->campaign?->referral_fee ?? 0;
             $allDenied = $rows->groupBy('user_id')
                 ->filter(fn($ur) => $ur->every(fn($r) => $r->status === 'rejected'))
@@ -89,37 +87,37 @@ class RewardController extends Controller
 
             if ($isCombinedParentView) {
                 return [
-                    'campaign'      => $rows->first()->campaign,
-                    'count'         => $eligible->count(),
-                    'fee'           => $fee,
-                    'reward'        => null, // 混在するため単価は表示しない
-                    'total'         => $eligible->sum($payoutFor),
-                    'parent_profit' => $eligible->sum($parentProfitFor),
-                    'all_denied'    => $allDenied,
-                    'is_child'      => false,
-                    'is_combined'   => true,
-                    'diff'          => null,
+                    'campaign'     => $rows->first()->campaign,
+                    'count'        => $eligible->count(),
+                    'fee'          => $fee,
+                    'reward'       => null, // 混在するため単価は表示しない
+                    'total'        => $eligible->sum($payoutFor),
+                    'child_payout' => $eligible->sum($childPayoutFor),
+                    'all_denied'   => $allDenied,
+                    'is_child'     => false,
+                    'is_combined'  => true,
+                    'diff'         => null,
                 ];
             }
 
             $reward = \App\Services\PortalService::calcReward($targetAgent, $rows->first());
 
             return [
-                'campaign'      => $rows->first()->campaign,
-                'count'         => $eligible->count(),
-                'fee'           => $fee,
-                'reward'        => $reward,
-                'total'         => $eligible->count() * $reward,
-                'parent_profit' => null,
-                'all_denied'    => $allDenied,
-                'is_child'      => $targetAgent->parent_id !== null,
-                'is_combined'   => false,
-                'diff'          => $fee - $reward,
+                'campaign'     => $rows->first()->campaign,
+                'count'        => $eligible->count(),
+                'fee'          => $fee,
+                'reward'       => $reward,
+                'total'        => $eligible->count() * $reward,
+                'child_payout' => null,
+                'all_denied'   => $allDenied,
+                'is_child'     => $targetAgent->parent_id !== null,
+                'is_combined'  => false,
+                'diff'         => $fee - $reward,
             ];
         })->values();
 
-        $grandTotal        = $campaignGroups->sum('total');
-        $grandParentProfit = $isCombinedParentView ? $campaignGroups->sum('parent_profit') : null;
+        $grandTotal       = $campaignGroups->sum('total');
+        $grandChildPayout = $isCombinedParentView ? $campaignGroups->sum('child_payout') : null;
 
         // コードプルダウン用リスト（コード → 代理店名）
         $codeOptions = collect();
@@ -136,7 +134,7 @@ class RewardController extends Controller
 
         return view('portal.rewards', compact(
             'agent','targetAgent','mode','month','block',
-            'campaignGroups','grandTotal','grandParentProfit','isCombinedParentView','childId',
+            'campaignGroups','grandTotal','grandChildPayout','isCombinedParentView','childId',
             'codeOptions','codeFilter'
         ));
     }
