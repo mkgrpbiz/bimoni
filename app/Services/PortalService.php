@@ -57,7 +57,7 @@ class PortalService
     /**
      * 報酬計算
      * 親: campaign.referral_fee がそのまま親の総取り分
-     * 子: parent.child_reward_{fee} が子の取り分、差額が親の純利益
+     * 子: 自身の child_reward_{fee} が子の取り分、差額が親の純利益
      */
     public static function calcReward(Agent $agent, MonitorReport $report): int
     {
@@ -65,8 +65,8 @@ class PortalService
         if ($fee === 0) return 0;
 
         if ($agent->parent_id) {
-            // 子: 親が設定した子への支払い額
-            return $agent->parent?->childRewardFor($fee) ?? 0;
+            // 子: 子代理店管理ページで設定された、この子自身への支払い額
+            return $agent->childRewardFor($fee);
         }
 
         // 親: campaign.referral_fee そのまま受け取る
