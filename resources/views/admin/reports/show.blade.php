@@ -81,6 +81,43 @@
             @endif
         </div>
 
+        {{-- 案件変更 --}}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">案件変更</h2>
+            <form method="POST" action="{{ route('admin.reports.campaign', $report) }}" class="flex flex-wrap items-end gap-3">
+                @csrf @method('PATCH')
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">ステータス</label>
+                    <select id="report-campaign-status" class="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <option value="">選択してください</option>
+                        <option value="published" @selected($report->campaign?->status === 'published')>公開中</option>
+                        <option value="paused" @selected($report->campaign?->status === 'paused')>一時停止</option>
+                        <option value="closed" @selected($report->campaign?->status === 'closed')>終了</option>
+                        <option value="draft" @selected($report->campaign?->status === 'draft')>下書き</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">案件</label>
+                    <select id="report-campaign-select" name="campaign_id" required
+                            class="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 min-w-[16rem]">
+                        <option value="">まずステータスを選択してください</option>
+                        @foreach($campaigns as $campaign)
+                        <option value="{{ $campaign->id }}" data-status="{{ $campaign->status }}"
+                                @selected($report->campaign_id === $campaign->id)
+                                @if($report->campaign?->status !== $campaign->status) hidden disabled @endif>
+                            {{ $campaign->title }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit"
+                        onclick="return confirm('案件を変更しますか？')"
+                        class="bg-gray-700 text-white px-5 py-2 rounded hover:bg-gray-800 text-sm">
+                    変更する
+                </button>
+            </form>
+        </div>
+
         {{-- 報告種別変更 --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">報告種別変更</h2>
@@ -287,6 +324,22 @@
 
 @push('scripts')
 <script>
+(function () {
+    var statusSelect   = document.getElementById('report-campaign-status');
+    var campaignSelect = document.getElementById('report-campaign-select');
+    var options        = Array.from(campaignSelect.querySelectorAll('option[data-status]'));
+
+    statusSelect.addEventListener('change', function () {
+        var status = statusSelect.value;
+        campaignSelect.value = '';
+        options.forEach(function (opt) {
+            var matches = opt.dataset.status === status;
+            opt.hidden = !matches;
+            opt.disabled = !matches;
+        });
+    });
+})();
+
 function openLightbox(src) {
     document.getElementById('lightbox-img').src = src;
     document.getElementById('lightbox').classList.remove('hidden');

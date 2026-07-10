@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Campaign;
 use App\Models\MonitorReport;
 use App\Services\LineMessagingService;
 use Illuminate\Http\RedirectResponse;
@@ -51,7 +52,9 @@ class ReportController extends Controller
                 ->get()
             : collect();
 
-        return view('admin.reports.show', compact('report', 'duplicates'));
+        $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get(['id', 'title', 'status']);
+
+        return view('admin.reports.show', compact('report', 'duplicates', 'campaigns'));
     }
 
     public function approve(MonitorReport $report): RedirectResponse
@@ -106,6 +109,17 @@ class ReportController extends Controller
         $report->application?->update(['status' => 'reported']);
 
         return back()->with('success', '承認待ちに戻しました。');
+    }
+
+    public function updateCampaign(Request $request, MonitorReport $report): RedirectResponse
+    {
+        $request->validate([
+            'campaign_id' => 'required|exists:campaigns,id',
+        ]);
+
+        $report->update(['campaign_id' => $request->campaign_id]);
+
+        return back()->with('success', '案件を変更しました。');
     }
 
     public function updatePurchaseType(Request $request, MonitorReport $report): RedirectResponse

@@ -111,6 +111,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('reports/{report}/revert', [ReportController::class, 'revert'])->name('reports.revert');
         Route::patch('reports/{report}/adjust', [ReportController::class, 'adjust'])->name('reports.adjust');
         Route::patch('reports/{report}/purchase-type', [ReportController::class, 'updatePurchaseType'])->name('reports.purchase_type');
+        Route::patch('reports/{report}/campaign', [ReportController::class, 'updateCampaign'])->name('reports.campaign');
         Route::get('agents', [AgentController::class, 'index'])->name('agents.index');
         Route::get('agents/create', [AgentController::class, 'create'])->name('agents.create');
         Route::post('agents', [AgentController::class, 'store'])->name('agents.store');
