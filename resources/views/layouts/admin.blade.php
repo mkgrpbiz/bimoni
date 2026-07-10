@@ -41,13 +41,13 @@
         ];
     @endphp
 
-    {{-- モバイル用オーバーレイ --}}
-    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/40 z-20 md:hidden"></div>
+    {{-- 狭い画面用オーバーレイ --}}
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/40 z-20 lg:hidden"></div>
 
     <aside id="sidebar"
            class="fixed inset-y-0 left-0 z-30 w-64 bg-pink-700 text-pink-100 overflow-y-auto
                   transform -translate-x-full transition-transform duration-200
-                  md:translate-x-0 md:static md:shrink-0">
+                  lg:translate-x-0">
         <div class="px-4 py-4 font-bold text-lg text-white border-b border-pink-600">
             BIMONI 管理画面
         </div>
@@ -93,14 +93,14 @@
         </nav>
     </aside>
 
-    <div class="md:pl-64">
+    <div class="lg:pl-64">
         <div class="bg-pink-600 shadow flex items-center justify-between px-4 py-3">
-            <button id="sidebar-toggle" type="button" class="md:hidden text-white p-1 -ml-1">
+            <button id="sidebar-toggle" type="button" class="lg:hidden text-white p-1 -ml-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
             </button>
-            <span class="font-bold text-white md:hidden">BIMONI 管理画面</span>
+            <span class="font-bold text-white lg:hidden">BIMONI 管理画面</span>
             <div class="flex items-center gap-1 text-sm ml-auto">
                 <a href="{{ route('admin.profile.edit') }}"
                    class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors whitespace-nowrap">
