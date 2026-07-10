@@ -154,18 +154,20 @@
                            placeholder="例: 送料補填、特別ボーナス"
                            class="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                 </div>
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">修正金額（±）</label>
-                    <input type="number" name="adjustment_amount" required
-                           value="{{ old('adjustment_amount', $report->adjustment_amount) }}"
-                           placeholder="例: 500 または -500"
-                           class="w-40 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <div class="flex items-end gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">修正金額（±）</label>
+                        <input type="number" name="adjustment_amount" required
+                               value="{{ old('adjustment_amount', $report->adjustment_amount) }}"
+                               placeholder="例: 500 または -500"
+                               class="w-40 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    </div>
+                    <button type="submit"
+                            onclick="return confirm('金額を修正しますか？')"
+                            class="bg-gray-700 text-white px-5 py-2 rounded hover:bg-gray-800 text-sm">
+                        修正する
+                    </button>
                 </div>
-                <button type="submit"
-                        onclick="return confirm('金額を修正しますか？')"
-                        class="bg-gray-700 text-white px-5 py-2 rounded hover:bg-gray-800 text-sm">
-                    修正する
-                </button>
             </form>
         </div>
 

@@ -58,6 +58,41 @@
             </dl>
         </div>
 
+        {{-- 金額修正 --}}
+        <div class="bg-white rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 mb-3">金額修正</h2>
+            @if($collectionReport->adjustment_amount)
+            <p class="text-sm text-gray-600 mb-3">
+                現在の修正: <span class="font-bold text-pink-600">{{ $collectionReport->adjustment_amount > 0 ? '+' : '' }}¥{{ number_format($collectionReport->adjustment_amount) }}</span>
+                <span class="text-gray-400 ml-2">（{{ $collectionReport->adjustment_reason }}）</span>
+            </p>
+            @endif
+            <form method="POST" action="{{ route('admin.collection_reports.adjust', $collectionReport) }}" class="space-y-3">
+                @csrf @method('PATCH')
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">修正理由</label>
+                    <input type="text" name="adjustment_reason" required maxlength="255"
+                           value="{{ old('adjustment_reason', $collectionReport->adjustment_reason) }}"
+                           placeholder="例: 送料補填、特別ボーナス"
+                           class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+                <div class="flex items-end gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">修正金額（±）</label>
+                        <input type="number" name="adjustment_amount" required
+                               value="{{ old('adjustment_amount', $collectionReport->adjustment_amount) }}"
+                               placeholder="例: 500 または -500"
+                               class="w-40 border rounded px-3 py-2 text-sm">
+                    </div>
+                    <button type="submit"
+                            onclick="return confirm('金額を修正しますか？')"
+                            class="bg-gray-700 text-white px-5 py-2 rounded hover:bg-gray-800 text-sm">
+                        修正する
+                    </button>
+                </div>
+            </form>
+        </div>
+
         {{-- 添付画像 --}}
         <div class="bg-white rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 mb-4">添付画像</h2>

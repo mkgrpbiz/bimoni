@@ -85,6 +85,21 @@ class CollectionReportController extends Controller
         return back()->with('success', '差戻し・LINE通知を送信しました。');
     }
 
+    public function adjust(Request $request, CollectionReport $collectionReport): RedirectResponse
+    {
+        $request->validate([
+            'adjustment_amount' => 'required|integer|not_in:0',
+            'adjustment_reason' => 'required|string|max:255',
+        ]);
+
+        $collectionReport->update([
+            'adjustment_amount' => $request->adjustment_amount,
+            'adjustment_reason' => $request->adjustment_reason,
+        ]);
+
+        return back()->with('success', '金額を修正しました。');
+    }
+
     public function revert(CollectionReport $collectionReport): RedirectResponse
     {
         $collectionReport->update([
