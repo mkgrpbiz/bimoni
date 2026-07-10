@@ -9,6 +9,7 @@ use App\Services\UserMatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class RegisterController extends Controller
@@ -139,22 +140,29 @@ class RegisterController extends Controller
             return null;
         }
 
-        // 既存ユーザーに LINE情報・プロフィール・銀行情報をマージ
-        $existing->update([
-            'line_user_id'        => $liffUser->line_user_id,
-            'line_display_name'   => $liffUser->line_display_name,
-            'name'                => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
-            'name_kana'           => preg_replace('/[\s\x{3000}]+/u', '', mb_convert_kana($request->name_kana, 'C', 'UTF-8')),
-            'gender'              => $request->gender,
-            'birthdate'           => $request->birthdate,
-            'email'               => $request->email,
-            'referred_by_code'    => $existing->referred_by_code ?: $liffUser->referred_by_code,
-            'profile_completed_at' => now(),
-        ]);
-        $this->saveBank($existing, $request);
+        $lineUserId      = $liffUser->line_user_id;
+        $lineDisplayName = $liffUser->line_display_name;
+        $referredByCode  = $liffUser->referred_by_code;
 
-        // LINEログイン時に作られた空ユーザーを削除
-        $liffUser->delete();
+        DB::transaction(function () use ($existing, $liffUser, $lineUserId, $lineDisplayName, $referredByCode, $request) {
+            // 先にLINEログイン時に作られた空ユーザーを削除してから既存ユーザーを更新
+            // （line_user_idのユニーク制約に引っかかるため、更新→削除の順だと失敗する）
+            $liffUser->delete();
+
+            // 既存ユーザーに LINE情報・プロフィール・銀行情報をマージ
+            $existing->update([
+                'line_user_id'         => $lineUserId,
+                'line_display_name'    => $lineDisplayName,
+                'name'                 => preg_replace('/[\s\x{3000}]+/u', '', $request->name),
+                'name_kana'            => preg_replace('/[\s\x{3000}]+/u', '', mb_convert_kana($request->name_kana, 'C', 'UTF-8')),
+                'gender'               => $request->gender,
+                'birthdate'            => $request->birthdate,
+                'email'                => $request->email,
+                'referred_by_code'     => $existing->referred_by_code ?: $referredByCode,
+                'profile_completed_at' => now(),
+            ]);
+            $this->saveBank($existing, $request);
+        });
 
         return $existing;
     }
