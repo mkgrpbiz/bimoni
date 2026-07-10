@@ -12,6 +12,8 @@
 <div class="flex items-center justify-between mb-4">
     <h1 class="text-lg font-bold text-gray-800">報告管理（承認済み）</h1>
     <div class="flex gap-1">
+        <button type="button" onclick="copyReportsTable(this)"
+                class="px-3 py-1.5 rounded text-sm bg-white text-gray-700 border hover:bg-gray-50">コピー</button>
         <a href="?{{ $qs(['mode' => 'all']) }}"
            class="px-3 py-1.5 rounded text-sm {{ $mode === 'all' ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border' }}">累計</a>
         <a href="?{{ $qs(['mode' => 'month']) }}"
@@ -64,7 +66,7 @@
 
 {{-- PC: テーブル --}}
 <div class="hidden md:block bg-white rounded-lg shadow overflow-x-auto">
-    <table class="w-full text-sm">
+    <table id="reportsTable" class="w-full text-sm">
         <thead class="bg-gray-50 text-gray-700">
             <tr>
                 <th class="px-4 py-3 text-left">報告日</th>
@@ -83,7 +85,7 @@
                 <td class="px-4 py-3 text-gray-800">{{ $r->user?->name ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $r->user?->name_kana ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-800">{{ $r->campaign?->title ?? '-' }}</td>
-                <td class="px-4 py-3 text-right font-medium text-gray-800">
+                <td class="px-4 py-3 text-right font-medium text-gray-800" data-copy="{{ $r->reward }}">
                     ¥{{ number_format($r->reward) }}
                 </td>
             </tr>
@@ -110,4 +112,39 @@
     <div class="bg-white rounded-lg shadow p-8 text-center text-gray-400">報告がありません</div>
     @endforelse
 </div>
+
+<script>
+function copyReportsTable(btn) {
+    const table = document.getElementById('reportsTable');
+    const rows = table.querySelectorAll('thead tr, tbody tr');
+    const lines = [];
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        const values = Array.from(cells).map(cell => (cell.dataset.copy ?? cell.textContent).trim());
+        lines.push(values.join('\t'));
+    });
+    const text = lines.join('\n');
+
+    const done = () => {
+        const original = btn.textContent;
+        btn.textContent = 'コピーしました';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done);
+    } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        done();
+    }
+}
+</script>
 @endsection
