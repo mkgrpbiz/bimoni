@@ -46,13 +46,15 @@
 
     <aside id="sidebar"
            class="fixed inset-y-0 left-0 z-30 w-64 bg-pink-700 text-pink-100 overflow-y-auto
-                  transform -translate-x-full transition-transform duration-200
-                  lg:translate-x-0">
-        <div class="px-4 py-4 font-bold text-lg text-white border-b border-pink-600">
-            BIMONI 管理画面
+                  flex flex-col transform -translate-x-full transition-transform duration-200">
+        <div class="px-4 py-4 font-bold text-lg text-white border-b border-pink-600 flex items-center justify-between shrink-0">
+            <span>BIMONI 管理画面</span>
+            <button id="sidebar-close" type="button" class="text-pink-200 hover:text-white text-2xl leading-none px-1">
+                ×
+            </button>
         </div>
 
-        <nav class="py-2 text-sm">
+        <nav class="py-2 text-sm flex-1">
             @if($authAdmin?->canAccessMenu('dashboard'))
             <a href="{{ route('admin.dashboard') }}"
                class="block px-4 py-2.5 hover:bg-pink-600 transition-colors font-medium">
@@ -91,29 +93,30 @@
             </div>
             @endif
         </nav>
+
+        <div class="border-t border-pink-600 shrink-0">
+            <a href="{{ route('admin.profile.edit') }}"
+               class="block px-4 py-2.5 hover:bg-pink-600 transition-colors">
+                パスワード
+            </a>
+            <form method="POST" action="{{ route('admin.logout') }}">
+                @csrf
+                <button type="submit"
+                        class="block w-full text-left px-4 py-2.5 hover:bg-pink-600 transition-colors">
+                    ログアウト
+                </button>
+            </form>
+        </div>
     </aside>
 
-    <div class="lg:pl-64">
-        <div class="bg-pink-600 shadow flex items-center justify-between px-4 py-3">
-            <button id="sidebar-toggle" type="button" class="lg:hidden text-white p-1 -ml-1">
+    <div id="content-wrapper" class="transition-[padding-left] duration-200">
+        <div class="bg-pink-600 shadow flex items-center gap-3 px-4 py-3">
+            <button id="sidebar-toggle" type="button" class="text-white p-1 -ml-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
             </button>
-            <span class="font-bold text-white lg:hidden">BIMONI 管理画面</span>
-            <div class="flex items-center gap-1 text-sm ml-auto">
-                <a href="{{ route('admin.profile.edit') }}"
-                   class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors whitespace-nowrap">
-                    パスワード
-                </a>
-                <form method="POST" action="{{ route('admin.logout') }}" class="inline">
-                    @csrf
-                    <button type="submit"
-                            class="px-3 py-1.5 rounded text-pink-100 hover:bg-pink-500 transition-colors">
-                        ログアウト
-                    </button>
-                </form>
-            </div>
+            <span class="font-bold text-white">BIMONI 管理画面</span>
         </div>
 
         <main class="px-4 py-6 text-gray-800">
@@ -126,18 +129,26 @@
         var sidebar  = document.getElementById('sidebar');
         var overlay  = document.getElementById('sidebar-overlay');
         var toggle   = document.getElementById('sidebar-toggle');
+        var closeBtn = document.getElementById('sidebar-close');
+        var wrapper  = document.getElementById('content-wrapper');
 
-        function openSidebar() {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-        }
-        function closeSidebar() {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
+        function isDesktop() {
+            return window.matchMedia('(min-width: 1024px)').matches;
         }
 
-        toggle.addEventListener('click', openSidebar);
-        overlay.addEventListener('click', closeSidebar);
+        function setSidebarOpen(open) {
+            sidebar.classList.toggle('-translate-x-full', !open);
+            wrapper.classList.toggle('sidebar-open', open);
+            overlay.classList.toggle('hidden', !(open && !isDesktop()));
+        }
+
+        toggle.addEventListener('click', function () {
+            setSidebarOpen(sidebar.classList.contains('-translate-x-full'));
+        });
+        closeBtn.addEventListener('click', function () { setSidebarOpen(false); });
+        overlay.addEventListener('click', function () { setSidebarOpen(false); });
+
+        setSidebarOpen(isDesktop());
 
         document.querySelectorAll('.nav-group-header').forEach(function (btn) {
             btn.addEventListener('click', function () {

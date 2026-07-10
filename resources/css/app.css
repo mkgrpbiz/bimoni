@@ -4,6 +4,13 @@
 
 [x-cloak] { display: none !important; }
 
+/* サイドバー: 開いている間だけ、広い画面幅でコンテンツ側に余白を確保する */
+@media (min-width: 1024px) {
+    #content-wrapper.sidebar-open {
+        padding-left: 16rem;
+    }
+}
+
 /* 横スクロール一覧表: スクロールバーを太く見やすくする */
 .overflow-x-auto {
     scrollbar-width: auto;
