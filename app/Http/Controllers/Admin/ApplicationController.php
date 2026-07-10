@@ -408,8 +408,6 @@ class ApplicationController extends Controller
             'continuation_wish'         => $request->continuation_wish ?: null,
             'continuation_response'     => $response,
             'continuation_responded_at' => $response ? now() : null,
-            // 一覧のOK/NG表示はcontinuation_sent_at必須のため、手動で回答を設定した場合も未送信ならここで補完する
-            'continuation_sent_at'      => $response ? ($application->continuation_sent_at ?? now()) : $application->continuation_sent_at,
         ]);
 
         return back()->with('success', '継続情報を更新しました。');

@@ -212,9 +212,9 @@ $statusTabs = [
                 <td class="px-3 py-2 text-center">{{ $age }}</td>
                 <td class="px-3 py-2 text-center">{{ $genderLabel }}</td>
                 <td class="px-3 py-2 text-center whitespace-nowrap">
-                    @if($app->continuation_sent_at && $app->continuation_response === 'possible')
+                    @if($app->continuation_responded_at && $app->continuation_response === 'possible')
                         <span class="text-xs bg-teal-500 text-white px-1.5 py-0.5 rounded-full">OK</span>
-                    @elseif($app->continuation_sent_at && $app->continuation_response === 'not_possible')
+                    @elseif($app->continuation_responded_at && $app->continuation_response === 'not_possible')
                         <span class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">NG</span>
                     @elseif($app->continuation_sent_at)
                         <span class="text-xs bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">確認中</span>
