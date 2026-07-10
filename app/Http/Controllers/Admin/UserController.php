@@ -30,7 +30,7 @@ class UserController extends Controller
 
         $userIds = $users->pluck('id');
 
-        $reportRows = MonitorReport::with('campaign:id,cooperation_fee')
+        $reportRows = MonitorReport::with('campaign:id,cooperation_fee,continuation_cooperation_fee')
             ->whereIn('user_id', $userIds)
             ->where('status', 'approved')
             ->get();
@@ -38,7 +38,12 @@ class UserController extends Controller
         $completedMap = $reportRows->groupBy('user_id')
             ->map(fn($r) => $r->count());
 
-        $calcFee = fn($row) => ($row->purchase_amount ?? 0) + ($row->campaign?->cooperation_fee ?? 0);
+        $calcFee = function ($row) {
+            $coopFee = $row->purchase_type === 'continuation'
+                ? ($row->campaign?->continuation_cooperation_fee ?? 0)
+                : ($row->campaign?->cooperation_fee ?? 0);
+            return ($row->purchase_amount ?? 0) + $coopFee + ($row->bonus_amount ?? 0) + ($row->adjustment_amount ?? 0);
+        };
 
         $pendingMap = $reportRows->where('payment_status', 'pending')
             ->groupBy('user_id')
@@ -54,7 +59,7 @@ class UserController extends Controller
     public function show(User $user): View
     {
         $reports = $user->monitorReports()
-            ->with('campaign:id,title,cooperation_fee')
+            ->with('campaign:id,title,cooperation_fee,continuation_cooperation_fee')
             ->orderByDesc('created_at')
             ->get();
 

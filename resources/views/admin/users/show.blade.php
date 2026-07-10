@@ -91,11 +91,14 @@
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">実績サマリー</h2>
         @php
             $approvedReports = $reports->where('status', 'approved');
-            $getCoopFee = fn($r) => $r->purchase_type === 'continuation'
-                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
-                : ($r->campaign?->cooperation_fee ?? 0);
-            $pendingPay = $approvedReports->where('payment_status', 'pending')->sum($getCoopFee);
-            $paidTotal  = $approvedReports->where('payment_status', 'paid')->sum($getCoopFee);
+            $calcReportTotal = function ($r) {
+                $coopFee = $r->purchase_type === 'continuation'
+                    ? ($r->campaign?->continuation_cooperation_fee ?? 0)
+                    : ($r->campaign?->cooperation_fee ?? 0);
+                return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
+            };
+            $pendingPay = $approvedReports->where('payment_status', 'pending')->sum($calcReportTotal);
+            $paidTotal  = $approvedReports->where('payment_status', 'paid')->sum($calcReportTotal);
         @endphp
         <dl class="text-sm space-y-2">
             <div class="flex justify-between">
@@ -130,7 +133,7 @@
                 <th class="px-4 py-3 text-left">モニター名</th>
                 <th class="px-4 py-3 text-left">報告ステータス</th>
                 <th class="px-4 py-3 text-left">支払いステータス</th>
-                <th class="px-4 py-3 text-right">協力金</th>
+                <th class="px-4 py-3 text-right">支払い金額</th>
                 <th class="px-4 py-3 text-left">支払日</th>
             </tr>
         </thead>
@@ -158,7 +161,7 @@
                 </td>
                 <td class="px-4 py-3 text-right font-medium text-gray-800 dark:text-gray-200">
                     @if($report->status === 'approved')
-                        ¥{{ number_format($report->purchase_type === 'continuation' ? ($report->campaign?->continuation_cooperation_fee ?? 0) : ($report->campaign?->cooperation_fee ?? 0)) }}
+                        ¥{{ number_format($calcReportTotal($report)) }}
                     @else
                         -
                     @endif
