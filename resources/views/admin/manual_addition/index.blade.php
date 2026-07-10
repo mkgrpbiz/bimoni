@@ -71,6 +71,11 @@
                     @endforeach
                 </select>
             </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">実施日</label>
+                <input type="date" name="date" value="{{ old('date', now()->toDateString()) }}"
+                       class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1.5 text-sm">
+            </div>
         </div>
 
         <div class="mb-4">

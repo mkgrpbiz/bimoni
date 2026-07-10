@@ -41,19 +41,20 @@ class ManualAdditionController extends Controller
             'user_id'     => 'required|exists:users,id',
             'campaign_id' => 'required|exists:campaigns,id',
             'outcome'     => 'required|in:continuation_ok,continuation_ng',
+            'date'        => 'nullable|date',
         ]);
 
-        $now = now();
+        $date = $request->filled('date') ? \Carbon\Carbon::parse($request->date) : now();
 
         Application::create([
             'user_id'                   => $request->user_id,
             'campaign_id'               => $request->campaign_id,
             'status'                    => 'completed',
-            'applied_at'                => $now,
-            'completed_at'              => $now,
+            'applied_at'                => $date,
+            'completed_at'              => $date,
             'continuation_wish'         => '希望',
             'continuation_response'     => $request->outcome === 'continuation_ok' ? 'possible' : 'not_possible',
-            'continuation_responded_at' => $now,
+            'continuation_responded_at' => $date,
         ]);
 
         return back()->with('success', '成果を追加しました。')->withInput(['q' => $request->q]);
