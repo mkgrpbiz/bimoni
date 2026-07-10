@@ -34,6 +34,29 @@ class ReportController extends Controller
 
         $reports = \App\Services\PortalService::approvedReports($codes, $month);
 
+        // 親が「全体」（子で絞り込まず、子がいる）を見ている場合は、
+        // レコードごとに実際の紹介元（親自身 or どの子か）を区別して単価を計算する
+        $isCombinedParentView = !$agent->parent_id && $childId === null && $agent->children->isNotEmpty();
+
+        $codeOwnerMap = [];
+        if ($isCombinedParentView) {
+            foreach ($agent->codes as $c) {
+                $codeOwnerMap[$c->code] = $agent;
+            }
+            foreach ($agent->children as $child) {
+                foreach ($child->codes as $c) {
+                    $codeOwnerMap[$c->code] = $child;
+                }
+            }
+        }
+
+        $reports->each(function ($report) use ($isCombinedParentView, $codeOwnerMap, $targetAgent) {
+            $owner = $isCombinedParentView
+                ? ($codeOwnerMap[$report->user?->referred_by_code] ?? $targetAgent)
+                : $targetAgent;
+            $report->reward = \App\Services\PortalService::calcReward($owner, $report);
+        });
+
         // コードプルダウン
         $codeOptions = collect();
         foreach ($agent->codes as $c) {

@@ -84,7 +84,7 @@
                 <td class="px-4 py-3 text-gray-600">{{ $r->user?->name_kana ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-800">{{ $r->campaign?->title ?? '-' }}</td>
                 <td class="px-4 py-3 text-right font-medium text-gray-800">
-                    ¥{{ number_format($r->campaign?->referral_fee ?? 0) }}
+                    ¥{{ number_format($r->reward) }}
                 </td>
             </tr>
             @empty
@@ -100,7 +100,7 @@
     <div class="bg-white rounded-lg shadow px-4 py-3">
         <div class="flex items-start justify-between mb-1">
             <p class="font-medium text-gray-800 text-sm">{{ $r->campaign?->title ?? '-' }}</p>
-            <span class="font-bold text-gray-800 text-sm ml-2 shrink-0">¥{{ number_format($r->campaign?->referral_fee ?? 0) }}</span>
+            <span class="font-bold text-gray-800 text-sm ml-2 shrink-0">¥{{ number_format($r->reward) }}</span>
         </div>
         <p class="text-xs text-gray-600">{{ $r->user?->name ?? '-' }}（{{ $r->user?->name_kana ?? '-' }}）</p>
         <p class="font-mono text-xs text-gray-400 mt-0.5">{{ $r->user?->referred_by_code ?? '-' }}</p>
