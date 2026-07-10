@@ -13,3 +13,6 @@ Schedule::command('line:send-messages')->everyMinute();
 
 // 実施案内日時切れの打診を自動キャンセル（毎5分）
 Schedule::command('proposals:auto-cancel')->everyFiveMinutes();
+
+// 継続依頼LINE送信から24時間経過し未回答の応募を自動的に継続NGにする（毎5分）
+Schedule::command('continuations:auto-decline')->everyFiveMinutes();

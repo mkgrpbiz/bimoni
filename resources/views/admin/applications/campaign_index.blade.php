@@ -214,9 +214,9 @@ $statusTabs = [
                 <td class="px-3 py-2 text-center whitespace-nowrap">
                     @if($app->continuation_response === 'possible')
                         <span class="text-xs bg-teal-500 text-white px-1.5 py-0.5 rounded-full">OK</span>
-                    @elseif($app->continuation_invite_date && $app->continuation_response === 'not_possible')
+                    @elseif($app->continuation_response === 'not_possible')
                         <span class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">NG</span>
-                    @elseif($app->continuation_invite_date)
+                    @elseif($app->continuation_sent_at)
                         <span class="text-xs bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">確認中</span>
                     @elseif($app->continuation_wish === '希望')
                         <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">希望</span>
@@ -357,12 +357,11 @@ $statusTabs = [
                                     onclick="return confirm('キャンセルしますか？')">取消</button>
                         </form>
                         @endif
-                        @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']))
+                        @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']) && !$app->continuation_response && !$app->continuation_sent_at)
                         <button type="button"
                                 class="bg-green-500 text-white px-1.5 py-0.5 rounded hover:bg-green-600 text-xs"
-                                title="{{ $app->continuation_response ? '回答済: '.($app->continuation_response === 'possible' ? '可能' : '不可') : '未回答' }}"
                                 onclick="openContModal('{{ route('admin.applications.continuation_line', $app) }}', '{{ addslashes($app->user?->name) }}')">
-                            継続LINE{{ $app->continuation_response ? '✓' : '' }}
+                            継続LINE
                         </button>
                         @endif
                         <a href="{{ route('admin.applications.show', $app) }}"

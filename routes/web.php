@@ -98,6 +98,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('applications/{application}/notes', [ApplicationController::class, 'updateNotes'])->name('applications.notes');
         Route::patch('applications/{application}/invite-schedule', [ApplicationController::class, 'updateInviteSchedule'])->name('applications.invite_schedule');
         Route::post('applications/{application}/continuation-line', [ApplicationController::class, 'sendContinuationRequest'])->name('applications.continuation_line');
+        Route::patch('applications/{application}/continuation', [ApplicationController::class, 'updateContinuation'])->name('applications.continuation_update');
         Route::post('applications/{application}/schedules', [ScheduleController::class, 'store'])->name('schedules.store');
         Route::patch('schedules/{schedule}/confirm', [ScheduleController::class, 'confirm'])->name('schedules.confirm');
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

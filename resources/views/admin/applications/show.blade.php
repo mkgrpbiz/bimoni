@@ -70,6 +70,31 @@
                 <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">保存</button>
             </form>
         </div>
+
+        {{-- 継続情報の編集 --}}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">継続情報の編集</h2>
+            <form method="POST" action="{{ route('admin.applications.continuation_update', $application) }}" class="flex flex-wrap items-end gap-3">
+                @csrf @method('PATCH')
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">継続希望</label>
+                    <select name="continuation_wish" class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1.5 text-sm">
+                        <option value="" @selected(!$application->continuation_wish)>未設定</option>
+                        <option value="希望" @selected($application->continuation_wish === '希望')>希望</option>
+                        <option value="不可" @selected($application->continuation_wish === '不可')>不可</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">継続回答</label>
+                    <select name="continuation_response" class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1.5 text-sm">
+                        <option value="" @selected(!$application->continuation_response)>未回答</option>
+                        <option value="possible" @selected($application->continuation_response === 'possible')>OK</option>
+                        <option value="not_possible" @selected($application->continuation_response === 'not_possible')>NG</option>
+                    </select>
+                </div>
+                <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">更新</button>
+            </form>
+        </div>
     </div>
 
     {{-- モニター情報サイドバー --}}
@@ -93,7 +118,7 @@
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">継続希望</dt>
                 <dd class="dark:text-gray-200 flex items-center gap-2">
                     {{ $application->continuation_wish ?? '-' }}
-                    @if($application->continuation_wish === '希望' && in_array($application->status, ['completed','reported','approved']))
+                    @if($application->continuation_wish === '希望' && in_array($application->status, ['completed','reported','approved']) && !$application->continuation_response && !$application->continuation_sent_at)
                     <button type="button"
                             onclick="document.getElementById('cont-modal').classList.remove('hidden')"
                             class="bg-green-500 text-white px-2 py-0.5 rounded text-xs hover:bg-green-600">
@@ -105,9 +130,9 @@
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">継続回答</dt>
                 <dd class="dark:text-gray-200">
                     @if($application->continuation_response === 'possible')
-                        <span class="text-green-600 font-medium">継続購入可能</span>
+                        <span class="text-green-600 font-medium">OK</span>
                     @else
-                        <span class="text-gray-500">継続購入不可</span>
+                        <span class="text-gray-500">NG</span>
                     @endif
                     <span class="text-xs text-gray-400 ml-1">{{ $application->continuation_responded_at?->format('m/d H:i') }}</span>
                 </dd>

@@ -395,12 +395,35 @@ class ApplicationController extends Controller
         return back()->with('success', '案内日時を保存しました。');
     }
 
+    public function updateContinuation(Request $request, Application $application): RedirectResponse
+    {
+        $request->validate([
+            'continuation_wish'     => 'nullable|in:希望,不可',
+            'continuation_response' => 'nullable|in:possible,not_possible',
+        ]);
+
+        $response = $request->continuation_response ?: null;
+
+        $application->update([
+            'continuation_wish'         => $request->continuation_wish ?: null,
+            'continuation_response'     => $response,
+            'continuation_responded_at' => $response ? now() : null,
+        ]);
+
+        return back()->with('success', '継続情報を更新しました。');
+    }
+
     public function sendContinuationRequest(Application $application, LineMessagingService $lineService): RedirectResponse
     {
         $application->loadMissing('campaign');
 
         // 再送時も新しいトークンで上書き → 旧リンクを無効化
-        $application->update(['continuation_token' => Str::random(64), 'continuation_response' => null, 'continuation_responded_at' => null]);
+        $application->update([
+            'continuation_token'        => Str::random(64),
+            'continuation_response'     => null,
+            'continuation_responded_at' => null,
+            'continuation_sent_at'      => now(),
+        ]);
         $application->refresh();
 
         $campaign   = $application->campaign;
@@ -410,7 +433,8 @@ class ApplicationController extends Controller
             . $campaign->title . "\n\n"
             . "継続購入についてのご希望をお聞かせください。\n\n"
             . "以下のURLよりご回答をお願いします。\n"
-            . $confirmUrl;
+            . $confirmUrl . "\n\n"
+            . "こちらの回答は受信から24時間で自動的に【継続NG】になりますので、継続希望の場合は時間内に回答をお願いいたします。";
 
         $lineService->sendPush($application->user_id, $msg, 'continuation_request', $application->id);
 
