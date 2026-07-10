@@ -59,7 +59,14 @@
     @foreach($block as $b)
     <div class="bg-white rounded-lg shadow p-4">
         <p class="text-xs text-gray-500 mb-1">{{ $b['month']->format('Y年n月') }}分</p>
+        @if($isCombinedParentView)
+        <p class="text-xs text-gray-500">支払総額</p>
+        <p class="text-lg font-bold text-gray-800">¥{{ number_format($b['total']) }}</p>
+        <p class="text-xs text-gray-500 mt-1">自分の取り分（利益）</p>
+        <p class="text-lg font-bold text-pink-600">¥{{ number_format($b['parent_profit']) }}</p>
+        @else
         <p class="text-xl font-bold text-gray-800">¥{{ number_format($b['total']) }}</p>
+        @endif
         <p class="text-xs text-gray-400 mt-1">支払予定: {{ $b['pay_date']->format('n月末') }}</p>
     </div>
     @endforeach
@@ -73,11 +80,16 @@
             <tr>
                 <th class="px-4 py-3 text-left">案件名</th>
                 <th class="px-4 py-3 text-right">件数</th>
+                @if($isCombinedParentView)
+                <th class="px-4 py-3 text-right">支払総額</th>
+                <th class="px-4 py-3 text-right">自分の取り分（利益）</th>
+                @else
                 <th class="px-4 py-3 text-right">紹介単価</th>
                 @if($targetAgent->parent_id)
                 <th class="px-4 py-3 text-right">差額</th>
                 @endif
                 <th class="px-4 py-3 text-right">合計</th>
+                @endif
                 <th class="px-4 py-3 text-center">全否認</th>
             </tr>
         </thead>
@@ -87,6 +99,10 @@
             <tr class="hover:bg-gray-50 {{ $isAllDenied ? 'opacity-50' : '' }}">
                 <td class="px-4 py-3 text-gray-800">{{ $row['campaign']?->title ?? '-' }}</td>
                 <td class="px-4 py-3 text-right text-gray-700">{{ $row['count'] }}件</td>
+                @if($isCombinedParentView)
+                <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($isAllDenied ? 0 : $row['total']) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($isAllDenied ? 0 : $row['parent_profit']) }}</td>
+                @else
                 <td class="px-4 py-3 text-right text-gray-700">¥{{ number_format($row['reward']) }}</td>
                 @if($targetAgent->parent_id)
                 <td class="px-4 py-3 text-right text-gray-500 text-xs">(差額 ¥{{ number_format($row['diff']) }})</td>
@@ -94,6 +110,7 @@
                 <td class="px-4 py-3 text-right font-bold text-gray-800">
                     ¥{{ number_format($isAllDenied ? 0 : $row['total']) }}
                 </td>
+                @endif
                 <td class="px-4 py-3 text-center">
                     @if($row['all_denied'] > 0)
                         <span class="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">全否認</span>
@@ -109,8 +126,14 @@
         @if($campaignGroups->isNotEmpty())
         <tfoot class="bg-gray-50">
             <tr>
+                @if($isCombinedParentView)
+                <td colspan="2" class="px-4 py-3 text-right font-bold text-gray-700">合計</td>
+                <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($grandTotal) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($grandParentProfit) }}</td>
+                @else
                 <td colspan="{{ $targetAgent->parent_id ? 4 : 3 }}" class="px-4 py-3 text-right font-bold text-gray-700">合計</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($grandTotal) }}</td>
+                @endif
                 <td></td>
             </tr>
         </tfoot>
@@ -129,6 +152,16 @@
                 <span class="text-xs bg-gray-800 text-white px-2 py-0.5 rounded ml-2 shrink-0">全否認</span>
             @endif
         </div>
+        @if($isCombinedParentView)
+        <div class="flex items-center justify-between mt-2 text-sm">
+            <span class="text-xs text-gray-500">{{ $row['count'] }}件・支払総額</span>
+            <span class="font-bold text-gray-800">¥{{ number_format($isAllDenied ? 0 : $row['total']) }}</span>
+        </div>
+        <div class="flex items-center justify-between mt-1 text-sm">
+            <span class="text-xs text-gray-500">自分の取り分（利益）</span>
+            <span class="font-bold text-pink-600">¥{{ number_format($isAllDenied ? 0 : $row['parent_profit']) }}</span>
+        </div>
+        @else
         <div class="flex items-center justify-between mt-2 text-sm">
             <span class="text-xs text-gray-500">{{ $row['count'] }}件 × ¥{{ number_format($row['reward']) }}</span>
             <span class="font-bold text-gray-800">¥{{ number_format($isAllDenied ? 0 : $row['total']) }}</span>
@@ -136,14 +169,28 @@
         @if($targetAgent->parent_id && $row['diff'] > 0)
         <p class="text-xs text-gray-400 mt-1">差額 ¥{{ number_format($row['diff']) }}</p>
         @endif
+        @endif
     </div>
     @empty
     <div class="bg-white rounded-lg shadow p-8 text-center text-gray-400">データがありません</div>
     @endforelse
     @if($campaignGroups->isNotEmpty())
-    <div class="bg-gray-800 text-white rounded-lg px-4 py-3 flex justify-between">
-        <span class="font-medium">合計</span>
-        <span class="font-bold text-lg">¥{{ number_format($grandTotal) }}</span>
+    <div class="bg-gray-800 text-white rounded-lg px-4 py-3">
+        @if($isCombinedParentView)
+        <div class="flex justify-between">
+            <span class="font-medium">合計（支払総額）</span>
+            <span class="font-bold text-lg">¥{{ number_format($grandTotal) }}</span>
+        </div>
+        <div class="flex justify-between mt-1">
+            <span class="font-medium">自分の取り分（利益）</span>
+            <span class="font-bold text-lg text-pink-300">¥{{ number_format($grandParentProfit) }}</span>
+        </div>
+        @else
+        <div class="flex justify-between">
+            <span class="font-medium">合計</span>
+            <span class="font-bold text-lg">¥{{ number_format($grandTotal) }}</span>
+        </div>
+        @endif
     </div>
     @endif
 </div>
