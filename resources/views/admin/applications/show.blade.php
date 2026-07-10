@@ -60,17 +60,6 @@
             </form>
         </div>
 
-        {{-- 管理メモ --}}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
-            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">管理メモ</h2>
-            <form method="POST" action="{{ route('admin.applications.notes', $application) }}">
-                @csrf @method('PATCH')
-                <textarea name="notes" rows="3"
-                          class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm mb-2">{{ $application->notes }}</textarea>
-                <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">保存</button>
-            </form>
-        </div>
-
         {{-- 継続情報の編集 --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">継続情報の編集</h2>
@@ -93,6 +82,17 @@
                     </select>
                 </div>
                 <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">更新</button>
+            </form>
+        </div>
+
+        {{-- 管理メモ --}}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">管理メモ</h2>
+            <form method="POST" action="{{ route('admin.applications.notes', $application) }}">
+                @csrf @method('PATCH')
+                <textarea name="notes" rows="3"
+                          class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm mb-2">{{ $application->notes }}</textarea>
+                <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">保存</button>
             </form>
         </div>
     </div>
