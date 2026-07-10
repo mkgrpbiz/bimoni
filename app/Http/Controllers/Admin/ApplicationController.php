@@ -298,6 +298,11 @@ class ApplicationController extends Controller
                     if ($earliest && Carbon::parse($request->invited_at)->lt($earliest)) {
                         return back()->with('error', $earliest->format('m/d H:i') . '〜打診可能です。');
                     }
+
+                    $slotError = $this->validateSlotCapacity($application, $request->invited_at);
+                    if ($slotError) {
+                        return back()->with('error', $slotError);
+                    }
                 }
             }
 
@@ -614,6 +619,39 @@ class ApplicationController extends Controller
         ]);
 
         return back()->with('success', '再打診を送信しました。');
+    }
+
+    // 手動打診の日時が「同一案件・同一日時の重複」「日別目標打診数」を超えていないか確認（PR打診は対象外）
+    private function validateSlotCapacity(Application $application, string $invitedAt): ?string
+    {
+        $invitedAtCarbon = Carbon::parse($invitedAt);
+        $date = $invitedAtCarbon->toDateString();
+        $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+
+        $exactSlotTaken = Application::where('campaign_id', $application->campaign_id)
+            ->where('id', '!=', $application->id)
+            ->whereIn('status', $activeStatuses)
+            ->where('invited_at', $invitedAtCarbon)
+            ->exists();
+        if ($exactSlotTaken) {
+            return 'この日時はすでに他の応募で埋まっています。';
+        }
+
+        $dailySlot = CampaignDailySlot::where('campaign_id', $application->campaign_id)
+            ->where('target_date', $date)
+            ->first();
+        if ($dailySlot && $dailySlot->planned_count > 0) {
+            $dailyBooked = Application::where('campaign_id', $application->campaign_id)
+                ->where('id', '!=', $application->id)
+                ->whereIn('status', $activeStatuses)
+                ->whereDate('invited_at', $date)
+                ->count();
+            if ($dailyBooked >= $dailySlot->planned_count) {
+                return 'この日はすでに目標打診数に達しています。';
+            }
+        }
+
+        return null;
     }
 
     private function getTabCounts(): \Illuminate\Support\Collection
