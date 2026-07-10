@@ -75,7 +75,7 @@
             $sales          = $reflectCount * ($campaign->campaign_unit_price ?? 0);
             $gross          = $reflectCount * ($campaign->gross_profit ?? 0);
             @endphp
-            @if($completedCount >= 1 || $isAllDenied)
+            @if($completedCount >= 1)
             @php
             $totalSales     += $sales;
             $totalGross     += $gross;
