@@ -201,13 +201,11 @@ class ImportService
                     default  => null,
                 };
 
-                // 継続打診承諾（TRUE/FALSE → possible/not_possible）
+                // 継続打診承諾: スプレッドシート運用ではOKの人だけチェックを入れるため、
+                // TRUE（チェック有）のみ possible として信頼する。FALSE/空欄は「無回答」であり
+                // 明確なNGではないため not_possible にはしない（継続希望の有無は別列で判定）
                 $flagRaw = strtoupper(trim($row['continuation_flag'] ?? ''));
-                $continuationResponse = match($flagRaw) {
-                    'TRUE'  => 'possible',
-                    'FALSE' => 'not_possible',
-                    default => null,
-                };
+                $continuationResponse = $flagRaw === 'TRUE' ? 'possible' : null;
 
                 $completedAt = null;
                 if (in_array($status, ['completed', 'reported', 'approved', 'point_granted'])) {
