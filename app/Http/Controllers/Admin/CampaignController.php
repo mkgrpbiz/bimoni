@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Category;
 use App\Models\Tag;
+use App\Services\CampaignClosureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -115,10 +116,17 @@ class CampaignController extends Controller
         return redirect()->route('admin.campaigns.index')->with('success', '案件を更新しました。');
     }
 
-    public function updateStatus(Request $request, Campaign $campaign): RedirectResponse
+    public function updateStatus(Request $request, Campaign $campaign, CampaignClosureService $closureService): RedirectResponse
     {
         $request->validate(['status' => 'required|in:published,paused,closed,draft']);
+
+        $wasClosed = $campaign->status === 'closed';
         $campaign->update(['status' => $request->status]);
+
+        if ($request->status === 'closed' && !$wasClosed) {
+            $closureService->handleClosure($campaign, Auth::guard('web')->id());
+        }
+
         return back()->with('success', 'ステータスを更新しました。');
     }
 

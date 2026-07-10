@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CampaignController;
 use App\Http\Controllers\Admin\CampaignDailySlotController;
 use App\Http\Controllers\Admin\CollectionReportController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EndCancelSettingController;
 use App\Http\Controllers\Admin\FormFieldController;
 use App\Http\Controllers\Admin\AdminManagerController;
 use App\Http\Controllers\Admin\AdminProfileController;
@@ -182,6 +183,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('form-fields/{formField}', [FormFieldController::class, 'destroy'])->name('form_fields.destroy');
         Route::patch('form-fields/{formField}/toggle', [FormFieldController::class, 'toggle'])->name('form_fields.toggle');
         Route::patch('form-fields/legal/{slug}', [FormFieldController::class, 'updateLegal'])->name('form_fields.legal');
+
+        Route::get('end-cancel-settings', [EndCancelSettingController::class, 'edit'])->name('end_cancel_settings.edit');
+        Route::patch('end-cancel-settings', [EndCancelSettingController::class, 'update'])->name('end_cancel_settings.update');
         // 案件別応募フォームフィールド設定
         Route::post('campaigns/{campaign}/form-fields', [CampaignController::class, 'syncFormFields'])->name('campaigns.form_fields.sync');
     });

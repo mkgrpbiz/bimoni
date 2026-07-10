@@ -27,11 +27,12 @@ class LineMessageJob extends Model
     public function getSendTypeLabel(): string
     {
         return match($this->send_type) {
-            'proposal'       => '打診',
-            'monitor_guide'  => '案内文',
-            'reminder'       => 'リマインド',
-            'report_request' => '報告依頼',
-            default          => $this->send_type,
+            'proposal'        => '打診',
+            'monitor_guide'   => '案内文',
+            'reminder'        => 'リマインド',
+            'report_request'  => '報告依頼',
+            'campaign_closed' => '終了案内',
+            default           => $this->send_type,
         };
     }
 
