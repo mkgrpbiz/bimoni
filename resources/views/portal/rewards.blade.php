@@ -85,7 +85,7 @@
                 <th class="px-4 py-3 text-right">子支払総額</th>
                 @else
                 <th class="px-4 py-3 text-right">紹介単価</th>
-                @if($targetAgent->parent_id)
+                @if($targetAgent->parent_id && !$agent->parent_id)
                 <th class="px-4 py-3 text-right">差額</th>
                 @endif
                 <th class="px-4 py-3 text-right">合計</th>
@@ -104,7 +104,7 @@
                 <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($isAllDenied ? 0 : $row['child_payout']) }}</td>
                 @else
                 <td class="px-4 py-3 text-right text-gray-700">¥{{ number_format($row['reward']) }}</td>
-                @if($targetAgent->parent_id)
+                @if($targetAgent->parent_id && !$agent->parent_id)
                 <td class="px-4 py-3 text-right text-gray-500 text-xs">(差額 ¥{{ number_format($row['diff']) }})</td>
                 @endif
                 <td class="px-4 py-3 text-right font-bold text-gray-800">
@@ -131,7 +131,7 @@
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($grandTotal) }}</td>
                 <td class="px-4 py-3 text-right font-bold text-pink-600">¥{{ number_format($grandChildPayout) }}</td>
                 @else
-                <td colspan="{{ $targetAgent->parent_id ? 4 : 3 }}" class="px-4 py-3 text-right font-bold text-gray-700">合計</td>
+                <td colspan="{{ ($targetAgent->parent_id && !$agent->parent_id) ? 4 : 3 }}" class="px-4 py-3 text-right font-bold text-gray-700">合計</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($grandTotal) }}</td>
                 @endif
                 <td></td>
@@ -166,7 +166,7 @@
             <span class="text-xs text-gray-500">{{ $row['count'] }}件 × ¥{{ number_format($row['reward']) }}</span>
             <span class="font-bold text-gray-800">¥{{ number_format($isAllDenied ? 0 : $row['total']) }}</span>
         </div>
-        @if($targetAgent->parent_id && $row['diff'] > 0)
+        @if($targetAgent->parent_id && !$agent->parent_id && $row['diff'] > 0)
         <p class="text-xs text-gray-400 mt-1">差額 ¥{{ number_format($row['diff']) }}</p>
         @endif
         @endif
