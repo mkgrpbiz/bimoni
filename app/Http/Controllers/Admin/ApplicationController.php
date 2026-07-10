@@ -640,7 +640,7 @@ class ApplicationController extends Controller
         $dailySlot = CampaignDailySlot::where('campaign_id', $application->campaign_id)
             ->where('target_date', $date)
             ->first();
-        if ($dailySlot && $dailySlot->planned_count > 0) {
+        if ($dailySlot && $dailySlot->planned_count !== null) {
             $dailyBooked = Application::where('campaign_id', $application->campaign_id)
                 ->where('id', '!=', $application->id)
                 ->whereIn('status', $activeStatuses)
