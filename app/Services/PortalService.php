@@ -54,6 +54,26 @@ class PortalService
         return $query->orderByDesc('created_at')->get();
     }
 
+    /** 否認された報告を取得（全否認判定用） */
+    public static function rejectedReports(array $codes, ?Carbon $month = null): Collection
+    {
+        $userIds = User::whereIn('referred_by_code', $codes)->pluck('id');
+
+        $query = MonitorReport::with(['campaign:id,title,cooperation_fee,referral_fee'])
+            ->whereIn('user_id', $userIds)
+            ->where('status', 'rejected')
+            ->where('purchase_type', 'initial');
+
+        if ($month) {
+            $query->whereBetween('created_at', [
+                $month->copy()->startOfMonth(),
+                $month->copy()->endOfMonth(),
+            ]);
+        }
+
+        return $query->get();
+    }
+
     /**
      * 報酬計算
      * 親: campaign.referral_fee がそのまま親の総取り分

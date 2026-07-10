@@ -33,6 +33,7 @@ class RewardController extends Controller
         }
 
         $reports = \App\Services\PortalService::approvedReports($filteredCodes, $month);
+        $rejectedReports = \App\Services\PortalService::rejectedReports($filteredCodes, $month);
 
         // 親が「全体」（子で絞り込まず、子がいる）を見ている場合は、
         // レコードごとに実際の紹介元（親自身 or どの子か）を区別して計算する必要がある
@@ -77,22 +78,27 @@ class RewardController extends Controller
             ];
         }
 
-        // 案件別集計
-        $campaignGroups = $reports->groupBy('campaign_id')->map(function ($rows) use ($targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor) {
-            $fee       = $rows->first()->campaign?->referral_fee ?? 0;
-            $allDenied = $rows->groupBy('user_id')
-                ->filter(fn($ur) => $ur->every(fn($r) => $r->status === 'rejected'))
-                ->count();
-            $eligible  = $rows->where('status', 'approved');
+        // 案件別集計（承認0件・全否認のみの案件も一覧に含めるため、否認のみの案件IDも対象に含める）
+        $allCampaignIds = $reports->pluck('campaign_id')->merge($rejectedReports->pluck('campaign_id'))->unique();
+
+        $campaignGroups = $allCampaignIds->map(function ($campaignId) use ($reports, $rejectedReports, $targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor) {
+            $rows        = $reports->where('campaign_id', $campaignId); // 承認済みのみ
+            $rejectedRows = $rejectedReports->where('campaign_id', $campaignId);
+            $campaign    = $rows->first()?->campaign ?? $rejectedRows->first()?->campaign;
+            $fee         = $campaign?->referral_fee ?? 0;
+
+            // 全否認: 承認済みが1件もないのに否認だけあるユーザー数
+            $approvedUserIds = $rows->pluck('user_id')->unique();
+            $allDenied = $rejectedRows->pluck('user_id')->unique()->diff($approvedUserIds)->count();
 
             if ($isCombinedParentView) {
                 return [
-                    'campaign'     => $rows->first()->campaign,
-                    'count'        => $eligible->count(),
+                    'campaign'     => $campaign,
+                    'count'        => $rows->count(),
                     'fee'          => $fee,
                     'reward'       => null, // 混在するため単価は表示しない
-                    'total'        => $eligible->sum($payoutFor),
-                    'child_payout' => $eligible->sum($childPayoutFor),
+                    'total'        => $rows->sum($payoutFor),
+                    'child_payout' => $rows->sum($childPayoutFor),
                     'all_denied'   => $allDenied,
                     'is_child'     => false,
                     'is_combined'  => true,
@@ -100,14 +106,15 @@ class RewardController extends Controller
                 ];
             }
 
-            $reward = \App\Services\PortalService::calcReward($targetAgent, $rows->first());
+            $sampleReport = $rows->first() ?? $rejectedRows->first();
+            $reward = \App\Services\PortalService::calcReward($targetAgent, $sampleReport);
 
             return [
-                'campaign'     => $rows->first()->campaign,
-                'count'        => $eligible->count(),
+                'campaign'     => $campaign,
+                'count'        => $rows->count(),
                 'fee'          => $fee,
                 'reward'       => $reward,
-                'total'        => $eligible->count() * $reward,
+                'total'        => $rows->count() * $reward,
                 'child_payout' => null,
                 'all_denied'   => $allDenied,
                 'is_child'     => $targetAgent->parent_id !== null,
@@ -118,6 +125,18 @@ class RewardController extends Controller
 
         $grandTotal       = $campaignGroups->sum('total');
         $grandChildPayout = $isCombinedParentView ? $campaignGroups->sum('child_payout') : null;
+
+        // 単価別サマリー（¥500案件・¥1000案件などをまとめて把握しやすくする）
+        $feeGroups = $campaignGroups->groupBy('fee')->map(function ($rows, $fee) use ($isCombinedParentView) {
+            return [
+                'fee'          => (int) $fee,
+                'reward'       => $isCombinedParentView ? null : $rows->first()['reward'],
+                'count'        => $rows->sum('count'),
+                'all_denied'   => $rows->sum('all_denied'),
+                'total'        => $rows->sum('total'),
+                'child_payout' => $isCombinedParentView ? $rows->sum('child_payout') : null,
+            ];
+        })->sortKeys()->values();
 
         // コードプルダウン用リスト（コード → 代理店名）
         $codeOptions = collect();
@@ -134,7 +153,7 @@ class RewardController extends Controller
 
         return view('portal.rewards', compact(
             'agent','targetAgent','mode','month','block',
-            'campaignGroups','grandTotal','grandChildPayout','isCombinedParentView','childId',
+            'campaignGroups','feeGroups','grandTotal','grandChildPayout','isCombinedParentView','childId',
             'codeOptions','codeFilter'
         ));
     }

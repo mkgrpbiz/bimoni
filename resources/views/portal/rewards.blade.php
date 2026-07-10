@@ -73,6 +73,44 @@
 </div>
 @endif
 
+{{-- 単価別サマリー --}}
+@if($feeGroups->isNotEmpty())
+<div class="bg-white rounded-lg shadow overflow-x-auto mb-5">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-700">
+            <tr>
+                <th class="px-4 py-2 text-left">単価</th>
+                <th class="px-4 py-2 text-right">件数</th>
+                <th class="px-4 py-2 text-right">全否認</th>
+                <th class="px-4 py-2 text-right">{{ $isCombinedParentView ? '全体紹介報酬' : '金額' }}</th>
+                @if($isCombinedParentView)
+                <th class="px-4 py-2 text-right">子支払総額</th>
+                @endif
+            </tr>
+        </thead>
+        <tbody class="divide-y">
+            @foreach($feeGroups as $fg)
+            <tr>
+                <td class="px-4 py-2 text-gray-800">
+                    @if($isCombinedParentView)
+                    ¥{{ number_format($fg['fee']) }}案件
+                    @else
+                    ¥{{ number_format($fg['reward']) }}
+                    @endif
+                </td>
+                <td class="px-4 py-2 text-right text-gray-700">{{ $fg['count'] }}件</td>
+                <td class="px-4 py-2 text-right text-gray-500">{{ $fg['all_denied'] }}件</td>
+                <td class="px-4 py-2 text-right font-bold text-gray-800">¥{{ number_format($fg['total']) }}</td>
+                @if($isCombinedParentView)
+                <td class="px-4 py-2 text-right font-bold text-pink-600">¥{{ number_format($fg['child_payout']) }}</td>
+                @endif
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
+
 {{-- PC: テーブル --}}
 <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden">
     <table class="w-full text-sm">
