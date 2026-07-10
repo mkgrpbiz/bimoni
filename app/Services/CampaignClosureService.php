@@ -56,7 +56,7 @@ class CampaignClosureService
                 'campaign_id'    => $campaign->id,
                 'line_user_id'   => $application->user?->line_user_id,
                 'send_type'      => 'campaign_closed',
-                'message_body'   => $campaign->resolveTemplate($settings->message_template ?? ''),
+                'message_body'   => str_replace('{{商品名}}', $campaign->title ?? '', $settings->message_template ?? ''),
                 'send_at'        => $this->computeSendAt($settings),
                 'status'         => 'pending',
             ]);

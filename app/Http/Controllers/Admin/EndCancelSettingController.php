@@ -6,16 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\EndCancelSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class EndCancelSettingController extends Controller
 {
-    public function edit(): View
-    {
-        $setting = EndCancelSetting::current();
-        return view('admin.end_cancel_settings.edit', compact('setting'));
-    }
-
     public function update(Request $request): RedirectResponse
     {
         $request->validate([

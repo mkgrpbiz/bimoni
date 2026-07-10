@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\EndCancelSetting;
 use App\Models\FormField;
 use App\Models\LegalPage;
 use Illuminate\Http\RedirectResponse;
@@ -13,10 +14,11 @@ class FormFieldController extends Controller
 {
     public function index(): View
     {
-        $terms   = LegalPage::terms();
-        $privacy = LegalPage::privacy();
+        $terms             = LegalPage::terms();
+        $privacy           = LegalPage::privacy();
+        $endCancelSetting  = EndCancelSetting::current();
 
-        return view('admin.form_fields.index', compact('terms', 'privacy'));
+        return view('admin.form_fields.index', compact('terms', 'privacy', 'endCancelSetting'));
     }
 
     public function store(Request $request): RedirectResponse

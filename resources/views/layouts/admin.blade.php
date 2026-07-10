@@ -33,7 +33,6 @@
                     'agents'                => ['label' => '代理店',          'route' => 'admin.agents.index'],
                     'import'                => ['label' => 'インポート',      'route' => 'admin.import.index'],
                     'form_fields'           => ['label' => '編集',            'route' => 'admin.form_fields.index'],
-                    'end_cancel_settings'   => ['label' => '終了キャンセル自動送信', 'route' => 'admin.end_cancel_settings.edit'],
                 ];
             @endphp
             <div class="flex items-center gap-1 text-sm">

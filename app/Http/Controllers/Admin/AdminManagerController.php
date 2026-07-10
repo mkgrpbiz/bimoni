@@ -36,7 +36,6 @@ class AdminManagerController extends Controller
             'agents'                => '代理店',
             'import'                => 'インポート',
             'form_fields'           => 'ページ編集',
-            'end_cancel_settings'   => '終了キャンセル自動送信',
         ];
     }
 
