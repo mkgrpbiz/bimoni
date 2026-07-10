@@ -215,12 +215,13 @@ class ImportService
                 }
 
                 $data = [
-                    'status'                => $status,
-                    'invited_at'            => $invitedAt,
-                    'completed_at'          => $completedAt,
-                    'continuation_wish'     => $continuationWish,
-                    'continuation_response' => $continuationResponse,
-                    'imported_from'         => 'spreadsheet',
+                    'status'                     => $status,
+                    'invited_at'                 => $invitedAt,
+                    'completed_at'               => $completedAt,
+                    'continuation_wish'          => $continuationWish,
+                    'continuation_response'      => $continuationResponse,
+                    'continuation_responded_at'  => $continuationResponse ? now() : null,
+                    'imported_from'              => 'spreadsheet',
                 ];
 
                 // 同一ユーザー×同一応募日時 → 上書き更新、なければ新規作成
