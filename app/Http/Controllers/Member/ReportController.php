@@ -25,6 +25,16 @@ class ReportController extends Controller
         return view('member.reports.show', compact('report'));
     }
 
+    public function showCollection(CollectionReport $collectionReport): View
+    {
+        $user = Auth::guard('liff')->user();
+        if ($collectionReport->user_id !== $user->id) {
+            abort(403);
+        }
+        $campaigns = $collectionReport->campaigns();
+        return view('member.reports.show_collection', ['report' => $collectionReport, 'campaigns' => $campaigns]);
+    }
+
     public function create(Request $request): View
     {
         $user = Auth::guard('liff')->user();

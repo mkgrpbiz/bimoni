@@ -224,6 +224,7 @@ Route::prefix('member')->name('member.')->group(function () {
             Route::patch('profile', [MemberRegister::class, 'updateProfile'])->name('profile.update');
             Route::get('reports/create', [\App\Http\Controllers\Member\ReportController::class, 'create'])->name('reports.create');
             Route::get('reports/{report}', [\App\Http\Controllers\Member\ReportController::class, 'show'])->name('reports.show');
+            Route::get('reports/collection/{collectionReport}', [\App\Http\Controllers\Member\ReportController::class, 'showCollection'])->name('reports.show_collection');
             Route::post('reports', [\App\Http\Controllers\Member\ReportController::class, 'store'])->name('reports.store');
             Route::post('reports/collection', [\App\Http\Controllers\Member\ReportController::class, 'storeCollection'])->name('reports.store_collection');
         });

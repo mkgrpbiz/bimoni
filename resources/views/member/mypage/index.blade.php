@@ -224,10 +224,16 @@
                                     <p class="text-sm font-bold text-pink-600">¥{{ number_format($cr->cooperation_fee) }}</p>
                                 </div>
                             </div>
-                            <div class="ml-13 pl-1">
-                                @foreach($campaigns as $c)
-                                <p class="text-xs text-gray-500">・{{ $c->title }}</p>
-                                @endforeach
+                            <div class="ml-13 pl-1 flex items-end justify-between">
+                                <div>
+                                    @foreach($campaigns as $c)
+                                    <p class="text-xs text-gray-500">・{{ $c->title }}</p>
+                                    @endforeach
+                                </div>
+                                <a href="{{ route('member.reports.show_collection', $cr) }}"
+                                   class="text-xs text-pink-500 flex-shrink-0">
+                                    詳細 →
+                                </a>
                             </div>
                         </div>
                         @endforeach
