@@ -41,10 +41,6 @@
                 <dd class="text-gray-800 dark:text-gray-200">{{ $user->birthdate?->format('Y/m/d') ?? '-' }}</dd>
             </div>
             <div class="flex gap-2">
-                <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">エリア</dt>
-                <dd class="text-gray-800 dark:text-gray-200">{{ $user->area ?? '-' }}</dd>
-            </div>
-            <div class="flex gap-2">
                 <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">登録日</dt>
                 <dd class="text-gray-800 dark:text-gray-200">{{ $user->created_at?->format('Y/m/d') ?? '-' }}</dd>
             </div>
