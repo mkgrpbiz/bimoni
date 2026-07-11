@@ -39,6 +39,7 @@
             '設定・その他' => [
                 'import'      => ['label' => 'インポート', 'route' => 'admin.import.index'],
                 'form_fields' => ['label' => '編集',       'route' => 'admin.form_fields.index'],
+                'faqs'        => ['label' => 'よくある質問管理', 'route' => 'admin.faqs.index'],
             ],
         ];
     @endphp

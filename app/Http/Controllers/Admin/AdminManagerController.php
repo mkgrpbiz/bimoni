@@ -38,6 +38,7 @@ class AdminManagerController extends Controller
             'agents'                => '代理店',
             'import'                => 'インポート',
             'form_fields'           => 'ページ編集',
+            'faqs'                  => 'よくある質問管理',
         ];
     }
 

@@ -195,6 +195,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('form-fields/{formField}/toggle', [FormFieldController::class, 'toggle'])->name('form_fields.toggle');
         Route::patch('form-fields/legal/{slug}', [FormFieldController::class, 'updateLegal'])->name('form_fields.legal');
         Route::patch('form-fields/end-cancel-setting', [EndCancelSettingController::class, 'update'])->name('form_fields.end_cancel_setting');
+        // よくある質問管理
+        Route::get('faqs', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('faqs.index');
+        Route::get('faqs/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('faqs.create');
+        Route::post('faqs', [\App\Http\Controllers\Admin\FaqController::class, 'store'])->name('faqs.store');
+        Route::get('faqs/{faq}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('faqs.edit');
+        Route::put('faqs/{faq}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('faqs.update');
+        Route::delete('faqs/{faq}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('faqs.destroy');
+        Route::patch('faqs/{faq}/toggle-visible', [\App\Http\Controllers\Admin\FaqController::class, 'toggleVisible'])->name('faqs.toggle_visible');
+        Route::post('faqs/reorder', [\App\Http\Controllers\Admin\FaqController::class, 'reorder'])->name('faqs.reorder');
         // 案件別応募フォームフィールド設定
         Route::post('campaigns/{campaign}/form-fields', [CampaignController::class, 'syncFormFields'])->name('campaigns.form_fields.sync');
     });
@@ -217,6 +226,9 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::post('register', [MemberRegister::class, 'store'])->name('register.store');
         Route::get('transfer', [\App\Http\Controllers\Member\TransferController::class, 'show'])->name('transfer');
         Route::post('transfer', [\App\Http\Controllers\Member\TransferController::class, 'store'])->name('transfer.store');
+
+        // LINEメニューから直接開くページ（プロフィール未完了でも閲覧可）
+        Route::get('faq', [\App\Http\Controllers\Member\FaqController::class, 'index'])->name('faq');
 
         // プロフィール登録済みユーザー用
         Route::middleware(EnsureProfileCompleted::class)->group(function () {
