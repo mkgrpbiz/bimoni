@@ -304,10 +304,11 @@ class DashboardController extends Controller
             }
         }
 
-        // 打診予約: ダブルブッキング（今後のみ・案件別）
+        // 打診予約: ダブルブッキング（今後のみ・案件別、終了案件は除外）
         $duplicateGroups = Application::whereIn('status', ['line_contacted', 'scheduled', 'confirming'])
             ->whereNotNull('invited_at')
             ->where('invited_at', '>=', now())
+            ->whereHas('campaign', fn($q) => $q->where('status', 'published'))
             ->select('campaign_id', 'invited_at', DB::raw('COUNT(*) as cnt'))
             ->groupBy('campaign_id', 'invited_at')
             ->havingRaw('COUNT(*) > 1')
@@ -327,11 +328,12 @@ class DashboardController extends Controller
             ];
         }
 
-        // 打診予約: 翌日未達成
+        // 打診予約: 翌日未達成（終了案件の古い目標件数は対象外）
         $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
         $tomorrowDate   = $today->copy()->addDay()->toDateString();
         $tomorrowSlots  = CampaignDailySlot::where('target_date', $tomorrowDate)
             ->where('planned_count', '>', 0)
+            ->whereHas('campaign', fn($q) => $q->where('status', 'published'))
             ->get();
         $underCount = 0;
         foreach ($tomorrowSlots as $slot) {

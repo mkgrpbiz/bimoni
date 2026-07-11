@@ -152,6 +152,7 @@ php8.3 artisan route:clear
   - 実施完了数（本日/昨日）: `completed_at`の日付でカウント。ステータスは`completed`だけでなく`reported`/`approved`/`point_granted`も含める（実施完了後さらに進んでいても実施完了扱い、月次`$metrics`の実施数ロジックと同じ考え方）
   - 打診中・予約中・実施確認中: 日次比較ではなく**現在のパイプライン件数**のスナップショット（`status`別の単純カウント）
   - 昨日件数をカードに直接併記しているため、増減バッジ（`diffBadge()`）は表示しない（他の月次指標カードのみバッジ付き）
+- 打診アラート（`buildAlerts()`の重複ブッキング・翌日未達成）は**`campaign.status='published'`のみ対象**（`whereHas('campaign', ...)`）。終了済み案件でも`CampaignDailySlot`の目標件数が残っていると、実際には誰も応募しないため常に「未達成」として誤カウントされるバグがあったため、公開中の案件だけに絞るよう修正済み（`admin/daily-slots`一覧ページはデフォルトで`status=published`フィルタがかかっているため、ダッシュボード側が終了案件を含めていると件数が食い違って見える）
 
 ### 応募管理（案件別一覧）
 - 並び順: 実施完了/報告済/承認済/付与済/キャンセル以外のステータスは応募日時の古い順、それ以外（実施完了・キャンセル等の完了系グループ）は**案内日時（`invited_at`）の新しい順**（`ApplicationController::campaignIndex()` の `orderByRaw`）
