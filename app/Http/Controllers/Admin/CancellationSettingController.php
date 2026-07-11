@@ -56,4 +56,18 @@ class CancellationSettingController extends Controller
         return redirect()->route('admin.cancellation_settings.index')
             ->with('success', '解約方法を更新しました。');
     }
+
+    public function destroy(Campaign $campaign): RedirectResponse
+    {
+        $campaign->update([
+            'cancellation_method'     => null,
+            'cancellation_phone'      => null,
+            'cancellation_hours'      => null,
+            'cancellation_mypage_url' => null,
+            'cancellation_email'      => null,
+        ]);
+
+        return redirect()->route('admin.cancellation_settings.index')
+            ->with('success', '解約方法を削除しました。');
+    }
 }

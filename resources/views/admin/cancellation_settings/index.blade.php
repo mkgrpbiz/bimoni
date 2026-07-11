@@ -39,6 +39,7 @@
                 <th class="px-3 py-3 text-left">マイページ</th>
                 <th class="px-3 py-3 text-left">メールアドレス</th>
                 <th class="px-3 py-3 text-center">設定状況</th>
+                <th class="px-3 py-3 text-center">操作</th>
             </tr>
         </thead>
         <tbody class="divide-y">
@@ -58,10 +59,19 @@
                         <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">未設定</span>
                     @endif
                 </td>
+                <td class="px-3 py-3 text-center">
+                    @if($campaign->hasCancellationInfo())
+                    <form method="POST" action="{{ route('admin.cancellation_settings.destroy', $campaign) }}"
+                          onsubmit="return confirm('解約方法を削除しますか？')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded hover:bg-red-100 hover:text-red-600">削除</button>
+                    </form>
+                    @endif
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
+                <td colspan="6" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
             </tr>
             @endforelse
         </tbody>
