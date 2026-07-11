@@ -119,13 +119,11 @@ $pm = $prevMetrics;
     <div class="bg-white rounded-lg shadow p-4">
         <p class="text-xs text-gray-700 mb-1">応募数（本日）</p>
         <p class="text-2xl font-bold text-purple-600">{{ number_format($dailyKpi['appliedToday']) }}件</p>
-        {!! diffBadge($dailyKpi['appliedToday'], $dailyKpi['appliedYesterday']) !!}
         <p class="text-xs text-gray-400 mt-1">昨日 {{ number_format($dailyKpi['appliedYesterday']) }}件</p>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
         <p class="text-xs text-gray-700 mb-1">実施完了数（本日）</p>
         <p class="text-2xl font-bold text-blue-600">{{ number_format($dailyKpi['completedToday']) }}件</p>
-        {!! diffBadge($dailyKpi['completedToday'], $dailyKpi['completedYesterday']) !!}
         <p class="text-xs text-gray-400 mt-1">昨日 {{ number_format($dailyKpi['completedYesterday']) }}件</p>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
