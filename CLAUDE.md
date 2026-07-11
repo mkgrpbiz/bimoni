@@ -178,6 +178,8 @@ php8.3 artisan route:clear
 ### 報告管理（`admin/reports`）
 - 一覧列: 報告日時 / ユーザーID(`bimoni_user_id`) / 登録コード / LINE表示名 / 名前 / フリガナ / 案件名 / モニター協力金 / ステータス / 詳細
 - 詳細: 画像クリックでライトボックス拡大、承認・差戻しアクションあり
+- 詳細サイドバー「応募情報」: ユーザー名 / 案件名 / 応募日時（`application.applied_at`） / 実施日時（`application.completed_at`） / 報告日時（`report.created_at`） / 継続ステータス（希望/不可/確認中/OK/NG、`admin/users/show.blade.php`と同じ継続バッジロジック）
+- 「応募詳細」「ユーザー詳細」ボタンを並べて表示（`admin.applications.show` / `admin.users.show`）
 
 ### 回収管理（`admin/collection_reports`）
 - 一覧列: 報告日時 / ユーザーID(`bimoni_user_id`) / 登録コード / LINE表示名 / 名前 / フリガナ / 商品数 / 到着予定日 / 追跡番号 / ステータス / 詳細

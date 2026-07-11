@@ -292,28 +292,45 @@
     <div class="space-y-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 text-sm">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">応募情報</h2>
+            @php $app = $report->application; @endphp
             <dl class="space-y-2">
-                <dt class="text-gray-700 dark:text-gray-400">モニター</dt>
+                <dt class="text-gray-700 dark:text-gray-400">ユーザー名</dt>
                 <dd class="font-medium dark:text-gray-200">{{ $report->user?->name ?? '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">案件</dt>
+                <dt class="text-gray-700 dark:text-gray-400">案件名</dt>
                 <dd class="dark:text-gray-200">{{ $report->campaign?->title ?? '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">種別</dt>
-                <dd class="dark:text-gray-200">{{ $report->campaign?->getTypeLabel() ?? '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">協力金</dt>
-                <dd class="font-medium text-pink-600 dark:text-pink-400">¥{{ number_format($report->purchase_type === 'continuation' ? ($report->campaign?->continuation_cooperation_fee ?? 0) : ($report->campaign?->cooperation_fee ?? 0)) }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">報告日</dt>
+                <dt class="text-gray-700 dark:text-gray-400">応募日時</dt>
+                <dd class="dark:text-gray-200">{{ $app?->applied_at?->format('Y/m/d H:i') ?? '-' }}</dd>
+                <dt class="text-gray-700 dark:text-gray-400">実施日時</dt>
+                <dd class="dark:text-gray-200">{{ $app?->completed_at?->format('Y/m/d H:i') ?? '-' }}</dd>
+                <dt class="text-gray-700 dark:text-gray-400">報告日時</dt>
                 <dd class="dark:text-gray-200">{{ $report->created_at->format('Y/m/d H:i') }}</dd>
-                @if($report->reviewed_at)
-                <dt class="text-gray-700 dark:text-gray-400">審査日</dt>
-                <dd class="dark:text-gray-200">{{ $report->reviewed_at->format('Y/m/d H:i') }}</dd>
-                @endif
+                <dt class="text-gray-700 dark:text-gray-400">継続ステータス</dt>
+                <dd class="dark:text-gray-200">
+                    @if($app?->continuation_responded_at && $app->continuation_response === 'possible')
+                        <span class="text-xs bg-teal-500 text-white px-1.5 py-0.5 rounded-full">OK</span>
+                    @elseif($app?->continuation_responded_at && $app->continuation_response === 'not_possible')
+                        <span class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">NG</span>
+                    @elseif($app?->continuation_sent_at)
+                        <span class="text-xs bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">確認中</span>
+                    @elseif($app?->continuation_wish === '希望')
+                        <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">希望</span>
+                    @elseif($app?->continuation_wish === '不可')
+                        <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">不可</span>
+                    @else
+                        <span class="text-xs text-gray-400">-</span>
+                    @endif
+                </dd>
             </dl>
-            @if($report->application)
-            <div class="mt-3">
+            <div class="mt-3 flex gap-2">
+                @if($report->application)
                 <a href="{{ route('admin.applications.show', $report->application) }}"
-                   class="bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600 text-xs">→ 応募詳細を見る</a>
+                   class="bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600 text-xs">応募詳細</a>
+                @endif
+                @if($report->user)
+                <a href="{{ route('admin.users.show', $report->user) }}"
+                   class="bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600 text-xs">ユーザー詳細</a>
+                @endif
             </div>
-            @endif
         </div>
     </div>
 </div>
