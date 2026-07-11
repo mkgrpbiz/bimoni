@@ -218,6 +218,9 @@ Route::prefix('member')->name('member.')->group(function () {
     Route::post('auth/dev-login', [MemberAuth::class, 'devLogin'])->name('auth.dev');
     Route::post('auth/logout', [MemberAuth::class, 'logout'])->name('logout');
 
+    // LINEメニューから直接開く公開ページ（ログイン不要）
+    Route::get('faq', [\App\Http\Controllers\Member\FaqController::class, 'index'])->name('faq');
+
     // LIFF認証必須
     Route::middleware('auth:liff')->group(function () {
 
@@ -226,9 +229,6 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::post('register', [MemberRegister::class, 'store'])->name('register.store');
         Route::get('transfer', [\App\Http\Controllers\Member\TransferController::class, 'show'])->name('transfer');
         Route::post('transfer', [\App\Http\Controllers\Member\TransferController::class, 'store'])->name('transfer.store');
-
-        // LINEメニューから直接開くページ（プロフィール未完了でも閲覧可）
-        Route::get('faq', [\App\Http\Controllers\Member\FaqController::class, 'index'])->name('faq');
 
         // プロフィール登録済みユーザー用
         Route::middleware(EnsureProfileCompleted::class)->group(function () {
