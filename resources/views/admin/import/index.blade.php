@@ -100,24 +100,16 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">応募リストインポート</h2>
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 space-y-0.5">
-            <p class="font-medium text-gray-700 dark:text-gray-300">エルメの応募フォーム回答データをそのままCSVでインポートできます。案件を選択してください。</p>
-            <p>・ヘッダー行（日本語）に対応：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">回答日時, 回答者ID, 回答者, お名前(漢字フルネーム), フリガナ, 生年月日をご入力ください, 性別を選択してください, 購入可能時間を選択して下さい, 継続購入がある場合〜, ステータス, 採用日, 継続</code></p>
+            <p class="font-medium text-gray-700 dark:text-gray-300">応募リストCSVをそのままインポートできます（複数案件が混在するCSVも一括で取込み可能）。</p>
+            <p>・ヘッダー行（日本語）に対応：<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">案件名, 応募日時, 回答者ID, 名前, フリガナ, 実施可能時間, 継続希望, ステータス, 案内日, 案内時間, 継続打診</code></p>
+            <p>・案件名は登録済みの案件タイトルと完全一致している必要があります（一致しない行はエラーとして報告されます）</p>
             <p>・ステータス：実施完了 / キャンセル / 予約中 / 実施確認中 / 打診中 / 空欄（応募のみ）</p>
-            <p>・継続購入希望（はい/いいえ）と継続打診承諾（TRUE/FALSE）を自動マッピング</p>
-<p>・回答者IDでユーザーを検索。見つからない場合は新規ユーザーとして登録します</p>
-            <p>・重複チェック：同一回答者ID×同一応募日時が既にある場合は上書き更新（スキップしません）</p>
+            <p>・継続希望（はい→希望／いいえ→不可）、継続打診（「継続OK」の記載があれば承諾）を自動マッピング</p>
+            <p>・回答者IDでユーザーを検索。見つからない場合は新規ユーザーとして登録します</p>
+            <p>・一致条件：<b>案件名×応募日時×回答者ID</b>が既存の報告と一致する場合、ステータスが<b>実施完了・キャンセル</b>のときのみ上書き更新し、それ以外はスキップします。一致がない場合は新規作成します</p>
         </div>
         <form method="POST" action="{{ route('admin.import.applications') }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
             @csrf
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">案件 <span class="text-red-500">*</span></label>
-                <select name="campaign_id" required class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-sm w-64">
-                    <option value="">選択してください</option>
-                    @foreach($campaigns as $campaign)
-                        <option value="{{ $campaign->id }}">{{ $campaign->title }}</option>
-                    @endforeach
-                </select>
-            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CSVファイル <span class="text-red-500">*</span></label>
                 <input type="file" name="csv_file" accept=".csv,.txt" required

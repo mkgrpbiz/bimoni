@@ -119,15 +119,9 @@ class ImportService
         return $result;
     }
 
-    public function importApplications(array $rows, int $campaignId): array
+    public function importApplications(array $rows): array
     {
         $result = ['success' => 0, 'skipped' => 0, 'errors' => []];
-
-        $campaign = Campaign::find($campaignId);
-        if (!$campaign) {
-            $result['errors'][] = '指定された案件が見つかりません';
-            return $result;
-        }
 
         $rows = $this->normalizeApplicationRows($rows);
 
@@ -141,11 +135,31 @@ class ImportService
             '応募'       => 'pending',
         ];
         $validStatuses = ['pending','line_contacted','scheduled','confirming','completed','reported','approved','point_granted','cancelled'];
+        $finalStatuses = ['completed', 'cancelled'];
 
-        DB::transaction(function () use ($rows, $campaign, &$result, $statusMap, $validStatuses) {
+        $campaignCache = [];
+
+        DB::transaction(function () use ($rows, &$result, $statusMap, $validStatuses, $finalStatuses, &$campaignCache) {
             foreach ($rows as $i => $row) {
+                $rowNo = $i + 2; // ヘッダー行分を加味した見た目上の行番号
+
                 $ermeId = trim($row['erme_respondent_id'] ?? '');
                 if (empty($ermeId)) {
+                    continue;
+                }
+
+                // 案件名で案件を特定（案件名, 応募日時, 回答者IDの3つが一致キー）
+                $campaignName = trim($row['campaign_name'] ?? '');
+                if ($campaignName === '') {
+                    $result['errors'][] = "{$rowNo}行目: 案件名が空です（回答者ID: {$ermeId}）";
+                    continue;
+                }
+                if (!array_key_exists($campaignName, $campaignCache)) {
+                    $campaignCache[$campaignName] = Campaign::where('title', $campaignName)->first();
+                }
+                $campaign = $campaignCache[$campaignName];
+                if (!$campaign) {
+                    $result['errors'][] = "{$rowNo}行目: 案件「{$campaignName}」が見つかりません（回答者ID: {$ermeId}）";
                     continue;
                 }
 
@@ -201,11 +215,10 @@ class ImportService
                     default  => null,
                 };
 
-                // 継続打診承諾: スプレッドシート運用ではOKの人だけチェックを入れるため、
-                // TRUE（チェック有）のみ possible として信頼する。FALSE/空欄は「無回答」であり
-                // 明確なNGではないため not_possible にはしない（継続希望の有無は別列で判定）
-                $flagRaw = strtoupper(trim($row['continuation_flag'] ?? ''));
-                $continuationResponse = $flagRaw === 'TRUE' ? 'possible' : null;
+                // 継続打診承諾: 「継続OK」の記載がある場合のみ possible とする。
+                // 空欄は「無回答」であり明確なNGではないため not_possible にはしない
+                $flagRaw = trim($row['continuation_flag'] ?? '');
+                $continuationResponse = str_contains($flagRaw, 'OK') ? 'possible' : null;
 
                 $completedAt = null;
                 if (in_array($status, ['completed', 'reported', 'approved', 'point_granted'])) {
@@ -222,24 +235,30 @@ class ImportService
                     'imported_from'              => 'spreadsheet',
                 ];
 
-                // 同一ユーザー×同一応募日時 → 上書き更新、なければ新規作成
+                // 案件名×応募日時×回答者ID が一致する既存レコードを探す
                 $existing = Application::where('user_id', $user->id)
+                    ->where('campaign_id', $campaign->id)
                     ->where('applied_at', $appliedAtStr)
                     ->first();
 
                 if ($existing) {
-                    $existing->update($data);
-                    $application = $existing;
+                    // 一致した場合：実施完了・キャンセルのみ更新、それ以外はスキップ
+                    if (in_array($status, $finalStatuses)) {
+                        $existing->update($data);
+                        $result['success']++;
+                    } else {
+                        $result['skipped']++;
+                    }
                 } else {
+                    // 一致がない場合：新規作成
                     $application = Application::create(array_merge($data, [
                         'user_id'     => $user->id,
                         'campaign_id' => $campaign->id,
                         'applied_at'  => $appliedAtStr,
                     ]));
                     DB::table('applications')->where('id', $application->id)->update(['created_at' => $appliedAtCarbon]);
+                    $result['success']++;
                 }
-
-                $result['success']++;
             }
         });
 
@@ -252,22 +271,28 @@ class ImportService
 
         $headerMap = [
             '回答日時'         => 'applied_at',
+            '応募日時'         => 'applied_at',
             '回答者ID'         => 'erme_respondent_id',
             '回答者'           => 'line_display_name',
             'お名前(漢字フルネーム)' => 'name',
+            '名前'             => 'name',
             'フリガナ'         => 'name_kana',
             '生年月日をご入力ください' => 'birthdate',
             '性別を選択してください'  => 'gender',
             '購入可能時間を選択して下さい' => 'available_times',
+            '実施可能時間'     => 'available_times',
             '継続購入がある場合、複数回の購入を希望されますか？' => 'wants_continuation',
+            '継続希望'         => 'wants_continuation',
             'ステータス'       => 'status',
             '案内日'           => 'invited_date',
             '案内時間'         => 'invited_time',
             '継続'             => 'continuation_flag',
+            '継続打診'         => 'continuation_flag',
             '奨学'             => 'continuation_flag',
             '備考'             => 'notes',
             'ｷｬﾝﾍﾟｰﾝ'         => 'campaign_name',
             'キャンペーン'     => 'campaign_name',
+            '案件名'           => 'campaign_name',
         ];
 
         $firstKeys = array_keys($rows[0]);
@@ -576,9 +601,22 @@ class ImportService
         return $value;
     }
 
+    /** 文字コードを自動判定してUTF-8に統一（Shift-JIS等のCSVを正しく読めるようにする） */
+    private function normalizeEncoding(string $content): string
+    {
+        $content = ltrim($content, "\xEF\xBB\xBF"); // UTF-8 BOM除去
+
+        $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS-win', 'SJIS', 'EUC-JP'], true);
+        if ($encoding && $encoding !== 'UTF-8') {
+            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+        }
+
+        return $content;
+    }
+
     public function skipToApplicationHeader(string $content): string
     {
-        $content = ltrim($content, "\xEF\xBB\xBF");
+        $content = $this->normalizeEncoding($content);
         $lines   = preg_split('/\r\n|\r|\n/', $content);
         foreach ($lines as $i => $line) {
             if (str_contains($line, '回答者ID')) {
@@ -590,7 +628,7 @@ class ImportService
 
     public function parseCsv(string $content): array
     {
-        $content = ltrim($content, "\xEF\xBB\xBF"); // UTF-8 BOM除去
+        $content = $this->normalizeEncoding($content);
 
         // fgetcsv を使うことでセル内改行を含むCSVを正しく処理
         $handle = fopen('php://temp', 'r+');

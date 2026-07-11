@@ -50,8 +50,7 @@ class ImportController extends Controller
     public function importApplications(Request $request): RedirectResponse
     {
         $request->validate([
-            'csv_file'    => 'required|file|mimes:csv,txt|max:5120',
-            'campaign_id' => 'required|integer|exists:campaigns,id',
+            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
         ]);
 
         $content = file_get_contents($request->file('csv_file')->getRealPath());
@@ -63,7 +62,7 @@ class ImportController extends Controller
         }
 
         try {
-            $result = $this->importer->importApplications($rows, (int) $request->input('campaign_id'));
+            $result = $this->importer->importApplications($rows);
         } catch (\Throwable $e) {
             return redirect()->route('admin.import.index')->with('error', 'インポートエラー: ' . $e->getMessage());
         }
