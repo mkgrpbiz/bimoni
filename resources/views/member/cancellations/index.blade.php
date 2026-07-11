@@ -25,7 +25,8 @@
                         <p class="text-xs font-bold text-gray-400 mb-0.5">商品名</p>
                         <p class="text-sm font-medium text-gray-800 truncate">{{ $campaign->title }}</p>
                     </div>
-                    <span class="text-pink-500 text-xs flex-shrink-0">解約方法を見る</span>
+                    <span class="text-pink-500 text-xs flex-shrink-0 cancel-label-closed">解約方法を見る</span>
+                    <span class="text-pink-500 text-xs flex-shrink-0 cancel-label-open">閉じる</span>
                 </summary>
                 <div class="px-4 pb-4 pt-1 border-t border-gray-50 space-y-3">
                     @if($campaign->cancellation_method)
@@ -62,4 +63,9 @@
     @endif
 
 </div>
+<style>
+    .cancel-label-open { display: none; }
+    details[open] .cancel-label-open { display: inline; }
+    details[open] .cancel-label-closed { display: none; }
+</style>
 @endsection
