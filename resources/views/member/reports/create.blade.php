@@ -6,7 +6,7 @@
         <a href="{{ route('member.mypage') }}" class="text-pink-500 text-sm">← マイページ</a>
     </div>
     <h1 class="font-bold text-gray-700 mb-3">モニター報告</h1>
-    <p class="text-xs text-gray-400 mb-4">実施が完了したモニターの報告をお願いします。</p>
+    <p class="text-xs text-gray-400 mb-4">実施が完了したモニター報告をお願いいたします。</p>
 
     @if(session('error'))
         <div class="bg-red-100 text-red-800 rounded-xl px-4 py-3 text-sm mb-4">{{ session('error') }}</div>
