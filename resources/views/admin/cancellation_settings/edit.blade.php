@@ -16,9 +16,9 @@
 
     <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">解約方法</label>
-        <textarea name="cancellation_info" rows="4" class="w-full border rounded px-3 py-2 text-sm @error('cancellation_info') border-red-400 @enderror"
-                  placeholder="商品到着から3日後以降、次回発送予定日の10日前までに...">{{ old('cancellation_info', $campaign->cancellation_info ?? '') }}</textarea>
-        @error('cancellation_info')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+        <textarea name="cancellation_method" rows="4" class="w-full border rounded px-3 py-2 text-sm @error('cancellation_method') border-red-400 @enderror"
+                  placeholder="商品到着から3日後以降、次回発送予定日の10日前までに...">{{ old('cancellation_method', $campaign->cancellation_method ?? '') }}</textarea>
+        @error('cancellation_method')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>

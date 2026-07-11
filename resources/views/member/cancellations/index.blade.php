@@ -28,10 +28,10 @@
                     <span class="text-pink-500 text-xs flex-shrink-0">解約方法を見る</span>
                 </summary>
                 <div class="px-4 pb-4 pt-1 border-t border-gray-50 space-y-3">
-                    @if($campaign->cancellation_info)
+                    @if($campaign->cancellation_method)
                     <div>
                         <p class="text-xs font-bold text-gray-500 mb-1">解約方法</p>
-                        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $campaign->cancellation_info }}</p>
+                        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $campaign->cancellation_method }}</p>
                     </div>
                     @endif
                     @if($campaign->cancellation_phone)

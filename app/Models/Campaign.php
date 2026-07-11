@@ -9,7 +9,8 @@ class Campaign extends Model
     protected $fillable = [
         'category_id', 'title', 'campaign_type', 'status', 'pr_media',
         'description', 'requirements', 'notes',
-        'cancellation_info', 'cancellation_phone', 'cancellation_hours',
+        'cancellation_info',
+        'cancellation_method', 'cancellation_phone', 'cancellation_hours',
         'cancellation_mypage_url', 'cancellation_email',
         'monitor_guide', 'link', 'monitor_video', 'monitor_video_thumbnail',
         'monitor_invite_message', 'monitor_end_message',
@@ -70,9 +71,10 @@ class Campaign extends Model
         };
     }
 
+    // 「解約方法管理」機能（案件編集とは別画面）で使う項目が1つでも入力されているか
     public function hasCancellationInfo(): bool
     {
-        return filled($this->cancellation_info)
+        return filled($this->cancellation_method)
             || filled($this->cancellation_phone)
             || filled($this->cancellation_hours)
             || filled($this->cancellation_mypage_url)

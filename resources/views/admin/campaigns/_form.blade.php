@@ -81,6 +81,11 @@
         </div>
 
         <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">解約について</label>
+            <textarea name="cancellation_info" rows="3" class="w-full border rounded px-3 py-2 text-sm"
+                      placeholder="解約手続きの方法・タイミング等">{{ old('cancellation_info', $campaign->cancellation_info ?? '') }}</textarea>
+        </div>
+        <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">モニター案内文</label>
             <textarea name="monitor_guide" rows="4" class="w-full border rounded px-3 py-2 text-sm"
                       placeholder="モニター参加者への案内・手順">{{ old('monitor_guide', $campaign->monitor_guide ?? '') }}</textarea>
