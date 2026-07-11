@@ -39,6 +39,7 @@ class AdminManagerController extends Controller
             'import'                => 'インポート',
             'form_fields'           => 'ページ編集',
             'faqs'                  => 'よくある質問管理',
+            'guide_pages'           => 'ガイドページ管理',
         ];
     }
 

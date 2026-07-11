@@ -204,6 +204,30 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('faqs/{faq}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('faqs.destroy');
         Route::patch('faqs/{faq}/toggle-visible', [\App\Http\Controllers\Admin\FaqController::class, 'toggleVisible'])->name('faqs.toggle_visible');
         Route::post('faqs/reorder', [\App\Http\Controllers\Admin\FaqController::class, 'reorder'])->name('faqs.reorder');
+        // ガイドページ管理（初心者ガイド・回収サービス等）
+        Route::get('guide-pages', [\App\Http\Controllers\Admin\GuidePageController::class, 'index'])->name('guide_pages.index');
+        Route::get('guide-pages/create', [\App\Http\Controllers\Admin\GuidePageController::class, 'create'])->name('guide_pages.create');
+        Route::post('guide-pages', [\App\Http\Controllers\Admin\GuidePageController::class, 'store'])->name('guide_pages.store');
+        Route::get('guide-pages/{guidePage}/edit', [\App\Http\Controllers\Admin\GuidePageController::class, 'edit'])->name('guide_pages.edit');
+        Route::put('guide-pages/{guidePage}', [\App\Http\Controllers\Admin\GuidePageController::class, 'update'])->name('guide_pages.update');
+        Route::delete('guide-pages/{guidePage}', [\App\Http\Controllers\Admin\GuidePageController::class, 'destroy'])->name('guide_pages.destroy');
+        Route::patch('guide-pages/{guidePage}/toggle-visible', [\App\Http\Controllers\Admin\GuidePageController::class, 'toggleVisible'])->name('guide_pages.toggle_visible');
+        Route::post('guide-pages/reorder', [\App\Http\Controllers\Admin\GuidePageController::class, 'reorder'])->name('guide_pages.reorder');
+        Route::post('guide-pages/{guidePage}/sections', [\App\Http\Controllers\Admin\GuideSectionController::class, 'store'])->name('guide_sections.store');
+        Route::get('guide-sections/{guideSection}/edit', [\App\Http\Controllers\Admin\GuideSectionController::class, 'edit'])->name('guide_sections.edit');
+        Route::put('guide-sections/{guideSection}', [\App\Http\Controllers\Admin\GuideSectionController::class, 'update'])->name('guide_sections.update');
+        Route::delete('guide-sections/{guideSection}', [\App\Http\Controllers\Admin\GuideSectionController::class, 'destroy'])->name('guide_sections.destroy');
+        Route::patch('guide-sections/{guideSection}/toggle-visible', [\App\Http\Controllers\Admin\GuideSectionController::class, 'toggleVisible'])->name('guide_sections.toggle_visible');
+        Route::post('guide-sections/reorder', [\App\Http\Controllers\Admin\GuideSectionController::class, 'reorder'])->name('guide_sections.reorder');
+        Route::post('guide-sections/{guideSection}/notes', [\App\Http\Controllers\Admin\GuideNoteController::class, 'store'])->name('guide_notes.store');
+        Route::put('guide-notes/{guideNote}', [\App\Http\Controllers\Admin\GuideNoteController::class, 'update'])->name('guide_notes.update');
+        Route::delete('guide-notes/{guideNote}', [\App\Http\Controllers\Admin\GuideNoteController::class, 'destroy'])->name('guide_notes.destroy');
+        Route::post('guide-notes/reorder', [\App\Http\Controllers\Admin\GuideNoteController::class, 'reorder'])->name('guide_notes.reorder');
+        Route::post('guide-sections/{guideSection}/steps', [\App\Http\Controllers\Admin\GuideStepController::class, 'store'])->name('guide_steps.store');
+        Route::put('guide-steps/{guideStep}', [\App\Http\Controllers\Admin\GuideStepController::class, 'update'])->name('guide_steps.update');
+        Route::delete('guide-steps/{guideStep}', [\App\Http\Controllers\Admin\GuideStepController::class, 'destroy'])->name('guide_steps.destroy');
+        Route::patch('guide-steps/{guideStep}/toggle-visible', [\App\Http\Controllers\Admin\GuideStepController::class, 'toggleVisible'])->name('guide_steps.toggle_visible');
+        Route::post('guide-steps/reorder', [\App\Http\Controllers\Admin\GuideStepController::class, 'reorder'])->name('guide_steps.reorder');
         // 案件別応募フォームフィールド設定
         Route::post('campaigns/{campaign}/form-fields', [CampaignController::class, 'syncFormFields'])->name('campaigns.form_fields.sync');
     });
@@ -220,6 +244,7 @@ Route::prefix('member')->name('member.')->group(function () {
 
     // LINEメニューから直接開く公開ページ（ログイン不要）
     Route::get('faq', [\App\Http\Controllers\Member\FaqController::class, 'index'])->name('faq');
+    Route::get('guide/{guidePage:slug}', [\App\Http\Controllers\Member\GuideController::class, 'show'])->name('guide');
 
     // LIFF認証必須
     Route::middleware('auth:liff')->group(function () {
