@@ -243,7 +243,9 @@ class ImportService
 
                 if ($existing) {
                     // 一致した場合：実施完了・キャンセルのみ更新、それ以外はスキップ
-                    if (in_array($status, $finalStatuses)) {
+                    // ただし既に報告・承認等でさらに先へ進んでいる場合は後退させないためスキップ
+                    $alreadyAdvanced = in_array($existing->status, ['reported', 'approved', 'point_granted']);
+                    if (in_array($status, $finalStatuses) && !$alreadyAdvanced) {
                         $existing->update($data);
                         $result['success']++;
                     } else {
