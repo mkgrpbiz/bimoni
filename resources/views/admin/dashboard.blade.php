@@ -111,6 +111,37 @@ $m  = $metrics;
 $pm = $prevMetrics;
 @endphp
 
+{{-- 本日の状況（日次KPI） --}}
+<div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm font-bold text-gray-600">本日の状況</h2>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-xs text-gray-700 mb-1">応募数（本日）</p>
+        <p class="text-2xl font-bold text-purple-600">{{ number_format($dailyKpi['appliedToday']) }}件</p>
+        {!! diffBadge($dailyKpi['appliedToday'], $dailyKpi['appliedYesterday']) !!}
+        <p class="text-xs text-gray-400 mt-1">昨日 {{ number_format($dailyKpi['appliedYesterday']) }}件</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-xs text-gray-700 mb-1">実施完了数（本日）</p>
+        <p class="text-2xl font-bold text-blue-600">{{ number_format($dailyKpi['completedToday']) }}件</p>
+        {!! diffBadge($dailyKpi['completedToday'], $dailyKpi['completedYesterday']) !!}
+        <p class="text-xs text-gray-400 mt-1">昨日 {{ number_format($dailyKpi['completedYesterday']) }}件</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-xs text-gray-700 mb-1">打診中</p>
+        <p class="text-2xl font-bold text-orange-600">{{ number_format($dailyKpi['lineContacted']) }}件</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-xs text-gray-700 mb-1">予約中</p>
+        <p class="text-2xl font-bold text-orange-600">{{ number_format($dailyKpi['scheduled']) }}件</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-xs text-gray-700 mb-1">実施確認中</p>
+        <p class="text-2xl font-bold text-orange-600">{{ number_format($dailyKpi['confirming']) }}件</p>
+    </div>
+</div>
+
 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
     @php
     $cards = [

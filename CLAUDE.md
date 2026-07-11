@@ -146,6 +146,9 @@ php8.3 artisan route:clear
 
 ## 管理画面
 
+### 応募管理（案件別一覧）
+- 並び順: 実施完了/報告済/承認済/付与済/キャンセル以外のステータスは応募日時の古い順、それ以外（実施完了・キャンセル等の完了系グループ）は**案内日時（`invited_at`）の新しい順**（`ApplicationController::campaignIndex()` の `orderByRaw`）
+
 ### 代理店管理
 - 一覧: 代理店名・子代理店数・コード数・登録数・応募数・報告数・詳細/削除
 - 削除: 登録者がいない代理店のみ可（子代理店・コードも一括削除）
@@ -188,16 +191,24 @@ php8.3 artisan route:clear
 
 ### インポート機能
 - **ユーザーインポート**: erme_respondent_idが既存ユーザーと一致→上書き更新（スキップしない）。メールのみ一致→スキップ
-- **応募リストインポート**: エルメのCSVをそのまま投入。案件を選択してインポート
+- **応募リストインポート**（2026-07-11に仕様変更・全面書き換え）: 案件を1つ選ぶ方式は廃止。CSV自体に複数案件が混在していてもそのまま投入できる
   - `ImportService::skipToApplicationHeader()` でサマリー行（集計情報）を自動スキップし「回答者ID」を含む行をヘッダーとして使用
+  - `normalizeEncoding()` を `parseCsv()` / `skipToApplicationHeader()` の先頭で実行し、Shift-JIS/UTF-8を自動判定して変換（貼り付け元によって文字コードが揺れるため）
   - `parseCsv()` で重複ヘッダーは `_2` `_3` でリネーム（最初の列を優先）
   - `normalizeApplicationRows()` で `ステータス共有` 列は明示的にスキップ（列名がそのままでも読み込み対象外）
-  - 重複チェック: 同一ユーザー × 同一応募日時 → 上書き更新（この定義は触らない）
+  - 案件は**行ごとに「案件名」列から** `Campaign::where('title', $campaignName)->first()` で自動特定（`$campaignCache` でキャッシュ）。見つからない/空欄の行はエラーとして報告しスキップ
+  - 一致判定キーは **案件名 × 応募日時 × 回答者ID**（`(user_id, campaign_id, applied_at)`）
+  - 更新・作成・スキップのルール（もともとのCSV運用で実施完了の反映漏れが400件以上あった問題への対応）:
+    - 一致する既存レコードがあり、CSV側のステータスが `completed`（実施完了）または `cancelled`（キャンセル）→ 更新
+    - 一致する既存レコードがあり、CSV側のステータスがそれ以外 → スキップ（何もしない）
+    - 一致する既存レコードがない → 新規作成（ステータス問わず）
+    - **保護対象ステータス**（既存レコードが以下の場合は絶対に上書きしない。CSV側の内容に関わらず常にスキップ）: `reported`（報告済） / `approved`（承認済） / `point_granted`（付与済） / `scheduled`（予約中） / `line_contacted`（打診中）。予約中・打診中は別工程（打診・日程調整フロー）で管理されているためユーザー確認済みで保護対象に追加
   - ステータスマッピング: 実施完了→completed / 実施確認中→confirming / キャンセル→cancelled / 予約中→scheduled / 打診中→line_contacted / 空欄→pending
   - `invited_at`: 採用日+採用時間 または 案内日+案内時間 から設定
-  - `available_times`: 購入可能時間を選択 列から設定（いつでもOK含む）。既存ユーザーも更新
-  - `continuation_flag`: 継続 / 奨学 列の TRUE/FALSE → possible/not_possible
-  - `campaign_name`: ｷｬﾝﾍﾟｰﾝ（半角）/ キャンペーン（全角）両対応
+  - `available_times`: 「実施可能時間」列から設定（いつでもOK含む）。既存ユーザーも更新
+  - `continuation_flag`（継続打診）: 完全一致の `TRUE` ではなく `str_contains($flagRaw, 'OK')` で判定（実データが「継続OK」等の文字列だったため）
+  - `wants_continuation`（継続希望）: 「希望」or「不可」
+  - ヘッダー名は実データに合わせて `応募日時` `名前` `実施可能時間` `継続希望` `継続打診` `案件名` に対応（旧ヘッダー名も後方互換で残している）
   - applications テーブルの `(user_id, campaign_id)` unique制約は削除済み（同一ユーザーが複数回応募可）
   - 案件別インポートデータ削除スクリプト: `php8.3 fix_delete_campaign_applications.php {campaign_id}`
 - **報告インポート**: 列 = 回答者ID, 回答者名（任意）, 名前, フリガナ, 案件名, 初回か継続, モニター経費, キャンペーン
@@ -218,7 +229,21 @@ php8.3 artisan route:clear
 
 ## 報酬計算ロジック（PortalService::calcReward）
 - **親代理店**: `campaign.referral_fee` をそのまま受け取る
-- **子代理店**: 親が設定した `child_reward_{fee}` を受け取る（差額が親の利益）
+- **子代理店**: `child_reward_{fee}` を受け取る。この値は**子自身のAgentレコード**に保存されている（親のレコードではない）
+  - 過去バグ: `$agent->parent?->childRewardFor($fee)` と親側を参照していたため子の設定が反映されず常に0になっていた → `$agent->childRewardFor($fee)` に修正済み
+- 報酬管理画面（ポータル）の表示は「入り」と「出」で統一：**全体紹介報酬**（案件の紹介報酬合計）/ **子支払総額**（子代理店への支払い合計）。親の取り分（利益・差額）という表現はやめた
+  - 「差額」は**親が子を見ている場合のみ**表示（子代理店が自分自身を閲覧している時は非表示。子に親の利益率を見せない）
+- 報告管理画面（ポータル）は閲覧者自身の取り分（`calcReward()`の結果）を表示する。案件の`referral_fee`そのままを出さない
+- 報酬管理に単価別（fee別）サマリーを追加。全否認（承認0件・却下のみ）の案件も一覧に出るよう、`approvedReports()` に加えて `rejectedReports()` から案件IDを集めて集計対象にしている（承認済みだけでフィルタすると却下のみの案件が集計から漏れて全否認が常に0件になるバグがあった）
+
+---
+
+## 会員マイページ（`member/mypage`）
+
+### 「応募中」タブの募集終了案件アコーディオン
+- 「応募中」ステータス（pending/selected/line_contacted/scheduled/confirming）の応募のうち、案件が既に募集終了（`campaign.status === 'closed'`）のものは、タブ内で削除せず下部に折りたたんで表示する（`MypageController::index()` の `$applyingActive` / `$applyingEnded`）
+- タブのバッジ件数は分割前の全件数（`$groups['応募中']`）のまま変えない
+- 折りたたみは `<details>/<summary>`（ネイティブHTML、JS不要）。「応募中」タブのみ対象で、実施完了・キャンセル等の他タブは影響なし
 
 ---
 

@@ -43,6 +43,9 @@ class DashboardController extends Controller
         // ダッシュボードアラート
         $alerts = $this->buildAlerts();
 
+        // 日次KPI（本日・昨日の状況確認）
+        $dailyKpi = $this->calcDailyKpi();
+
         // メイン指標
         $metrics = $this->calcMetrics($year, $month, $mode);
 
@@ -68,8 +71,33 @@ class DashboardController extends Controller
             'pendingReportsCount', 'pendingReportsAmount',
             'pendingCollectionCount',
             'metrics', 'prevMetrics', 'chartData',
-            'year', 'month', 'mode', 'months', 'alerts'
+            'year', 'month', 'mode', 'months', 'alerts', 'dailyKpi'
         ));
+    }
+
+    private function calcDailyKpi(): array
+    {
+        $today     = Carbon::today();
+        $yesterday = $today->copy()->subDay();
+
+        $appliedToday     = Application::whereDate('applied_at', $today)->count();
+        $appliedYesterday = Application::whereDate('applied_at', $yesterday)->count();
+
+        // 実施完了数は completed_at ベース（その後さらに報告・承認等に進んでいても実施完了扱い）
+        $completedStatuses = ['completed', 'reported', 'approved', 'point_granted'];
+        $completedToday     = Application::whereIn('status', $completedStatuses)->whereDate('completed_at', $today)->count();
+        $completedYesterday = Application::whereIn('status', $completedStatuses)->whereDate('completed_at', $yesterday)->count();
+
+        // 打診中・予約中・実施確認中は現在の件数（日次比較ではなく現状のパイプライン件数）
+        $lineContacted = Application::where('status', 'line_contacted')->count();
+        $scheduled     = Application::where('status', 'scheduled')->count();
+        $confirming    = Application::where('status', 'confirming')->count();
+
+        return compact(
+            'appliedToday', 'appliedYesterday',
+            'completedToday', 'completedYesterday',
+            'lineContacted', 'scheduled', 'confirming'
+        );
     }
 
     public function dismissAlert(Request $request): \Illuminate\Http\RedirectResponse
