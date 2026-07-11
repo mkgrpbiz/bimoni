@@ -168,6 +168,12 @@ php8.3 artisan route:clear
 
 ### ユーザー管理
 - 登録コード（`referred_by_code`）を表示
+- 詳細ページ（`admin/users/{user}`）: 応募履歴・モニター報告履歴・回収報告履歴を`<details>`アコーディオンで表示（応募履歴が一番上でopen、他は閉じた状態）
+  - 応募履歴: 応募日時 / 案件名 / ステータス / 案内日時（`invited_at`） / 継続（`continuation_response`/`continuation_sent_at`/`continuation_wish`から判定するOK/NG/確認中/希望/不可バッジ、`campaign_index.blade.php`と同じロジック） / 詳細（`admin.applications.show`）
+  - モニター報告履歴（旧名: モニター実施履歴）: 報告日時 / 案件名 / 報告ステータス / 支払いステータス / 支払い金額 / 支払日 / 詳細（`admin.reports.show`）
+  - 回収報告履歴: 報告日時 / 案件名（`$cr->campaigns()`で複数案件をカンマ区切り表示） / 商品数 / 報告ステータス / 支払いステータス / 支払日 / 詳細（`admin.collection_reports.show`）
+  - `CollectionReport`モデルの`paid_at`は元々`casts()`に含まれておらず文字列のままだった（`->format()`でエラー）→ `datetime`キャストを追加して修正
+  - `User::collectionReports()`リレーションを新規追加
 
 ### 報告管理（`admin/reports`）
 - 一覧列: 報告日時 / ユーザーID(`bimoni_user_id`) / 登録コード / LINE表示名 / 名前 / フリガナ / 案件名 / モニター協力金 / ステータス / 詳細

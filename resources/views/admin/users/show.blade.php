@@ -121,27 +121,85 @@
     </div>
 </div>
 
-{{-- モニター実施履歴 --}}
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
-    <div class="px-5 py-3 border-b dark:border-gray-700">
-        <h2 class="font-bold text-gray-700 dark:text-gray-200">モニター実施履歴</h2>
-    </div>
+{{-- 応募履歴 --}}
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6" open>
+    <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+        応募履歴（{{ $applications->count() }}件）
+    </summary>
     <table class="w-full text-sm">
         <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
             <tr>
-                <th class="px-4 py-3 text-left">報告日</th>
-                <th class="px-4 py-3 text-left">モニター名</th>
+                <th class="px-4 py-3 text-left">応募日時</th>
+                <th class="px-4 py-3 text-left">案件名</th>
+                <th class="px-4 py-3 text-left">ステータス</th>
+                <th class="px-4 py-3 text-left">案内日時</th>
+                <th class="px-4 py-3 text-center">継続</th>
+                <th class="px-4 py-3 text-left">詳細</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y dark:divide-gray-700">
+            @forelse($applications as $app)
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+                <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">{{ $app->applied_at->format('Y/m/d H:i') }}</td>
+                <td class="px-4 py-3 text-gray-800 dark:text-gray-200">{{ $app->campaign?->title ?? '-' }}</td>
+                <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-0.5 rounded {{ $app->getStatusColor() }}">
+                        {{ $app->getStatusLabel() }}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">
+                    {{ $app->invited_at?->format('Y/m/d H:i') ?? '-' }}
+                </td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    @if($app->continuation_responded_at && $app->continuation_response === 'possible')
+                        <span class="text-xs bg-teal-500 text-white px-1.5 py-0.5 rounded-full">OK</span>
+                    @elseif($app->continuation_responded_at && $app->continuation_response === 'not_possible')
+                        <span class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">NG</span>
+                    @elseif($app->continuation_sent_at)
+                        <span class="text-xs bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">確認中</span>
+                    @elseif($app->continuation_wish === '希望')
+                        <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">希望</span>
+                    @elseif($app->continuation_wish === '不可')
+                        <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">不可</span>
+                    @else
+                        <span class="text-xs text-gray-400">-</span>
+                    @endif
+                </td>
+                <td class="px-4 py-3">
+                    <a href="{{ route('admin.applications.show', $app) }}" class="text-xs text-pink-500 hover:underline">詳細 →</a>
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">応募履歴がありません</td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+</details>
+
+{{-- モニター報告履歴 --}}
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
+    <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+        モニター報告履歴（{{ $reports->count() }}件）
+    </summary>
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+            <tr>
+                <th class="px-4 py-3 text-left">報告日時</th>
+                <th class="px-4 py-3 text-left">案件名</th>
                 <th class="px-4 py-3 text-left">報告ステータス</th>
                 <th class="px-4 py-3 text-left">支払いステータス</th>
                 <th class="px-4 py-3 text-right">支払い金額</th>
                 <th class="px-4 py-3 text-left">支払日</th>
+                <th class="px-4 py-3 text-left">詳細</th>
             </tr>
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($reports as $report)
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
                 <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">
-                    {{ $report->created_at->format('Y/m/d') }}
+                    {{ $report->created_at->format('Y/m/d H:i') }}
                 </td>
                 <td class="px-4 py-3 text-gray-800 dark:text-gray-200">{{ $report->campaign?->title ?? '-' }}</td>
                 <td class="px-4 py-3">
@@ -169,46 +227,74 @@
                 <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">
                     {{ $report->paid_at?->format('Y/m/d') ?? '-' }}
                 </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">実施履歴がありません</td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
-
-{{-- 応募履歴 --}}
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-    <div class="px-5 py-3 border-b dark:border-gray-700">
-        <h2 class="font-bold text-gray-700 dark:text-gray-200">応募履歴</h2>
-    </div>
-    <table class="w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-            <tr>
-                <th class="px-4 py-3 text-left">応募日</th>
-                <th class="px-4 py-3 text-left">モニター名</th>
-                <th class="px-4 py-3 text-left">ステータス</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y dark:divide-gray-700">
-            @forelse($applications as $app)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
-                <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">{{ $app->applied_at->format('Y/m/d') }}</td>
-                <td class="px-4 py-3 text-gray-800 dark:text-gray-200">{{ $app->campaign?->title ?? '-' }}</td>
                 <td class="px-4 py-3">
-                    <span class="text-xs px-2 py-0.5 rounded {{ $app->getStatusColor() }}">
-                        {{ $app->getStatusLabel() }}
-                    </span>
+                    <a href="{{ route('admin.reports.show', $report) }}" class="text-xs text-pink-500 hover:underline">詳細 →</a>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="3" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">応募履歴がありません</td>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">報告履歴がありません</td>
             </tr>
             @endforelse
         </tbody>
     </table>
-</div>
+</details>
+
+{{-- 回収報告履歴 --}}
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+        回収報告履歴（{{ $collectionReports->count() }}件）
+    </summary>
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+            <tr>
+                <th class="px-4 py-3 text-left">報告日時</th>
+                <th class="px-4 py-3 text-left">案件名</th>
+                <th class="px-4 py-3 text-right">商品数</th>
+                <th class="px-4 py-3 text-left">報告ステータス</th>
+                <th class="px-4 py-3 text-left">支払いステータス</th>
+                <th class="px-4 py-3 text-left">支払日</th>
+                <th class="px-4 py-3 text-left">詳細</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y dark:divide-gray-700">
+            @forelse($collectionReports as $cr)
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+                <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">
+                    {{ $cr->created_at->format('Y/m/d H:i') }}
+                </td>
+                <td class="px-4 py-3 text-gray-800 dark:text-gray-200">
+                    {{ $cr->campaigns()->pluck('title')->join('、') ?: '-' }}
+                </td>
+                <td class="px-4 py-3 text-right text-gray-800 dark:text-gray-200">{{ $cr->item_count }}</td>
+                <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-0.5 rounded {{ $cr->getStatusColor() }}">
+                        {{ $cr->getStatusLabel() }}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    @if($cr->status === 'approved')
+                    <span class="text-xs px-2 py-0.5 rounded
+                        {{ $cr->payment_status === 'paid' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white' }}">
+                        {{ $cr->payment_status === 'paid' ? '支払済' : '支払待ち' }}
+                    </span>
+                    @else
+                    <span class="text-xs text-gray-700 dark:text-gray-500">-</span>
+                    @endif
+                </td>
+                <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">
+                    {{ $cr->paid_at?->format('Y/m/d') ?? '-' }}
+                </td>
+                <td class="px-4 py-3">
+                    <a href="{{ route('admin.collection_reports.show', $cr) }}" class="text-xs text-pink-500 hover:underline">詳細 →</a>
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">回収報告履歴がありません</td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+</details>
 @endsection

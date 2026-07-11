@@ -72,4 +72,5 @@ class User extends Authenticatable
     public function points()         { return $this->hasMany(Point::class); }
     public function pointExchanges() { return $this->hasMany(PointExchange::class); }
     public function monitorReports() { return $this->hasMany(MonitorReport::class); }
+    public function collectionReports() { return $this->hasMany(CollectionReport::class); }
 }

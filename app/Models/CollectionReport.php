@@ -20,6 +20,7 @@ class CollectionReport extends Model
             'campaign_ids'           => 'array',
             'estimated_arrival_date' => 'date',
             'reviewed_at'            => 'datetime',
+            'paid_at'                => 'datetime',
         ];
     }
 

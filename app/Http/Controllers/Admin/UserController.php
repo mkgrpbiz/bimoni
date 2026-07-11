@@ -68,6 +68,10 @@ class UserController extends Controller
             ->orderByDesc('applied_at')
             ->get();
 
-        return view('admin.users.show', compact('user', 'reports', 'applications'));
+        $collectionReports = $user->collectionReports()
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.users.show', compact('user', 'reports', 'applications', 'collectionReports'));
     }
 }
