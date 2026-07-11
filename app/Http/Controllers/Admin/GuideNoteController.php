@@ -13,7 +13,7 @@ class GuideNoteController extends Controller
 {
     public function store(Request $request, GuideSection $guideSection): RedirectResponse
     {
-        $validated = $request->validate($this->rules());
+        $validated = $this->mapped($request->validate($this->rules()));
         $validated['guide_section_id'] = $guideSection->id;
         $validated['sort_order'] = GuideNote::where('guide_section_id', $guideSection->id)->max('sort_order') + 1;
 
@@ -24,7 +24,7 @@ class GuideNoteController extends Controller
 
     public function update(Request $request, GuideNote $guideNote): RedirectResponse
     {
-        $validated = $request->validate($this->rules());
+        $validated = $this->mapped($request->validate($this->rules()));
         $guideNote->update($validated);
 
         return redirect()->route('admin.guide_sections.edit', $guideNote->guide_section_id)->with('success', '注意書きを更新しました。');
@@ -50,9 +50,18 @@ class GuideNoteController extends Controller
     private function rules(): array
     {
         return [
-            'heading' => 'nullable|string|max:100',
-            'body'    => 'required|string',
-            'style'   => 'required|in:normal,warning',
+            'heading'    => 'nullable|string|max:100',
+            'body'       => 'required|string',
+            'note_style' => 'required|in:normal,warning',
         ];
+    }
+
+    // フォームのname="style"はJSでform.style（CSSStyleDeclaration）を上書きしてしまうため
+    // 入力側はnote_styleで受け取り、DBカラム名のstyleにマッピングする
+    private function mapped(array $validated): array
+    {
+        $validated['style'] = $validated['note_style'];
+        unset($validated['note_style']);
+        return $validated;
     }
 }

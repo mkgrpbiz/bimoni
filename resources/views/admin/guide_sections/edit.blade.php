@@ -75,7 +75,7 @@
                 @csrf @method('PUT')
                 <input type="text" name="heading" value="{{ $note->heading }}" placeholder="見出し（例: ■ ポイント）" class="w-full border rounded px-2 py-1.5 text-sm">
                 <textarea name="body" rows="4" placeholder="1行1項目で入力" class="w-full border rounded px-2 py-1.5 text-sm">{{ $note->body }}</textarea>
-                <select name="style" class="border rounded px-2 py-1.5 text-sm">
+                <select name="note_style" class="border rounded px-2 py-1.5 text-sm">
                     <option value="normal" @selected($note->style === 'normal')>通常色（ピンク）</option>
                     <option value="warning" @selected($note->style === 'warning')>警告色（赤）</option>
                 </select>
@@ -95,7 +95,7 @@
         <input type="text" name="heading" placeholder="見出し（例: ■ ポイント、任意）" class="w-full border rounded px-3 py-2 text-sm">
         <textarea name="body" rows="3" placeholder="1行1項目で入力（箇条書きになります）" required class="w-full border rounded px-3 py-2 text-sm"></textarea>
         <div class="flex gap-2 items-center">
-            <select name="style" class="border rounded px-2 py-2 text-sm">
+            <select name="note_style" class="border rounded px-2 py-2 text-sm">
                 <option value="normal">通常色（ピンク）</option>
                 <option value="warning">警告色（赤）</option>
             </select>
@@ -110,10 +110,13 @@
     <p class="text-xs text-gray-400 mb-4">ドラッグ&ドロップで並び替えできます。</p>
 
     <div id="sortable-steps" class="space-y-3 mb-4">
-        @forelse($section->steps as $step)
+        @forelse($section->steps as $i => $step)
         <div class="border rounded-lg p-3" data-id="{{ $step->id }}">
             <div id="step-disp-{{ $step->id }}" class="flex items-start gap-3">
                 <span class="cursor-grab text-gray-400 drag-handle select-none mt-1">⠿</span>
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-pink-400 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    {{ $i + 1 }}
+                </div>
                 @if($step->image)
                 <img src="{{ asset('storage/' . $step->image) }}" class="w-16 h-16 object-cover rounded border shrink-0">
                 @endif
