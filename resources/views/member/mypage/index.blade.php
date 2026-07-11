@@ -11,10 +11,14 @@
             <div class="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center text-xl">
                 👤
             </div>
-            <div>
+            <div class="flex-1 min-w-0">
                 <p class="font-bold text-lg">{{ $user->name ?? '未設定' }}</p>
                 <p class="text-pink-100 text-xs">{{ $user->name_kana ?? '' }}</p>
             </div>
+            <a href="{{ route('member.profile.edit') }}"
+               class="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1.5 rounded-full">
+                ✏️ 情報変更
+            </a>
         </div>
 
         <p class="text-pink-100 text-xs mb-2 text-center">モニター協力金 支払い予定</p>
@@ -36,12 +40,8 @@
            class="bg-pink-500 text-white py-3 rounded-xl text-sm font-medium text-center">
             📋 モニター報告
         </a>
-        <a href="{{ route('member.profile.edit') }}"
-           class="bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium text-center">
-            ✏️ 情報変更
-        </a>
         <a href="{{ route('member.cancellations') }}"
-           class="col-span-2 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium text-center">
+           class="bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium text-center">
             📄 解約方法一覧
         </a>
     </div>
