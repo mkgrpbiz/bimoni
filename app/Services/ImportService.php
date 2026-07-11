@@ -243,9 +243,10 @@ class ImportService
 
                 if ($existing) {
                     // 一致した場合：実施完了・キャンセルのみ更新、それ以外はスキップ
-                    // ただし既に報告・承認等でさらに先へ進んでいる場合は後退させないためスキップ
-                    $alreadyAdvanced = in_array($existing->status, ['reported', 'approved', 'point_granted']);
-                    if (in_array($status, $finalStatuses) && !$alreadyAdvanced) {
+                    // 既に報告・承認等でさらに先へ進んでいる場合、および予約中・打診中は
+                    // 別工程で管理中のため触らずスキップ
+                    $protectedStatus = in_array($existing->status, ['reported', 'approved', 'point_granted', 'scheduled', 'line_contacted']);
+                    if (in_array($status, $finalStatuses) && !$protectedStatus) {
                         $existing->update($data);
                         $result['success']++;
                     } else {
