@@ -16,11 +16,11 @@ class FaqController extends Controller
             ->orderBy('min_order')
             ->pluck('category');
 
-        $faqsByCategory = Faq::where('is_visible', true)
+        $items = Faq::where('is_visible', true)
             ->orderBy('sort_order')
-            ->get()
-            ->groupBy('category');
+            ->get(['category', 'question', 'answer'])
+            ->toArray();
 
-        return view('member.faq.index', compact('categories', 'faqsByCategory'));
+        return view('member.faq.index', compact('categories', 'items'));
     }
 }

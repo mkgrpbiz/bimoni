@@ -13,10 +13,27 @@
             <p class="text-xs text-gray-400">質問がありません</p>
         </div>
     @else
-        <div x-data="{ tab: '{{ $categories->first() }}' }">
+        <div x-data="{
+                tab: '{{ $categories->first() }}',
+                search: '',
+                items: @js($items),
+                get filtered() {
+                    if (this.search.trim() === '') {
+                        return this.items.filter(i => i.category === this.tab);
+                    }
+                    const q = this.search.trim().toLowerCase();
+                    return this.items.filter(i => (i.question + i.answer).toLowerCase().includes(q));
+                }
+            }">
 
-            {{-- カテゴリタブ --}}
-            <div class="flex border-b border-gray-200 mb-4 overflow-x-auto">
+            {{-- キーワード検索 --}}
+            <div class="mb-4">
+                <input type="text" x-model="search" placeholder="キーワードで検索"
+                       class="w-full border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-pink-400">
+            </div>
+
+            {{-- カテゴリタブ（検索中は非表示） --}}
+            <div x-show="search.trim() === ''" class="flex border-b border-gray-200 mb-4 overflow-x-auto">
                 @foreach($categories as $cat)
                 <button
                     @click="tab = '{{ $cat }}'"
@@ -29,23 +46,24 @@
                 @endforeach
             </div>
 
-            {{-- カテゴリごとのQ&A --}}
-            @foreach($categories as $cat)
-            <div x-show="tab === '{{ $cat }}'" class="space-y-3">
-                @foreach($faqsByCategory->get($cat, []) as $faq)
-                <details class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <summary class="px-4 py-3 flex items-center gap-3 cursor-pointer select-none">
-                        <p class="flex-1 text-sm font-medium text-gray-800">{{ $faq->question }}</p>
-                        <span class="text-pink-500 text-xs flex-shrink-0 cancel-label-closed">見る</span>
-                        <span class="text-pink-500 text-xs flex-shrink-0 cancel-label-open">閉じる</span>
-                    </summary>
-                    <div class="px-4 pb-4 pt-1 border-t border-gray-50">
-                        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $faq->answer }}</p>
-                    </div>
-                </details>
-                @endforeach
+            {{-- Q&A一覧 --}}
+            <div class="space-y-3">
+                <template x-for="(item, index) in filtered" :key="index">
+                    <details class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <summary class="px-4 py-3 flex items-center gap-3 cursor-pointer select-none">
+                            <p class="flex-1 text-sm font-medium text-gray-800" x-text="item.question"></p>
+                            <span class="text-pink-500 text-xs flex-shrink-0 cancel-label-closed">見る</span>
+                            <span class="text-pink-500 text-xs flex-shrink-0 cancel-label-open">閉じる</span>
+                        </summary>
+                        <div class="px-4 pb-4 pt-1 border-t border-gray-50">
+                            <p class="text-sm text-gray-700 whitespace-pre-wrap" x-text="item.answer"></p>
+                        </div>
+                    </details>
+                </template>
+                <p x-show="filtered.length === 0" class="text-xs text-gray-400 text-center py-8">
+                    該当する質問が見つかりませんでした
+                </p>
             </div>
-            @endforeach
 
         </div>
     @endif
