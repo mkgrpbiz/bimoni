@@ -14,7 +14,9 @@ class CancellationSettingController extends Controller
     {
         $visible = $request->input('visible', '1');
 
-        $query = Campaign::orderByDesc('id')->where('cancellation_visible', $visible === '1');
+        $query = Campaign::where('cancellation_visible', $visible === '1')
+            ->orderByRaw('CASE WHEN cancellation_method IS NULL AND cancellation_phone IS NULL AND cancellation_hours IS NULL AND cancellation_mypage_url IS NULL AND cancellation_email IS NULL THEN 0 ELSE 1 END')
+            ->orderByDesc('id');
 
         if ($request->filled('q')) {
             $query->where('title', 'like', '%' . $request->q . '%');
