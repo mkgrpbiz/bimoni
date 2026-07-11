@@ -7,8 +7,10 @@
     <a href="{{ route('admin.campaigns.index') }}"
        class="bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600 text-sm">← 一覧に戻る</a>
     <h1 class="text-2xl font-bold text-gray-800">{{ $campaign->title }}</h1>
+    <a href="{{ route('admin.cancellation_settings.edit', $campaign) }}"
+       class="ml-auto bg-white border border-pink-300 text-pink-600 px-4 py-1.5 rounded hover:bg-pink-50 text-sm">解約方法管理</a>
     <a href="{{ route('admin.campaigns.edit', $campaign) }}"
-       class="ml-auto bg-pink-500 text-white px-4 py-1.5 rounded hover:bg-pink-600 text-sm">編集</a>
+       class="bg-pink-500 text-white px-4 py-1.5 rounded hover:bg-pink-600 text-sm">編集</a>
 </div>
 
 <div class="bg-white rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -56,12 +58,6 @@
     <div class="md:col-span-2">
         <p class="text-gray-700 mb-1">案件内容：</p>
         <p class="whitespace-pre-wrap">{{ $campaign->description }}</p>
-    </div>
-    @endif
-    @if($campaign->cancellation_info)
-    <div class="md:col-span-2">
-        <p class="text-gray-700 mb-1">解約について：</p>
-        <p class="whitespace-pre-wrap">{{ $campaign->cancellation_info }}</p>
     </div>
     @endif
     @if($campaign->notes)

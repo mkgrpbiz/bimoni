@@ -15,6 +15,7 @@
         $navGroups = [
             '案件関連' => [
                 'campaigns'             => ['label' => '案件管理',     'route' => 'admin.campaigns.index'],
+                'cancellation_settings' => ['label' => '解約方法管理', 'route' => 'admin.cancellation_settings.index'],
                 'daily_slots'           => ['label' => '日別件数管理', 'route' => 'admin.daily_slots.index'],
                 'campaign_bonuses'      => ['label' => 'キャンペーン', 'route' => 'admin.campaign_bonuses.index'],
                 'approval_reflections'  => ['label' => '承認反映',     'route' => 'admin.approval_reflections.index'],

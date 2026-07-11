@@ -22,6 +22,7 @@ class AdminManagerController extends Controller
         return [
             'dashboard'             => 'ダッシュボード',
             'campaigns'             => '案件管理',
+            'cancellation_settings' => '解約方法管理',
             'daily_slots'           => '日別件数管理',
             'approval_reflections'  => '承認反映',
             'campaign_bonuses'      => 'キャンペーン',

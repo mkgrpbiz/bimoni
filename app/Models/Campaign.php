@@ -9,7 +9,9 @@ class Campaign extends Model
     protected $fillable = [
         'category_id', 'title', 'campaign_type', 'status', 'pr_media',
         'description', 'requirements', 'notes',
-        'cancellation_info', 'monitor_guide', 'link', 'monitor_video', 'monitor_video_thumbnail',
+        'cancellation_info', 'cancellation_phone', 'cancellation_hours',
+        'cancellation_mypage_url', 'cancellation_email',
+        'monitor_guide', 'link', 'monitor_video', 'monitor_video_thumbnail',
         'monitor_invite_message', 'monitor_end_message',
         'product_name', 'product_price',
         'cooperation_fee', 'cooperation_fee_formula',
@@ -66,6 +68,15 @@ class Campaign extends Model
             'closed'    => '終了',
             default     => $this->status,
         };
+    }
+
+    public function hasCancellationInfo(): bool
+    {
+        return filled($this->cancellation_info)
+            || filled($this->cancellation_phone)
+            || filled($this->cancellation_hours)
+            || filled($this->cancellation_mypage_url)
+            || filled($this->cancellation_email);
     }
 
     public function getPrMediaLabel(): string

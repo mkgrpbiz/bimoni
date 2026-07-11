@@ -40,6 +40,10 @@
            class="bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium text-center">
             ✏️ 情報変更
         </a>
+        <a href="{{ route('member.cancellations') }}"
+           class="col-span-2 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium text-center">
+            📄 解約方法一覧
+        </a>
     </div>
 
     {{-- モニター履歴（タブ） --}}

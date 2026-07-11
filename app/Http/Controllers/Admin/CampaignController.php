@@ -228,7 +228,6 @@ class CampaignController extends Controller
             'description'            => 'nullable|string',
             'requirements'           => 'nullable|string',
             'notes'                  => 'nullable|string',
-            'cancellation_info'      => 'nullable|string',
             'monitor_guide'          => 'nullable|string',
             'link'                   => 'nullable|url|max:500',
             'monitor_invite_message' => 'nullable|string',
