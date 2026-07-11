@@ -19,14 +19,14 @@ class CancellationSettingController extends Controller
         }
         if ($request->input('filled') === '1') {
             $query->where(function ($q) {
-                $q->whereNotNull('cancellation_phone')
-                    ->orWhereNotNull('cancellation_hours')
+                $q->whereNotNull('cancellation_info')
+                    ->orWhereNotNull('cancellation_phone')
                     ->orWhereNotNull('cancellation_mypage_url')
                     ->orWhereNotNull('cancellation_email');
             });
         } elseif ($request->input('filled') === '0') {
-            $query->whereNull('cancellation_phone')
-                ->whereNull('cancellation_hours')
+            $query->whereNull('cancellation_info')
+                ->whereNull('cancellation_phone')
                 ->whereNull('cancellation_mypage_url')
                 ->whereNull('cancellation_email');
         }
@@ -44,6 +44,7 @@ class CancellationSettingController extends Controller
     public function update(Request $request, Campaign $campaign): RedirectResponse
     {
         $validated = $request->validate([
+            'cancellation_info'       => 'nullable|string',
             'cancellation_phone'      => 'nullable|string|max:50',
             'cancellation_hours'      => 'nullable|string|max:255',
             'cancellation_mypage_url' => 'nullable|url|max:500',

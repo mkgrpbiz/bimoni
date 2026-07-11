@@ -79,14 +79,6 @@ class Campaign extends Model
             || filled($this->cancellation_email);
     }
 
-    public function hasCancellationContact(): bool
-    {
-        return filled($this->cancellation_phone)
-            || filled($this->cancellation_hours)
-            || filled($this->cancellation_mypage_url)
-            || filled($this->cancellation_email);
-    }
-
     public function getPrMediaLabel(): string
     {
         return match($this->pr_media) {
