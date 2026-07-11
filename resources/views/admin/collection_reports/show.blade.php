@@ -225,9 +225,13 @@
                 <dd class="font-medium">{{ $u->name ?? '-' }}</dd>
                 <dt class="text-gray-500">フリガナ</dt>
                 <dd>{{ $u->name_kana ?? '-' }}</dd>
-                <dt class="text-gray-500">エリア</dt>
-                <dd>{{ $u->area ?? '-' }}</dd>
             </dl>
+            @if($u)
+            <div class="mt-3">
+                <a href="{{ route('admin.users.show', $u) }}"
+                   class="bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600 text-xs">ユーザー詳細</a>
+            </div>
+            @endif
         </div>
     </div>
 

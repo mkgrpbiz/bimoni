@@ -20,20 +20,32 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">応募情報</h2>
             <dl class="grid grid-cols-2 gap-2 text-sm">
-                <dt class="text-gray-700 dark:text-gray-400">モニター</dt>
+                <dt class="text-gray-700 dark:text-gray-400">ユーザー名</dt>
                 <dd class="font-medium dark:text-gray-200">{{ $application->user->name ?? '（未登録）' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">案件</dt>
+                <dt class="text-gray-700 dark:text-gray-400">案件名</dt>
                 <dd class="dark:text-gray-200">{{ $application->campaign->title }}</dd>
+                <dt class="text-gray-700 dark:text-gray-400">応募日時</dt>
+                <dd class="dark:text-gray-200">{{ $application->applied_at->format('Y/m/d H:i') }}</dd>
+                <dt class="text-gray-700 dark:text-gray-400">案内日時</dt>
+                <dd class="dark:text-gray-200">{{ $application->invited_at?->format('Y/m/d H:i') ?? '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">ステータス</dt>
                 <dd><span class="px-2 py-0.5 rounded text-xs {{ $application->getStatusColor() }}">{{ $application->getStatusLabel() }}</span></dd>
-                <dt class="text-gray-700 dark:text-gray-400">応募日</dt>
-                <dd class="dark:text-gray-200">{{ $application->applied_at->format('Y/m/d H:i') }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">当選日</dt>
-                <dd class="dark:text-gray-200">{{ $application->selected_at?->format('Y/m/d') ?? '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">LINE案内</dt>
-                <dd class="dark:text-gray-200">{{ $application->line_contacted_at?->format('Y/m/d') ?? '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400">日程確定</dt>
-                <dd class="dark:text-gray-200">{{ $application->schedule_confirmed_at?->format('Y/m/d') ?? '-' }}</dd>
+                <dt class="text-gray-700 dark:text-gray-400">継続ステータス</dt>
+                <dd>
+                    @if($application->continuation_responded_at && $application->continuation_response === 'possible')
+                        <span class="text-xs bg-teal-500 text-white px-1.5 py-0.5 rounded-full">OK</span>
+                    @elseif($application->continuation_responded_at && $application->continuation_response === 'not_possible')
+                        <span class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">NG</span>
+                    @elseif($application->continuation_sent_at)
+                        <span class="text-xs bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">確認中</span>
+                    @elseif($application->continuation_wish === '希望')
+                        <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">希望</span>
+                    @elseif($application->continuation_wish === '不可')
+                        <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">不可</span>
+                    @else
+                        <span class="text-xs text-gray-400">-</span>
+                    @endif
+                </dd>
             </dl>
         </div>
 
@@ -113,35 +125,13 @@
                 <dd class="dark:text-gray-200">{{ $user->birthdate?->format('Y/m/d') ?? '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">エリア</dt>
                 <dd class="dark:text-gray-200">{{ $user->area ?? '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400 mt-2">実施可能時間帯</dt>
-                <dd class="dark:text-gray-200">{{ $user->available_times ? implode('、', $user->available_times) : '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400 mt-2">継続希望</dt>
-                <dd class="dark:text-gray-200 flex items-center gap-2">
-                    {{ $application->continuation_wish ?? '-' }}
-                    @if($application->continuation_wish === '希望' && in_array($application->status, ['completed','reported','approved']) && !$application->continuation_response && !$application->continuation_sent_at)
-                    <button type="button"
-                            onclick="document.getElementById('cont-modal').classList.remove('hidden')"
-                            class="bg-green-500 text-white px-2 py-0.5 rounded text-xs hover:bg-green-600">
-                        LINE送信
-                    </button>
-                    @endif
-                </dd>
-                @if($application->continuation_response)
-                <dt class="text-gray-700 dark:text-gray-400 mt-2">継続回答</dt>
-                <dd class="dark:text-gray-200">
-                    @if($application->continuation_response === 'possible')
-                        <span class="text-green-600 font-medium">OK</span>
-                    @else
-                        <span class="text-gray-500">NG</span>
-                    @endif
-                    <span class="text-xs text-gray-400 ml-1">{{ $application->continuation_responded_at?->format('m/d H:i') }}</span>
-                </dd>
-                @endif
-                <dt class="text-gray-700 dark:text-gray-400 mt-2">購入可能時間</dt>
-                <dd class="dark:text-gray-200 text-xs">{{ $application->purchase_available_times ? implode('・', $application->purchase_available_times) : '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400 mt-2">保有ポイント</dt>
-                <dd class="font-medium text-pink-600 dark:text-pink-400">{{ number_format($user->point_balance) }} pt</dd>
             </dl>
+            @if($user)
+            <div class="mt-3">
+                <a href="{{ route('admin.users.show', $user) }}"
+                   class="bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600 text-xs">ユーザー詳細</a>
+            </div>
+            @endif
         </div>
     </div>
 </div>
