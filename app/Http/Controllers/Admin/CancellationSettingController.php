@@ -12,28 +12,21 @@ class CancellationSettingController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Campaign::orderByDesc('id');
+        $visible = $request->input('visible', '1');
+
+        $query = Campaign::orderByDesc('id')->where('cancellation_visible', $visible === '1');
 
         if ($request->filled('q')) {
             $query->where('title', 'like', '%' . $request->q . '%');
         }
-        if ($request->input('filled') === '1') {
-            $query->where(function ($q) {
-                $q->whereNotNull('cancellation_method')
-                    ->orWhereNotNull('cancellation_phone')
-                    ->orWhereNotNull('cancellation_mypage_url')
-                    ->orWhereNotNull('cancellation_email');
-            });
-        } elseif ($request->input('filled') === '0') {
-            $query->whereNull('cancellation_method')
-                ->whereNull('cancellation_phone')
-                ->whereNull('cancellation_mypage_url')
-                ->whereNull('cancellation_email');
-        }
 
         $campaigns = $query->paginate(50)->withQueryString();
 
-        return view('admin.cancellation_settings.index', compact('campaigns'));
+        $visibleCounts = Campaign::selectRaw('cancellation_visible, count(*) as count')
+            ->groupBy('cancellation_visible')
+            ->pluck('count', 'cancellation_visible');
+
+        return view('admin.cancellation_settings.index', compact('campaigns', 'visible', 'visibleCounts'));
     }
 
     public function edit(Campaign $campaign): View
@@ -57,17 +50,10 @@ class CancellationSettingController extends Controller
             ->with('success', '解約方法を更新しました。');
     }
 
-    public function destroy(Campaign $campaign): RedirectResponse
+    public function toggleVisible(Campaign $campaign): RedirectResponse
     {
-        $campaign->update([
-            'cancellation_method'     => null,
-            'cancellation_phone'      => null,
-            'cancellation_hours'      => null,
-            'cancellation_mypage_url' => null,
-            'cancellation_email'      => null,
-        ]);
+        $campaign->update(['cancellation_visible' => !$campaign->cancellation_visible]);
 
-        return redirect()->route('admin.cancellation_settings.index')
-            ->with('success', '解約方法を削除しました。');
+        return back()->with('success', '表示設定を変更しました。');
     }
 }

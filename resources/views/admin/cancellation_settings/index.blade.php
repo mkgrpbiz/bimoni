@@ -11,22 +11,38 @@
     <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
 @endif
 
+{{-- 表示・非表示タブ --}}
+@php
+$tabs = [
+    '1' => ['label' => '表示',   'color' => 'bg-green-500'],
+    '0' => ['label' => '非表示', 'color' => 'bg-gray-500'],
+];
+@endphp
+<div class="flex border-b border-gray-200 mb-4">
+    @foreach($tabs as $key => $tab)
+    @php $count = $visibleCounts->get($key === '1' ? 1 : 0, 0); @endphp
+    <a href="{{ route('admin.cancellation_settings.index', array_merge(request()->except(['visible', 'page']), ['visible' => $key])) }}"
+       class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
+              {{ $visible === $key
+                  ? 'border-pink-500 text-pink-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+        {{ $tab['label'] }}
+        <span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white {{ $tab['color'] }}">
+            {{ $count }}
+        </span>
+    </a>
+    @endforeach
+</div>
+
 <form method="GET" class="bg-white rounded-lg shadow p-3 mb-4 flex flex-wrap gap-3 items-end">
+    <input type="hidden" name="visible" value="{{ $visible }}">
     <div>
         <label class="block text-xs text-gray-700 mb-1">キーワード</label>
         <input type="text" name="q" value="{{ request('q') }}"
                class="border rounded px-2 py-1.5 text-sm w-48" placeholder="案件名">
     </div>
-    <div>
-        <label class="block text-xs text-gray-700 mb-1">設定状況</label>
-        <select name="filled" class="border rounded px-2 py-1.5 text-sm">
-            <option value="">すべて</option>
-            <option value="1" @selected(request('filled') === '1')>設定済み</option>
-            <option value="0" @selected(request('filled') === '0')>未設定</option>
-        </select>
-    </div>
     <button type="submit" class="bg-pink-500 text-white px-3 py-1.5 rounded text-sm hover:bg-pink-600">絞り込み</button>
-    <a href="{{ route('admin.cancellation_settings.index') }}"
+    <a href="{{ route('admin.cancellation_settings.index', ['visible' => $visible]) }}"
        class="text-sm text-gray-500 hover:text-gray-700 py-1.5">リセット</a>
 </form>
 
@@ -60,13 +76,16 @@
                     @endif
                 </td>
                 <td class="px-3 py-3 text-center">
-                    @if($campaign->hasCancellationInfo())
-                    <form method="POST" action="{{ route('admin.cancellation_settings.destroy', $campaign) }}"
-                          onsubmit="return confirm('解約方法を削除しますか？')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded hover:bg-red-100 hover:text-red-600">削除</button>
+                    <form method="POST" action="{{ route('admin.cancellation_settings.toggle_visible', $campaign) }}">
+                        @csrf @method('PATCH')
+                        <button type="submit"
+                                class="text-xs px-3 py-1 rounded
+                                    {{ $campaign->cancellation_visible
+                                        ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        : 'bg-pink-500 text-white hover:bg-pink-600' }}">
+                            {{ $campaign->cancellation_visible ? '非表示にする' : '表示にする' }}
+                        </button>
                     </form>
-                    @endif
                 </td>
             </tr>
             @empty
