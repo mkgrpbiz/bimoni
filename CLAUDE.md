@@ -153,6 +153,7 @@ php8.3 artisan route:clear
   - 打診中・予約中・実施確認中: 日次比較ではなく**現在のパイプライン件数**のスナップショット（`status`別の単純カウント）
   - 昨日件数をカードに直接併記しているため、増減バッジ（`diffBadge()`）は表示しない（他の月次指標カードのみバッジ付き）
 - 打診アラート（`buildAlerts()`の重複ブッキング・翌日未達成）は**`campaign.status='published'`のみ対象**（`whereHas('campaign', ...)`）。終了済み案件でも`CampaignDailySlot`の目標件数が残っていると、実際には誰も応募しないため常に「未達成」として誤カウントされるバグがあったため、公開中の案件だけに絞るよう修正済み（`admin/daily-slots`一覧ページはデフォルトで`status=published`フィルタがかかっているため、ダッシュボード側が終了案件を含めていると件数が食い違って見える）
+- グラフ「売上・協力金推移」（`getChartData()`）の協力金は、以前は`CampaignApprovalReflection.reflection_count × campaign.cooperation_fee`という**単価だけの概算**で、実際のモニター経費（`purchase_amount`）・継続報告の`continuation_cooperation_fee`・ボーナス・回収報告分が一切含まれておらず、メインKPIカードの「協力金」と桁違いに乖離するバグがあった → `MonitorReport`（`created_at`の年月で集計、承認済みのみ）＋`CollectionReport`を使い、メインKPIカードの`cooperationFee`と同じ計算式に統一
 
 ### 応募管理（案件別一覧）
 - 並び順: 実施完了/報告済/承認済/付与済/キャンセル以外のステータスは応募日時の古い順、それ以外（実施完了・キャンセル等の完了系グループ）は**案内日時（`invited_at`）の新しい順**（`ApplicationController::campaignIndex()` の `orderByRaw`）

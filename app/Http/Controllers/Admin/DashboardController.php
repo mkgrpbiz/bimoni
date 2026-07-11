@@ -385,8 +385,19 @@ class DashboardController extends Controller
                 ->get();
 
             $monthSales = $refs->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
-            $monthFee   = $refs->sum(fn($r) => $r->reflection_count * ($r->campaign?->cooperation_fee ?? 0));
             $monthGross = $refs->sum(fn($r) => $r->reflection_count * ($r->campaign?->gross_profit ?? 0));
+
+            // 協力金 = 承認済み報告のモニター経費+協力金+ボーナス（メインKPIカードと同じ計算式）
+            $monthReports = MonitorReport::with('campaign')->where('status', 'approved')
+                ->whereYear('created_at', $y)->whereMonth('created_at', $m)->get();
+            $monthFee = $monthReports->sum(function ($r) {
+                $c       = $r->campaign;
+                $coopFee = $r->purchase_type === 'continuation'
+                    ? ($c?->continuation_cooperation_fee ?? 0)
+                    : ($c?->cooperation_fee ?? 0);
+                return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+            }) + CollectionReport::where('status', 'approved')
+                ->whereYear('created_at', $y)->whereMonth('created_at', $m)->sum('cooperation_fee');
             $completed  = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                 ->whereYear('completed_at', $y)->whereMonth('completed_at', $m)->count();
 
