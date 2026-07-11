@@ -123,8 +123,6 @@
                 <dd class="dark:text-gray-200">{{ match($user->gender ?? '') { 'male' => '男性', 'female' => '女性', 'other' => 'その他', default => '-' } }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400 mt-2">生年月日</dt>
                 <dd class="dark:text-gray-200">{{ $user->birthdate?->format('Y/m/d') ?? '-' }}</dd>
-                <dt class="text-gray-700 dark:text-gray-400 mt-2">エリア</dt>
-                <dd class="dark:text-gray-200">{{ $user->area ?? '-' }}</dd>
             </dl>
             @if($user)
             <div class="mt-3">
