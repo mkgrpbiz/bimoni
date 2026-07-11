@@ -12,7 +12,7 @@ class CancellationSettingController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Campaign::orderBy('id');
+        $query = Campaign::orderByDesc('id');
 
         if ($request->filled('q')) {
             $query->where('title', 'like', '%' . $request->q . '%');
