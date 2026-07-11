@@ -146,6 +146,13 @@ php8.3 artisan route:clear
 
 ## 管理画面
 
+### ダッシュボード（`admin/dashboard`）
+- 月次/累計の`$metrics`とは別に、常に「今日・昨日」基準の**日次KPI（本日の状況）**を表示（`DashboardController::calcDailyKpi()`）
+  - 応募数（本日/昨日）: `applied_at`の日付で単純カウント
+  - 実施完了数（本日/昨日）: `completed_at`の日付でカウント。ステータスは`completed`だけでなく`reported`/`approved`/`point_granted`も含める（実施完了後さらに進んでいても実施完了扱い、月次`$metrics`の実施数ロジックと同じ考え方）
+  - 打診中・予約中・実施確認中: 日次比較ではなく**現在のパイプライン件数**のスナップショット（`status`別の単純カウント）
+  - 昨日件数をカードに直接併記しているため、増減バッジ（`diffBadge()`）は表示しない（他の月次指標カードのみバッジ付き）
+
 ### 応募管理（案件別一覧）
 - 並び順: 実施完了/報告済/承認済/付与済/キャンセル以外のステータスは応募日時の古い順、それ以外（実施完了・キャンセル等の完了系グループ）は**案内日時（`invited_at`）の新しい順**（`ApplicationController::campaignIndex()` の `orderByRaw`）
 
