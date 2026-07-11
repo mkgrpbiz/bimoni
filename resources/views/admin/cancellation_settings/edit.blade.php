@@ -3,23 +3,22 @@
 @section('title', '解約方法編集')
 
 @section('content')
-<div class="flex items-center gap-3 mb-6">
+<div class="flex items-center gap-3 mb-2">
     <a href="{{ route('admin.cancellation_settings.index') }}"
        class="bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600 text-sm">← 一覧に戻る</a>
     <h1 class="text-2xl font-bold text-gray-800">{{ $campaign->title }}</h1>
 </div>
+<p class="text-xs text-gray-400 mb-6">
+    ※解約方法の説明文（解約について）は
+    <a href="{{ route('admin.campaigns.edit', $campaign) }}" class="text-pink-500 underline">案件編集画面</a>
+    で入力してください。ここでは連絡先のみ管理します。
+</p>
 
 <form method="POST" action="{{ route('admin.cancellation_settings.update', $campaign) }}"
       class="bg-white rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
     @csrf
     @method('PUT')
 
-    <div class="md:col-span-2">
-        <label class="block text-sm font-medium text-gray-700 mb-1">解約方法</label>
-        <textarea name="cancellation_info" rows="4" class="w-full border rounded px-3 py-2 text-sm @error('cancellation_info') border-red-400 @enderror"
-                  placeholder="商品到着から3日後以降、次回発送予定日の10日前までに...">{{ old('cancellation_info', $campaign->cancellation_info ?? '') }}</textarea>
-        @error('cancellation_info')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
-    </div>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
         <input type="text" name="cancellation_phone" value="{{ old('cancellation_phone', $campaign->cancellation_phone ?? '') }}"

@@ -60,6 +60,12 @@
         <p class="whitespace-pre-wrap">{{ $campaign->description }}</p>
     </div>
     @endif
+    @if($campaign->cancellation_info)
+    <div class="md:col-span-2">
+        <p class="text-gray-700 mb-1">解約について：</p>
+        <p class="whitespace-pre-wrap">{{ $campaign->cancellation_info }}</p>
+    </div>
+    @endif
     @if($campaign->notes)
     <div class="md:col-span-2">
         <p class="text-gray-700 mb-1">注意事項：</p>

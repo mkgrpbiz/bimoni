@@ -50,7 +50,7 @@
                 <td class="px-3 py-3 text-gray-700 max-w-xs truncate">{{ $campaign->cancellation_mypage_url ?: '-' }}</td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->cancellation_email ?: '-' }}</td>
                 <td class="px-3 py-3 text-center">
-                    @if($campaign->hasCancellationInfo())
+                    @if($campaign->hasCancellationContact())
                         <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">設定済み</span>
                     @else
                         <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">未設定</span>
