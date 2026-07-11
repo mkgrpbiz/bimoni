@@ -16,7 +16,7 @@ class CancellationController extends Controller
         $campaigns = Application::where('user_id', $user->id)
             ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
             ->with('campaign')
-            ->latest('completed_at')
+            ->orderByRaw('COALESCE(invited_at, applied_at) DESC')
             ->get()
             ->pluck('campaign')
             ->filter(fn ($campaign) => $campaign && $campaign->hasCancellationInfo())
