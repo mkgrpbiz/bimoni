@@ -166,7 +166,7 @@
                     @endif
                 </td>
                 <td class="px-4 py-3">
-                    <a href="{{ route('admin.applications.show', $app) }}" class="text-xs text-pink-500 hover:underline">詳細 →</a>
+                    <a href="{{ route('admin.applications.show', $app) }}" class="inline-block text-xs bg-pink-500 text-white px-2.5 py-1 rounded hover:bg-pink-600">詳細</a>
                 </td>
             </tr>
             @empty
@@ -179,7 +179,7 @@
 </details>
 
 {{-- モニター報告履歴 --}}
-<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6" open>
     <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
         モニター報告履歴（{{ $reports->count() }}件）
     </summary>
@@ -228,7 +228,7 @@
                     {{ $report->paid_at?->format('Y/m/d') ?? '-' }}
                 </td>
                 <td class="px-4 py-3">
-                    <a href="{{ route('admin.reports.show', $report) }}" class="text-xs text-pink-500 hover:underline">詳細 →</a>
+                    <a href="{{ route('admin.reports.show', $report) }}" class="inline-block text-xs bg-pink-500 text-white px-2.5 py-1 rounded hover:bg-pink-600">詳細</a>
                 </td>
             </tr>
             @empty
@@ -241,7 +241,7 @@
 </details>
 
 {{-- 回収報告履歴 --}}
-<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden" open>
     <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
         回収報告履歴（{{ $collectionReports->count() }}件）
     </summary>
@@ -286,7 +286,7 @@
                     {{ $cr->paid_at?->format('Y/m/d') ?? '-' }}
                 </td>
                 <td class="px-4 py-3">
-                    <a href="{{ route('admin.collection_reports.show', $cr) }}" class="text-xs text-pink-500 hover:underline">詳細 →</a>
+                    <a href="{{ route('admin.collection_reports.show', $cr) }}" class="inline-block text-xs bg-pink-500 text-white px-2.5 py-1 rounded hover:bg-pink-600">詳細</a>
                 </td>
             </tr>
             @empty
