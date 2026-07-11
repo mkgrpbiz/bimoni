@@ -39,13 +39,15 @@
                 <th class="px-3 py-3 text-left">マイページ</th>
                 <th class="px-3 py-3 text-left">メールアドレス</th>
                 <th class="px-3 py-3 text-center">設定状況</th>
-                <th class="px-3 py-3 text-center">操作</th>
             </tr>
         </thead>
         <tbody class="divide-y">
             @forelse($campaigns as $campaign)
             <tr class="hover:bg-gray-50">
-                <td class="px-4 py-3 font-medium max-w-xs truncate">{{ $campaign->title }}</td>
+                <td class="px-4 py-3 font-medium max-w-xs truncate">
+                    <a href="{{ route('admin.cancellation_settings.edit', $campaign) }}"
+                       class="font-medium text-pink-600 hover:text-pink-800 hover:underline">{{ $campaign->title }}</a>
+                </td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->cancellation_phone ?: '-' }}</td>
                 <td class="px-3 py-3 text-gray-700 max-w-xs truncate">{{ $campaign->cancellation_mypage_url ?: '-' }}</td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->cancellation_email ?: '-' }}</td>
@@ -56,14 +58,10 @@
                         <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">未設定</span>
                     @endif
                 </td>
-                <td class="px-3 py-3 text-center">
-                    <a href="{{ route('admin.cancellation_settings.edit', $campaign) }}"
-                       class="text-xs bg-pink-500 text-white px-3 py-1 rounded hover:bg-pink-600">編集</a>
-                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
+                <td colspan="5" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
             </tr>
             @endforelse
         </tbody>
