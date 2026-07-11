@@ -60,8 +60,14 @@ class MypageController extends Controller
         $payCurrentDate = $now->copy()->day(10)->format('n月j日');
         $payNextDate    = $now->copy()->addMonth()->day(10)->format('n月j日');
 
+        $applying = $applications->filter(fn($a) => in_array($a->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming']));
+
+        // 応募中のうち、案件の募集がすでに終了しているものは下部に折りたたんで表示する
+        $applyingActive = $applying->filter(fn($a) => $a->campaign?->status !== 'closed')->values();
+        $applyingEnded  = $applying->filter(fn($a) => $a->campaign?->status === 'closed')->values();
+
         $groups = [
-            '応募中'     => $applications->filter(fn($a) => in_array($a->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming'])),
+            '応募中'     => $applying,
             '実施完了'   => $applications->filter(fn($a) => in_array($a->status, ['completed'])),
             'キャンセル' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'cancelled'])),
         ];
@@ -78,7 +84,7 @@ class MypageController extends Controller
             ->get();
 
         return view('member.mypage.index', compact(
-            'user', 'groups', 'monitorReports', 'collectionReports',
+            'user', 'groups', 'applyingActive', 'applyingEnded', 'monitorReports', 'collectionReports',
             'payCurrentMonth', 'payNextMonth',
             'payCurrentDate', 'payNextDate'
         ));

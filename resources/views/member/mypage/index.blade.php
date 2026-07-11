@@ -100,42 +100,60 @@
         </div>
 
         {{-- 応募中・実施完了・キャンセル タブコンテンツ --}}
+        @php
+            $appCard = function ($app) {
+                return '
+                <div class="px-4 py-3 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-pink-50 rounded-lg flex-shrink-0 overflow-hidden">
+                        ' . (($app->campaign && $app->campaign->thumbnail)
+                            ? '<img src="' . asset('storage/' . $app->campaign->thumbnail) . '" class="w-full h-full object-cover">'
+                            : '<div class="w-full h-full flex items-center justify-center text-lg">💄</div>') . '
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">' . e($app->campaign->title ?? '削除済み案件') . '</p>
+                        <p class="text-xs text-gray-400 mt-0.5">応募：' . $app->applied_at->format('Y/m/d') . '</p>
+                    </div>
+                    ' . ($app->campaign ? '<a href="' . route('member.campaigns.show', $app->campaign) . '" class="text-xs text-pink-500 flex-shrink-0">詳細 →</a>' : '') . '
+                </div>';
+            };
+        @endphp
         @foreach($groups as $label => $apps)
         <div x-show="tab === '{{ $label }}'" x-cloak>
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                @if($apps->isEmpty())
-                    <p class="text-xs text-gray-400 text-center py-8">対象の履歴がありません</p>
+                @if($label === '応募中')
+                    @if($applyingActive->isEmpty() && $applyingEnded->isEmpty())
+                        <p class="text-xs text-gray-400 text-center py-8">対象の履歴がありません</p>
+                    @else
+                        @if($applyingActive->isEmpty())
+                            <p class="text-xs text-gray-400 text-center py-6">応募中の案件はありません</p>
+                        @else
+                            <div class="divide-y divide-gray-50">
+                                @foreach($applyingActive as $app){!! $appCard($app) !!}@endforeach
+                            </div>
+                        @endif
+                    @endif
                 @else
-                    <div class="divide-y divide-gray-50">
-                        @foreach($apps as $app)
-                        <div class="px-4 py-3 flex items-center gap-3">
-                            <div class="w-10 h-10 bg-pink-50 rounded-lg flex-shrink-0 overflow-hidden">
-                                @if($app->campaign && $app->campaign->thumbnail)
-                                    <img src="{{ asset('storage/' . $app->campaign->thumbnail) }}"
-                                         class="w-full h-full object-cover">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-lg">💄</div>
-                                @endif
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-800 truncate">
-                                    {{ $app->campaign->title ?? '削除済み案件' }}
-                                </p>
-                                <p class="text-xs text-gray-400 mt-0.5">
-                                    応募：{{ $app->applied_at->format('Y/m/d') }}
-                                </p>
-                            </div>
-                            @if($app->campaign)
-                            <a href="{{ route('member.campaigns.show', $app->campaign) }}"
-                               class="text-xs text-pink-500 flex-shrink-0">
-                                詳細 →
-                            </a>
-                            @endif
+                    @if($apps->isEmpty())
+                        <p class="text-xs text-gray-400 text-center py-8">対象の履歴がありません</p>
+                    @else
+                        <div class="divide-y divide-gray-50">
+                            @foreach($apps as $app){!! $appCard($app) !!}@endforeach
                         </div>
-                        @endforeach
-                    </div>
+                    @endif
                 @endif
             </div>
+
+            @if($label === '応募中' && $applyingEnded->isNotEmpty())
+            <details class="mt-3 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+                <summary class="px-4 py-3 text-xs font-medium text-gray-500 cursor-pointer select-none flex items-center justify-between">
+                    <span>募集終了（{{ $applyingEnded->count() }}件）</span>
+                    <span class="text-gray-400">タップして開く</span>
+                </summary>
+                <div class="divide-y divide-gray-100 bg-white">
+                    @foreach($applyingEnded as $app){!! $appCard($app) !!}@endforeach
+                </div>
+            </details>
+            @endif
         </div>
         @endforeach
 
