@@ -57,9 +57,14 @@ class CampaignController extends Controller
             ->whereNotIn('status', ['cancelled'])
             ->first();
 
-        // 非公開案件は応募歴がある場合のみ閲覧可
+        // 非公開案件は応募歴がある場合のみ閲覧可（キャンセル済みの応募歴も含む）
         if ($campaign->status !== 'published' && !$application) {
-            abort(404);
+            $hasAnyApplication = Application::where('user_id', $user->id)
+                ->where('campaign_id', $campaign->id)
+                ->exists();
+            if (!$hasAnyApplication) {
+                abort(404);
+            }
         }
 
         $now = now();
