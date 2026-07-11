@@ -15,6 +15,16 @@
     <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
 @endif
 
+{{-- 会員向けFAQページURL --}}
+<div class="bg-white rounded-lg shadow p-4 mb-4">
+    <h2 class="font-bold text-gray-700 text-sm mb-2">会員向けページURL（LINEメニュー設定用）</h2>
+    <div class="flex items-center gap-2">
+        <code class="text-xs bg-gray-100 text-gray-800 px-3 py-2 rounded flex-1 break-all">{{ route('member.faq') }}</code>
+        <button type="button" onclick="copyUrl('{{ route('member.faq') }}')"
+                class="bg-pink-500 text-white text-xs px-3 py-1.5 rounded hover:bg-pink-600 shrink-0">コピー</button>
+    </div>
+</div>
+
 {{-- カテゴリタブ --}}
 <div class="flex border-b border-gray-200 mb-4 overflow-x-auto">
     @foreach($categories as $cat)
@@ -104,6 +114,22 @@ if (tbody) {
             });
         },
     });
+}
+
+function copyUrl(url) {
+    try {
+        const el = document.createElement('textarea');
+        el.value = url;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+    } catch(e) {
+        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+    }
+    alert('コピーしました');
 }
 </script>
 @endsection
