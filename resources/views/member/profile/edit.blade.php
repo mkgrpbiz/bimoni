@@ -2,10 +2,10 @@
 @section('title', 'プロフィール編集')
 @section('content')
 <div class="py-4">
-    <div class="flex items-center gap-3 mb-6">
-        <a href="{{ route('member.mypage') }}" class="text-gray-500 text-sm">← マイページ</a>
-        <h1 class="text-lg font-bold text-gray-800">プロフィール編集</h1>
+    <div class="flex items-center gap-2 mb-4">
+        <a href="{{ route('member.mypage') }}" class="text-pink-500 text-sm">← マイページ</a>
     </div>
+    <h1 class="font-bold text-gray-700 mb-3">プロフィール編集</h1>
 
     @if(session('success'))
         <div class="bg-green-100 text-green-800 rounded-xl px-4 py-3 text-sm mb-4">{{ session('success') }}</div>
