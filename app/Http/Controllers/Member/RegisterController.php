@@ -31,6 +31,10 @@ class RegisterController extends Controller
     {
         $user = Auth::guard('liff')->user();
 
+        if ($user->profile_completed_at) {
+            return redirect()->route('member.campaigns.index');
+        }
+
         $request->validate([
             'name'                => 'required|string|max:50',
             'name_kana'           => 'required|string|max:100',
