@@ -335,25 +335,24 @@ class DashboardController extends Controller
             ->where('planned_count', '>', 0)
             ->whereHas('campaign', fn($q) => $q->where('status', 'published'))
             ->get();
-        $underCount = 0;
+        $tomorrowSlots->load('campaign:id,title');
         foreach ($tomorrowSlots as $slot) {
             $booked = Application::where('campaign_id', $slot->campaign_id)
                 ->whereIn('status', $activeStatuses)
                 ->whereNotNull('invited_at')
                 ->whereDate('invited_at', $tomorrowDate)
                 ->count();
-            if ($booked < $slot->planned_count) {
-                $underCount++;
-            }
-        }
-        $underKey = 'under_' . $tomorrowDate;
-        if ($underCount > 0 && !($dismissed[$underKey] ?? false)) {
+            if ($booked >= $slot->planned_count) continue;
+
+            $underKey = 'under_' . $tomorrowDate . '_' . $slot->campaign_id;
+            if ($dismissed[$underKey] ?? false) continue;
+
             $alerts[] = [
-                'level'       => 'warning',
-                'message'     => "翌日（{$today->copy()->addDay()->format('m/d')}）の打診が目標に達していない案件が {$underCount}件 あります。",
-                'link'        => route('admin.proposal_reservations.index'),
-                'label'       => '打診予約管理',
-                'dismiss_key' => $underKey,
+                'level'         => 'warning',
+                'message'       => "翌日（{$today->copy()->addDay()->format('m/d')}）の打診が目標に達していません（{$booked}/{$slot->planned_count}件）。",
+                'campaign_name' => $slot->campaign?->title,
+                'campaign_link' => $slot->campaign_id ? route('admin.campaigns.applications', $slot->campaign_id) : null,
+                'dismiss_key'   => $underKey,
             ];
         }
 
