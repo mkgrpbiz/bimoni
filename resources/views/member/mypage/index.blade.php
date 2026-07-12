@@ -41,7 +41,7 @@
             📋 モニター報告
         </a>
         <div class="grid grid-cols-2 gap-3">
-            <a href="{{ route('member.reports.create', ['report_type' => 'collection']) }}"
+            <a href="{{ route('member.collections.create') }}"
                class="bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium text-center">
                 📦 回収依頼
             </a>

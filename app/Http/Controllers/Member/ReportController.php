@@ -35,7 +35,7 @@ class ReportController extends Controller
         return view('member.reports.show_collection', ['report' => $collectionReport, 'campaigns' => $campaigns]);
     }
 
-    public function create(Request $request): View
+    public function create(): View
     {
         $user = Auth::guard('liff')->user();
 
@@ -46,7 +46,7 @@ class ReportController extends Controller
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
 
-        // モニター報告用: 購入タイプ別に申請済みを除外（初回・継続は独立して保持）
+        // 購入タイプ別に申請済みを除外（初回・継続は独立して保持）
         $reportedInitialIds = MonitorReport::where('user_id', $user->id)
             ->where('purchase_type', 'initial')
             ->where('status', '!=', 'rejected')
@@ -61,17 +61,25 @@ class ReportController extends Controller
             ->whereNotIn('id', $reportedContinuationIds)
             ->values();
 
+        return view('member.reports.create', compact('monitorInitialApps', 'monitorContinuationApps'));
+    }
+
+    public function createCollection(): View
+    {
+        $user = Auth::guard('liff')->user();
+
+        $allCompleted = Application::where('user_id', $user->id)
+            ->whereIn('status', ['completed', 'reported', 'approved'])
+            ->with('campaign')
+            ->get()
+            ->filter(fn($a) => $a->campaign !== null);
+
         // 回収サービス用（体験モニターは除外）
         $collectionTargets        = $allCompleted->filter(fn($a) => $a->campaign?->campaign_type !== 'experience');
         $initialApplications      = $collectionTargets->values();
         $continuationApplications = $collectionTargets->values();
 
-        $reportType = $request->input('report_type', 'monitor');
-
-        return view('member.reports.create', compact(
-            'monitorInitialApps', 'monitorContinuationApps',
-            'initialApplications', 'continuationApplications', 'reportType'
-        ));
+        return view('member.reports.create_collection', compact('initialApplications', 'continuationApplications'));
     }
 
     public function store(Request $request): RedirectResponse
