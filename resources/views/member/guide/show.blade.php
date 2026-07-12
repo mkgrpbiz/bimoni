@@ -56,7 +56,7 @@
                         {{ $i + 1 }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-bold text-sm text-gray-800">{{ $step->title }}</p>
+                        <p class="font-bold text-base text-gray-800">{{ $step->title }}</p>
                         @if($step->description)
                         <p class="text-sm text-gray-600 whitespace-pre-wrap mt-0.5">{{ $step->description }}</p>
                         @endif
