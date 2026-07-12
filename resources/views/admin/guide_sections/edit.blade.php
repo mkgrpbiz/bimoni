@@ -56,8 +56,17 @@
                 <span class="cursor-grab text-gray-400 drag-handle select-none mt-1">⠿</span>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
-                        <span class="text-xs px-1.5 py-0.5 rounded {{ $note->style === 'warning' ? 'bg-red-100 text-red-600' : 'bg-pink-100 text-pink-600' }}">
-                            {{ $note->style === 'warning' ? '警告色' : '通常色' }}
+                        <span class="text-xs px-1.5 py-0.5 rounded
+                            {{ match($note->style) {
+                                'red'    => 'bg-red-100 text-red-600',
+                                'orange' => 'bg-orange-100 text-orange-600',
+                                default  => 'bg-pink-100 text-pink-600',
+                            } }}">
+                            {{ match($note->style) {
+                                'red'    => '赤',
+                                'orange' => 'オレンジ',
+                                default  => 'ピンク',
+                            } }}
                         </span>
                         <span class="font-medium text-sm">{{ $note->heading ?: '（見出しなし）' }}</span>
                     </div>
@@ -76,8 +85,9 @@
                 <input type="text" name="heading" value="{{ $note->heading }}" placeholder="見出し（例: ■ ポイント）" class="w-full border rounded px-2 py-1.5 text-sm">
                 <textarea name="body" rows="4" placeholder="1行1項目で入力" class="w-full border rounded px-2 py-1.5 text-sm">{{ $note->body }}</textarea>
                 <select name="note_style" class="border rounded px-2 py-1.5 text-sm">
-                    <option value="normal" @selected($note->style === 'normal')>通常色（ピンク）</option>
-                    <option value="warning" @selected($note->style === 'warning')>警告色（赤）</option>
+                    <option value="pink" @selected($note->style === 'pink')>ピンク</option>
+                    <option value="orange" @selected($note->style === 'orange')>オレンジ</option>
+                    <option value="red" @selected($note->style === 'red')>赤</option>
                 </select>
                 <div class="flex gap-2">
                     <button type="submit" class="text-xs bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">保存</button>
@@ -96,8 +106,9 @@
         <textarea name="body" rows="3" placeholder="1行1項目で入力（箇条書きになります）" required class="w-full border rounded px-3 py-2 text-sm"></textarea>
         <div class="flex gap-2 items-center">
             <select name="note_style" class="border rounded px-2 py-2 text-sm">
-                <option value="normal">通常色（ピンク）</option>
-                <option value="warning">警告色（赤）</option>
+                <option value="pink">ピンク</option>
+                <option value="orange">オレンジ</option>
+                <option value="red">赤</option>
             </select>
             <button type="submit" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 text-sm">＋ 注意書きを追加</button>
         </div>

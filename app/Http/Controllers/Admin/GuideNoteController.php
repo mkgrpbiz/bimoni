@@ -52,7 +52,7 @@ class GuideNoteController extends Controller
         return [
             'heading'    => 'nullable|string|max:100',
             'body'       => 'required|string',
-            'note_style' => 'required|in:normal,warning',
+            'note_style' => 'required|in:pink,orange,red',
         ];
     }
 

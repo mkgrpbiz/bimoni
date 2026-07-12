@@ -23,7 +23,7 @@
     <div class="space-y-5">
         @foreach($page->sections as $section)
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <h2 class="font-bold text-pink-500 text-base mb-2">{{ $section->title }}</h2>
+            <h2 class="font-bold text-pink-500 text-xl mb-2">{{ $section->title }}</h2>
             <div class="h-0.5 bg-gradient-to-r from-pink-400 to-transparent rounded-full mb-3"></div>
 
             @if($section->intro_text)
@@ -31,12 +31,14 @@
             @endif
 
             @foreach($section->notes as $note)
-            <div class="rounded-xl p-3 mb-3 text-sm font-medium
-                        {{ $note->style === 'warning'
-                            ? 'bg-red-50 border border-red-100 text-red-700'
-                            : 'bg-pink-50 border border-pink-100 text-gray-700' }}">
+            <div class="rounded-xl p-3 mb-3 text-sm font-medium text-black border
+                        {{ match($note->style) {
+                            'red'    => 'bg-red-50 border-red-100',
+                            'orange' => 'bg-orange-50 border-orange-100',
+                            default  => 'bg-pink-50 border-pink-100',
+                        } }}">
                 @if($note->heading)
-                <p class="font-bold mb-1">{{ $note->heading }}</p>
+                <p class="font-bold text-base mb-1">{{ $note->heading }}</p>
                 @endif
                 <ul class="list-disc list-inside space-y-1">
                     @foreach($note->lines as $line)
