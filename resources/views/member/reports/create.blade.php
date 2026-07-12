@@ -45,7 +45,7 @@
 
             <div x-show="mode === 'initial'" x-cloak>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    対象案件 <span class="text-red-500 text-xs">必須</span>
+                    対象案件 <span class="text-red-500 text-xs">必須（該当がなければ「その他報告」を選択）</span>
                 </label>
                 <select id="monitor-initial-select" onchange="onMonitorSelectChange(this)"
                         class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm">
@@ -58,11 +58,12 @@
                         {{ $app->campaign->title }}
                     </option>
                     @endforeach
+                    <option value="other" data-fee="0" data-bonus="0">その他報告</option>
                 </select>
             </div>
             <div x-show="mode === 'continuation'" x-cloak>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    対象案件 <span class="text-red-500 text-xs">必須</span>
+                    対象案件 <span class="text-red-500 text-xs">必須（該当がなければ「その他報告」を選択）</span>
                 </label>
                 <select id="monitor-cont-select" onchange="onMonitorSelectChange(this)"
                         class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm">
@@ -75,7 +76,18 @@
                         {{ $app->campaign->title }}
                     </option>
                     @endforeach
+                    <option value="other" data-fee="0" data-bonus="0">その他報告</option>
                 </select>
+            </div>
+
+            {{-- その他報告 入力欄 --}}
+            <div id="other-report-box" class="hidden mt-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    報告内容 <span class="text-red-500 text-xs">必須</span>
+                </label>
+                <textarea name="report_body" id="other-report-body" rows="4"
+                          placeholder="イレギュラーな内容を詳しく記入してください"
+                          class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm leading-relaxed">{{ old('report_body') }}</textarea>
             </div>
         </div>
 
@@ -189,7 +201,7 @@
             @include('member._image_picker', ['inputName' => 'report_image_3', 'labelText' => '3枚目（任意）', 'required' => false, 'pickerId' => 'rimg3'])
         </div>
 
-        <div class="pb-2">
+        <div class="pb-8">
             <button type="submit"
                     class="w-full bg-pink-500 text-white py-4 rounded-xl font-bold text-base shadow-md hover:bg-pink-600">
                 報告する
@@ -197,24 +209,6 @@
             <p class="text-xs text-gray-400 text-center mt-2">※報告確認後、問題がなければモニター協力金に反映されます。</p>
         </div>
     </form>
-
-    {{-- ======== 常時表示: その他報告 ======== --}}
-    <div class="bg-white border border-gray-200 rounded-xl p-4 mt-6">
-        <p class="text-sm font-bold text-gray-700 mb-1">上記に該当する案件がない場合</p>
-        <p class="text-xs text-gray-400 mb-3">案件一覧に見つからないイレギュラーな内容は、こちらから報告してください。</p>
-        <form method="POST" action="{{ route('member.reports.store') }}" enctype="multipart/form-data" class="space-y-3">
-            @csrf
-            <input type="hidden" name="purchase_type" value="other">
-            <textarea name="report_body" rows="4" required placeholder="報告内容を詳しく記入してください"
-                      class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm leading-relaxed">{{ old('report_body') }}</textarea>
-            @include('member._image_picker', ['inputName' => 'report_image_1', 'labelText' => '画像（必須）', 'required' => true, 'pickerId' => 'other_rimg1'])
-            @include('member._image_picker', ['inputName' => 'report_image_2', 'labelText' => '画像2（任意）', 'required' => false, 'pickerId' => 'other_rimg2'])
-            <button type="submit"
-                    class="w-full bg-gray-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-gray-700">
-                その他報告を送信する
-            </button>
-        </form>
-    </div>
 
 </div>
 @endsection
@@ -227,13 +221,26 @@ function currentMode() {
 }
 
 function onModeChange(mode) {
-    document.getElementById('monitor-purchase-type').value = mode;
     document.getElementById('monitor-application-id').value = '';
+    document.getElementById('monitor-purchase-type').value = mode;
+    document.getElementById('other-report-box').classList.add('hidden');
+    document.getElementById('monitor-fee-box').style.display = '';
     resetFeeDisplay();
 }
 
 function onMonitorSelectChange(sel) {
-    document.getElementById('monitor-application-id').value = sel.value;
+    const mode    = currentMode();
+    const isOther = sel.value === 'other';
+
+    const otherBox = document.getElementById('other-report-box');
+    const feeBox   = document.getElementById('monitor-fee-box');
+    otherBox.classList.toggle('hidden', !isOther);
+    feeBox.style.display = isOther ? 'none' : '';
+
+    document.getElementById('monitor-purchase-type').value  = isOther ? 'other' : mode;
+    document.getElementById('monitor-application-id').value = isOther ? '' : sel.value;
+
+    if (isOther) return;
     recalcFee();
 }
 
@@ -248,7 +255,7 @@ function recalcFee() {
     const mode  = currentMode();
     const selId = mode === 'initial' ? 'monitor-initial-select' : 'monitor-cont-select';
     const sel   = document.getElementById(selId);
-    if (!sel || !sel.value) { resetFeeDisplay(); return; }
+    if (!sel || !sel.value || sel.value === 'other') { resetFeeDisplay(); return; }
 
     const opt = sel.options[sel.selectedIndex];
     const extraBonus    = parseInt(opt.dataset.fee || 0);
