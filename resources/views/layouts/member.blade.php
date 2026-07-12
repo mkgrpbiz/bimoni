@@ -37,8 +37,13 @@
 
     @stack('scripts')
 
+    @php
+        // auth:liffミドルウェアが付いていないページ（FAQ・ガイド等、ログイン不要の公開ページ）は
+        // ルート名を個別に列挙せず、構造的に対象外にする
+        $requiresLiffAuth = in_array('auth:liff', request()->route()?->gatherMiddleware() ?? []);
+    @endphp
     @auth('liff')
-    @if(!request()->routeIs('member.register*') && !request()->routeIs('member.transfer*') && !auth('liff')->user()->transfer_registered_at)
+    @if($requiresLiffAuth && !request()->routeIs('member.register*') && !request()->routeIs('member.transfer*') && !auth('liff')->user()->transfer_registered_at)
     <style>
     @keyframes bimoni-popup {
         from { opacity: 0; transform: scale(0.8) translateY(20px); }
