@@ -13,18 +13,10 @@
 <body class="bg-gray-50 min-h-screen pb-24">
 
     <header class="bg-pink-500 text-white shadow-md sticky top-0 z-50">
-        <div class="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
+        <div class="flex items-center px-4 py-3 max-w-lg mx-auto">
             <a href="{{ route('member.campaigns.index') }}" class="font-bold text-lg tracking-wide">
                 BIMONI
             </a>
-            @auth('liff')
-            @if(!request()->routeIs('member.transfer*'))
-            <nav class="flex gap-4 text-sm">
-                <a href="{{ route('member.campaigns.index') }}" class="opacity-90 hover:opacity-100">案件一覧</a>
-                <a href="{{ route('member.mypage') }}" class="opacity-90 hover:opacity-100">マイページ</a>
-            </nav>
-            @endif
-            @endauth
         </div>
     </header>
 
