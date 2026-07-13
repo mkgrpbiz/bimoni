@@ -71,6 +71,7 @@ class CampaignController extends Controller
         $campaign = Campaign::create($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
         $this->syncCourses($campaign, $courses);
+        $this->recalculateGrossProfit($campaign);
 
         return redirect()->route('admin.campaigns.index')->with('success', '案件を登録しました。');
     }
@@ -123,6 +124,7 @@ class CampaignController extends Controller
         $campaign->update($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
         $this->syncCourses($campaign, $courses);
+        $this->recalculateGrossProfit($campaign);
 
         return redirect()->route('admin.campaigns.index')->with('success', '案件を更新しました。');
     }
@@ -145,6 +147,16 @@ class CampaignController extends Controller
                 'sort_order'           => $i,
             ]);
         }
+    }
+
+    // 粗利はJSのリアルタイム計算に依存すると保存タイミング次第でズレるため、
+    // コース保存後にモニターコストをサーバー側で再計算して確定させる
+    private function recalculateGrossProfit(Campaign $campaign): void
+    {
+        $campaign->load('courses');
+        $campaign->update([
+            'gross_profit' => (int) round(($campaign->campaign_unit_price ?? 0) - $campaign->calculatedMonitorCost()),
+        ]);
     }
 
     public function updateStatus(Request $request, Campaign $campaign, CampaignClosureService $closureService): RedirectResponse
