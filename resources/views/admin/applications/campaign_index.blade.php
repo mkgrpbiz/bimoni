@@ -379,7 +379,7 @@ $statusTabs = [
                                     onclick="return confirm('キャンセルしますか？')">取消</button>
                         </form>
                         @endif
-                        @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']) && !$app->continuation_response && !$app->continuation_sent_at)
+                        @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']) && !$app->continuation_response && !$app->continuation_sent_at && !$app->course_id)
                         <button type="button"
                                 class="bg-green-500 text-white px-1.5 py-0.5 rounded hover:bg-green-600 text-xs"
                                 onclick="openContModal('{{ route('admin.applications.continuation_line', $app) }}', '{{ addslashes($app->user?->name) }}')">
