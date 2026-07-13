@@ -114,7 +114,7 @@ class ApplicationController extends Controller
         $contStats = Application::whereIn('campaign_id', $contCampaigns->pluck('id'))
             ->whereIn('status', $contCompletedStatuses)
             ->where('completed_at', '>=', '2026-06-01')
-            ->selectRaw('campaign_id, COUNT(*) as total, SUM(continuation_response = "possible") as ok_count')
+            ->selectRaw('campaign_id, COUNT(*) as total, COALESCE(SUM(continuation_response = "possible"), 0) as ok_count')
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
         $continuationRateAlerts = $contCampaigns->filter(function ($c) use ($contStats) {
@@ -240,7 +240,7 @@ class ApplicationController extends Controller
         $contStats2 = Application::whereIn('campaign_id', $contCampaigns2->pluck('id'))
             ->whereIn('status', $contCompletedStatuses2)
             ->where('completed_at', '>=', '2026-06-01')
-            ->selectRaw('campaign_id, COUNT(*) as total, SUM(continuation_response = "possible") as ok_count')
+            ->selectRaw('campaign_id, COUNT(*) as total, COALESCE(SUM(continuation_response = "possible"), 0) as ok_count')
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
         $continuationRateAlerts = $contCampaigns2->filter(function ($c) use ($contStats2) {
