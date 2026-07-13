@@ -278,6 +278,7 @@ class CampaignController extends Controller
             'continuation_rate'      => 'nullable|numeric|min:0|max:100',
             'continuation_condition' => 'nullable|in:2回前提,3回前提',
             'course_settings_enabled'          => 'nullable|in:0,1',
+            'course_normal_name'               => 'nullable|string|max:255',
             'course_normal_percentage'         => 'nullable|numeric|min:0|max:100',
             'courses'                          => 'nullable|array',
             'courses.*.name'                   => 'nullable|string|max:255',
