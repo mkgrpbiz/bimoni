@@ -195,6 +195,9 @@ $statusTabs = [
                 <th class="px-3 py-2 text-left whitespace-nowrap">継続希望</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">実施可能時間</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">ステータス</th>
+                @if($campaign->course_settings_enabled)
+                <th class="px-3 py-2 text-left whitespace-nowrap">コース</th>
+                @endif
                 <th class="px-3 py-2 text-left whitespace-nowrap">案内日時</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">打診回答</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">LINE送信</th>
@@ -254,6 +257,11 @@ $statusTabs = [
                         {{ $app->getStatusLabel() }}
                     </span>
                 </td>
+                @if($campaign->course_settings_enabled)
+                <td class="px-3 py-2 whitespace-nowrap text-gray-700">
+                    {{ $app->course->name ?? ($campaign->course_normal_name ?: '通常') }}
+                </td>
+                @endif
                 <td class="px-3 py-2 whitespace-nowrap text-gray-700">
                     {{ $app->invited_at?->format('m/d H:i') ?? '-' }}
                     @if($app->invited_end_at)

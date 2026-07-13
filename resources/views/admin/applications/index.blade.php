@@ -113,6 +113,7 @@ $tabs = [
                 <th class="px-3 py-2 text-left whitespace-nowrap">案件名</th>
                 <th class="px-3 py-2 text-center whitespace-nowrap">CP</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">ステータス</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">コース</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">案内日時</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">打診回答</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">LINE送信</th>
@@ -179,6 +180,13 @@ $tabs = [
                     <span class="px-1.5 py-0.5 rounded text-xs {{ $app->getStatusColor() }}">
                         {{ $app->getStatusLabel() }}
                     </span>
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-700">
+                    @if($app->campaign?->course_settings_enabled)
+                        {{ $app->course->name ?? ($app->campaign->course_normal_name ?: '通常') }}
+                    @else
+                        <span class="text-gray-300">-</span>
+                    @endif
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-gray-700">
                     {{ $app->invited_at?->format('m/d H:i') ?? '-' }}

@@ -36,7 +36,7 @@ class ApplicationController extends Controller
     {
         $campaignStatus = $request->input('status', 'published');
 
-        $query = Application::with(['user', 'campaign.courses', 'lineMessageJobs'])
+        $query = Application::with(['user', 'campaign.courses', 'course', 'lineMessageJobs'])
             ->whereHas('campaign', fn($q) => $q->where('status', $campaignStatus))
             ->latest('applied_at');
 
@@ -137,7 +137,7 @@ class ApplicationController extends Controller
     {
         $campaign->load('courses');
 
-        $query = $campaign->applications()->with(['user', 'statusLogs.changedBy', 'lineMessageJobs'])
+        $query = $campaign->applications()->with(['user', 'course', 'statusLogs.changedBy', 'lineMessageJobs'])
             ->orderByRaw("CASE WHEN status IN ('completed','reported','approved','point_granted','cancelled') THEN 1 ELSE 0 END ASC")
             ->orderByRaw("CASE WHEN status IN ('completed','reported','approved','point_granted','cancelled') THEN invited_at END DESC")
             ->orderBy('applied_at', 'asc');
