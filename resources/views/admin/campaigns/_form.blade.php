@@ -344,7 +344,9 @@
                                    class="w-full border rounded px-2 py-1.5 text-sm">
                         </div>
                         <div class="md:col-span-4">
-                            <label class="block text-xs text-gray-500 mb-1">初回購入費（円）</label>
+                            <label class="block text-xs text-gray-500 mb-1">
+                                初回購入費（円） <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('初回購入費' + (index+2)) + '）'"></span>
+                            </label>
                             <input type="number" :name="`courses[${index}][initial_purchase_fee]`" x-model="course.initial_purchase_fee"
                                    min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
                         </div>
@@ -379,14 +381,18 @@
                         </template>
                         <template x-if="course.course_type === '継続'">
                             <div class="md:col-span-2">
-                                <label class="block text-xs text-gray-500 mb-1">継続購入費2（円）</label>
+                                <label class="block text-xs text-gray-500 mb-1">
+                                    継続購入費2（円） <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('継続購入費' + (index+2) + '-2') + '）'"></span>
+                                </label>
                                 <input type="number" :name="`courses[${index}][continuation_fee_2]`" x-model="course.continuation_fee_2"
                                        min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
                             </div>
                         </template>
                         <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
                             <div class="md:col-span-2">
-                                <label class="block text-xs text-gray-500 mb-1">継続購入費3（円）</label>
+                                <label class="block text-xs text-gray-500 mb-1">
+                                    継続購入費3（円） <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('継続購入費' + (index+2) + '-3') + '）'"></span>
+                                </label>
                                 <input type="number" :name="`courses[${index}][continuation_fee_3]`" x-model="course.continuation_fee_3"
                                        min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
                             </div>
@@ -396,12 +402,22 @@
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">モニター案内メッセージ（打診時にこのコースを選ぶと使用）</label>
                         <div class="bg-gray-50 border border-gray-200 rounded p-2 mb-1 text-xs text-gray-600">
-                            <p class="font-medium text-gray-700">このコース専用コード</p>
+                            <p class="font-medium text-gray-700">このコース専用コード（コースごとに番号が変わります）</p>
                             <div class="grid grid-cols-2 gap-0.5 font-mono">
                                 <span>@{{コース名}}</span><span class="text-gray-400">→ このコースのコース名</span>
-                                <span>@{{初回購入費2}}</span><span class="text-gray-400">→ このコースの初回購入費</span>
-                                <span>@{{継続購入費2}}</span><span class="text-gray-400">→ このコースの継続購入費2</span>
-                                <span>@{{継続購入費3}}</span><span class="text-gray-400">→ このコースの継続購入費3</span>
+                                <span x-text="courseCode('初回購入費' + (index+2))"></span><span class="text-gray-400">→ このコースの初回購入費</span>
+                                <template x-if="course.course_type === '継続'">
+                                    <span x-text="courseCode('継続購入費' + (index+2) + '-2')"></span>
+                                </template>
+                                <template x-if="course.course_type === '継続'">
+                                    <span class="text-gray-400">→ このコースの継続購入費2</span>
+                                </template>
+                                <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
+                                    <span x-text="courseCode('継続購入費' + (index+2) + '-3')"></span>
+                                </template>
+                                <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
+                                    <span class="text-gray-400">→ このコースの継続購入費3</span>
+                                </template>
                             </div>
                             <p class="mt-1">下記の案件共通コード（@{{商品名}} @{{モニター協力金}} @{{解約について}} @{{モニター案内文}} @{{リンク}} @{{案内日時}}）も使えます。</p>
                         </div>
@@ -567,6 +583,12 @@ function courseSettings() {
             this.$nextTick(() => calcGross());
         },
     };
+}
+
+function courseCode(inner) {
+    const b = String.fromCharCode(123);
+    const e = String.fromCharCode(125);
+    return b + b + inner + e + e;
 }
 
 function calcGross() {
