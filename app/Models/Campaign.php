@@ -17,7 +17,7 @@ class Campaign extends Model
         'product_name', 'product_price',
         'cooperation_fee', 'cooperation_fee_formula',
         'continuation_cooperation_fee', 'continuation_cooperation_fee_formula',
-        'continuation_condition',
+        'continuation_condition', 'course_settings_enabled',
         'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
         'continuation_rate', 'closing_date', 'payment_timing',
@@ -38,6 +38,7 @@ class Campaign extends Model
             'application_end_at'     => 'date',
             'application_show_fields' => 'array',
             'cancellation_visible'    => 'boolean',
+            'course_settings_enabled' => 'boolean',
         ];
     }
 
@@ -50,6 +51,20 @@ class Campaign extends Model
     public function bonuses()             { return $this->hasMany(CampaignBonus::class); }
     public function activeBonus()         { return $this->bonuses()->where('start_at', '<=', now())->where('end_at', '>=', now())->latest('start_at'); }
     public function formFields()          { return $this->belongsToMany(FormField::class, 'campaign_form_fields')->withPivot('sort_order')->orderByPivot('sort_order'); }
+    public function courses()             { return $this->hasMany(CampaignCourse::class)->orderBy('sort_order'); }
+
+    // コース設定が有効な場合、各コースの金額×％の加重平均でモニターコストを算出（単発=金額そのまま、定期=金額×継続率）
+    public function calculatedMonitorCost(): float
+    {
+        if ($this->course_settings_enabled && $this->courses->isNotEmpty()) {
+            $weighted = $this->courses->sum(fn($c) => $c->cost($this->continuation_rate ?? 0) * ($c->percentage / 100));
+            return $weighted + ($this->cooperation_fee ?? 0) + ($this->referral_fee ?? 0);
+        }
+        return ($this->initial_purchase_fee ?? 0)
+            + ($this->recurring_purchase_fee ?? 0) * (($this->continuation_rate ?? 0) / 100)
+            + ($this->cooperation_fee ?? 0)
+            + ($this->referral_fee ?? 0);
+    }
 
     public function getTypeLabel(): string
     {

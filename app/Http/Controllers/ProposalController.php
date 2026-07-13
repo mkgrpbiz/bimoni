@@ -263,9 +263,12 @@ class ProposalController extends Controller
     {
         $campaign = $application->campaign;
         $user     = $application->user;
+        $course   = $application->course_id ? $application->course : null;
 
-        $guideMsg = $campaign->monitor_invite_message
-            ?? "【モニターご案内】\n{$campaign->title}\n\n実施時間になりました。モニターを開始してください。";
+        $guideMsg = ($course && $course->invite_message)
+            ? $course->invite_message
+            : ($campaign->monitor_invite_message
+                ?? "【モニターご案内】\n{$campaign->title}\n\n実施時間になりました。モニターを開始してください。");
 
         // {{案内日時}} を invited_at〜invited_end_at で置換
         if ($application->invited_at) {

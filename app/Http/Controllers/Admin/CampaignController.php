@@ -63,9 +63,14 @@ class CampaignController extends Controller
             $validated['monitor_video_thumbnail'] = $request->file('monitor_video_thumbnail')->store('campaigns/video_thumbnails', 'public');
         }
 
+        $courses = $validated['courses'] ?? [];
+        unset($validated['courses']);
+        $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
+
         $this->applyCooperationFormula($validated, $request);
         $campaign = Campaign::create($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
+        $this->syncCourses($campaign, $courses);
 
         return redirect()->route('admin.campaigns.index')->with('success', '案件を登録しました。');
     }
@@ -80,7 +85,7 @@ class CampaignController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         $tags = Tag::orderBy('name')->get();
-        $campaign->load('tags', 'formFields');
+        $campaign->load('tags', 'formFields', 'courses');
         return view('admin.campaigns.edit', compact('campaign', 'categories', 'tags'));
     }
 
@@ -108,12 +113,35 @@ class CampaignController extends Controller
         }
 
         $validated['capacity'] = $request->filled('capacity') ? (int) $request->capacity : null;
+
+        $courses = $validated['courses'] ?? [];
+        unset($validated['courses']);
+        $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
+
         $this->applyCooperationFormula($validated, $request);
 
         $campaign->update($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
+        $this->syncCourses($campaign, $courses);
 
         return redirect()->route('admin.campaigns.index')->with('success', '案件を更新しました。');
+    }
+
+    // コース設定: 案件更新のたびに全削除→送信内容で作り直す
+    private function syncCourses(Campaign $campaign, array $courses): void
+    {
+        $campaign->courses()->delete();
+        foreach ($courses as $i => $row) {
+            if (empty($row['name'])) continue;
+            $campaign->courses()->create([
+                'name'           => $row['name'],
+                'amount'         => $row['amount'] ?? 0,
+                'course_type'    => $row['course_type'] ?? '単発',
+                'percentage'     => $row['percentage'] ?? 0,
+                'invite_message' => $row['invite_message'] ?? null,
+                'sort_order'     => $i,
+            ]);
+        }
     }
 
     public function updateStatus(Request $request, Campaign $campaign, CampaignClosureService $closureService): RedirectResponse
@@ -246,6 +274,13 @@ class CampaignController extends Controller
             'gross_profit'           => 'nullable|integer',
             'continuation_rate'      => 'nullable|numeric|min:0|max:100',
             'continuation_condition' => 'nullable|in:2回前提,3回前提',
+            'course_settings_enabled'   => 'nullable|in:0,1',
+            'courses'                   => 'nullable|array',
+            'courses.*.name'            => 'nullable|string|max:255',
+            'courses.*.amount'          => 'nullable|integer|min:0',
+            'courses.*.course_type'     => 'nullable|in:定期,単発',
+            'courses.*.percentage'      => 'nullable|numeric|min:0|max:100',
+            'courses.*.invite_message'  => 'nullable|string',
             'collection_requirement'    => 'nullable|in:回収前提,回収不要',
             'collection_count_judgment' => 'nullable|integer|in:1,2,3',
             'closing_date'           => 'nullable|in:20日,25日,月末',

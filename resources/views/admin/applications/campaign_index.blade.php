@@ -142,6 +142,14 @@ $statusTabs = [
             <span class="font-bold text-green-600 ml-1">/ 完了 {{ $actualCont !== null ? $actualCont.'%' : '-' }}</span>
             <span class="text-gray-400 text-xs">（{{ $summary['continuation_ok_count'] }}件）</span>
         </div>
+        @foreach($summary['course_stats'] as $cs)
+        <div>
+            <span class="text-gray-500">{{ $cs['name'] }}</span>
+            <span class="text-gray-400 text-xs ml-1">目標 {{ $cs['target'] !== null ? number_format($cs['target'], 1).'%' : '-' }}</span>
+            <span class="font-bold text-indigo-600 ml-1">/ 完了 {{ $cs['actual'] !== null ? $cs['actual'].'%' : '-' }}</span>
+            <span class="text-gray-400 text-xs">（{{ $cs['count'] }}件）</span>
+        </div>
+        @endforeach
     </div>
 </div>
 
@@ -468,6 +476,17 @@ $statusTabs = [
                 <p id="prDeadlineError" class="hidden text-xs text-red-500 mt-1">締め切り日時を入力してください</p>
             </div>
 
+            @if($campaign->course_settings_enabled && $campaign->courses->count())
+            <div>
+                <label class="block text-xs text-gray-700 mb-1">コース指定</label>
+                <select name="course_id" class="w-full border rounded px-3 py-2 text-sm">
+                    <option value="">指定なし（案件共通の案内文）</option>
+                    @foreach($campaign->courses as $course)
+                    <option value="{{ $course->id }}">{{ $course->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div>
                 <label class="block text-xs text-gray-700 mb-1">メモ</label>
                 <input type="text" name="memo"

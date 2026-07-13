@@ -134,6 +134,8 @@ class ApplicationController extends Controller
 
     public function campaignIndex(Campaign $campaign, Request $request): View
     {
+        $campaign->load('courses');
+
         $query = $campaign->applications()->with(['user', 'statusLogs.changedBy', 'lineMessageJobs'])
             ->orderByRaw("CASE WHEN status IN ('completed','reported','approved','point_granted','cancelled') THEN 1 ELSE 0 END ASC")
             ->orderByRaw("CASE WHEN status IN ('completed','reported','approved','point_granted','cancelled') THEN invited_at END DESC")
@@ -210,6 +212,16 @@ class ApplicationController extends Controller
             'continuation_ok_count' => $completedApps->where('continuation_response', 'possible')->count(),
             'total_applications' => $campaign->applications()->count(),
             'pending_count'       => $campaign->applications()->where('status', 'pending')->count(),
+            'course_stats' => $campaign->course_settings_enabled
+                ? $campaign->courses->map(fn($course) => [
+                    'name'   => $course->name,
+                    'target' => $course->percentage,
+                    'actual' => $completedApps->count() > 0
+                        ? round($completedApps->where('course_id', $course->id)->count() / $completedApps->count() * 100)
+                        : null,
+                    'count'  => $completedApps->where('course_id', $course->id)->count(),
+                ])
+                : collect(),
         ];
 
         $allCampaigns   = Campaign::orderBy('title')->get(['id', 'title', 'status']);
@@ -283,6 +295,7 @@ class ApplicationController extends Controller
             'memo'           => 'nullable|string|max:500',
             'invited_at'     => 'nullable|date',
             'invited_end_at' => 'nullable|date',
+            'course_id'      => 'nullable|exists:campaign_courses,id',
         ]);
 
         // 応募中に戻す場合は案内日時をクリア
@@ -297,6 +310,8 @@ class ApplicationController extends Controller
         if ($request->status === 'line_contacted') {
             $application->loadMissing('campaign');
             $isPrIf = $application->isPrIfCampaign();
+
+            $application->update(['course_id' => $request->course_id ?: null]);
 
             if (!$isPrIf) {
                 // 通常案件：ロック・48h制限チェック

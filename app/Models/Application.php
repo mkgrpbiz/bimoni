@@ -20,6 +20,7 @@ class Application extends Model
         'form_image',
         'bonus_amount',
         'is_re_proposal',
+        'course_id',
     ];
 
     protected function casts(): array
@@ -49,6 +50,7 @@ class Application extends Model
 
     public function user()            { return $this->belongsTo(User::class); }
     public function campaign()        { return $this->belongsTo(Campaign::class); }
+    public function course()          { return $this->belongsTo(CampaignCourse::class, 'course_id'); }
     public function schedules()       { return $this->hasMany(ApplicationSchedule::class); }
     public function report()          { return $this->hasOne(MonitorReport::class); }
     public function statusLogs()      { return $this->hasMany(ApplicationStatusLog::class)->orderBy('created_at'); }
