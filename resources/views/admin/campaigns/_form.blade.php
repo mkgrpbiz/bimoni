@@ -328,7 +328,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">通常コースのコース名</label>
             <textarea name="course_normal_name" rows="1"
                       placeholder="例: 通常コース"
-                      class="w-48 border rounded px-3 py-2 text-sm resize-none">{{ old('course_normal_name', $campaign->course_normal_name ?? '') }}</textarea>
+                      class="w-64 border rounded px-3 py-2 text-sm resize-none">{{ old('course_normal_name', $campaign->course_normal_name ?? '') }}</textarea>
         </div>
         <div x-show="enabled === '1'">
             <label class="block text-sm font-medium text-gray-700 mb-1">通常案内の割合（％）</label>
