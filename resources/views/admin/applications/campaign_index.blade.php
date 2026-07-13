@@ -111,8 +111,9 @@ $statusTabs = [
         $femaleRatio = $totalC > 0 ? round($summary['completed_female'] / $totalC * 100) : null;
         $targetMale   = $summary['target_male_ratio']   ?? null;
         $targetFemale = $summary['target_female_ratio'] ?? null;
-        $targetCont   = $campaign->continuation_rate;
-        $actualCont   = $totalC > 0 ? round($summary['continuation_ok_count'] / $totalC * 100) : null;
+        $targetCont      = $campaign->continuation_rate;
+        $normalCompleted = $summary['normal_completed_count'];
+        $actualCont      = $normalCompleted > 0 ? round($summary['continuation_ok_count'] / $normalCompleted * 100) : null;
     @endphp
     <div class="flex gap-6 items-center flex-wrap text-sm">
         <div>
@@ -140,7 +141,7 @@ $statusTabs = [
             <span class="text-gray-500">継続率</span>
             <span class="text-gray-400 text-xs ml-1">目標 {{ $targetCont !== null ? $targetCont.'%' : '-' }}</span>
             <span class="font-bold text-green-600 ml-1">/ 完了 {{ $actualCont !== null ? $actualCont.'%' : '-' }}</span>
-            <span class="text-gray-400 text-xs">（{{ $summary['continuation_ok_count'] }}件）</span>
+            <span class="text-gray-400 text-xs">（{{ $summary['continuation_ok_count'] }}/{{ $normalCompleted }}件・通常コースのみ）</span>
         </div>
         @foreach($summary['course_stats'] as $cs)
         <div>

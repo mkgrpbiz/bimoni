@@ -114,6 +114,7 @@ class ApplicationController extends Controller
         $contStats = Application::whereIn('campaign_id', $contCampaigns->pluck('id'))
             ->whereIn('status', $contCompletedStatuses)
             ->where('completed_at', '>=', '2026-06-01')
+            ->whereNull('course_id')
             ->selectRaw('campaign_id, COUNT(*) as total, COALESCE(SUM(continuation_response = "possible"), 0) as ok_count')
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
@@ -200,6 +201,8 @@ class ApplicationController extends Controller
         }
 
         $completedApps = $campaign->applications()->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])->where('completed_at', '>=', '2026-06-01')->with('user')->get();
+        // 継続率指標はコース未指定（通常コース）の応募のみで集計する（コースの「継続」タイプは確率的な継続確認の対象ではないため）
+        $normalCompletedApps = $completedApps->filter(fn($a) => $a->course_id === null);
         $summary = [
             'today'    => $slots->get($today->toDateString()),
             'tomorrow' => $slots->get($tomorrow->toDateString()),
@@ -209,7 +212,8 @@ class ApplicationController extends Controller
             'total_completed'  => $completedApps->count(),
             'target_male_ratio'   => $campaign->target_male_ratio,
             'target_female_ratio' => $campaign->target_female_ratio,
-            'continuation_ok_count' => $completedApps->where('continuation_response', 'possible')->count(),
+            'normal_completed_count' => $normalCompletedApps->count(),
+            'continuation_ok_count' => $normalCompletedApps->where('continuation_response', 'possible')->count(),
             'total_applications' => $campaign->applications()->count(),
             'pending_count'       => $campaign->applications()->where('status', 'pending')->count(),
             'course_stats' => $campaign->course_settings_enabled
@@ -254,6 +258,7 @@ class ApplicationController extends Controller
         $contStats2 = Application::whereIn('campaign_id', $contCampaigns2->pluck('id'))
             ->whereIn('status', $contCompletedStatuses2)
             ->where('completed_at', '>=', '2026-06-01')
+            ->whereNull('course_id')
             ->selectRaw('campaign_id, COUNT(*) as total, COALESCE(SUM(continuation_response = "possible"), 0) as ok_count')
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
