@@ -279,8 +279,8 @@ class ProposalController extends Controller
             $guideMsg = str_replace('{{案内日時}}', $invitedLabel, $guideMsg);
         }
 
-        // その他のキャンペーン変数を置換
-        $guideMsg = $campaign->resolveTemplate($guideMsg);
+        // その他の変数を置換（コース指定時はコース専用コードも解決）
+        $guideMsg = $course ? $course->resolveTemplate($guideMsg) : $campaign->resolveTemplate($guideMsg);
 
         LineMessageJob::create([
             'application_id' => $application->id,

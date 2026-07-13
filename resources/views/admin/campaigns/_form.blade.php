@@ -329,7 +329,7 @@
             <input type="number" name="course_normal_percentage" value="{{ old('course_normal_percentage', $campaign->course_normal_percentage ?? '') }}"
                    min="0" max="100" step="0.01" oninput="calcGross()" placeholder="例: 80"
                    class="w-full md:w-40 border rounded px-3 py-2 text-sm">
-            <p class="text-xs text-gray-400 mt-0.5">詳細情報の初回購入費・継続購入費等（既定の案内）が占める割合。残りをコースで按分します。</p>
+            <p class="text-xs text-gray-400 mt-0.5">詳細情報の初回購入費・継続購入費等（既定の案内）が占める割合。この割合と各コースの目標％の合計が100％になるように設定してください。</p>
         </div>
     </div>
     <template x-if="enabled === '1'">
@@ -395,6 +395,16 @@
                     {{-- 3行目: モニター案内メッセージ --}}
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">モニター案内メッセージ（打診時にこのコースを選ぶと使用）</label>
+                        <div class="bg-gray-50 border border-gray-200 rounded p-2 mb-1 text-xs text-gray-600">
+                            <p class="font-medium text-gray-700">このコース専用コード</p>
+                            <div class="grid grid-cols-2 gap-0.5 font-mono">
+                                <span>@{{コース名}}</span><span class="text-gray-400">→ このコースのコース名</span>
+                                <span>@{{初回購入費2}}</span><span class="text-gray-400">→ このコースの初回購入費</span>
+                                <span>@{{継続購入費2}}</span><span class="text-gray-400">→ このコースの継続購入費2</span>
+                                <span>@{{継続購入費3}}</span><span class="text-gray-400">→ このコースの継続購入費3</span>
+                            </div>
+                            <p class="mt-1">下記の案件共通コード（@{{商品名}} @{{モニター協力金}} @{{解約について}} @{{モニター案内文}} @{{リンク}} @{{案内日時}}）も使えます。</p>
+                        </div>
                         <textarea :name="`courses[${index}][invite_message]`" x-model="course.invite_message" rows="2"
                                   class="w-full border rounded px-2 py-1.5 text-sm" placeholder="空欄=案件共通のモニター案内メッセージを使用"></textarea>
                     </div>
