@@ -141,7 +141,7 @@ $statusTabs = [
             <span class="text-gray-500">継続率</span>
             <span class="text-gray-400 text-xs ml-1">目標 {{ $targetCont !== null ? $targetCont.'%' : '-' }}</span>
             <span class="font-bold text-green-600 ml-1">/ 完了 {{ $actualCont !== null ? $actualCont.'%' : '-' }}</span>
-            <span class="text-gray-400 text-xs">（{{ $summary['continuation_ok_count'] }}/{{ $normalCompleted }}件・通常コースのみ）</span>
+            <span class="text-gray-400 text-xs">（{{ $summary['continuation_ok_count'] }}/{{ $normalCompleted }}件・{{ $campaign->course_normal_name ?: '通常コース' }}のみ）</span>
         </div>
         @foreach($summary['course_stats'] as $cs)
         <div>
