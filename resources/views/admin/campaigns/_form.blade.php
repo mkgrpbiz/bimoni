@@ -316,7 +316,7 @@
 </script>
 <div class="bg-white rounded-lg shadow p-6 mb-4" x-data="courseSettings()">
     <h2 class="font-bold text-gray-700 mb-4">コース指定設定</h2>
-    <div class="flex items-end gap-4 mb-4">
+    <div class="flex items-end gap-4 mb-1">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">コース設定</label>
             <select name="course_settings_enabled" x-model="enabled" onchange="calcGross()" class="w-full md:w-48 border rounded px-3 py-2 text-sm">
@@ -324,20 +324,20 @@
                 <option value="1">有</option>
             </select>
         </div>
-        <div x-show="enabled === '1'">
+        <div x-show="enabled === '1'" class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-1">通常コースのコース名</label>
-            <input type="text" name="course_normal_name" value="{{ old('course_normal_name', $campaign->course_normal_name ?? '') }}"
-                   placeholder="例: 通常コース"
-                   class="w-full md:w-48 border rounded px-3 py-2 text-sm">
+            <textarea name="course_normal_name" rows="1"
+                      placeholder="例: 通常コース"
+                      class="w-full border rounded px-3 py-2 text-sm">{{ old('course_normal_name', $campaign->course_normal_name ?? '') }}</textarea>
         </div>
         <div x-show="enabled === '1'">
             <label class="block text-sm font-medium text-gray-700 mb-1">通常案内の割合（％）</label>
             <input type="number" name="course_normal_percentage" value="{{ old('course_normal_percentage', $campaign->course_normal_percentage ?? '') }}"
                    min="0" max="100" step="0.01" oninput="calcGross()" placeholder="例: 80"
-                   class="w-full md:w-40 border rounded px-3 py-2 text-sm">
-            <p class="text-xs text-gray-400 mt-0.5">詳細情報の初回購入費・継続購入費等（既定の案内）が占める割合。この割合と各コースの目標％の合計が100％になるように設定してください。</p>
+                   class="w-24 border rounded px-3 py-2 text-sm">
         </div>
     </div>
+    <p x-show="enabled === '1'" class="text-xs text-gray-400 mb-4">詳細情報の初回購入費・継続購入費等（既定の案内）が占める割合。この割合と各コースの目標％の合計が100％になるように設定してください。</p>
     <template x-if="enabled === '1'">
         <div class="space-y-3">
             <template x-for="(course, index) in courses" :key="index">
