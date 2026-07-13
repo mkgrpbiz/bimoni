@@ -36,7 +36,7 @@ class ApplicationController extends Controller
     {
         $campaignStatus = $request->input('status', 'published');
 
-        $query = Application::with(['user', 'campaign', 'lineMessageJobs'])
+        $query = Application::with(['user', 'campaign.courses', 'lineMessageJobs'])
             ->whereHas('campaign', fn($q) => $q->where('status', $campaignStatus))
             ->latest('applied_at');
 

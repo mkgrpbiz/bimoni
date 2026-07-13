@@ -261,7 +261,7 @@ $tabs = [
                     <div class="flex gap-1 flex-wrap">
                         @if($app->status === 'pending' && !$isLocked)
                         <button type="button"
-                                onclick="openProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.status', $app) }}', {{ ($app->campaign?->campaign_type === 'pr' && $app->campaign?->pr_media === 'IF') ? 'true' : 'false' }})"
+                                onclick="openProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.status', $app) }}', {{ ($app->campaign?->campaign_type === 'pr' && $app->campaign?->pr_media === 'IF') ? 'true' : 'false' }}, {{ Illuminate\Support\Js::from($app->campaign?->course_settings_enabled ? $app->campaign->courses->map(fn($c) => ['id' => $c->id, 'name' => $c->name])->values() : []) }}, {{ Illuminate\Support\Js::from($app->campaign?->course_normal_name ?: '') }})"
                                 class="bg-purple-500 text-white px-1.5 py-0.5 rounded hover:bg-purple-600 text-xs">
                             打診
                         </button>
@@ -386,6 +386,10 @@ $tabs = [
                 <p id="prDeadlineError" class="hidden text-xs text-red-500 mt-1">締め切り日時を入力してください</p>
             </div>
 
+            <div id="courseSelectWrap" class="hidden">
+                <label class="block text-xs text-gray-700 mb-1">コース指定</label>
+                <select name="course_id" id="courseSelectField" class="w-full border rounded px-3 py-2 text-sm"></select>
+            </div>
             <div>
                 <label class="block text-xs text-gray-700 mb-1">メモ</label>
                 <input type="text" name="memo" class="w-full border rounded px-3 py-2 text-sm">
@@ -456,10 +460,31 @@ function switchModalTab(tab) {
     }
 }
 
-function openProposalModal(appId, userName, actionUrl, isPrIf) {
+function openProposalModal(appId, userName, actionUrl, isPrIf, courses, courseNormalName) {
     _modalIsPrIf = !!isPrIf;
     document.getElementById('proposalUserName').textContent = '対象: ' + userName;
     document.getElementById('proposalForm').action = actionUrl;
+
+    var courseWrap  = document.getElementById('courseSelectWrap');
+    var courseField = document.getElementById('courseSelectField');
+    courses = courses || [];
+    if (courses.length) {
+        courseField.innerHTML = '';
+        var noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = courseNormalName || '指定なし（案件共通の案内文）';
+        courseField.appendChild(noneOpt);
+        courses.forEach(function (c) {
+            var opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            courseField.appendChild(opt);
+        });
+        courseWrap.classList.remove('hidden');
+    } else {
+        courseField.innerHTML = '';
+        courseWrap.classList.add('hidden');
+    }
 
     _selectedSlotStart = null; _selectedSlotEnd = null;
     document.getElementById('selectedSlotStart').value = '';
