@@ -17,7 +17,7 @@ class Campaign extends Model
         'product_name', 'product_price',
         'cooperation_fee', 'cooperation_fee_formula',
         'continuation_cooperation_fee', 'continuation_cooperation_fee_formula',
-        'continuation_condition', 'course_settings_enabled',
+        'continuation_condition', 'course_settings_enabled', 'course_normal_percentage',
         'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
         'continuation_rate', 'closing_date', 'payment_timing',
@@ -53,17 +53,20 @@ class Campaign extends Model
     public function formFields()          { return $this->belongsToMany(FormField::class, 'campaign_form_fields')->withPivot('sort_order')->orderByPivot('sort_order'); }
     public function courses()             { return $this->hasMany(CampaignCourse::class)->orderBy('sort_order'); }
 
-    // コース設定が有効な場合、各コースの金額×％の加重平均でモニターコストを算出（単発=金額そのまま、定期=金額×継続率）
+    // コース設定が有効な場合、通常案内％分の既定コスト＋各コースの初回/継続購入費×％の加重平均でモニターコストを算出
     public function calculatedMonitorCost(): float
     {
+        $extra = ($this->cooperation_fee ?? 0) + ($this->referral_fee ?? 0);
+        $normalCost = ($this->initial_purchase_fee ?? 0)
+            + ($this->recurring_purchase_fee ?? 0) * (($this->continuation_rate ?? 0) / 100);
+
         if ($this->course_settings_enabled && $this->courses->isNotEmpty()) {
-            $weighted = $this->courses->sum(fn($c) => $c->cost($this->continuation_rate ?? 0) * ($c->percentage / 100));
-            return $weighted + ($this->cooperation_fee ?? 0) + ($this->referral_fee ?? 0);
+            $weighted = $normalCost * (($this->course_normal_percentage ?? 0) / 100);
+            $weighted += $this->courses->sum(fn($c) => $c->cost() * (($c->percentage ?? 0) / 100));
+            return $weighted + $extra;
         }
-        return ($this->initial_purchase_fee ?? 0)
-            + ($this->recurring_purchase_fee ?? 0) * (($this->continuation_rate ?? 0) / 100)
-            + ($this->cooperation_fee ?? 0)
-            + ($this->referral_fee ?? 0);
+
+        return $normalCost + $extra;
     }
 
     public function getTypeLabel(): string

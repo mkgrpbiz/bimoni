@@ -299,11 +299,14 @@
 {{-- コース指定設定 --}}
 @php
     $courseRows = old('courses') ?: (($campaign->courses ?? collect())->map(fn($c) => [
-        'name'           => $c->name,
-        'amount'         => $c->amount,
-        'course_type'    => $c->course_type,
-        'percentage'     => $c->percentage,
-        'invite_message' => $c->invite_message,
+        'name'                 => $c->name,
+        'initial_purchase_fee' => $c->initial_purchase_fee,
+        'course_type'          => $c->course_type,
+        'continuation_count'   => $c->continuation_count,
+        'continuation_fee_2'   => $c->continuation_fee_2,
+        'continuation_fee_3'   => $c->continuation_fee_3,
+        'percentage'           => $c->percentage,
+        'invite_message'       => $c->invite_message,
     ])->values()->toArray());
     $courseEnabled = old('course_settings_enabled', ($campaign->course_settings_enabled ?? false) ? '1' : '0');
 @endphp
@@ -313,53 +316,93 @@
 </script>
 <div class="bg-white rounded-lg shadow p-6 mb-4" x-data="courseSettings()">
     <h2 class="font-bold text-gray-700 mb-4">コース指定設定</h2>
-    <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">コース設定</label>
-        <select name="course_settings_enabled" x-model="enabled" onchange="calcGross()" class="w-full md:w-48 border rounded px-3 py-2 text-sm">
-            <option value="0">無</option>
-            <option value="1">有</option>
-        </select>
+    <div class="flex items-end gap-4 mb-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">コース設定</label>
+            <select name="course_settings_enabled" x-model="enabled" onchange="calcGross()" class="w-full md:w-48 border rounded px-3 py-2 text-sm">
+                <option value="0">無</option>
+                <option value="1">有</option>
+            </select>
+        </div>
+        <div x-show="enabled === '1'">
+            <label class="block text-sm font-medium text-gray-700 mb-1">通常案内の割合（％）</label>
+            <input type="number" name="course_normal_percentage" value="{{ old('course_normal_percentage', $campaign->course_normal_percentage ?? '') }}"
+                   min="0" max="100" step="0.01" oninput="calcGross()" placeholder="例: 80"
+                   class="w-full md:w-40 border rounded px-3 py-2 text-sm">
+            <p class="text-xs text-gray-400 mt-0.5">詳細情報の初回購入費・継続購入費等（既定の案内）が占める割合。残りをコースで按分します。</p>
+        </div>
     </div>
     <template x-if="enabled === '1'">
         <div class="space-y-3">
             <template x-for="(course, index) in courses" :key="index">
-                <div class="course-row border rounded-lg p-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-start">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs text-gray-500 mb-1">コース名</label>
-                        <input type="text" :name="`courses[${index}][name]`" x-model="course.name"
-                               class="w-full border rounded px-2 py-1.5 text-sm">
+                <div class="course-row border rounded-lg p-3 space-y-2">
+                    {{-- 1行目: コース名・初回購入費・目標% --}}
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+                        <div class="md:col-span-5">
+                            <label class="block text-xs text-gray-500 mb-1">コース名</label>
+                            <input type="text" :name="`courses[${index}][name]`" x-model="course.name"
+                                   class="w-full border rounded px-2 py-1.5 text-sm">
+                        </div>
+                        <div class="md:col-span-4">
+                            <label class="block text-xs text-gray-500 mb-1">初回購入費（円）</label>
+                            <input type="number" :name="`courses[${index}][initial_purchase_fee]`" x-model="course.initial_purchase_fee"
+                                   min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs text-gray-500 mb-1">目標％</label>
+                            <input type="number" :name="`courses[${index}][percentage]`" x-model="course.percentage"
+                                   min="0" max="100" step="0.01" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                        </div>
+                        <div class="md:col-span-1 flex items-end">
+                            <button type="button" @click="removeCourse(index)" class="text-red-500 text-xs hover:underline pb-2">削除</button>
+                        </div>
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs text-gray-500 mb-1">金額（円）</label>
-                        <input type="number" :name="`courses[${index}][amount]`" x-model="course.amount"
-                               min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                    {{-- 2行目: 単発/継続・継続回数・継続購入費2/3 --}}
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs text-gray-500 mb-1">単発/継続</label>
+                            <select :name="`courses[${index}][course_type]`" x-model="course.course_type"
+                                    onchange="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                                <option value="単発">単発</option>
+                                <option value="継続">継続</option>
+                            </select>
+                        </div>
+                        <template x-if="course.course_type === '継続'">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">継続回数</label>
+                                <select :name="`courses[${index}][continuation_count]`" x-model="course.continuation_count"
+                                        onchange="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                                    <option value="2">2回</option>
+                                    <option value="3">3回</option>
+                                </select>
+                            </div>
+                        </template>
+                        <template x-if="course.course_type === '継続'">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">継続購入費2（円）</label>
+                                <input type="number" :name="`courses[${index}][continuation_fee_2]`" x-model="course.continuation_fee_2"
+                                       min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                            </div>
+                        </template>
+                        <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">継続購入費3（円）</label>
+                                <input type="number" :name="`courses[${index}][continuation_fee_3]`" x-model="course.continuation_fee_3"
+                                       min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                            </div>
+                        </template>
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs text-gray-500 mb-1">定期/単発</label>
-                        <select :name="`courses[${index}][course_type]`" x-model="course.course_type"
-                                onchange="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
-                            <option value="単発">単発</option>
-                            <option value="定期">定期</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-1">
-                        <label class="block text-xs text-gray-500 mb-1">％</label>
-                        <input type="number" :name="`courses[${index}][percentage]`" x-model="course.percentage"
-                               min="0" max="100" step="0.01" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
-                    </div>
-                    <div class="md:col-span-4">
+                    {{-- 3行目: モニター案内メッセージ --}}
+                    <div>
                         <label class="block text-xs text-gray-500 mb-1">モニター案内メッセージ（打診時にこのコースを選ぶと使用）</label>
                         <textarea :name="`courses[${index}][invite_message]`" x-model="course.invite_message" rows="2"
                                   class="w-full border rounded px-2 py-1.5 text-sm" placeholder="空欄=案件共通のモニター案内メッセージを使用"></textarea>
-                    </div>
-                    <div class="md:col-span-1 flex items-center h-full pt-4">
-                        <button type="button" @click="removeCourse(index)" class="text-red-500 text-xs hover:underline">削除</button>
                     </div>
                 </div>
             </template>
             <button type="button" @click="addCourse()"
                     class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-200">+ 行追加</button>
-            <p class="text-xs text-gray-400">％は各コースの発生比率（合計100%目安）。モニターコストはコースの金額×％の加重平均（単発=金額そのまま、定期=金額×継続率）で自動計算されます。「有」にした案件は打診時にコース選択プルダウンが表示され、指定したコースの「モニター案内メッセージ」が案件共通の案内文の代わりに送信されます（モニター終了案内文は共通のまま）。</p>
+            <p class="text-xs text-gray-400">通常案内％+各コースの目標％の合計が100%になるようにしてください。モニターコストは「通常案内の既定コスト×通常割合」＋「各コースのコスト×目標％」の加重平均（単発=初回購入費のみ、継続=初回購入費+継続購入費2〈3回の場合はさらに+継続購入費3〉）で自動計算されます。「有」にした案件は打診時にコース選択プルダウンが表示され、指定したコースの「モニター案内メッセージ」が案件共通の案内文の代わりに送信されます（モニター終了案内文は共通のまま）。</p>
         </div>
     </template>
 </div>
@@ -463,23 +506,33 @@ function calcMonitorCost() {
     const rate      = parseFloat(document.getElementById('f-rate')?.value)      || 0;
     const coop      = parseFloat(document.getElementById('f-coop')?.value)      || 0;
     const referral  = parseFloat(document.getElementById('f-referral')?.value)  || 0;
+    const initial   = parseFloat(document.getElementById('f-initial')?.value)   || 0;
+    const recurring = parseFloat(document.getElementById('f-recurring')?.value) || 0;
+    const normalCost = initial + recurring * (rate / 100);
     const courseEnabled = document.querySelector('[name="course_settings_enabled"]')?.value === '1';
 
     let cost;
     if (courseEnabled) {
-        let weighted = 0;
+        const normalPct = parseFloat(document.querySelector('[name="course_normal_percentage"]')?.value) || 0;
+        let weighted = normalCost * (normalPct / 100);
         document.querySelectorAll('.course-row').forEach(row => {
-            const amount = parseFloat(row.querySelector('[name$="[amount]"]')?.value) || 0;
-            const type   = row.querySelector('[name$="[course_type]"]')?.value;
-            const pct    = parseFloat(row.querySelector('[name$="[percentage]"]')?.value) || 0;
-            const courseCost = type === '定期' ? amount * (rate / 100) : amount;
+            const initialFee = parseFloat(row.querySelector('[name$="[initial_purchase_fee]"]')?.value) || 0;
+            const type       = row.querySelector('[name$="[course_type]"]')?.value;
+            const pct        = parseFloat(row.querySelector('[name$="[percentage]"]')?.value) || 0;
+            let courseCost = initialFee;
+            if (type === '継続') {
+                const countSelect = row.querySelector('[name$="[continuation_count]"]');
+                const count = countSelect ? parseInt(countSelect.value) : null;
+                const fee2 = parseFloat(row.querySelector('[name$="[continuation_fee_2]"]')?.value) || 0;
+                const fee3 = parseFloat(row.querySelector('[name$="[continuation_fee_3]"]')?.value) || 0;
+                courseCost += fee2;
+                if (count === 3) courseCost += fee3;
+            }
             weighted += courseCost * (pct / 100);
         });
         cost = weighted + coop + referral;
     } else {
-        const initial   = parseFloat(document.getElementById('f-initial')?.value)   || 0;
-        const recurring = parseFloat(document.getElementById('f-recurring')?.value) || 0;
-        cost = initial + recurring * (rate / 100) + coop + referral;
+        cost = normalCost + coop + referral;
     }
 
     const el = document.getElementById('f-monitor-cost');
@@ -492,7 +545,11 @@ function courseSettings() {
         enabled: window.__campaignCourseEnabled || '0',
         courses: (window.__campaignCourseInit && window.__campaignCourseInit.length) ? window.__campaignCourseInit : [],
         addCourse() {
-            this.courses.push({ name: '', amount: '', course_type: '単発', percentage: '', invite_message: '' });
+            this.courses.push({
+                name: '', initial_purchase_fee: '', course_type: '単発',
+                continuation_count: '2', continuation_fee_2: '', continuation_fee_3: '',
+                percentage: '', invite_message: '',
+            });
             this.$nextTick(() => calcGross());
         },
         removeCourse(index) {
