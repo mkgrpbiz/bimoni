@@ -310,6 +310,11 @@ class ApplicationController extends Controller
             'course_id'      => 'nullable|exists:campaign_courses,id',
         ]);
 
+        // コース選択欄がある画面から送られた場合はステータスに関わらず保存する
+        if ($request->has('course_id')) {
+            $application->update(['course_id' => $request->course_id ?: null]);
+        }
+
         // 応募中に戻す場合は案内日時をクリア
         if ($request->status === 'pending') {
             $application->update([
@@ -322,8 +327,6 @@ class ApplicationController extends Controller
         if ($request->status === 'line_contacted') {
             $application->loadMissing('campaign');
             $isPrIf = $application->isPrIfCampaign();
-
-            $application->update(['course_id' => $request->course_id ?: null]);
 
             if (!$isPrIf) {
                 // 通常案件：ロック・48h制限チェック
