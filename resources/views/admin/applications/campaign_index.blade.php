@@ -116,6 +116,11 @@ $statusTabs = [
     @endphp
     <div class="flex gap-6 items-center flex-wrap text-sm">
         <div>
+            <span class="text-gray-500">応募数</span>
+            <span class="font-bold text-purple-600 ml-1">{{ $summary['total_applications'] }}件</span>
+            <span class="text-gray-400 text-xs ml-1">（残{{ $summary['pending_count'] }}件）</span>
+        </div>
+        <div>
             <span class="text-gray-500">実施完了</span>
             <span class="font-bold text-teal-600 ml-1">{{ $totalC }}件</span>
         </div>

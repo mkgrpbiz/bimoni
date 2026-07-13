@@ -208,6 +208,8 @@ class ApplicationController extends Controller
             'target_male_ratio'   => $campaign->target_male_ratio,
             'target_female_ratio' => $campaign->target_female_ratio,
             'continuation_ok_count' => $completedApps->where('continuation_response', 'possible')->count(),
+            'total_applications' => $campaign->applications()->count(),
+            'pending_count'       => $campaign->applications()->where('status', 'pending')->count(),
         ];
 
         $allCampaigns   = Campaign::orderBy('title')->get(['id', 'title', 'status']);
