@@ -249,7 +249,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right flex-shrink-0">
-                                    <p class="text-sm font-bold text-pink-600">¥{{ number_format($cr->cooperation_fee) }}</p>
+                                    <p class="text-sm font-bold text-pink-600">¥{{ number_format($cr->totalFee()) }}</p>
                                 </div>
                             </div>
                             <div class="ml-13 pl-1 flex items-end justify-between">

@@ -66,6 +66,9 @@
                 現在の修正: <span class="font-bold text-pink-600">{{ $collectionReport->adjustment_amount > 0 ? '+' : '' }}¥{{ number_format($collectionReport->adjustment_amount) }}</span>
                 <span class="text-gray-400 ml-2">（{{ $collectionReport->adjustment_reason }}）</span>
             </p>
+            <p class="text-sm text-gray-600 mb-3">
+                支払合計: <span class="font-bold text-gray-800">¥{{ number_format($collectionReport->totalFee()) }}</span>
+            </p>
             @endif
             <form method="POST" action="{{ route('admin.collection_reports.adjust', $collectionReport) }}" class="space-y-3">
                 @csrf @method('PATCH')

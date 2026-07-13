@@ -170,7 +170,7 @@ class DashboardController extends Controller
                 ? ($c?->continuation_cooperation_fee ?? 0)
                 : ($c?->cooperation_fee ?? 0);
             return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
-        }) + $collectionQuery->sum('cooperation_fee');
+        }) + $collectionQuery->get()->sum(fn($r) => $r->totalFee());
 
         // 売上 = 承認数 × 案件単価
         $sales = $reflections->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
@@ -397,7 +397,8 @@ class DashboardController extends Controller
                     : ($c?->cooperation_fee ?? 0);
                 return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
             }) + CollectionReport::where('status', 'approved')
-                ->whereYear('created_at', $y)->whereMonth('created_at', $m)->sum('cooperation_fee');
+                ->whereYear('created_at', $y)->whereMonth('created_at', $m)
+                ->get()->sum(fn($r) => $r->totalFee());
             $completed  = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                 ->whereYear('completed_at', $y)->whereMonth('completed_at', $m)->count();
 

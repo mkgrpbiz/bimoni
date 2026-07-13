@@ -39,7 +39,8 @@ class PointController extends Controller
 
             $collectionFee = CollectionReport::where('status', 'approved')
                 ->whereBetween('created_at', [$start, $end])
-                ->sum('cooperation_fee');
+                ->get()
+                ->sum(fn($r) => $r->totalFee());
 
             $hasPendingCollection = CollectionReport::where('status', 'approved')
                 ->where('payment_status', 'pending')
@@ -128,7 +129,7 @@ class PointController extends Controller
                     'status'          => $cr->payment_status === 'paid' ? 'paid' : 'reserved',
                 ];
             }
-            $userMap[$uid]['collectionTotal'] += $cr->cooperation_fee;
+            $userMap[$uid]['collectionTotal'] += $cr->totalFee();
             $userMap[$uid]['collectionCount'] += 1;
             if ($cr->payment_status === 'pending') {
                 $userMap[$uid]['status'] = 'pending';
@@ -254,7 +255,7 @@ class PointController extends Controller
                 $r->user?->name ?? '',
                 $r->payment_status === 'paid' ? '支払済' : '支払待ち',
                 '【回収】' . $r->item_count . '点',
-                $r->cooperation_fee,
+                $r->totalFee(),
             ];
         }
 
@@ -314,7 +315,7 @@ class PointController extends Controller
             if (!isset($userTotals[$uid])) {
                 $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
             }
-            $userTotals[$uid]['amount'] += $r->cooperation_fee;
+            $userTotals[$uid]['amount'] += $r->totalFee();
         }
 
         $userTotals = array_filter($userTotals, fn($u) =>

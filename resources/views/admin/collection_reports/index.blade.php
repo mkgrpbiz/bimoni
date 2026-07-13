@@ -70,7 +70,7 @@ $tabs = [
                 <td class="px-3 py-3 whitespace-nowrap">{{ $report->estimated_arrival_date?->format('m/d') ?? '-' }}</td>
                 <td class="px-3 py-3 font-mono text-xs">{{ $report->tracking_number ?? '-' }}</td>
                 <td class="px-3 py-3 text-right whitespace-nowrap font-medium text-pink-600">
-                    ¥{{ number_format($report->cooperation_fee ?? 0) }}
+                    ¥{{ number_format($report->totalFee()) }}
                 </td>
                 <td class="px-3 py-3 whitespace-nowrap">
                     <div class="flex items-center gap-1.5">

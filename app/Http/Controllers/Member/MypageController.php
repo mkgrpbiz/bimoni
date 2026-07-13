@@ -43,7 +43,7 @@ class MypageController extends Controller
         $payCurrentMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
             ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
-            ->sum('cooperation_fee');
+            ->get()->sum(fn($r) => $r->totalFee());
 
         // 今月報告（created_at）→ 来月10日支払い
         $thisMonthReports = MonitorReport::where('user_id', $user->id)
@@ -55,7 +55,7 @@ class MypageController extends Controller
         $payNextMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
             ->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])
-            ->sum('cooperation_fee');
+            ->get()->sum(fn($r) => $r->totalFee());
 
         $payCurrentDate = $now->copy()->day(10)->format('n月j日');
         $payNextDate    = $now->copy()->addMonth()->day(10)->format('n月j日');

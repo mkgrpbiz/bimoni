@@ -38,6 +38,11 @@ class CollectionReport extends Model
         return $itemCount >= 5 ? $gross + $shippingFee : $gross;
     }
 
+    public function totalFee(): int
+    {
+        return $this->cooperation_fee + ($this->adjustment_amount ?? 0);
+    }
+
     public function getStatusLabel(): string
     {
         return match($this->status) {
