@@ -279,7 +279,7 @@ class ApplicationController extends Controller
 
     public function show(Application $application): View
     {
-        $application->load(['user', 'campaign', 'schedules.proposedBy', 'statusLogs.changedBy']);
+        $application->load(['user', 'campaign.courses', 'course', 'schedules.proposedBy', 'statusLogs.changedBy']);
 
         $others = $this->getOtherApplicationsMap(
             collect([$application->user_id]),
@@ -452,6 +452,17 @@ class ApplicationController extends Controller
         ]);
 
         return back()->with('success', '継続情報を更新しました。');
+    }
+
+    public function updateCourse(Request $request, Application $application): RedirectResponse
+    {
+        $request->validate([
+            'course_id' => 'nullable|exists:campaign_courses,id',
+        ]);
+
+        $application->update(['course_id' => $request->course_id ?: null]);
+
+        return back()->with('success', 'コースを更新しました。');
     }
 
     public function sendContinuationRequest(Application $application, LineMessagingService $lineService): RedirectResponse

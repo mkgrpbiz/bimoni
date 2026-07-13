@@ -30,6 +30,10 @@
                 <dd class="dark:text-gray-200">{{ $application->invited_at?->format('Y/m/d H:i') ?? '-' }}</dd>
                 <dt class="text-gray-700 dark:text-gray-400">ステータス</dt>
                 <dd><span class="px-2 py-0.5 rounded text-xs {{ $application->getStatusColor() }}">{{ $application->getStatusLabel() }}</span></dd>
+                @if($application->campaign->course_settings_enabled)
+                <dt class="text-gray-700 dark:text-gray-400">コース</dt>
+                <dd class="dark:text-gray-200">{{ $application->course->name ?? '指定なし（通常コース）' }}</dd>
+                @endif
                 <dt class="text-gray-700 dark:text-gray-400">継続ステータス</dt>
                 <dd>
                     @if($application->continuation_responded_at && $application->continuation_response === 'possible')
@@ -96,6 +100,26 @@
                 <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">更新</button>
             </form>
         </div>
+
+        @if($application->campaign->course_settings_enabled)
+        {{-- コースの編集 --}}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">コースの編集</h2>
+            <form method="POST" action="{{ route('admin.applications.course_update', $application) }}" class="flex flex-wrap items-end gap-3">
+                @csrf @method('PATCH')
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">コース</label>
+                    <select name="course_id" class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1.5 text-sm">
+                        <option value="" @selected(!$application->course_id)>指定なし（通常コース）</option>
+                        @foreach($application->campaign->courses as $course)
+                        <option value="{{ $course->id }}" @selected($application->course_id === $course->id)>{{ $course->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="text-sm bg-pink-500 text-white px-3 py-1.5 rounded hover:bg-pink-600">更新</button>
+            </form>
+        </div>
+        @endif
 
         {{-- 管理メモ --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
