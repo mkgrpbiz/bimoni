@@ -58,17 +58,6 @@
             <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">ステータス変更</h2>
             <form method="POST" action="{{ route('admin.applications.status', $application) }}" class="flex flex-wrap items-end gap-2">
                 @csrf @method('PATCH')
-                @if($application->campaign->course_settings_enabled)
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">コース</label>
-                    <select name="course_id" class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1.5 text-sm">
-                        <option value="" @selected(!$application->course_id)>{{ $application->campaign->course_normal_name ?: '指定なし（通常コース）' }}</option>
-                        @foreach($application->campaign->courses as $course)
-                        <option value="{{ $course->id }}" @selected($application->course_id === $course->id)>{{ $course->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
                 @foreach([
                     'pending'        => ['応募中にする',     'bg-gray-500 hover:bg-gray-600'],
                     'line_contacted' => ['打診中にする',     'bg-pink-500 hover:bg-pink-600'],
