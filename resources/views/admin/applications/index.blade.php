@@ -67,7 +67,7 @@ $tabs = [
             @foreach($continuationRateAlerts as $alert)
             <a href="{{ route('admin.campaigns.applications', $alert['campaign']->id) }}"
                class="bg-green-100 border border-green-300 rounded px-2 py-0.5 text-xs font-medium hover:bg-green-200">
-                {{ $alert['campaign']->title }}（完了{{ $alert['actual'] }}%/目標{{ $alert['target'] }}%）
+                {{ $alert['campaign']->title }}（完了{{ $alert['actual'] }}%/目標{{ $alert['target'] }}%）あと{{ $alert['needed'] }}件
             </a>
             @endforeach
         </div>

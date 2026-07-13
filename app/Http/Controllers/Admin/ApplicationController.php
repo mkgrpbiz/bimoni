@@ -20,6 +20,18 @@ use Illuminate\View\View;
 
 class ApplicationController extends Controller
 {
+    // 目標継続率に達するために、今後の完了報告が全て継続OKだった場合にあと何件必要か
+    // （新規完了報告が増えると分母も増えるため、単純な引き算では算出できない）
+    private function neededOkCountForTargetRate(int $total, int $okCount, float $targetRatePercent): int
+    {
+        $targetRate = $targetRatePercent / 100;
+        if ($targetRate >= 1) {
+            return 0;
+        }
+        $needed = ($targetRate * $total - $okCount) / (1 - $targetRate);
+        return max(0, (int) ceil($needed));
+    }
+
     public function index(Request $request): View
     {
         $campaignStatus = $request->input('status', 'published');
@@ -110,7 +122,8 @@ class ApplicationController extends Controller
             return $s && $s->total > 0 && ($s->ok_count / $s->total * 100) < $c->continuation_rate;
         })->map(function ($c) use ($contStats) {
             $s = $contStats->get($c->id);
-            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate];
+            $needed = $this->neededOkCountForTargetRate($s->total, $s->ok_count, (float) $c->continuation_rate);
+            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate, 'needed' => $needed];
         })->values();
 
         return view('admin.applications.index', compact(
@@ -235,7 +248,8 @@ class ApplicationController extends Controller
             return $s && $s->total > 0 && ($s->ok_count / $s->total * 100) < $c->continuation_rate;
         })->map(function ($c) use ($contStats2) {
             $s = $contStats2->get($c->id);
-            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate];
+            $needed = $this->neededOkCountForTargetRate($s->total, $s->ok_count, (float) $c->continuation_rate);
+            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate, 'needed' => $needed];
         })->values();
 
         return view('admin.applications.campaign_index', compact(
