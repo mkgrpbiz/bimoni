@@ -345,18 +345,16 @@
                     {{-- 1行目: コース名・初回購入費・目標% --}}
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
                         <div class="md:col-span-5">
-                            <label class="block text-xs text-gray-500 mb-1">
-                                コース名 <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('コース名' + (index+2)) + '）'"></span>
-                            </label>
+                            <label class="block text-xs text-gray-500 mb-1">コース名</label>
                             <input type="text" :name="`courses[${index}][name]`" x-model="course.name"
                                    class="w-full border rounded px-2 py-1.5 text-sm">
+                            <p class="text-xs text-gray-400 font-mono mt-0.5" x-text="'コード: ' + courseCode('コース名' + (index+2))"></p>
                         </div>
                         <div class="md:col-span-4">
-                            <label class="block text-xs text-gray-500 mb-1">
-                                初回購入費（円） <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('初回購入費' + (index+2)) + '）'"></span>
-                            </label>
+                            <label class="block text-xs text-gray-500 mb-1">初回購入費（円）</label>
                             <input type="number" :name="`courses[${index}][initial_purchase_fee]`" x-model="course.initial_purchase_fee"
                                    min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                            <p class="text-xs text-gray-400 font-mono mt-0.5" x-text="'コード: ' + courseCode('初回購入費' + (index+2))"></p>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs text-gray-500 mb-1">目標％</label>
@@ -389,20 +387,18 @@
                         </template>
                         <template x-if="course.course_type === '継続'">
                             <div class="md:col-span-2">
-                                <label class="block text-xs text-gray-500 mb-1">
-                                    継続購入費2（円） <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('継続購入費' + (index+2) + '-2') + '）'"></span>
-                                </label>
+                                <label class="block text-xs text-gray-500 mb-1">継続購入費2（円）</label>
                                 <input type="number" :name="`courses[${index}][continuation_fee_2]`" x-model="course.continuation_fee_2"
                                        min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                                <p class="text-xs text-gray-400 font-mono mt-0.5" x-text="'コード: ' + courseCode('継続購入費' + (index+2) + '-2')"></p>
                             </div>
                         </template>
                         <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
                             <div class="md:col-span-2">
-                                <label class="block text-xs text-gray-500 mb-1">
-                                    継続購入費3（円） <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('継続購入費' + (index+2) + '-3') + '）'"></span>
-                                </label>
+                                <label class="block text-xs text-gray-500 mb-1">継続購入費3（円）</label>
                                 <input type="number" :name="`courses[${index}][continuation_fee_3]`" x-model="course.continuation_fee_3"
                                        min="0" oninput="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                                <p class="text-xs text-gray-400 font-mono mt-0.5" x-text="'コード: ' + courseCode('継続購入費' + (index+2) + '-3')"></p>
                             </div>
                         </template>
                     </div>
