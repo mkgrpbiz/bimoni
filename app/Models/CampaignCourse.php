@@ -24,14 +24,14 @@ class CampaignCourse extends Model
         return $this->belongsTo(Campaign::class);
     }
 
-    // コース専用コード（{{コース名}} {{初回購入費N}} {{継続購入費N-2}} {{継続購入費N-3}}、N=このコースの並び順+2）を
+    // コース専用コード（{{コース名N}} {{初回購入費N}} {{継続購入費N-2}} {{継続購入費N-3}}、N=このコースの並び順+2）を
     // 置換したあと、案件共通コードも解決する。他コースの値と混同しないようコースごとに番号が変わる
     public function resolveTemplate(string $template): string
     {
         $n = $this->sort_order + 2;
 
         $template = str_replace(
-            ['{{コース名}}', "{{初回購入費{$n}}}", "{{継続購入費{$n}-2}}", "{{継続購入費{$n}-3}}"],
+            ["{{コース名{$n}}}", "{{初回購入費{$n}}}", "{{継続購入費{$n}-2}}", "{{継続購入費{$n}-3}}"],
             [
                 $this->name ?? '',
                 $this->initial_purchase_fee ? number_format($this->initial_purchase_fee) . '円' : '',

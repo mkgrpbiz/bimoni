@@ -339,7 +339,9 @@
                     {{-- 1行目: コース名・初回購入費・目標% --}}
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
                         <div class="md:col-span-5">
-                            <label class="block text-xs text-gray-500 mb-1">コース名</label>
+                            <label class="block text-xs text-gray-500 mb-1">
+                                コース名 <span class="text-gray-400 font-mono" x-text="'（コード: ' + courseCode('コース名' + (index+2)) + '）'"></span>
+                            </label>
                             <input type="text" :name="`courses[${index}][name]`" x-model="course.name"
                                    class="w-full border rounded px-2 py-1.5 text-sm">
                         </div>
@@ -404,7 +406,7 @@
                         <div class="bg-gray-50 border border-gray-200 rounded p-2 mb-1 text-xs text-gray-600">
                             <p class="font-medium text-gray-700">このコース専用コード（コースごとに番号が変わります）</p>
                             <div class="grid grid-cols-2 gap-0.5 font-mono">
-                                <span>@{{コース名}}</span><span class="text-gray-400">→ このコースのコース名</span>
+                                <span x-text="courseCode('コース名' + (index+2))"></span><span class="text-gray-400">→ このコースのコース名</span>
                                 <span x-text="courseCode('初回購入費' + (index+2))"></span><span class="text-gray-400">→ このコースの初回購入費</span>
                                 <template x-if="course.course_type === '継続'">
                                     <span x-text="courseCode('継続購入費' + (index+2) + '-2')"></span>
