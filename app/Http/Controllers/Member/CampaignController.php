@@ -95,13 +95,14 @@ class CampaignController extends Controller
                 ->with('error', 'すでに応募済みです。');
         }
 
-        $hasContinuation = $campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee;
+        $hasContinuation   = $campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee;
+        $continuationFixed = in_array($campaign->continuation_condition, ['2回前提', '3回前提']);
 
         $rules = [
             'purchase_available_times'   => 'required|array|min:1',
             'purchase_available_times.*' => 'string|max:50',
         ];
-        if ($hasContinuation) {
+        if ($hasContinuation && !$continuationFixed) {
             $rules['continuation_wish'] = 'required|in:希望,不可';
         }
         $request->validate($rules);
@@ -116,7 +117,7 @@ class CampaignController extends Controller
             'status'                   => 'pending',
             'applied_at'               => $now,
             'bonus_amount'             => $activeBonus?->bonus_amount,
-            'continuation_wish'        => $hasContinuation ? $request->continuation_wish : null,
+            'continuation_wish'        => $continuationFixed ? '希望' : ($hasContinuation ? $request->continuation_wish : null),
             'purchase_available_times' => $request->purchase_available_times,
             'selected_at'              => null, 'line_contacted_at'   => null,
             'sounded_at'               => null, 'schedule_confirmed_at' => null,
@@ -126,7 +127,8 @@ class CampaignController extends Controller
             'invited_end_at'           => null, 'proposal_token'      => null,
             'proposal_answered_at'     => null, 'proposal_answer'     => null,
             'proposal_sent_at'         => null, 'continuation_token'  => null,
-            'continuation_response'    => null, 'continuation_responded_at' => null,
+            'continuation_response'    => $continuationFixed ? 'possible' : null,
+            'continuation_responded_at' => $continuationFixed ? $now : null,
             'notes'                    => null,
         ];
 

@@ -127,8 +127,8 @@
                 @enderror
             </div>
 
-            {{-- 継続希望 --}}
-            @if($campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee)
+            {{-- 継続希望（継続条件が2回前提/3回前提の場合は確認不要のため非表示） --}}
+            @if(($campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee) && !in_array($campaign->continuation_condition, ['2回前提', '3回前提']))
             <div>
                 <p class="text-sm font-medium text-gray-700 mb-2">
                     モニターで継続依頼がある場合、継続してモニター希望されますか？ <span class="text-red-500 text-xs">必須</span>

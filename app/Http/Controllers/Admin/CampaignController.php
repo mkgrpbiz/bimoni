@@ -245,6 +245,7 @@ class CampaignController extends Controller
             'recurring_purchase_fee' => 'nullable|integer|min:0',
             'gross_profit'           => 'nullable|integer',
             'continuation_rate'      => 'nullable|numeric|min:0|max:100',
+            'continuation_condition' => 'nullable|in:2回前提,3回前提',
             'collection_requirement'    => 'nullable|in:回収前提,回収不要',
             'collection_count_judgment' => 'nullable|integer|in:1,2,3',
             'closing_date'           => 'nullable|in:20日,25日,月末',

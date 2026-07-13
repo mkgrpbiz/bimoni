@@ -203,6 +203,17 @@
             </select>
         </div>
 
+        {{-- Row 4-2: 継続条件 --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">継続条件</label>
+            <select name="continuation_condition" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">未設定</option>
+                <option value="2回前提" @selected(old('continuation_condition', $campaign->continuation_condition ?? '') === '2回前提')>2回前提</option>
+                <option value="3回前提" @selected(old('continuation_condition', $campaign->continuation_condition ?? '') === '3回前提')>3回前提</option>
+            </select>
+            <p class="text-xs text-gray-400 mt-0.5">2回前提/3回前提の場合、応募フォームの継続希望確認を非表示にし、応募時点で継続希望を自動的にOKにします</p>
+        </div>
+
         {{-- Row 5: 締日 / 支払い日 --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">締日</label>

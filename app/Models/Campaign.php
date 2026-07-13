@@ -17,6 +17,7 @@ class Campaign extends Model
         'product_name', 'product_price',
         'cooperation_fee', 'cooperation_fee_formula',
         'continuation_cooperation_fee', 'continuation_cooperation_fee_formula',
+        'continuation_condition',
         'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
         'continuation_rate', 'closing_date', 'payment_timing',
