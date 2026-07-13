@@ -32,7 +32,7 @@
                 <dd><span class="px-2 py-0.5 rounded text-xs {{ $application->getStatusColor() }}">{{ $application->getStatusLabel() }}</span></dd>
                 @if($application->campaign->course_settings_enabled)
                 <dt class="text-gray-700 dark:text-gray-400">コース</dt>
-                <dd class="dark:text-gray-200">{{ $application->course->name ?? '指定なし（通常コース）' }}</dd>
+                <dd class="dark:text-gray-200">{{ $application->course->name ?? ($application->campaign->course_normal_name ?: '指定なし（通常コース）') }}</dd>
                 @endif
                 <dt class="text-gray-700 dark:text-gray-400">継続ステータス</dt>
                 <dd>
@@ -110,7 +110,7 @@
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">コース</label>
                     <select name="course_id" class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1.5 text-sm">
-                        <option value="" @selected(!$application->course_id)>指定なし（通常コース）</option>
+                        <option value="" @selected(!$application->course_id)>{{ $application->campaign->course_normal_name ?: '指定なし（通常コース）' }}</option>
                         @foreach($application->campaign->courses as $course)
                         <option value="{{ $course->id }}" @selected($application->course_id === $course->id)>{{ $course->name }}</option>
                         @endforeach

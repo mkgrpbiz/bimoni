@@ -217,14 +217,21 @@ class ApplicationController extends Controller
             'total_applications' => $campaign->applications()->count(),
             'pending_count'       => $campaign->applications()->where('status', 'pending')->count(),
             'course_stats' => $campaign->course_settings_enabled
-                ? $campaign->courses->map(fn($course) => [
+                ? collect([[
+                    'name'   => $campaign->course_normal_name ?: '通常コース',
+                    'target' => $campaign->course_normal_percentage,
+                    'actual' => $completedApps->count() > 0
+                        ? round($normalCompletedApps->count() / $completedApps->count() * 100)
+                        : null,
+                    'count'  => $normalCompletedApps->count(),
+                ]])->merge($campaign->courses->map(fn($course) => [
                     'name'   => $course->name,
                     'target' => $course->percentage,
                     'actual' => $completedApps->count() > 0
                         ? round($completedApps->where('course_id', $course->id)->count() / $completedApps->count() * 100)
                         : null,
                     'count'  => $completedApps->where('course_id', $course->id)->count(),
-                ])
+                ]))
                 : collect(),
         ];
 

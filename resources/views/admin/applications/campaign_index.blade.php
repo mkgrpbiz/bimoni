@@ -481,7 +481,7 @@ $statusTabs = [
             <div>
                 <label class="block text-xs text-gray-700 mb-1">コース指定</label>
                 <select name="course_id" class="w-full border rounded px-3 py-2 text-sm">
-                    <option value="">指定なし（案件共通の案内文）</option>
+                    <option value="">{{ $campaign->course_normal_name ?: '指定なし（案件共通の案内文）' }}</option>
                     @foreach($campaign->courses as $course)
                     <option value="{{ $course->id }}">{{ $course->name }}</option>
                     @endforeach

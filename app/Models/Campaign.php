@@ -116,7 +116,7 @@ class Campaign extends Model
     public function resolveTemplate(string $template): string
     {
         return str_replace(
-            ['{{商品名}}', '{{初回購入費}}', '{{モニター協力金}}', '{{解約について}}', '{{モニター案内文}}', '{{リンク}}'],
+            ['{{商品名}}', '{{初回購入費}}', '{{モニター協力金}}', '{{解約について}}', '{{モニター案内文}}', '{{リンク}}', '{{コース名}}'],
             [
                 $this->title ?? '',
                 $this->initial_purchase_fee ? number_format($this->initial_purchase_fee) . '円' : '',
@@ -124,6 +124,7 @@ class Campaign extends Model
                 $this->cancellation_info ?? '',
                 $this->monitor_guide ?? '',
                 $this->link ?? '',
+                $this->course_normal_name ?? '',
             ],
             $template
         );

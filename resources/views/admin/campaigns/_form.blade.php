@@ -456,6 +456,7 @@
             <span>@{{モニター案内文}}</span><span class="text-gray-400">→ モニター案内文の内容</span>
             <span>@{{リンク}}</span><span class="text-gray-400">→ リンクURL</span>
             <span>@{{案内日時}}</span><span class="text-gray-400">→ 案内日時（例: 7月4日 10:00〜11:00）</span>
+            <span>@{{コース名}}</span><span class="text-gray-400">→ 通常コースのコース名（コース設定が有の場合）</span>
         </div>
     </div>
 
