@@ -81,6 +81,7 @@ php8.3 artisan route:clear
 - `tracking_number`: 追跡番号（重複スキップキー）
 - `box_image` / `label_image`: 添付画像パス（null許容）
 - `estimated_arrival_date`: 到着予定日（null許容、`?->format()` でnull安全に）
+- `adjustment_amount`: 金額修正。**実際の合計金額は必ず `totalFee()`（`cooperation_fee + adjustment_amount`）経由で参照する**（協力金管理の集計・CSV/全銀エクスポート・ダッシュボードKPI・会員マイページの支払予定額・回収管理一覧など）。過去に`cooperation_fee`を直接`sum()`していた箇所が複数あり、金額修正が一切反映されない不具合があった
 
 ### MonitorReport
 - `purchase_type`: ENUM('initial', 'continuation', 'other')
@@ -95,6 +96,25 @@ php8.3 artisan route:clear
   - 回収前提の場合、応募フォームに警告メッセージ表示
 - `collection_info`: DBカラムは残存しているがフォーム・会員ページからは削除済み（未使用）
 - LINE自動送信設定（`monitor_invite_message` / `monitor_end_message`）は案件ごとに設定。新規案件は既存案件を複製して作成する想定（デフォルト機能は廃止）
+- `continuation_condition`: ENUM('2回前提', '3回前提') nullable。継続前提の商品用。設定すると会員応募フォームの継続希望確認欄を非表示にし、応募時点で`continuation_wish='希望'` + `continuation_response='possible'` + `continuation_responded_at=now()`を自動セット（バッジ表示は「OK」になる。`continuation_response`が`continuation_wish`より優先されるため）
+
+### コース指定設定（`course_settings_enabled` / `CampaignCourse` / `Application.course_id`）
+1商品に複数の購入コース（単発○本、継続○回など）があり、コースによって初回/継続購入費や案内文が異なる案件向けの機能。
+
+- `Campaign.course_settings_enabled`: 有効化フラグ。有にすると案件編集フォームに「コース指定設定」ブロックが出る
+- `Campaign.course_normal_name` / `course_normal_percentage`: 「通常コース」（詳細情報の初回購入費・継続購入費等の既定値を使うケース）の呼称と発生比率。**コース未指定（`Application.course_id === null`）の表示・集計は全てこの名前を使う**（固定文字列「通常コース」をハードコードしない）
+- `CampaignCourse`（`campaign_courses`テーブル）: `name`, `initial_purchase_fee`, `course_type`（ENUM '単発'/'継続'）, `continuation_count`（2 or 3、継続のみ）, `continuation_fee_2` / `continuation_fee_3`（継続のみ）, `percentage`, `invite_message`, `sort_order`
+  - `cost()`: 単発=`initial_purchase_fee`のみ、継続=`initial_purchase_fee + continuation_fee_2`（3回の場合はさらに`+continuation_fee_3`）
+  - 案件更新のたびに**全削除→送信内容で作り直す**（delete-and-recreate、`CampaignController::syncCourses()`）。個別のid付きupdateはしない
+- **モニターコスト自動計算**（`Campaign::calculatedMonitorCost()`）: コース設定が有の場合、`通常コストの加重平均（×course_normal_percentage）+ Σ各コースのcost()×percentage + 協力金 + 紹介単価`。JS側（`_form.blade.php`の`calcMonitorCost()`）にも同じ式を実装しており、**両方を必ず同期させること**
+- **粗利（`gross_profit`）はJSのリアルタイム計算に依存すると保存タイミング次第で古い値のまま保存されるバグがあった** → `CampaignController::store()/update()`で`syncCourses()`実行後にサーバー側で`calculatedMonitorCost()`を使って再計算し、クライアント送信値を上書きする（`recalculateGrossProfit()`）
+- **コース専用プレースホルダーコード**（`invite_message`内で使用可）: `{{コース名N}}` `{{初回購入費N}}` `{{継続購入費N-2}}` `{{継続購入費N-3}}`（N=そのコースの並び順+2、コースごとに番号が変わるため他コースの値と混同しない）。`CampaignCourse::resolveTemplate()`で解決してから`Campaign::resolveTemplate()`に委譲。案件共通コード（`{{商品名}}`等、下記参照）に加え`{{コース名}}`（無番号）は案件共通メッセージ内で`course_normal_name`に解決される
+- **打診時のコース選択**: `Application.course_id`（nullable, `campaign_courses`への外部キー、`nullOnDelete`）。打診モーダルは3箇所に存在し**すべてに同期が必要**: ①`admin/campaigns/{id}/applications`の案件別ページ、②`admin/applications`の全案件横断ページ（案件が混在するため打診ボタンに`courses`をJSON埋め込みしJSで動的に選択肢構築）、③`admin/applications/{id}`詳細ページの「ステータス変更」フォーム（※コース選択はここではなく別枠の「コースの編集」フォームのみに置く。重複させない）
+  - `ApplicationController::updateStatus()`で`$request->has('course_id')`ならステータスに関わらず保存する（`line_contacted`遷移時限定にすると再打診や直接完了操作でコースが保存されないバグになる）
+  - 打診確定後の案内文（`ProposalController::createMonitorGuideJob()`）は`$application->course_id`があれば`$course->invite_message`（空ならcampaign既定にフォールバック）を使用。モニター終了案内文（`monitor_end_message`）はコースに関わらず常に案件共通
+  - コースが割り当てられた応募には**継続LINE送信ボタン（継続打診）を出さない**（`campaign_index.blade.php`のボタン条件に`&& !$app->course_id`）。コースの単発/継続は応募時点の`continuation_wish`とは別概念のため
+- **継続率指標はコース未指定（`course_id === null`）の応募のみで集計する**（`ApplicationController::index()`の「未達成目標継続率」アラート、`campaignIndex()`の継続率サマリー、いずれも`whereNull('course_id')`）。コースの「継続」タイプは商品として継続が確定しており確率的な継続確認の対象ではないため
+- 応募管理一覧・案件別ページ・応募詳細に「コース」列/欄を表示。テーブルは`overflow-x-auto`で横スクロールするため列追加で窮屈にはならない
 
 ---
 
@@ -116,8 +136,9 @@ php8.3 artisan route:clear
 - LIFFチャンネルはエルメのLINEデベロッパーコンソール（チャンネルID: 2007390214）で管理
 
 ### LINE自動送信（`monitor_invite_message` / `monitor_end_message`）
-- 使用できるコード: `{{商品名}}` `{{初回購入費}}` `{{モニター協力金}}` `{{解約について}}` `{{モニター案内文}}` `{{リンク}}` `{{案内日時}}`
+- 使用できるコード: `{{商品名}}` `{{初回購入費}}` `{{モニター協力金}}` `{{解約について}}` `{{モニター案内文}}` `{{リンク}}` `{{案内日時}}` `{{コース名}}`（通常コースのコース名、コース設定が有の場合のみ意味を持つ）
 - `{{案内日時}}`: `invited_at->format('n月j日 H:i')` + `〜invited_end_at->format('H:i')` の形式で置換（ProposalController::createMonitorGuideJob）
+- コース別の案内文専用コード（`{{コース名N}}`等）は上記とは別体系。「コース指定設定」の項を参照
 
 ---
 
@@ -157,9 +178,10 @@ php8.3 artisan route:clear
 
 ### 応募管理（案件別一覧）
 - 並び順: 実施完了/報告済/承認済/付与済/キャンセル以外のステータスは応募日時の古い順、それ以外（実施完了・キャンセル等の完了系グループ）は**案内日時（`invited_at`）の新しい順**（`ApplicationController::campaignIndex()` の `orderByRaw`）
+- 実施完了サマリーバーに「応募数（総数/残件数）」を表示。残件数はステータスが「応募」（pending）のまま未処理の件数
 - 詳細ページ（`admin/applications/{application}`）
-  - 「応募情報」: ユーザー名 / 案件名 / 応募日時 / 案内日時 / ステータス / 継続ステータス（希望/不可/確認中/OK/NG、`admin/users/show.blade.php`と同じ継続バッジロジック）
-  - 「モニター情報」サイドバー: 氏名/フリガナ/性別/生年月日のみ（エリア以下は削除済み）＋「ユーザー詳細」ボタン（`admin.users.show`）。継続希望/回答の編集は上部の「継続情報の編集」フォームで行う
+  - 「応募情報」: ユーザー名 / 案件名 / 応募日時 / 案内日時 / ステータス / 継続ステータス（希望/不可/確認中/OK/NG、`admin/users/show.blade.php`と同じ継続バッジロジック）/ コース（コース設定が有の案件のみ）
+  - 「モニター情報」サイドバー: 氏名/フリガナ/性別/生年月日のみ（エリア以下は削除済み）＋「ユーザー詳細」ボタン（`admin.users.show`）。継続希望/回答の編集は上部の「継続情報の編集」フォームで行う。コースの編集は別枠の「コースの編集」フォーム（ステータス変更フォームには置かない、重複させない）
 
 ### 代理店管理
 - 一覧: 代理店名・子代理店数・コード数・登録数・応募数・報告数・詳細/削除
@@ -306,3 +328,6 @@ php8.3 artisan route:clear
 - ¥・カンマ除去は `preg_replace('/[^\d]/', '', $value)` を使う
 - Carbon の `whereBetween` で同一オブジェクトに `startOfMonth()` → `endOfMonth()` と連続して呼ぶと両方が月末になるバグ → 必ず `copy()` を使う
 - MonitorReport を全削除すると Application の status が `reported` のまま残る。再報告は可能だがマイページ表示がおかしくなるので application の status も `completed` に戻す必要がある
+- MySQLの `SUM(条件式)`（例: `SUM(continuation_response = "possible")`）は、集計対象の全行で条件式がNULL評価される場合（比較対象カラム自体がNULLなど）に**SUM結果もNULLを返す**。PHP側で`int`型引数に渡すとTypeErrorで500になる（本番で実際に発生）→ `COALESCE(SUM(...), 0)` で必ず0にフォールバックする
+- 全案件横断ページと案件別ページのように**同じ機能（打診モーダル等）が複数のBladeファイルに重複実装されている箇所がある**。片方だけ直して満足せず、`grep`で同名の関数・同じルートへのフォーム送信がないか横断確認すること（コース選択欄の実装漏れで一箇所だけ機能しない事故が起きた）
+- 動的な値をJSに埋め込むとき、Bladeの`{{ }}`は生の`{{`/`}}`文字を含む文字列（プレースホルダーコード等）と衝突してコンパイルエラーになる。`@json()`（`<script>`タグ内でJS変数に代入する形）か、複数箇所で使うなら`String.fromCharCode(123)`等で中括弧をJS側组み立てにする

@@ -18,17 +18,12 @@ class LineLinkController extends Controller
     public function index(Request $request): View
     {
         $status = $request->get('status', 'unlinked');
-        if (!in_array($status, ['unlinked', 'linked', 'transfer', 'new_register'], true)) {
+        if (!in_array($status, ['unlinked', 'linked', 'transfer'], true)) {
             $status = 'unlinked';
         }
 
         if ($status === 'transfer') {
             $entries = $this->buildTransferEntries($request);
-            return view('admin.line_links.index', ['status' => $status, 'entries' => $entries]);
-        }
-
-        if ($status === 'new_register') {
-            $entries = $this->buildNewRegisterEntries($request);
             return view('admin.line_links.index', ['status' => $status, 'entries' => $entries]);
         }
 
@@ -53,50 +48,6 @@ class LineLinkController extends Controller
         $unlinked = $query->paginate(50)->withQueryString();
 
         return view('admin.line_links.index', compact('unlinked', 'status'));
-    }
-
-    // 通常登録（紐付け未確定）一覧 + それぞれの候補一覧を作成
-    private function buildNewRegisterEntries(Request $request): LengthAwarePaginator
-    {
-        $importPool = User::where('imported_from', 'spreadsheet')
-            ->where(fn($q) => $q->whereNull('line_user_id')->orWhere('line_user_id', 'like', 'IMPORT_%'))
-            ->get();
-
-        $query = User::where('imported_from', 'new')
-            ->whereNotNull('profile_completed_at')
-            ->whereNull('transfer_registered_at')
-            ->whereNull('new_register_confirmed_at')
-            ->whereNotNull('line_user_id')
-            ->where('line_user_id', 'not like', 'IMPORT_%')
-            ->orderByDesc('profile_completed_at');
-
-        if ($request->filled('name')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->name . '%')
-                  ->orWhere('name_kana', 'like', '%' . $request->name . '%');
-            });
-        }
-
-        $newUsers = $query->get();
-
-        $entries = $newUsers->map(function (User $user) use ($importPool) {
-            $target = UserMatcher::fields($user);
-            return [
-                'user'       => $user,
-                'candidates' => UserMatcher::scoredCandidates($importPool, $target, 1),
-            ];
-        });
-
-        $perPage = 50;
-        $page = max((int) $request->get('page', 1), 1);
-
-        return new LengthAwarePaginator(
-            $entries->forPage($page, $perPage)->values(),
-            $entries->count(),
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
     }
 
     // 引き継ぎ登録（紐付け未確定）一覧 + それぞれの候補一覧を作成
@@ -270,17 +221,6 @@ class LineLinkController extends Controller
 
         User::findOrFail($request->user_id)
             ->update(['transfer_registered_at' => null]);
-
-        return back()->with('success', '新規ユーザーとして確定しました。');
-    }
-
-    // 通常登録ユーザーを正真正銘の新規として確定（新規登録タブから外す）
-    public function confirmNewRegister(Request $request): RedirectResponse
-    {
-        $request->validate(['user_id' => 'required|exists:users,id']);
-
-        User::findOrFail($request->user_id)
-            ->update(['new_register_confirmed_at' => now()]);
 
         return back()->with('success', '新規ユーザーとして確定しました。');
     }
