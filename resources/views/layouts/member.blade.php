@@ -10,7 +10,10 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     @endif
 </head>
-<body class="bg-gray-50 min-h-screen pb-24">
+@php
+    $showBottomNav = auth('liff')->check() && !request()->routeIs('member.transfer*') && !request()->routeIs('member.guide') && !request()->routeIs('member.faq');
+@endphp
+<body class="bg-gray-50 min-h-screen {{ $showBottomNav ? 'pb-24' : '' }}">
 
     <header class="bg-pink-500 text-white shadow-md sticky top-0 z-50">
         <div class="flex items-center px-4 py-3 max-w-lg mx-auto">
@@ -96,8 +99,7 @@
     @endif
     @endauth
 
-    @auth('liff')
-    @if(!request()->routeIs('member.transfer*'))
+    @if($showBottomNav)
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
         <div class="flex max-w-2xl mx-auto">
             <a href="{{ route('member.campaigns.index') }}"
@@ -121,7 +123,6 @@
         </div>
     </nav>
     @endif
-    @endauth
 
 <script>
 function hiraToKata(str) {
