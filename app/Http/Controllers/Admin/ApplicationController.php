@@ -104,9 +104,11 @@ class ApplicationController extends Controller
                 ->whereDate('invited_at', $tomorrowDate)
                 ->count();
             if ($booked < $slot->planned_count) {
-                $tomorrowUnderAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count]);
+                $pendingCount = Application::where('campaign_id', $slot->campaign_id)->where('status', 'pending')->count();
+                $tomorrowUnderAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count, 'pending' => $pendingCount]);
             }
         }
+        $tomorrowUnderAlerts = $tomorrowUnderAlerts->sortBy('pending')->values();
 
         // アラート: 未達成目標継続率（実施完了以上のデータで計算）
         $contCampaigns = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->whereIn('status', ['published', 'paused'])->get();
@@ -255,9 +257,11 @@ class ApplicationController extends Controller
                 ->whereDate('invited_at', $tomorrowDate2)
                 ->count();
             if ($booked < $slot->planned_count) {
-                $tomorrowUnderAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count]);
+                $pendingCount = Application::where('campaign_id', $slot->campaign_id)->where('status', 'pending')->count();
+                $tomorrowUnderAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count, 'pending' => $pendingCount]);
             }
         }
+        $tomorrowUnderAlerts = $tomorrowUnderAlerts->sortBy('pending')->values();
 
         // アラート: 未達成目標継続率（実施完了以上のデータで計算）
         $contCampaigns2 = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->whereIn('status', ['published', 'paused'])->get();
