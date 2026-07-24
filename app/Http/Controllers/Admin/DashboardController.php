@@ -297,7 +297,7 @@ class DashboardController extends Controller
                 $alerts[] = [
                     'level'       => 'warning',
                     'message'     => "前月（{$prevMonth->format('Y年n月')}）の紹介報酬 {$undoneCount}代理店 が処理済みになっていません（毎月25日までに対応してください）。",
-                    'link'        => route('admin.referrals.index', ['month' => $prevMonth->format('Y-m')]),
+                    'link'        => route('admin.referrals.index', ['year' => $py, 'month' => $pm]),
                     'label'       => '紹介報酬管理',
                     'dismiss_key' => $refKey,
                 ];
