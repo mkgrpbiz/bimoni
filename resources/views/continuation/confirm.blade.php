@@ -13,6 +13,7 @@
     <h1 class="text-base font-bold text-gray-800 text-center mb-5">{{ $application->campaign->title }}</h1>
 
     {{-- 回収サービス情報 --}}
+    @if($application->campaign->continuation_cooperation_fee || $application->campaign->recurring_purchase_fee)
     @if($application->campaign->collection_requirement === '回収必須')
     <div class="bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 mb-5 space-y-2 text-sm">
         <div class="flex justify-between">
@@ -35,6 +36,7 @@
     <div class="bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 mb-5 text-sm">
         <p class="text-gray-700">こちらの商品は継続分も回収必須ではありません。</p>
     </div>
+    @endif
     @endif
 
     <p class="text-sm text-gray-700 font-medium text-center mb-6">

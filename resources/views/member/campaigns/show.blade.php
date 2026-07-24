@@ -79,6 +79,7 @@
 
     @if($application)
         {{-- 応募済み --}}
+        @if($campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee)
         @if($campaign->collection_requirement === '回収必須')
         <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium mb-2">
             こちらの商品は継続分のみ回収必須となります。
@@ -87,6 +88,7 @@
         <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-gray-600 font-medium mb-2">
             こちらの商品は継続分も回収必須ではありません。
         </div>
+        @endif
         @endif
 
         @if(in_array($application->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming']))
@@ -195,6 +197,7 @@
             </div>
             @endif
 
+            @if($campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee)
             @if($campaign->collection_requirement === '回収必須')
             <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
                 こちらの商品は継続分のみ回収必須となります。
@@ -203,6 +206,7 @@
             <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-gray-600 font-medium">
                 こちらの商品は継続分も回収必須ではありません。
             </div>
+            @endif
             @endif
 
             <div class="pb-8">
