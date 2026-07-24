@@ -133,7 +133,7 @@
             {{-- 購入可能時間 --}}
             <div>
                 <p class="text-sm font-medium text-gray-700 mb-2">
-                    購入が可能な時間をすべて選択してください <span class="text-red-500 text-xs">必須</span>
+                    モニター実施が可能な時間をすべて選択してください <span class="text-red-500 text-xs">必須</span>
                 </p>
                 <p class="text-xs text-gray-500 mb-2">複数選択可</p>
                 @php
