@@ -13,13 +13,13 @@
     <h1 class="text-base font-bold text-gray-800 text-center mb-5">{{ $application->campaign->title }}</h1>
 
     {{-- 回収サービス情報 --}}
-    @if($application->campaign->collection_requirement)
+    @if($application->campaign->collection_requirement === '回収必須')
     <div class="bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 mb-5 space-y-2 text-sm">
         <div class="flex justify-between">
             <span class="text-gray-500">回収サービス</span>
             <span class="font-medium text-gray-800">{{ $application->campaign->collection_requirement }}</span>
         </div>
-        @if($application->campaign->collection_requirement === '回収必須' && $application->campaign->collection_count_judgment)
+        @if($application->campaign->collection_count_judgment)
         @php $collectionFee = 800 * $application->campaign->collection_count_judgment; @endphp
         <div class="flex justify-between">
             <span class="text-gray-500">回収個数</span>
@@ -29,9 +29,11 @@
             <span class="text-gray-500">回収時の金額</span>
             <span class="font-medium text-gray-800">800×{{ $application->campaign->collection_count_judgment }}＝{{ number_format($collectionFee) }}円</span>
         </div>
-        @elseif($application->campaign->collection_requirement === '回収不要')
-        <p class="text-gray-700">こちらの商品は継続分も回収必須ではありません。</p>
         @endif
+    </div>
+    @else
+    <div class="bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 mb-5 text-sm">
+        <p class="text-gray-700">こちらの商品は継続分も回収必須ではありません。</p>
     </div>
     @endif
 
