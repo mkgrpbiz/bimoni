@@ -67,10 +67,14 @@ class CampaignController extends Controller
         unset($validated['courses']);
         $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
 
+        $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
+        unset($validated['duplicate_campaign_ids']);
+
         $this->applyCooperationFormula($validated, $request);
         $campaign = Campaign::create($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
         $this->syncCourses($campaign, $courses);
+        $this->syncDuplicateProhibitions($campaign, $duplicateCampaignIds);
         $this->recalculateGrossProfit($campaign);
 
         return redirect()->route('admin.campaigns.index')->with('success', '案件を登録しました。');
@@ -86,8 +90,22 @@ class CampaignController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         $tags = Tag::orderBy('name')->get();
-        $campaign->load('tags', 'formFields', 'courses');
+        $campaign->load('tags', 'formFields', 'courses', 'duplicateProhibitedCampaigns');
         return view('admin.campaigns.edit', compact('campaign', 'categories', 'tags'));
+    }
+
+    // 案件名で検索（重複禁止商品の候補表示用）
+    public function search(Request $request): JsonResponse
+    {
+        $request->validate(['name' => 'required|string|min:1']);
+
+        $campaigns = Campaign::where('title', 'like', '%' . $request->name . '%')
+            ->when($request->filled('exclude_id'), fn($q) => $q->where('id', '!=', $request->exclude_id))
+            ->orderBy('title')
+            ->limit(20)
+            ->get(['id', 'title']);
+
+        return response()->json($campaigns);
     }
 
     public function update(Request $request, Campaign $campaign): RedirectResponse
@@ -119,11 +137,15 @@ class CampaignController extends Controller
         unset($validated['courses']);
         $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
 
+        $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
+        unset($validated['duplicate_campaign_ids']);
+
         $this->applyCooperationFormula($validated, $request);
 
         $campaign->update($validated);
         $campaign->tags()->sync($validated['tags'] ?? []);
         $this->syncCourses($campaign, $courses);
+        $this->syncDuplicateProhibitions($campaign, $duplicateCampaignIds);
         $this->recalculateGrossProfit($campaign);
 
         return redirect()->route('admin.campaigns.index')->with('success', '案件を更新しました。');
@@ -146,6 +168,22 @@ class CampaignController extends Controller
                 'invite_message'       => $row['invite_message'] ?? null,
                 'sort_order'           => $i,
             ]);
+        }
+    }
+
+    // 重複禁止商品: どちらの案件を編集しても同じ関係が見えるよう双方向に同期する
+    private function syncDuplicateProhibitions(Campaign $campaign, array $ids): void
+    {
+        $ids = array_values(array_unique(array_filter($ids, fn($id) => (int) $id !== $campaign->id)));
+        $old = $campaign->duplicateProhibitedCampaigns()->pluck('campaigns.id')->all();
+
+        $campaign->duplicateProhibitedCampaigns()->sync($ids);
+
+        foreach (array_diff($ids, $old) as $otherId) {
+            Campaign::find($otherId)?->duplicateProhibitedCampaigns()->syncWithoutDetaching([$campaign->id]);
+        }
+        foreach (array_diff($old, $ids) as $otherId) {
+            Campaign::find($otherId)?->duplicateProhibitedCampaigns()->detach($campaign->id);
         }
     }
 
@@ -314,6 +352,8 @@ class CampaignController extends Controller
             'application_end_at'     => 'nullable|date|after_or_equal:application_start_at',
             'tags'                   => 'nullable|array',
             'tags.*'                 => 'exists:tags,id',
+            'duplicate_campaign_ids'   => 'nullable|array',
+            'duplicate_campaign_ids.*' => 'exists:campaigns,id',
             'thumbnail'              => 'nullable|image|max:5120',
         ];
     }

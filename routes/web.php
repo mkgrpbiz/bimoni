@@ -70,6 +70,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', fn() => redirect()->route('admin.dashboard'));
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/alerts/dismiss', [DashboardController::class, 'dismissAlert'])->name('alerts.dismiss');
+        Route::get('campaigns/search', [CampaignController::class, 'search'])->name('campaigns.search');
         Route::resource('campaigns', CampaignController::class);
         Route::post('campaigns/{campaign}/duplicate', [CampaignController::class, 'duplicate'])->name('campaigns.duplicate');
         Route::post('campaigns/reorder', [CampaignController::class, 'reorder'])->name('campaigns.reorder');

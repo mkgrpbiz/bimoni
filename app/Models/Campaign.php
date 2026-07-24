@@ -51,6 +51,9 @@ class Campaign extends Model
     public function bonuses()             { return $this->hasMany(CampaignBonus::class); }
     public function activeBonus()         { return $this->bonuses()->where('start_at', '<=', now())->where('end_at', '>=', now())->latest('start_at'); }
     public function formFields()          { return $this->belongsToMany(FormField::class, 'campaign_form_fields')->withPivot('sort_order')->orderByPivot('sort_order'); }
+    public function duplicateProhibitedCampaigns() {
+        return $this->belongsToMany(Campaign::class, 'campaign_duplicate_prohibitions', 'campaign_id', 'duplicate_campaign_id');
+    }
     public function courses()             { return $this->hasMany(CampaignCourse::class)->orderBy('sort_order'); }
 
     // コース設定が有効な場合、通常案内％分の既定コスト＋各コースの初回/継続購入費×％の加重平均でモニターコストを算出

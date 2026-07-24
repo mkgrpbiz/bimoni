@@ -98,6 +98,38 @@
                    class="w-full border rounded px-3 py-2 text-sm @error('link') border-red-400 @enderror">
             @error('link')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
+
+        {{-- 重複禁止商品 --}}
+        @php
+            $duplicateInit = (($campaign->duplicateProhibitedCampaigns ?? collect()))
+                ->map(fn($c) => ['id' => $c->id, 'title' => $c->title])->values();
+        @endphp
+        <script>
+            window.__campaignDuplicateInit = @json($duplicateInit);
+        </script>
+        <div class="md:col-span-2" x-data="duplicateProhibitionField()">
+            <label class="block text-sm font-medium text-gray-700 mb-1">重複禁止商品</label>
+            <input type="text" x-model="searchName" @input.debounce.300ms="search()" placeholder="案件名で検索"
+                   class="w-full border rounded px-3 py-2 text-sm mb-2">
+            <div x-show="results.length > 0" x-cloak class="border rounded mb-2 divide-y max-h-40 overflow-y-auto">
+                <template x-for="c in results" :key="c.id">
+                    <div class="px-3 py-2 flex items-center justify-between hover:bg-gray-50 text-sm">
+                        <span x-text="c.title"></span>
+                        <button type="button" @click="addCampaign(c)" class="text-pink-500 text-xs hover:underline">追加</button>
+                    </div>
+                </template>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <template x-for="(c, index) in selected" :key="c.id">
+                    <span class="inline-flex items-center gap-1 bg-gray-100 rounded-full pl-3 pr-2 py-1 text-xs">
+                        <span x-text="c.title"></span>
+                        <input type="hidden" :name="`duplicate_campaign_ids[${index}]`" :value="c.id">
+                        <button type="button" @click="removeCampaign(index)" class="text-gray-400 hover:text-red-500">×</button>
+                    </span>
+                </template>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">同じユーザーが重複して応募できないようにしたい案件を検索して追加します（複数可）。</p>
+        </div>
     </div>
 </div>
 
@@ -569,6 +601,34 @@ function calcMonitorCost() {
     const el = document.getElementById('f-monitor-cost');
     if (el) el.value = Math.round(cost).toLocaleString() + '円';
     return cost;
+}
+
+function duplicateProhibitionField() {
+    return {
+        searchName: '',
+        results: [],
+        selected: window.__campaignDuplicateInit || [],
+        search() {
+            if (!this.searchName) { this.results = []; return; }
+            const excludeId = {{ $campaign->id ?? 'null' }};
+            fetch(`{{ route('admin.campaigns.search') }}?name=${encodeURIComponent(this.searchName)}` + (excludeId ? `&exclude_id=${excludeId}` : ''))
+                .then(r => r.json())
+                .then(data => {
+                    const selectedIds = this.selected.map(c => c.id);
+                    this.results = data.filter(c => !selectedIds.includes(c.id));
+                });
+        },
+        addCampaign(c) {
+            if (!this.selected.find(s => s.id === c.id)) {
+                this.selected.push(c);
+            }
+            this.searchName = '';
+            this.results = [];
+        },
+        removeCampaign(index) {
+            this.selected.splice(index, 1);
+        },
+    };
 }
 
 function courseSettings() {
