@@ -234,35 +234,48 @@ class PointController extends Controller
             ->whereBetween('created_at', [$zenginStart, $zenginEnd])
             ->get();
 
-        $userTotals = [];
+        // 振込先（銀行コード+支店コード+口座番号+口座名義）単位で集約する。
+        // 元スプレッドシート運用（GASマクロ）と同じ集約キー・正規化ロジックに揃えている。
+        $recipients = [];
+
+        $accumulate = function ($user, int $amount) use (&$recipients) {
+            if (!$user || !$user->bank_code || !$user->bank_account_number || $amount <= 0) {
+                return;
+            }
+            $bankCode   = str_pad($this->digitsOnly($user->bank_code), 4, '0', STR_PAD_LEFT);
+            $branchCode = str_pad($this->digitsOnly($user->bank_branch_code), 3, '0', STR_PAD_LEFT);
+            $account    = str_pad($this->digitsOnly($user->bank_account_number), 7, '0', STR_PAD_LEFT);
+            $name       = $this->normalizeRecipientName($user->bank_account_name);
+            if ($name === '') {
+                return;
+            }
+
+            $key = $bankCode . '|' . $branchCode . '|' . $account . '|' . $name;
+            if (!isset($recipients[$key])) {
+                $recipients[$key] = [
+                    'bankCode'   => $bankCode,
+                    'branchCode' => $branchCode,
+                    'account'    => $account,
+                    'name'       => $name,
+                    'amount'     => 0,
+                ];
+            }
+            $recipients[$key]['amount'] += $amount;
+        };
 
         foreach ($monitors as $r) {
-            $uid = $r->user_id;
-            if (!isset($userTotals[$uid])) {
-                $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
-            }
             $coopFee = $r->purchase_type === 'continuation'
                 ? ($r->campaign?->continuation_cooperation_fee ?? 0)
                 : ($r->campaign?->cooperation_fee ?? 0);
-            $userTotals[$uid]['amount'] += ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
+            $accumulate($r->user, ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0));
         }
 
         foreach ($collections as $r) {
-            $uid = $r->user_id;
-            if (!isset($userTotals[$uid])) {
-                $userTotals[$uid] = ['user' => $r->user, 'amount' => 0];
-            }
-            $userTotals[$uid]['amount'] += $r->totalFee();
+            $accumulate($r->user, $r->totalFee());
         }
 
-        $userTotals = array_filter($userTotals, fn($u) =>
-            $u['user']?->bank_code &&
-            $u['user']?->bank_account_number &&
-            $u['amount'] > 0
-        );
-
-        $totalCount  = count($userTotals);
-        $totalAmount = array_sum(array_column($userTotals, 'amount'));
+        $totalCount  = count($recipients);
+        $totalAmount = array_sum(array_column($recipients, 'amount'));
 
         $lines = [];
 
@@ -277,28 +290,25 @@ class PointController extends Controller
             env('ZENGIN_ACCOUNT_NUMBER', '2965755'),
         ]);
 
-        foreach ($userTotals as $data) {
-            $user = $data['user'];
-            $name = mb_convert_kana($user->bank_account_name ?? '', 'k', 'UTF-8');
-
+        foreach ($recipients as $data) {
             $lines[] = implode(',', [
                 '2',
-                $user->bank_code ?? '',
+                $data['bankCode'],
                 '',
-                $user->bank_branch_code ?? '',
+                $data['branchCode'],
                 '',
                 '0000',
-                $user->bank_account_type ?? '1',
-                $user->bank_account_number ?? '',
-                $name,
-                $data['amount'],
+                '1',
+                $data['account'],
+                $data['name'],
+                (string) (int) $data['amount'],
                 '', '',
                 '7',
                 '',
             ]);
         }
 
-        $lines[] = implode(',', ['8', $totalCount, $totalAmount]);
+        $lines[] = implode(',', ['8', $totalCount, (string) (int) $totalAmount]);
         $lines[] = '9';
 
         $content  = implode("\r\n", $lines);
@@ -309,6 +319,38 @@ class PointController extends Controller
             'Content-Type'        => 'application/octet-stream',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    private function digitsOnly(?string $value): string
+    {
+        return preg_replace('/\D/', '', $value ?? '') ?? '';
+    }
+
+    // スプレッドシート運用時に実際に使っていたGASマクロ（normalizeRecipientName）と同じ正規化ロジック
+    private function normalizeRecipientName(?string $value): string
+    {
+        $s = trim($value ?? '');
+
+        // スペース除去
+        $s = str_replace(['　', ' '], '', $s);
+
+        // 全角英数字 → 半角（記号は対象外。mb_convert_kanaの'a'は記号も変換してしまうため使わない）
+        $s = preg_replace_callback('/[\x{FF21}-\x{FF3A}\x{FF41}-\x{FF5A}\x{FF10}-\x{FF19}]/u', function ($m) {
+            return mb_chr(mb_ord($m[0], 'UTF-8') - 0xFEE0, 'UTF-8');
+        }, $s);
+
+        // よくある記号を銀行向けに寄せる
+        $s = str_replace(
+            ['‐', '‑', '‒', '–', '—', '―', 'ー', '－', '−', '・', '（', '）', '．', '／'],
+            ['ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', '･', '(', ')', '.', '/'],
+            $s
+        );
+
+        // 全角カナ → 半角カナ
+        $s = mb_convert_kana($s, 'k', 'UTF-8');
+
+        // 銀行向けに許容しやすい文字だけ残す
+        return preg_replace('/[^0-9A-Za-z\x{FF66}-\x{FF9F}().\/-]/u', '', $s) ?? '';
     }
 
     public function adjust(Request $request): RedirectResponse
