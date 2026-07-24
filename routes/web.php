@@ -141,7 +141,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('referrals/{agent}', [ReferralController::class, 'show'])->name('referrals.show');
         Route::get('referrals/{agent}/csv', [ReferralController::class, 'exportCsv'])->name('referrals.csv');
         Route::get('points', [PointController::class, 'index'])->name('points.index');
-        Route::get('points/csv', [PointController::class, 'exportCsv'])->name('points.csv');
         Route::get('points/zengin', [PointController::class, 'exportZengin'])->name('points.zengin');
         Route::patch('points/grant/{report}', [PointController::class, 'grant'])->name('points.grant');
         Route::patch('points/mark-reserved', [PointController::class, 'markReserved'])->name('points.mark_reserved');

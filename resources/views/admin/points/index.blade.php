@@ -79,9 +79,6 @@
         </div>
 
         <div class="flex gap-2 flex-wrap items-end">
-            <a href="{{ route('admin.points.csv', ['month' => $block['month']->format('Y-m')]) }}"
-               class="bg-gray-500 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-600">CSV出力</a>
-
             <form method="GET" action="{{ route('admin.points.zengin') }}" class="flex items-end gap-1.5">
                 <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
                 <div>
