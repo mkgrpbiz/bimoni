@@ -312,6 +312,7 @@ class ApplicationController extends Controller
             'invited_at'     => 'nullable|date',
             'invited_end_at' => 'nullable|date',
             'course_id'      => 'nullable|exists:campaign_courses,id',
+            'reserve_9am'    => 'nullable|boolean',
         ]);
 
         // コース選択欄がある画面から送られた場合はステータスに関わらず保存する
@@ -405,6 +406,13 @@ class ApplicationController extends Controller
                     . "上記の時間が難しい場合、別日程調整より都合の良い時間に予約お願いいたします。";
             }
 
+            // 「9:00に打診送信する」チェック時は、当日9時（すでに過ぎていれば翌日9時）まで送信を予約する
+            $proposalSendAt = now();
+            if ($request->boolean('reserve_9am')) {
+                $today9am = now()->copy()->setTime(9, 0, 0);
+                $proposalSendAt = now()->lt($today9am) ? $today9am : $today9am->addDay();
+            }
+
             LineMessageJob::create([
                 'application_id' => $application->id,
                 'user_id'        => $application->user_id,
@@ -412,7 +420,7 @@ class ApplicationController extends Controller
                 'line_user_id'   => $application->user?->line_user_id,
                 'send_type'      => 'proposal',
                 'message_body'   => $proposalMsg,
-                'send_at'        => now(),
+                'send_at'        => $proposalSendAt,
                 'status'         => 'pending',
             ]);
         }

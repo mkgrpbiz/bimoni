@@ -402,6 +402,10 @@ $tabs = [
                 <label class="block text-xs text-gray-700 mb-1">メモ</label>
                 <input type="text" name="memo" class="w-full border rounded px-3 py-2 text-sm">
             </div>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" name="reserve_9am" value="1" class="rounded">
+                9:00に打診送信する
+            </label>
             <div class="flex gap-2 pt-1">
                 <button type="button" onclick="submitProposal()"
                         class="flex-1 bg-pink-500 text-white py-2 rounded text-sm hover:bg-pink-600 font-medium">
