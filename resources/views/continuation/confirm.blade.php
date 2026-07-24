@@ -29,6 +29,8 @@
             <span class="text-gray-500">回収時の金額</span>
             <span class="font-medium text-gray-800">800×{{ $application->campaign->collection_count_judgment }}＝{{ number_format($collectionFee) }}円</span>
         </div>
+        @elseif($application->campaign->collection_requirement === '回収不要')
+        <p class="text-gray-700">こちらの商品は継続分も回収必須ではありません。</p>
         @endif
     </div>
     @endif

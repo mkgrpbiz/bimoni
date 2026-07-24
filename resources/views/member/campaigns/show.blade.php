@@ -173,6 +173,10 @@
             <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
                 こちらの商品は継続分のみ回収必須となります。
             </div>
+            @elseif($campaign->collection_requirement === '回収不要')
+            <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-black font-medium">
+                こちらの商品は継続分も回収必須ではありません。
+            </div>
             @endif
 
             <div class="pb-8">
