@@ -301,7 +301,7 @@ class CampaignController extends Controller
             'courses.*.continuation_fee_3'     => 'nullable|integer|min:0',
             'courses.*.percentage'             => 'nullable|numeric|min:0|max:100',
             'courses.*.invite_message'         => 'nullable|string',
-            'collection_requirement'    => 'nullable|in:回収前提,回収不要',
+            'collection_requirement'    => 'nullable|in:回収必須,回収不要',
             'collection_count_judgment' => 'nullable|integer|in:1,2,3',
             'closing_date'           => 'nullable|in:20日,25日,月末',
             'payment_timing'         => 'nullable|in:翌月末,翌々月末',

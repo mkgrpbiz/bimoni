@@ -91,9 +91,9 @@ php8.3 artisan route:clear
 - **継続報告（`purchase_type='continuation'`）の協力金は必ず `campaign.continuation_cooperation_fee` を使う**（`cooperation_fee` を使うと初回金額になるバグ）
 
 ### Campaign
-- `collection_requirement`: ENUM('回収前提', '回収不要') nullable
-  - 条件チェックは必ず `=== '回収前提'`（truthy判定だと'回収不要'でも引っかかる）
-  - 回収前提の場合、応募フォームに警告メッセージ表示
+- `collection_requirement`: ENUM('回収必須', '回収不要') nullable（旧称「回収前提」。2026-07-14に「前提」という表現が分かりにくいため「必須」に改称、マイグレーションで既存データも一括変換済み）
+  - 条件チェックは必ず `=== '回収必須'`（truthy判定だと'回収不要'でも引っかかる）
+  - 回収必須の場合、応募フォームに警告メッセージ表示
 - `collection_info`: DBカラムは残存しているがフォーム・会員ページからは削除済み（未使用）
 - LINE自動送信設定（`monitor_invite_message` / `monitor_end_message`）は案件ごとに設定。新規案件は既存案件を複製して作成する想定（デフォルト機能は廃止）
 - `continuation_condition`: ENUM('2回前提', '3回前提') nullable。継続前提の商品用。設定すると会員応募フォームの継続希望確認欄を非表示にし、応募時点で`continuation_wish='希望'` + `continuation_response='possible'` + `continuation_responded_at=now()`を自動セット（バッジ表示は「OK」になる。`continuation_response`が`continuation_wish`より優先されるため）

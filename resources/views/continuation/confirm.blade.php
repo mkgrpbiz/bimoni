@@ -19,7 +19,7 @@
             <span class="text-gray-500">回収サービス</span>
             <span class="font-medium text-gray-800">{{ $application->campaign->collection_requirement }}</span>
         </div>
-        @if($application->campaign->collection_requirement === '回収前提' && $application->campaign->collection_count_judgment)
+        @if($application->campaign->collection_requirement === '回収必須' && $application->campaign->collection_count_judgment)
         @php $collectionFee = 800 * $application->campaign->collection_count_judgment; @endphp
         <div class="flex justify-between">
             <span class="text-gray-500">回収個数</span>

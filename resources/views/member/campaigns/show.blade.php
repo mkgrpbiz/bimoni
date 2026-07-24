@@ -169,7 +169,7 @@
             </div>
             @endif
 
-            @if($campaign->collection_requirement === '回収前提')
+            @if($campaign->collection_requirement === '回収必須')
             <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
                 こちらの商品は継続分のみ回収必須となります。
             </div>

@@ -156,7 +156,7 @@
             </select>
         </div>
 
-        {{-- Row 3: モニター協力金 / 回収前提 --}}
+        {{-- Row 3: モニター協力金 / 回収必須 --}}
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金（+○円部分）</label>
             <div class="flex items-center gap-1">
@@ -172,10 +172,10 @@
             @error('cooperation_fee')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">回収前提（継続）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">回収必須（継続）</label>
             <select name="collection_requirement" class="w-full border rounded px-3 py-2 text-sm">
                 <option value="">未設定</option>
-                <option value="回収前提" @selected(old('collection_requirement', $campaign->collection_requirement ?? '') === '回収前提')>回収前提</option>
+                <option value="回収必須" @selected(old('collection_requirement', $campaign->collection_requirement ?? '') === '回収必須')>回収必須</option>
                 <option value="回収不要" @selected(old('collection_requirement', $campaign->collection_requirement ?? '') === '回収不要')>回収不要</option>
             </select>
         </div>
