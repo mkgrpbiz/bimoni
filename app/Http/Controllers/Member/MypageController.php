@@ -66,9 +66,12 @@ class MypageController extends Controller
         $applyingActive = $applying->filter(fn($a) => $a->campaign?->status !== 'closed')->values();
         $applyingEnded  = $applying->filter(fn($a) => $a->campaign?->status === 'closed')->values();
 
+        $completedApps = $applications->filter(fn($a) => in_array($a->status, ['completed']));
+
         $groups = [
             '応募中'     => $applying,
-            '実施完了'   => $applications->filter(fn($a) => in_array($a->status, ['completed'])),
+            '実施完了'   => $completedApps->filter(fn($a) => $a->continuation_response !== 'possible')->values(),
+            '継続'       => $completedApps->filter(fn($a) => $a->continuation_response === 'possible')->values(),
             'キャンセル' => $applications->filter(fn($a) => in_array($a->status, ['rejected', 'cancelled'])),
         ];
 
