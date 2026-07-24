@@ -79,20 +79,20 @@
 
     @if($application)
         {{-- 応募済み --}}
+        @if($campaign->collection_requirement === '回収必須')
+        <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium mb-2">
+            こちらの商品は継続分のみ回収必須となります。
+        </div>
+        @else
+        <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-gray-600 font-medium mb-2">
+            こちらの商品は継続分も回収必須ではありません。
+        </div>
+        @endif
+
         <div class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl text-center font-bold mb-2">
             応募済みです
         </div>
         <p class="text-xs text-gray-400 text-center mb-3">ステータス：{{ $application->getStatusLabel() }}</p>
-
-        @if($campaign->collection_requirement === '回収必須')
-        <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
-            こちらの商品は継続分のみ回収必須となります。
-        </div>
-        @else
-        <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-gray-600 font-medium">
-            こちらの商品は継続分も回収必須ではありません。
-        </div>
-        @endif
 
     @elseif($campaign->status !== 'published')
         {{-- 募集終了 --}}
