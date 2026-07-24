@@ -24,6 +24,8 @@
 <div class="flex gap-2 mb-4 flex-wrap">
     <a href="?{{ $qs(['child_id' => null, 'code_filter' => null]) }}"
        class="px-3 py-1 rounded text-xs border {{ !$childId ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-700' }}">全体</a>
+    <a href="?{{ $qs(['child_id' => 'parent', 'code_filter' => null]) }}"
+       class="px-3 py-1 rounded text-xs border {{ $childId === 'parent' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-700' }}">親のみ</a>
     @foreach($agent->children as $child)
     <a href="?{{ $qs(['child_id' => $child->id, 'code_filter' => null]) }}"
        class="px-3 py-1 rounded text-xs border {{ $childId == $child->id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700' }}">
