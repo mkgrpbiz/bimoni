@@ -262,6 +262,7 @@ Route::prefix('member')->name('member.')->group(function () {
             Route::get('campaigns/complete', [MemberCampaign::class, 'complete'])->name('campaigns.complete');
             Route::get('campaigns/{campaign}', [MemberCampaign::class, 'show'])->name('campaigns.show');
             Route::post('campaigns/{campaign}/apply', [MemberCampaign::class, 'apply'])->name('campaigns.apply');
+            Route::post('campaigns/{campaign}/cancel', [MemberCampaign::class, 'cancel'])->name('campaigns.cancel');
             Route::get('mypage', [MemberMypage::class, 'index'])->name('mypage');
             Route::get('cancellations', [\App\Http\Controllers\Member\CancellationController::class, 'index'])->name('cancellations');
             Route::get('profile/edit', [MemberRegister::class, 'edit'])->name('profile.edit');

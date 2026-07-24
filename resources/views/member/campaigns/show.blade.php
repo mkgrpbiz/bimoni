@@ -89,9 +89,19 @@
         </div>
         @endif
 
+        @if(in_array($application->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming']))
+        <form method="POST" action="{{ route('member.campaigns.cancel', $campaign) }}"
+              onsubmit="return confirm('応募を取り消しますか？')">
+            @csrf
+            <button type="submit" class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl text-center font-bold mb-2">
+                応募を取り消しする
+            </button>
+        </form>
+        @else
         <div class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl text-center font-bold mb-2">
             応募済みです
         </div>
+        @endif
         <p class="text-xs text-gray-400 text-center mb-3">ステータス：{{ $application->getStatusLabel() }}</p>
 
     @elseif($campaign->status !== 'published')

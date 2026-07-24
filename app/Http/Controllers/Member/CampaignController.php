@@ -191,6 +191,31 @@ class CampaignController extends Controller
             ->with('applied_pr_media', $campaign->pr_media);
     }
 
+    // 応募中（未実施）の応募を会員自身が取り消す
+    public function cancel(Campaign $campaign): RedirectResponse
+    {
+        $user = Auth::guard('liff')->user();
+
+        $application = Application::where('user_id', $user->id)
+            ->where('campaign_id', $campaign->id)
+            ->whereIn('status', ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming'])
+            ->first();
+
+        if (!$application) {
+            return redirect()->route('member.campaigns.show', $campaign)
+                ->with('error', '取り消し可能な応募が見つかりません。');
+        }
+
+        LineMessageJob::where('application_id', $application->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'canceled']);
+
+        $application->update(['status' => 'cancelled']);
+
+        return redirect()->route('member.campaigns.show', $campaign)
+            ->with('success', '応募を取り消しました。');
+    }
+
     public function complete(): \Illuminate\View\View
     {
         $prMedia = session('applied_pr_media');
