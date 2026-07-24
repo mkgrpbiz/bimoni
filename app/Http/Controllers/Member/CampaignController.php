@@ -73,7 +73,28 @@ class CampaignController extends Controller
             ->where('end_at', '>=', $now)
             ->first();
 
-        return view('member.campaigns.show', compact('campaign', 'application', 'activeBonus'));
+        $duplicateConflicts = $this->duplicateConflictTitles($campaign, $user->id);
+
+        return view('member.campaigns.show', compact('campaign', 'application', 'activeBonus', 'duplicateConflicts'));
+    }
+
+    // 重複禁止商品に指定された案件のうち、既に応募済み（キャンセル除く）のものの案件名一覧
+    private function duplicateConflictTitles(Campaign $campaign, int $userId): \Illuminate\Support\Collection
+    {
+        $prohibitedIds = $campaign->duplicateProhibitedCampaigns->pluck('id');
+        if ($prohibitedIds->isEmpty()) {
+            return collect();
+        }
+
+        return Application::where('user_id', $userId)
+            ->whereIn('campaign_id', $prohibitedIds)
+            ->whereNotIn('status', ['cancelled'])
+            ->with('campaign:id,title')
+            ->get()
+            ->pluck('campaign.title')
+            ->filter()
+            ->unique()
+            ->values();
     }
 
     public function apply(Request $request, Campaign $campaign): RedirectResponse
@@ -93,6 +114,13 @@ class CampaignController extends Controller
         if ($exists) {
             return redirect()->route('member.campaigns.show', $campaign)
                 ->with('error', 'すでに応募済みです。');
+        }
+
+        // 重複禁止商品チェック
+        $duplicateConflicts = $this->duplicateConflictTitles($campaign, $user->id);
+        if ($duplicateConflicts->isNotEmpty()) {
+            return redirect()->route('member.campaigns.show', $campaign)
+                ->with('error', "こちらの商品は\n" . $duplicateConflicts->join('、') . "\nと重複参加不可になります。");
         }
 
         $hasContinuation   = $campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee;

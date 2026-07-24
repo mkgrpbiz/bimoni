@@ -100,6 +100,12 @@
             この案件の募集は終了しました
         </div>
 
+    @elseif($duplicateConflicts->isNotEmpty())
+        {{-- 重複禁止商品に応募済み --}}
+        <div class="w-full bg-gray-100 text-gray-500 py-4 rounded-xl text-center font-bold mb-2 px-4">
+            こちらの商品は<br>{{ $duplicateConflicts->join('、') }}<br>と重複参加不可になります。
+        </div>
+
     @else
         {{-- 応募フォーム --}}
         <form method="POST" action="{{ route('member.campaigns.apply', $campaign) }}"
