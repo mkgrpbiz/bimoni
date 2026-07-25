@@ -66,7 +66,7 @@ class MypageController extends Controller
         $applyingActive = $applying->filter(fn($a) => $a->campaign?->status !== 'closed')->values();
         $applyingEnded  = $applying->filter(fn($a) => $a->campaign?->status === 'closed')->values();
 
-        $completedApps = $applications->filter(fn($a) => in_array($a->status, ['completed']));
+        $completedApps = $applications->filter(fn($a) => in_array($a->status, ['completed', 'reported', 'approved', 'point_granted']));
 
         $groups = [
             '応募中'     => $applying,
