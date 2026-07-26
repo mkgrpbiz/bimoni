@@ -151,7 +151,7 @@
                 </td>
                 @endif
                 <td class="px-4 py-3 text-center">
-                    @if($row['all_denied'] > 0)
+                    @if($isAllDenied)
                         <span class="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">全否認</span>
                     @else
                         <span class="text-xs text-gray-300">-</span>
@@ -187,7 +187,7 @@
     <div class="bg-white rounded-lg shadow px-4 py-3 {{ $isAllDenied ? 'opacity-60' : '' }}">
         <div class="flex items-start justify-between mb-1">
             <p class="font-medium text-gray-800 text-sm flex-1">{{ $row['campaign']?->title ?? '-' }}</p>
-            @if($row['all_denied'] > 0)
+            @if($isAllDenied)
                 <span class="text-xs bg-gray-800 text-white px-2 py-0.5 rounded ml-2 shrink-0">全否認</span>
             @endif
         </div>
