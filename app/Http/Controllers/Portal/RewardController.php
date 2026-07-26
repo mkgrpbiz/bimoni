@@ -68,6 +68,14 @@ class RewardController extends Controller
             return ($owner && $owner->parent_id) ? $payoutFor($report) : 0;
         };
 
+        // 「全体紹介報酬」= 案件の紹介報酬合計そのもの（親/子どちらの取り分かで按分しない生の値）。
+        // calcReward()は受け取り側（子なら子自身の取り分）に応じて金額を減らすため、
+        // 「全体」の合計にはそのまま使えない。
+        $fullFeeFor = function ($report) use ($allDeniedCampaignIds) {
+            if ($allDeniedCampaignIds->contains($report->campaign_id)) return 0;
+            return (int) ($report->campaign?->referral_fee ?? 0);
+        };
+
         // 2ヶ月ブロック用データ（月次モード時）
         $thisMonth = \Carbon\Carbon::now()->startOfMonth();
         $lastMonth = $thisMonth->copy()->subMonth();
@@ -77,7 +85,7 @@ class RewardController extends Controller
             $bReports = \App\Services\PortalService::approvedReports($filteredCodes, $bm);
             $block[] = [
                 'month'        => $bm,
-                'total'        => $bReports->sum($payoutFor),
+                'total'        => $isCombinedParentView ? $bReports->sum($fullFeeFor) : $bReports->sum($payoutFor),
                 'child_payout' => $isCombinedParentView ? $bReports->sum($childPayoutFor) : null,
                 'pay_date'     => $bm->copy()->addMonth()->endOfMonth(),
             ];
@@ -86,7 +94,7 @@ class RewardController extends Controller
         // 案件別集計（承認0件・全否認のみの案件も一覧に含めるため、否認のみの案件IDも対象に含める）
         $allCampaignIds = $reports->pluck('campaign_id')->merge($rejectedReports->pluck('campaign_id'))->unique();
 
-        $campaignGroups = $allCampaignIds->map(function ($campaignId) use ($reports, $rejectedReports, $targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor, $allDeniedCampaignIds) {
+        $campaignGroups = $allCampaignIds->map(function ($campaignId) use ($reports, $rejectedReports, $targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor, $fullFeeFor, $allDeniedCampaignIds) {
             $rows        = $reports->where('campaign_id', $campaignId); // 承認済みのみ
             $rejectedRows = $rejectedReports->where('campaign_id', $campaignId);
             $campaign    = $rows->first()?->campaign ?? $rejectedRows->first()?->campaign;
@@ -106,7 +114,7 @@ class RewardController extends Controller
                     'count'        => $rows->count(),
                     'fee'          => $fee,
                     'reward'       => null, // 混在するため単価は表示しない
-                    'total'        => $rows->sum($payoutFor),
+                    'total'        => $rows->sum($fullFeeFor),
                     'child_payout' => $rows->sum($childPayoutFor),
                     'all_denied'   => $allDenied,
                     'is_all_denied' => $isAllDenied,
