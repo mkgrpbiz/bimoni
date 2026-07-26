@@ -35,6 +35,10 @@ class RewardController extends Controller
         $reports = \App\Services\PortalService::approvedReports($filteredCodes, $month);
         $rejectedReports = \App\Services\PortalService::rejectedReports($filteredCodes, $month);
 
+        // 全否認キャンペーンID（承認反映ページで管理者が手動設定したもの。個々の報告のステータスとは独立したフラグ）
+        $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
+            ->pluck('campaign_id')->unique();
+
         // 親が「全体」（子で絞り込まず、子がいる）を見ている場合は、
         // レコードごとに実際の紹介元（親自身 or どの子か）を区別して計算する必要がある
         $isCombinedParentView = !$agent->parent_id && $childId === null && $agent->children->isNotEmpty();
@@ -53,7 +57,8 @@ class RewardController extends Controller
         $resolveOwner = fn($report) => $codeOwnerMap[$report->user?->referred_by_code] ?? $targetAgent;
 
         // レコード1件ごとの「支払額（受け取り側の実際の取り分）」と「子への支払額」
-        $payoutFor = function ($report) use ($isCombinedParentView, $resolveOwner, $targetAgent) {
+        $payoutFor = function ($report) use ($isCombinedParentView, $resolveOwner, $targetAgent, $allDeniedCampaignIds) {
+            if ($allDeniedCampaignIds->contains($report->campaign_id)) return 0;
             $owner = $isCombinedParentView ? $resolveOwner($report) : $targetAgent;
             return \App\Services\PortalService::calcReward($owner, $report);
         };
@@ -81,15 +86,19 @@ class RewardController extends Controller
         // 案件別集計（承認0件・全否認のみの案件も一覧に含めるため、否認のみの案件IDも対象に含める）
         $allCampaignIds = $reports->pluck('campaign_id')->merge($rejectedReports->pluck('campaign_id'))->unique();
 
-        $campaignGroups = $allCampaignIds->map(function ($campaignId) use ($reports, $rejectedReports, $targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor) {
+        $campaignGroups = $allCampaignIds->map(function ($campaignId) use ($reports, $rejectedReports, $targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor, $allDeniedCampaignIds) {
             $rows        = $reports->where('campaign_id', $campaignId); // 承認済みのみ
             $rejectedRows = $rejectedReports->where('campaign_id', $campaignId);
             $campaign    = $rows->first()?->campaign ?? $rejectedRows->first()?->campaign;
             $fee         = $campaign?->referral_fee ?? 0;
 
-            // 全否認: 承認済みが1件もないのに否認だけあるユーザー数
+            // 全否認: 管理者が承認反映ページで手動設定したフラグ（優先）、
+            // またはこの代理店経由では承認済みが1件もないのに否認だけあるユーザーがいる場合
+            $isAdminAllDenied = $allDeniedCampaignIds->contains($campaignId);
             $approvedUserIds = $rows->pluck('user_id')->unique();
-            $allDenied = $rejectedRows->pluck('user_id')->unique()->diff($approvedUserIds)->count();
+            $organicAllDenied = $rejectedRows->pluck('user_id')->unique()->diff($approvedUserIds)->count();
+            $allDenied = $isAdminAllDenied ? $rows->count() : $organicAllDenied;
+            $isAllDenied = $isAdminAllDenied || ($rows->count() === 0 && $organicAllDenied > 0);
 
             if ($isCombinedParentView) {
                 return [
@@ -100,6 +109,7 @@ class RewardController extends Controller
                     'total'        => $rows->sum($payoutFor),
                     'child_payout' => $rows->sum($childPayoutFor),
                     'all_denied'   => $allDenied,
+                    'is_all_denied' => $isAllDenied,
                     'is_child'     => false,
                     'is_combined'  => true,
                     'diff'         => null,
@@ -114,9 +124,10 @@ class RewardController extends Controller
                 'count'        => $rows->count(),
                 'fee'          => $fee,
                 'reward'       => $reward,
-                'total'        => $rows->count() * $reward,
+                'total'        => $rows->sum($payoutFor),
                 'child_payout' => null,
                 'all_denied'   => $allDenied,
+                'is_all_denied' => $isAllDenied,
                 'is_child'     => $targetAgent->parent_id !== null,
                 'is_combined'  => false,
                 'diff'         => $fee - $reward,
