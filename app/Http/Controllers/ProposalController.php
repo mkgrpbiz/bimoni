@@ -388,14 +388,20 @@ class ProposalController extends Controller
 
         $slots = [];
 
+        // PRモニターは日別件数管理の対象外（従来通り無制限）。それ以外は設定がない日はNG。
+        $isPrCampaign = $application?->campaign?->campaign_type === 'pr';
+
         for ($d = 0; $d < 3; $d++) {
             $date = $startDate->copy()->addDays($d);
             $dateStr = $date->toDateString();
             $dayLabel = $date->format('m/d') . '(' . $dayNames[$date->dayOfWeek] . ')';
 
-            // 日次目標チェック：planned_count が設定されていてすでに上限に達している場合は日ごとスキップ
+            // 日次目標チェック：PR以外は設定がない日はNG、設定がある日は上限に達したらスキップ
             $plannedCount = $dailyPlannedCounts[$dateStr] ?? null;
             $dailyBooked  = $dailyBookedCounts[$dateStr] ?? 0;
+            if (!$isPrCampaign && $plannedCount === null) {
+                continue;
+            }
             if ($plannedCount !== null && $dailyBooked >= $plannedCount) {
                 continue;
             }
