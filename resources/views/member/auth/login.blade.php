@@ -65,6 +65,8 @@
     // サーバー側で liff.state をデコード済みの値を使う（URL読み取り不要）
     const _serverFrom = '{{ $from }}';
     if (_serverFrom) localStorage.setItem('_liff_from', _serverFrom);
+    const _serverReferralCode = '{{ $referralCode ?? '' }}';
+    if (_serverReferralCode) localStorage.setItem('_liff_referral_code', _serverReferralCode);
 
     liff.init({ liffId: '{{ config("services.line.liff_id") }}' })
         .then(() => {
@@ -78,8 +80,9 @@
             if (!profile) return;
             const params = new URLSearchParams(window.location.search);
             const fromPage     = _serverFrom || localStorage.getItem('_liff_from') || params.get('from') || '';
-            const referralCode = params.get('referral_code') || '';
+            const referralCode = _serverReferralCode || localStorage.getItem('_liff_referral_code') || params.get('referral_code') || '';
             localStorage.removeItem('_liff_from');
+            localStorage.removeItem('_liff_referral_code');
             return fetch('{{ route("member.auth.liff") }}', {
                 method: 'POST',
                 headers: {

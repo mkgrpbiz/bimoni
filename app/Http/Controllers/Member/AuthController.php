@@ -15,12 +15,16 @@ class AuthController extends Controller
     public function login(Request $request): View|RedirectResponse
     {
         // liff.state 経由のパラメータを server 側でデコード
+        // （liff.init()の内部リダイレクトで元のクエリパラメータが liff.state に
+        // 格納されてしまい、window.location.search から読めなくなることがあるため）
         $from = $request->get('from', '');
-        if (!$from) {
+        $referralCode = $request->get('referral_code', '');
+        if (!$from || !$referralCode) {
             // PHPはクエリパラメータ名のドットをアンダースコアに変換するため liff_state で取得
             $liffState = $request->get('liff_state', '');
             parse_str(ltrim($liffState, '?'), $stateParams);
-            $from = $stateParams['from'] ?? '';
+            $from = $from ?: ($stateParams['from'] ?? '');
+            $referralCode = $referralCode ?: ($stateParams['referral_code'] ?? '');
         }
 
         if (Auth::guard('liff')->check()) {
@@ -34,7 +38,7 @@ class AuthController extends Controller
         $devMode = empty(config('services.line.liff_id'));
         $testUsers = $devMode ? User::whereNotNull('name')->orderBy('name')->get() : collect();
 
-        return view('member.auth.login', compact('devMode', 'testUsers', 'from'));
+        return view('member.auth.login', compact('devMode', 'testUsers', 'from', 'referralCode'));
     }
 
     // 本番LIFF: JavaScript から POST される
