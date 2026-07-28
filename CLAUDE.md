@@ -105,7 +105,7 @@ php8.3 artisan route:clear
 - `Campaign.course_normal_name` / `course_normal_percentage`: 「通常コース」（詳細情報の初回購入費・継続購入費等の既定値を使うケース）の呼称と発生比率。**コース未指定（`Application.course_id === null`）の表示・集計は全てこの名前を使う**（固定文字列「通常コース」をハードコードしない）
 - `CampaignCourse`（`campaign_courses`テーブル）: `name`, `initial_purchase_fee`, `course_type`（ENUM '単発'/'継続'）, `continuation_count`（2 or 3、継続のみ）, `continuation_fee_2` / `continuation_fee_3`（継続のみ）, `percentage`, `invite_message`, `sort_order`
   - `cost()`: 単発=`initial_purchase_fee`のみ、継続=`initial_purchase_fee + continuation_fee_2`（3回の場合はさらに`+continuation_fee_3`）
-  - 案件更新のたびに**全削除→送信内容で作り直す**（delete-and-recreate、`CampaignController::syncCourses()`）。個別のid付きupdateはしない
+  - `CampaignController::syncCourses()`は送信された`courses[].id`で既存レコードと突き合わせてupdate、id無し（新規行）はcreate、送信に含まれなくなったidだけdeleteする。**以前は毎回全削除→作り直し（delete-and-recreate）していたが、`Application.course_id`が`nullOnDelete`のため、コース内容を何も変えずに案件を保存しただけで全応募のコース紐付けがnullに巻き戻るバグがあった**（2026-07-28修正）。フォーム側は各コース行に隠しinputで`id`を送信する（`_form.blade.php`）
 - **モニターコスト自動計算**（`Campaign::calculatedMonitorCost()`）: コース設定が有の場合、`通常コストの加重平均（×course_normal_percentage）+ Σ各コースのcost()×percentage + 協力金 + 紹介単価`。JS側（`_form.blade.php`の`calcMonitorCost()`）にも同じ式を実装しており、**両方を必ず同期させること**
 - **粗利（`gross_profit`）はJSのリアルタイム計算に依存すると保存タイミング次第で古い値のまま保存されるバグがあった** → `CampaignController::store()/update()`で`syncCourses()`実行後にサーバー側で`calculatedMonitorCost()`を使って再計算し、クライアント送信値を上書きする（`recalculateGrossProfit()`）
 - **コース専用プレースホルダーコード**（`invite_message`内で使用可）: `{{コース名N}}` `{{初回購入費N}}` `{{継続購入費N-2}}` `{{継続購入費N-3}}`（N=そのコースの並び順+2、コースごとに番号が変わるため他コースの値と混同しない）。`CampaignCourse::resolveTemplate()`で解決してから`Campaign::resolveTemplate()`に委譲。案件共通コード（`{{商品名}}`等、下記参照）に加え`{{コース名}}`（無番号）は案件共通メッセージ内で`course_normal_name`に解決される

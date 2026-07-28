@@ -151,13 +151,16 @@ class CampaignController extends Controller
         return redirect()->route('admin.campaigns.index')->with('success', '案件を更新しました。');
     }
 
-    // コース設定: 案件更新のたびに全削除→送信内容で作り直す
+    // 既存コースはid一致で更新し、削除された行だけ消す（全削除→再作成だと
+    // applications.course_id が nullOnDelete で毎回nullに巻き戻ってしまうバグがあったため）
     private function syncCourses(Campaign $campaign, array $courses): void
     {
-        $campaign->courses()->delete();
+        $existingIds = $campaign->courses()->pluck('id')->all();
+        $keepIds = [];
+
         foreach ($courses as $i => $row) {
             if (empty($row['name'])) continue;
-            $campaign->courses()->create([
+            $attrs = [
                 'name'                 => $row['name'],
                 'initial_purchase_fee' => $row['initial_purchase_fee'] ?? 0,
                 'course_type'          => $row['course_type'] ?? '単発',
@@ -167,8 +170,19 @@ class CampaignController extends Controller
                 'percentage'           => $row['percentage'] ?? 0,
                 'invite_message'       => $row['invite_message'] ?? null,
                 'sort_order'           => $i,
-            ]);
+            ];
+
+            $id = $row['id'] ?? null;
+            if ($id && in_array((int) $id, $existingIds, true)) {
+                $campaign->courses()->where('id', $id)->update($attrs);
+                $keepIds[] = (int) $id;
+            } else {
+                $created = $campaign->courses()->create($attrs);
+                $keepIds[] = $created->id;
+            }
         }
+
+        $campaign->courses()->whereNotIn('id', $keepIds)->delete();
     }
 
     // 重複禁止商品: どちらの案件を編集しても同じ関係が見えるよう双方向に同期する
@@ -331,6 +345,7 @@ class CampaignController extends Controller
             'course_normal_name'               => 'nullable|string|max:255',
             'course_normal_percentage'         => 'nullable|numeric|min:0|max:100',
             'courses'                          => 'nullable|array',
+            'courses.*.id'                     => 'nullable|integer',
             'courses.*.name'                   => 'nullable|string|max:255',
             'courses.*.initial_purchase_fee'   => 'nullable|integer|min:0',
             'courses.*.course_type'            => 'nullable|in:単発,継続',

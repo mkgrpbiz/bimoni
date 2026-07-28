@@ -331,6 +331,7 @@
 {{-- コース指定設定 --}}
 @php
     $courseRows = old('courses') ?: (($campaign->courses ?? collect())->map(fn($c) => [
+        'id'                   => $c->id,
         'name'                 => $c->name,
         'initial_purchase_fee' => $c->initial_purchase_fee,
         'course_type'          => $c->course_type,
@@ -374,6 +375,7 @@
         <div class="space-y-3">
             <template x-for="(course, index) in courses" :key="index">
                 <div class="course-row border rounded-lg p-3 space-y-2">
+                    <input type="hidden" :name="`courses[${index}][id]`" :value="course.id">
                     {{-- 1行目: コース名・初回購入費・目標% --}}
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
                         <div class="md:col-span-5">
