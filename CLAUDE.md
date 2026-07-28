@@ -42,6 +42,12 @@ php8.3 artisan route:clear
 > 本番cronも同様に `schedule:run` を毎分実行。
 
 > **注意**: サーバーのデフォルトPHPは8.0。必ず `php8.3` を使う。
+
+### DBバックアップ
+Xserver側にDB自動バックアップの設定がなく、コース機能のバグでデータが消えた際に復元手段が一切なかった教訓から追加（2026-07-28）。
+- 毎日4:10に `/home/mkgrp/db_backups/backup.sh` がcron実行され、STG・本番両方を`mysqldump | gzip`で `/home/mkgrp/db_backups/{stg,prod}_YYYYmmdd.sql.gz` に保存
+- 30日以上前のファイルは自動削除（`find -mtime +30 -delete`）
+- 手動実行: `ssh ... "/bin/bash /home/mkgrp/db_backups/backup.sh"`
 > **STGと本番のLINEチャンネル・トークンは絶対に混ぜない**（チャンネルが別々）
 
 ### Git（ローカル）
