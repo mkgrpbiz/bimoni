@@ -157,6 +157,9 @@ $pm = $prevMetrics;
             {{ $card['prefix'] }}{{ number_format($card['value']) }}{{ $card['suffix'] }}
         </p>
         {!! diffBadge($card['value'], $card['prev']) !!}
+        @if($card['label'] === '会員数')
+            <span class="text-xs text-gray-400">（今日：{{ number_format($dailyKpi['membersToday']) }}名 / 昨日：{{ number_format($dailyKpi['membersYesterday']) }}名）</span>
+        @endif
     </div>
     @endforeach
 </div>

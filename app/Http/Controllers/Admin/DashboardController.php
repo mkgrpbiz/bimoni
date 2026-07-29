@@ -80,6 +80,9 @@ class DashboardController extends Controller
         $today     = Carbon::today();
         $yesterday = $today->copy()->subDay();
 
+        $membersToday     = User::whereDate('created_at', $today)->count();
+        $membersYesterday = User::whereDate('created_at', $yesterday)->count();
+
         $appliedToday     = Application::whereDate('applied_at', $today)->count();
         $appliedYesterday = Application::whereDate('applied_at', $yesterday)->count();
 
@@ -94,6 +97,7 @@ class DashboardController extends Controller
         $confirming    = Application::where('status', 'confirming')->count();
 
         return compact(
+            'membersToday', 'membersYesterday',
             'appliedToday', 'appliedYesterday',
             'completedToday', 'completedYesterday',
             'lineContacted', 'scheduled', 'confirming'
