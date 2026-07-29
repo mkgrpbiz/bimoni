@@ -80,8 +80,9 @@ class DashboardController extends Controller
         $today     = Carbon::today();
         $yesterday = $today->copy()->subDay();
 
-        $membersToday     = User::whereDate('created_at', $today)->count();
-        $membersYesterday = User::whereDate('created_at', $yesterday)->count();
+        // LIFFを開いただけで登録未完了のユーザーは会員として数えない（$membersと同じ条件）
+        $membersToday     = User::whereNotNull('profile_completed_at')->whereDate('created_at', $today)->count();
+        $membersYesterday = User::whereNotNull('profile_completed_at')->whereDate('created_at', $yesterday)->count();
 
         $appliedToday     = Application::whereDate('applied_at', $today)->count();
         $appliedYesterday = Application::whereDate('applied_at', $yesterday)->count();
@@ -130,7 +131,10 @@ class DashboardController extends Controller
             $appQuery->whereRaw($exDate('applied_at'));
         }
 
-        $members   = User::when($mode === 'monthly', fn($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))->count();
+        // LIFFを開いただけで登録未完了のユーザーは会員として数えない（ポータル等の会員一覧と同じ条件）
+        $members   = User::whereNotNull('profile_completed_at')
+            ->when($mode === 'monthly', fn($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))
+            ->count();
         $applied   = (clone $appQuery)->count();
         // 実施数は案内日時ベース
         $completed = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
