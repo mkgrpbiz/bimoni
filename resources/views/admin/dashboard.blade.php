@@ -179,6 +179,9 @@ $pm = $prevMetrics;
             ¥{{ number_format($card['value']) }}
         </p>
         {!! diffBadge($card['value'], $card['prev']) !!}
+        @if($card['label'] === '売上' && $m['salesLastReflectedAt'])
+            <span class="text-xs text-gray-400">（最終反映：{{ $m['salesLastReflectedAt']->format('n/j H:i') }}）</span>
+        @endif
     </div>
     @endforeach
 </div>

@@ -148,6 +148,9 @@ class DashboardController extends Controller
         }
         $reflections = $reflectionQuery->get();
 
+        // 売上の元になる承認反映データが最後に更新された日時（表示の鮮度確認用）
+        $salesLastReflectedAt = $reflections->max('updated_at');
+
         // 全否認キャンペーンは承認数から除外
         $approvedCount = $reflections->filter(fn($r) => !$r->is_all_denied)->sum('reflection_count');
 
@@ -220,7 +223,8 @@ class DashboardController extends Controller
 
         return compact(
             'members', 'applied', 'completed', 'reported',
-            'approvedCount', 'cooperationFee', 'sales', 'leakCost', 'allDenied', 'grossProfit'
+            'approvedCount', 'cooperationFee', 'sales', 'leakCost', 'allDenied', 'grossProfit',
+            'salesLastReflectedAt'
         );
     }
 
