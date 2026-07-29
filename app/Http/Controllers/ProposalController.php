@@ -271,11 +271,7 @@ class ProposalController extends Controller
                 ?? "【モニターご案内】\n{$campaign->title}\n\n実施時間になりました。モニターを開始してください。");
 
         // {{案内日時}} を invited_at〜invited_end_at で置換
-        if ($application->invited_at) {
-            $invitedLabel = $application->invited_at->format('n月j日 H:i');
-            if ($application->invited_end_at) {
-                $invitedLabel .= '〜' . $application->invited_end_at->format('H:i');
-            }
+        if ($invitedLabel = $application->invitedLabel()) {
             $guideMsg = str_replace('{{案内日時}}', $invitedLabel, $guideMsg);
         }
 
@@ -298,9 +294,7 @@ class ProposalController extends Controller
                 ?? "【モニター終了】\n{$campaign->title}\n\nモニター時間が終了しました。ご報告をお願いします。";
 
             // {{案内日時}} を置換（guideMsg と同様）
-            if ($application->invited_at) {
-                $invitedLabel = $application->invited_at->format('n月j日 H:i')
-                    . '〜' . $application->invited_end_at->format('H:i');
+            if ($invitedLabel = $application->invitedLabel()) {
                 $endMsg = str_replace('{{案内日時}}', $invitedLabel, $endMsg);
             }
 

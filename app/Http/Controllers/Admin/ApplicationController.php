@@ -392,10 +392,7 @@ class ApplicationController extends Controller
                     . "別日程をご希望の場合もURLから日程調整が可能です。";
             } else {
                 // 通常打診メッセージ
-                $invitedLabel = $application->invited_at
-                    ? $application->invited_at->format('m月d日 H:i')
-                      . ($application->invited_end_at ? '〜' . $application->invited_end_at->format('H:i') : '')
-                    : '（日時未設定）';
+                $invitedLabel = $application->invitedLabel('m月d日') ?? '（日時未設定）';
 
                 $proposalMsg = "【モニターご案内】\n"
                     . $application->campaign->title . "\n\n"
@@ -662,10 +659,7 @@ class ApplicationController extends Controller
                 . $application->invited_end_at->format(') H:i');
             $invitedLabel  = '今から' . $deadlineLabel . 'まで';
         } else {
-            $invitedLabel = $application->invited_at
-                ? $application->invited_at->format('m月d日 H:i')
-                  . ($application->invited_end_at ? '〜' . $application->invited_end_at->format('H:i') : '')
-                : '（日時未設定）';
+            $invitedLabel = $application->invitedLabel('m月d日') ?? '（日時未設定）';
         }
 
         $proposalMsg = "【再打診のご案内】\n"

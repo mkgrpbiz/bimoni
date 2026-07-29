@@ -90,6 +90,23 @@ class Application extends Model
         return $this->campaign?->campaign_type === 'pr' && $this->campaign?->pr_media === 'IF';
     }
 
+    // 案内日時ラベル（invited_at〜invited_end_at）。PR打診は日を跨ぐことが多いため、
+    // 日付が変わる場合は終了側にも日付を表示する
+    public function invitedLabel(string $dateFormat = 'n月j日'): ?string
+    {
+        if (!$this->invited_at) return null;
+
+        $label = $this->invited_at->format("{$dateFormat} H:i");
+        if ($this->invited_end_at) {
+            $label .= '〜' . (
+                $this->invited_end_at->isSameDay($this->invited_at)
+                    ? $this->invited_end_at->format('H:i')
+                    : $this->invited_end_at->format("{$dateFormat} H:i")
+            );
+        }
+        return $label;
+    }
+
     // 次回案内可能日時（案内終了時間+48h）※表示用・案内時間バリデーション用
     public function getEarliestNextInviteAt(?\Illuminate\Support\Collection $otherApplications = null): ?Carbon
     {

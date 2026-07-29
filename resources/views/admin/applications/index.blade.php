@@ -189,10 +189,7 @@ $tabs = [
                     @endif
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-gray-700">
-                    {{ $app->invited_at?->format('m/d H:i') ?? '-' }}
-                    @if($app->invited_end_at)
-                        <span class="text-gray-500">〜{{ $app->invited_end_at->format('H:i') }}</span>
-                    @endif
+                    {{ $app->invitedLabel('m/d') ?? '-' }}
                 </td>
                 {{-- 打診回答 --}}
                 <td class="px-3 py-2 whitespace-nowrap">
@@ -244,10 +241,7 @@ $tabs = [
                                     'completed'      => '実施完了',
                                     default          => $other->getStatusLabel(),
                                 };
-                                $otherTime = $other->invited_at
-                                    ? $other->invited_at->format('m/d H:i')
-                                      . ($other->invited_end_at ? '〜'.$other->invited_end_at->format('H:i') : '')
-                                    : null;
+                                $otherTime = $other->invitedLabel('m/d');
                             @endphp
                             <div class="text-orange-600 whitespace-nowrap text-xs">
                                 {{ $other->campaign?->title ?? '不明' }}で{{ $otherLabel }}
@@ -423,6 +417,20 @@ $tabs = [
 <script>
 let _selectedSlotStart = null, _selectedSlotEnd = null, _modalTab = 'normal', _modalIsPrIf = false;
 
+// PR打診は同じ締め切り日時で連続送信することが多いため、前回入力した締め切りを記憶して次回の初期値にする
+(function restorePrDeadline() {
+    const savedDate = localStorage.getItem('_pr_deadline_date');
+    const savedHour = localStorage.getItem('_pr_deadline_hour');
+    const todayStr  = new Date().toISOString().slice(0, 10);
+    // 過去日が保存されている場合は今日にリセット（誤って過去日のまま送信するのを防ぐ）
+    if (savedDate && savedDate >= todayStr) {
+        document.getElementById('prDeadlineDate').value = savedDate;
+    }
+    if (savedHour !== null && savedHour !== '') {
+        document.getElementById('prDeadlineHour').value = savedHour;
+    }
+})();
+
 function selectModalSlot(btn) {
     document.querySelectorAll('.slot-btn').forEach(b => {
         b.classList.remove('bg-pink-500','text-white','border-pink-500');
@@ -446,6 +454,8 @@ function buildDatetimes() {
 function buildPrDeadline() {
     const date = document.getElementById('prDeadlineDate').value;
     const hour = document.getElementById('prDeadlineHour').value;
+    localStorage.setItem('_pr_deadline_date', date);
+    localStorage.setItem('_pr_deadline_hour', hour);
     document.getElementById('hiddenInvitedAt').value    = '';
     document.getElementById('hiddenInvitedEndAt').value = (date && hour !== '')
         ? date + ' ' + String(hour).padStart(2, '0') + ':00:00'
