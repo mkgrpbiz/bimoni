@@ -167,13 +167,21 @@ class DashboardController extends Controller
         } else {
             $collectionQuery->whereRaw($exDate('created_at'));
         }
-        $cooperationFee = $reportQuery->get()->sum(function ($r) {
+        $reports = $reportQuery->get();
+        $collectionReports = $collectionQuery->get();
+        $cooperationFee = $reports->sum(function ($r) {
             $c        = $r->campaign;
             $coopFee  = $r->purchase_type === 'continuation'
                 ? ($c?->continuation_cooperation_fee ?? 0)
                 : ($c?->cooperation_fee ?? 0);
             return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
-        }) + $collectionQuery->get()->sum(fn($r) => $r->totalFee());
+        }) + $collectionReports->sum(fn($r) => $r->totalFee());
+
+        // 協力金の元になった報告が最後に承認された日時（表示の鮮度確認用）
+        $cooperationFeeLastApprovedAt = $reports->pluck('reviewed_at')
+            ->merge($collectionReports->pluck('reviewed_at'))
+            ->filter()
+            ->max();
 
         // 売上 = 承認数 × 案件単価
         $sales = $reflections->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
@@ -224,7 +232,7 @@ class DashboardController extends Controller
         return compact(
             'members', 'applied', 'completed', 'reported',
             'approvedCount', 'cooperationFee', 'sales', 'leakCost', 'allDenied', 'grossProfit',
-            'salesLastReflectedAt'
+            'salesLastReflectedAt', 'cooperationFeeLastApprovedAt'
         );
     }
 

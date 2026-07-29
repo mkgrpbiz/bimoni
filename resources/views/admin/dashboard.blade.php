@@ -182,6 +182,9 @@ $pm = $prevMetrics;
         @if($card['label'] === '売上' && $m['salesLastReflectedAt'])
             <span class="text-xs text-gray-400">（最終反映：{{ $m['salesLastReflectedAt']->format('n/j H:i') }}）</span>
         @endif
+        @if($card['label'] === '協力金' && $m['cooperationFeeLastApprovedAt'])
+            <span class="text-xs text-gray-400">（最終承認：{{ $m['cooperationFeeLastApprovedAt']->format('n/j H:i') }}）</span>
+        @endif
     </div>
     @endforeach
 </div>
