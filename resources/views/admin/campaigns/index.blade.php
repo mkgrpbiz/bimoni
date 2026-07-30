@@ -82,10 +82,10 @@ $tabs = [
                 <th class="px-3 py-3 text-left">ステータス</th>
                 <th class="px-3 py-3 text-left">PR媒体</th>
                 <th class="px-3 py-3 text-left">種別</th>
-                <th class="px-3 py-3 text-right w-24 whitespace-nowrap">応募総数</th>
-                <th class="px-3 py-3 text-right w-24 whitespace-nowrap">応募残数</th>
-                <th class="px-3 py-3 text-center w-20 whitespace-nowrap">回収必須</th>
-                <th class="px-3 py-3 text-right w-24 whitespace-nowrap">粗利</th>
+                <th class="px-3 py-3 text-right">応募総数</th>
+                <th class="px-3 py-3 text-right">応募残数</th>
+                <th class="px-3 py-3 text-center">回収必須</th>
+                <th class="px-3 py-3 text-right">粗利</th>
                 <th class="px-3 py-3 text-center">操作</th>
             </tr>
         </thead>
