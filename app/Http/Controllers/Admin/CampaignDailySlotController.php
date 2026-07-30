@@ -20,6 +20,13 @@ class CampaignDailySlotController extends Controller
         $tomorrow = $now->copy()->addDay()->toDateString();
         $dayAfter = $now->copy()->addDays(2)->toDateString();
 
+        // 表示対象月（デフォルトは今月）。過去に取り込んだ来月分等も確認できるよう切り替え可能にする
+        $year  = (int) $request->input('year', $now->year);
+        $month = (int) $request->input('month', $now->month);
+        $viewMonth = Carbon::createFromDate($year, $month, 1);
+        $prevMonth = $viewMonth->copy()->subMonth();
+        $nextMonth = $viewMonth->copy()->addMonth();
+
         $campaigns = Campaign::where('status', $status)
             ->orderBy('sort_order')->orderBy('id')->get();
 
@@ -27,8 +34,8 @@ class CampaignDailySlotController extends Controller
 
         $slots = CampaignDailySlot::whereIn('campaign_id', $campaignIds)
             ->whereBetween('target_date', [
-                $now->copy()->startOfMonth()->toDateString(),
-                $now->copy()->endOfMonth()->toDateString(),
+                $viewMonth->copy()->startOfMonth()->toDateString(),
+                $viewMonth->copy()->endOfMonth()->toDateString(),
             ])
             ->get()
             ->groupBy('campaign_id')
@@ -40,7 +47,8 @@ class CampaignDailySlotController extends Controller
 
         return view('admin.daily_slots.list', compact(
             'campaigns', 'slots', 'status', 'statusCounts',
-            'today', 'tomorrow', 'dayAfter'
+            'today', 'tomorrow', 'dayAfter',
+            'viewMonth', 'prevMonth', 'nextMonth'
         ));
     }
 

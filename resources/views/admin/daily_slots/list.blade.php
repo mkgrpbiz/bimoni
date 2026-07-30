@@ -34,6 +34,15 @@
     </form>
 </div>
 
+{{-- 月切り替え --}}
+<div class="flex items-center gap-3 mb-4">
+    <a href="{{ route('admin.daily_slots.index', ['status' => $status, 'year' => $prevMonth->year, 'month' => $prevMonth->month]) }}"
+       class="text-sm text-gray-600 hover:text-pink-600 px-2 py-1 rounded border border-gray-200 hover:border-pink-300">← {{ $prevMonth->format('n月') }}</a>
+    <span class="text-base font-bold text-gray-800">{{ $viewMonth->format('Y年n月') }}</span>
+    <a href="{{ route('admin.daily_slots.index', ['status' => $status, 'year' => $nextMonth->year, 'month' => $nextMonth->month]) }}"
+       class="text-sm text-gray-600 hover:text-pink-600 px-2 py-1 rounded border border-gray-200 hover:border-pink-300">{{ $nextMonth->format('n月') }} →</a>
+</div>
+
 {{-- ステータスタブ --}}
 @php
 $tabs = [
@@ -45,7 +54,7 @@ $tabs = [
 @endphp
 <div class="flex border-b border-gray-200 mb-4">
     @foreach($tabs as $key => $tab)
-    <a href="{{ route('admin.daily_slots.index', ['status' => $key]) }}"
+    <a href="{{ route('admin.daily_slots.index', ['status' => $key, 'year' => $viewMonth->year, 'month' => $viewMonth->month]) }}"
        class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
               {{ $status === $key
                   ? 'border-pink-500 text-pink-600'
@@ -64,7 +73,7 @@ $tabs = [
         <thead class="bg-gray-50 text-gray-800 text-xs">
             <tr>
                 <th class="px-4 py-3 text-left">案件名</th>
-                <th class="px-3 py-3 text-right whitespace-nowrap">今月目標</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">{{ $viewMonth->format('n月') }}目標</th>
                 <th class="px-3 py-3 text-right whitespace-nowrap">本日（{{ now()->format('m/d') }}）</th>
                 <th class="px-3 py-3 text-right whitespace-nowrap">明日（{{ now()->addDay()->format('m/d') }}）</th>
                 <th class="px-3 py-3 text-right whitespace-nowrap">明後日（{{ now()->addDays(2)->format('m/d') }}）</th>
