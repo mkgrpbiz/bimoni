@@ -5,7 +5,7 @@
 --}}
 @php
     $grouped = $allCampaigns->groupBy('status');
-    $statusLabels = ['published' => '公開中', 'paused' => '一時停止', 'closed' => '終了', 'draft' => '下書き'];
+    $statusLabels = ['published' => '公開中', 'paused' => '募集停止', 'closed' => '案内終了', 'draft' => '下書き'];
     $currentStatus ??= $allCampaigns->firstWhere('id', $activeCampaignId)?->status ?? 'published';
 @endphp
 

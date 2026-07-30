@@ -17,8 +17,8 @@
 @php
 $tabs = [
     'published' => ['label' => '公開中',   'color' => 'bg-green-500'],
-    'paused'    => ['label' => '一時停止', 'color' => 'bg-orange-500'],
-    'closed'    => ['label' => '終了',     'color' => 'bg-gray-500'],
+    'paused'    => ['label' => '募集停止', 'color' => 'bg-orange-500'],
+    'closed'    => ['label' => '案内終了', 'color' => 'bg-gray-500'],
     'draft'     => ['label' => '下書き',   'color' => 'bg-yellow-500'],
 ];
 @endphp

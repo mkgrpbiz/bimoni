@@ -56,8 +56,8 @@
                 <select id="status-select" class="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1.5 text-sm">
                     <option value="">選択してください</option>
                     <option value="published">公開中</option>
-                    <option value="paused">一時停止</option>
-                    <option value="closed">終了</option>
+                    <option value="paused">募集停止</option>
+                    <option value="closed">案内終了</option>
                     <option value="draft">下書き</option>
                 </select>
             </div>

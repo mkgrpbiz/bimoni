@@ -88,8 +88,8 @@ class Campaign extends Model
         return match($this->status) {
             'draft'     => '下書き',
             'published' => '公開中',
-            'paused'    => '一時停止',
-            'closed'    => '終了',
+            'paused'    => '募集停止',
+            'closed'    => '案内終了',
             default     => $this->status,
         };
     }

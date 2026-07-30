@@ -19,8 +19,8 @@
 @php
 $tabs = [
     'published' => ['label' => '公開中',   'color' => 'bg-green-500'],
-    'paused'    => ['label' => '一時停止', 'color' => 'bg-orange-500'],
-    'closed'    => ['label' => '終了',     'color' => 'bg-gray-500'],
+    'paused'    => ['label' => '募集停止', 'color' => 'bg-orange-500'],
+    'closed'    => ['label' => '案内終了', 'color' => 'bg-gray-500'],
     'draft'     => ['label' => '下書き',   'color' => 'bg-yellow-500'],
 ];
 @endphp
@@ -109,8 +109,8 @@ $tabs = [
                                         default     => 'border-yellow-300 text-yellow-700 bg-yellow-50',
                                     } }}">
                             <option value="published" @selected($campaign->status === 'published')>公開中</option>
-                            <option value="paused"    @selected($campaign->status === 'paused')>一時停止</option>
-                            <option value="closed"    @selected($campaign->status === 'closed')>終了</option>
+                            <option value="paused"    @selected($campaign->status === 'paused')>募集停止</option>
+                            <option value="closed"    @selected($campaign->status === 'closed')>案内終了</option>
                             <option value="draft"     @selected($campaign->status === 'draft')>下書き</option>
                         </select>
                     </form>

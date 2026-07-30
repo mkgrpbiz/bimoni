@@ -478,7 +478,9 @@ class ImportService
             '実施中'   => 'published',
             '募集中'   => 'published',
             '一時停止' => 'paused',
+            '募集停止' => 'paused',
             '終了'     => 'closed',
+            '案内終了' => 'closed',
             '準備中'   => 'draft',
         ];
         $validStatuses = ['draft', 'published', 'paused', 'closed'];
