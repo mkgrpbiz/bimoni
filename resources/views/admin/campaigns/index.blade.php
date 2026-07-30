@@ -131,6 +131,8 @@ $tabs = [
                 </td>
                 <td class="px-3 py-3">
                     <div class="flex gap-1 justify-center flex-wrap">
+                        <a href="{{ route('admin.campaigns.applications', $campaign) }}"
+                           class="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">応募</a>
                         <form method="POST" action="{{ route('admin.campaigns.duplicate', $campaign) }}" class="inline">
                             @csrf
                             <button type="submit"
