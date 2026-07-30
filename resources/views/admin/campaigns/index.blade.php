@@ -84,7 +84,7 @@ $tabs = [
                 <th class="px-3 py-3 text-left">種別</th>
                 <th class="px-3 py-3 text-right">応募総数</th>
                 <th class="px-3 py-3 text-right">応募残数</th>
-                <th class="px-3 py-3 text-left">継続必須</th>
+                <th class="px-3 py-3 text-left">回収必須</th>
                 <th class="px-3 py-3 text-right">粗利</th>
                 <th class="px-3 py-3 text-center">操作</th>
             </tr>
@@ -120,10 +120,10 @@ $tabs = [
                 <td class="px-3 py-3 text-right text-gray-700">{{ number_format($campaign->applications_total_count) }}件</td>
                 <td class="px-3 py-3 text-right text-gray-700">{{ number_format($campaign->applications_pending_count) }}件</td>
                 <td class="px-3 py-3">
-                    @if($campaign->continuation_condition)
-                        <span class="text-gray-700">{{ $campaign->continuation_condition }}</span>
+                    @if($campaign->collection_requirement === '回収必須')
+                        <span class="text-red-600 font-medium">必須</span>
                     @else
-                        <span class="text-gray-300">-</span>
+                        <span class="text-gray-400">不要</span>
                     @endif
                 </td>
                 <td class="px-3 py-3 text-right {{ $campaign->gross_profit < 0 ? 'text-red-600' : 'text-gray-700' }}">
