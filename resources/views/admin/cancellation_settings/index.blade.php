@@ -60,7 +60,7 @@ $tabs = [
         </thead>
         <tbody class="divide-y">
             @forelse($campaigns as $campaign)
-            <tr class="hover:bg-gray-50">
+            <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 font-medium max-w-xs truncate">
                     <a href="{{ route('admin.cancellation_settings.edit', $campaign) }}"
                        class="font-medium text-pink-600 hover:text-pink-800 hover:underline">{{ $campaign->title }}</a>

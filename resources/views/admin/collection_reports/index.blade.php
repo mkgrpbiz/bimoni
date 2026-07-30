@@ -59,7 +59,7 @@ $tabs = [
         </thead>
         <tbody class="divide-y">
             @forelse($reports as $report)
-            <tr class="hover:bg-gray-50">
+            <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ $report->created_at->format('m/d H:i') }}</td>
                 <td class="px-3 py-3 text-gray-600 text-xs">{{ $report->user->bimoni_user_id ?? '-' }}</td>
                 <td class="px-3 py-3 font-mono text-xs text-pink-600">{{ $report->user->referred_by_code ?? '-' }}</td>

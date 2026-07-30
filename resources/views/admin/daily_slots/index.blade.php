@@ -31,7 +31,7 @@
                 </thead>
                 <tbody class="divide-y dark:divide-gray-700">
                     @forelse($slots as $slot)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+                    <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                         <td class="px-4 py-2 font-medium">{{ $slot->target_date->format('Y/m/d (D)') }}</td>
                         <td class="px-4 py-2 text-center font-bold text-gray-800 dark:text-gray-100">{{ $slot->planned_count }}</td>
                         <td class="px-4 py-2 text-center text-purple-600">{{ $slot->invited_count }}</td>

@@ -31,7 +31,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @foreach($admins as $adm)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-2 font-medium dark:text-gray-200">
                     {{ $adm->name }}
                     @if($adm->id === auth('web')->id())

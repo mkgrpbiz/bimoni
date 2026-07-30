@@ -38,7 +38,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($users as $user)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">
                     {{ $user->created_at?->format('Y/m/d') ?? '-' }}
                 </td>

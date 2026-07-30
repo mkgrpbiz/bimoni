@@ -40,7 +40,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($settlements as $s)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-3 font-medium dark:text-gray-200">{{ $s->settlement_month->format('Y年n月') }}</td>
                 <td class="px-4 py-3">
                     @php

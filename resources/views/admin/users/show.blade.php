@@ -135,7 +135,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($applications as $app)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">{{ $app->applied_at->format('Y/m/d H:i') }}</td>
                 <td class="px-4 py-3 text-gray-800 dark:text-gray-200">{{ $app->campaign?->title ?? '-' }}</td>
                 <td class="px-4 py-3">
@@ -193,7 +193,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($reports as $report)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">
                     {{ $report->created_at->format('Y/m/d H:i') }}
                 </td>
@@ -255,7 +255,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($collectionReports as $cr)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">
                     {{ $cr->created_at->format('Y/m/d H:i') }}
                 </td>

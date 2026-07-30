@@ -30,7 +30,7 @@
         </thead>
         <tbody id="sortable-pages" class="divide-y">
             @forelse($pages as $page)
-            <tr class="hover:bg-gray-50" data-id="{{ $page->id }}">
+            <tr class="even:bg-gray-50 hover:bg-gray-100" data-id="{{ $page->id }}">
                 <td class="px-3 py-3 text-center cursor-grab text-gray-800 drag-handle select-none">⠿</td>
                 <td class="px-4 py-3 font-medium">
                     <a href="{{ route('admin.guide_pages.edit', $page) }}"

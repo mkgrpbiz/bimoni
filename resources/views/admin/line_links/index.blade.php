@@ -193,7 +193,7 @@
         </thead>
         <tbody class="divide-y">
             @forelse($unlinked as $user)
-            <tr class="hover:bg-gray-50">
+            <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 font-medium text-gray-800">{{ $user->name }}</td>
                 <td class="px-4 py-3 text-gray-600">{{ $user->name_kana }}</td>
                 <td class="px-4 py-3 text-gray-600">

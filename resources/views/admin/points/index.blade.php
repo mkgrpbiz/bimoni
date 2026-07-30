@@ -165,7 +165,7 @@ function syncMonth(sel) {
         <tbody class="divide-y">
             @forelse($userSummary as $row)
             @php $u = $row['user']; @endphp
-            <tr class="hover:bg-gray-50">
+            <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $u?->bimoni_user_id ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-700">{{ $u?->line_display_name ?? '-' }}</td>
                 <td class="px-4 py-3 font-medium text-gray-800">{{ $u?->name ?? '-' }}</td>

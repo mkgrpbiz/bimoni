@@ -70,7 +70,7 @@ function syncMonth(sel) {
         </thead>
         <tbody class="divide-y">
             @forelse($summary as $row)
-            <tr class="hover:bg-gray-50 {{ $row['pay_status'] === 'done' ? 'opacity-60' : '' }}">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 {{ $row['pay_status'] === 'done' ? 'opacity-60' : '' }}">
                 <td class="px-4 py-3 font-medium text-gray-800">
                     {{ $row['agent']->name }}
                     @foreach($row['agent']->children as $child)

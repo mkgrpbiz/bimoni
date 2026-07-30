@@ -68,7 +68,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($bonuses as $bonus)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700/50">
                     <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ $bonus->campaign->title }}</td>
                     <td class="px-4 py-3 text-center text-pink-600 dark:text-pink-400 font-bold">+{{ number_format($bonus->bonus_amount) }}円</td>
                     <td class="px-4 py-3 text-center text-gray-600 dark:text-gray-400 text-xs">

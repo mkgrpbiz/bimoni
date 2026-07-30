@@ -117,7 +117,7 @@
                 $isPrIf      = $app->campaign->campaign_type === 'pr' && $app->campaign->pr_media === 'IF';
             @endphp
             @php $unlinked = str_starts_with($user?->line_user_id ?? '', 'IMPORT_'); @endphp
-            <tr class="{{ $unlinked ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50 dark:hover:bg-gray-750' }}">
+            <tr class="{{ $unlinked ? 'bg-red-50 hover:bg-red-100' : 'even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750' }}">
                 <td class="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-400">{{ $app->applied_at?->format('m/d H:i') ?? '-' }}</td>
                 <td class="px-3 py-2 text-gray-700 dark:text-gray-400">{{ $user?->line_display_name ?? '-' }}</td>
                 <td class="px-3 py-2 font-medium whitespace-nowrap dark:text-gray-200">{{ $user?->name ?? '（未登録）' }}</td>

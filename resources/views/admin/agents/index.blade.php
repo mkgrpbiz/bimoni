@@ -25,7 +25,7 @@
         </thead>
         <tbody class="divide-y dark:divide-gray-700">
             @forelse($agents as $agent)
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-3">
                     <div id="disp-{{ $agent->id }}" class="flex items-center gap-2">
                         <span class="font-medium text-gray-800 dark:text-gray-200">{{ $agent->name }}</span>

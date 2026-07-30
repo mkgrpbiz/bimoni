@@ -67,7 +67,7 @@
                 </thead>
                 <tbody class="divide-y dark:divide-gray-700">
                     @forelse($logs as $log)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750">
+                    <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                         <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">{{ $log->sent_at->format('m/d H:i') }}</td>
                         <td class="px-4 py-3 dark:text-gray-200">{{ $log->user->name ?? '-' }}</td>
                         <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">{{ $log->notification_type }}</td>

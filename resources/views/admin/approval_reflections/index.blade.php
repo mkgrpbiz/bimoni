@@ -83,7 +83,7 @@
             $totalReported  += $approvedCount;
             $totalReflected += $reflectCount;
             @endphp
-            <tr class="hover:bg-gray-50 {{ $isAllDenied ? 'bg-red-50' : '' }} {{ $campaign->is_visible ? '' : 'opacity-50' }}"
+            <tr class="{{ $isAllDenied ? 'bg-red-50 hover:bg-red-100' : 'even:bg-gray-50 hover:bg-gray-100' }} {{ $campaign->is_visible ? '' : 'opacity-50' }}"
                 data-campaign="{{ $campaign->id }}"
                 data-unit-price="{{ (int)($campaign->campaign_unit_price ?? 0) }}"
                 data-gross-profit="{{ (int)($campaign->gross_profit ?? 0) }}">

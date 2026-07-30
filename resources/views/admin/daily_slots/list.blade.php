@@ -80,7 +80,7 @@ $tabs = [
                 $tomorrowSlot  = $campaignSlots->get($tomorrow);
                 $dayAfterSlot  = $campaignSlots->get($dayAfter);
             @endphp
-            <tr class="hover:bg-gray-50">
+            <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 font-medium">{{ $campaign->title }}</td>
                 <td class="px-3 py-3 text-right font-bold">{{ number_format($monthTotal) }}</td>
                 <td class="px-3 py-3 text-right {{ $todaySlot ? 'text-pink-600 font-bold' : 'text-gray-400' }}">
