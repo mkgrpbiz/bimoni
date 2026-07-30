@@ -337,12 +337,15 @@ $statusTabs = [
                 {{-- 操作 --}}
                 <td class="px-3 py-2 whitespace-nowrap">
                     <div class="flex gap-1 flex-wrap">
-                        @if($app->status === 'pending' && !$isLocked)
+                        @if($app->status === 'pending' && !$isLocked && !$unlinked)
                         <button type="button"
                                 onclick="openProposalModal({{ $app->id }}, '{{ addslashes($user?->name ?? '') }}', '{{ route('admin.applications.status', $app) }}', {{ ($campaign->campaign_type === 'pr' && $campaign->pr_media === 'IF') ? 'true' : 'false' }})"
                                 class="bg-purple-500 text-white px-1.5 py-0.5 rounded hover:bg-purple-600 text-xs">
                             打診
                         </button>
+                        @endif
+                        @if($app->status === 'pending' && $unlinked)
+                        <span class="text-red-600 text-xs">引き継ぎ未完了</span>
                         @endif
                         @if($app->status === 'line_contacted')
                         <form method="POST" action="{{ route('admin.applications.status', $app) }}">
