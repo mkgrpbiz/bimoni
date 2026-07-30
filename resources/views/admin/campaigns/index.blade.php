@@ -91,7 +91,7 @@ $tabs = [
         </thead>
         <tbody id="sortable-campaigns" class="divide-y">
             @forelse($campaigns as $campaign)
-            <tr class="hover:bg-gray-50 cursor-default" data-id="{{ $campaign->id }}">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 cursor-default" data-id="{{ $campaign->id }}">
                 <td class="px-3 py-3 text-center cursor-grab text-gray-800 drag-handle select-none">⠿</td>
                 <td class="px-4 py-3 font-medium max-w-xs">
                     <a href="{{ route('admin.campaigns.edit', $campaign) }}"
