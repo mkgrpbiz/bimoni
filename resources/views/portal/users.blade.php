@@ -97,7 +97,7 @@
         </thead>
         <tbody class="divide-y">
             @forelse($users as $user)
-            <tr class="hover:bg-gray-50">
+            <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 text-xs text-gray-500">{{ $user->created_at?->format('Y/m/d') }}</td>
                 <td class="px-4 py-3 font-mono text-xs">{{ $user->bimoni_user_id ?? '-' }}</td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $user->referred_by_code ?? '-' }}</td>

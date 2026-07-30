@@ -135,7 +135,7 @@
         <tbody class="divide-y">
             @forelse($campaignGroups as $row)
             @php $isAllDenied = $row['is_all_denied']; @endphp
-            <tr class="hover:bg-gray-50 {{ $isAllDenied ? 'opacity-50' : '' }}">
+            <tr class="even:bg-gray-50 hover:bg-gray-100 {{ $isAllDenied ? 'opacity-50' : '' }}">
                 <td class="px-4 py-3 text-gray-800">{{ $row['campaign']?->title ?? '-' }}</td>
                 <td class="px-4 py-3 text-right text-gray-700">{{ $row['count'] }}件</td>
                 @if($isCombinedParentView)

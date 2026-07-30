@@ -81,7 +81,7 @@
         </thead>
         <tbody class="divide-y">
             @forelse($reports as $r)
-            <tr class="hover:bg-gray-50">
+            <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 text-xs text-gray-500">{{ $r->created_at->format('Y/m/d') }}</td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $r->user?->referred_by_code ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-800">{{ $r->user?->name ?? '-' }}</td>
