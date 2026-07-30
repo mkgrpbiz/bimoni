@@ -177,16 +177,13 @@ class ReferralController extends Controller
         $referredUserIds = User::whereIn('referred_by_code', $codeStrings)->pluck('id');
         $referredUsers   = User::whereIn('referred_by_code', $codeStrings)->orderBy('created_at')->get();
 
+        // 全否認キャンペーンID（承認反映ページの is_all_denied=true。紹介報酬管理の他画面と同じ判定基準）
+        $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
+            ->pluck('campaign_id')->unique();
+
         $approvedReports = MonitorReport::with(['campaign:id,referral_fee'])
             ->whereIn('user_id', $referredUserIds)
             ->where('status', 'approved')
-            ->where('purchase_type', 'initial')
-            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
-            ->get();
-
-        $rejectedReports = MonitorReport::with(['campaign:id,referral_fee'])
-            ->whereIn('user_id', $referredUserIds)
-            ->where('status', 'rejected')
             ->where('purchase_type', 'initial')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->get();
@@ -200,26 +197,33 @@ class ReferralController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function () use ($activeUsers, $approvedReports, $rejectedReports) {
+        $callback = function () use ($activeUsers, $approvedReports, $allDeniedCampaignIds) {
             $out = fopen('php://output', 'w');
             // BOM for Excel
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['登録日', '登録コード', 'LINE表示名', '名前', 'フリガナ', '報告数(¥500)', '報告数(¥1000)', '全否認数(¥500)', '全否認数(¥1000)', '紹介報酬合計']);
+            fputcsv($out, ['登録日', '登録コード', 'LINE表示名', '名前', 'フリガナ', '確定数(¥500)', '確定数(¥1000)', '全否認数(¥500)', '全否認数(¥1000)', '紹介報酬合計']);
 
             foreach ($activeUsers as $ru) {
-                $userApproved  = $approvedReports->where('user_id', $ru->id);
-                $userRejected  = $rejectedReports->where('user_id', $ru->id);
+                $userApproved   = $approvedReports->where('user_id', $ru->id);
+                $userAllDenied  = $userApproved->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id));
+
+                $approved500  = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
+                $approved1000 = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
+                $denied500    = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
+                $denied1000   = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
+
                 fputcsv($out, [
                     $ru->created_at?->format('Y/m/d'),
                     $ru->referred_by_code,
                     $ru->line_display_name ?? '',
                     $ru->name ?? '',
                     $ru->name_kana ?? '',
-                    $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count(),
-                    $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count(),
-                    $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count(),
-                    $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count(),
-                    $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0),
+                    $approved500 - $denied500,
+                    $approved1000 - $denied1000,
+                    $denied500,
+                    $denied1000,
+                    $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
+                        - $userAllDenied->sum(fn($r) => $r->campaign?->referral_fee ?? 0),
                 ]);
             }
             fclose($out);
