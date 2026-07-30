@@ -71,9 +71,10 @@ class ReferralController extends Controller
             $totalApps = $allApplications->filter(fn($a) => $referredUserIds->contains($a->user_id))->count();
 
             // 全否認 = 承認反映で is_all_denied=true のキャンペーンに紐づく報告数
-            $allDenied = $monthReports->where('status', 'approved')
-                ->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
-                ->count();
+            $allDeniedReports = $monthReports->where('status', 'approved')
+                ->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id));
+            $allDenied = $allDeniedReports->count();
+            $allDeniedByFee = $allDeniedReports->groupBy(fn($r) => $r->campaign?->referral_fee ?? 0);
 
             // 紹介報酬合計 = 全承認報告の合計 - 全否認分
             $expectedPay = $monthReports->where('status', 'approved')
@@ -92,6 +93,7 @@ class ReferralController extends Controller
                 'reports_by_fee' => $reportsByFee,
                 'reports_total'  => $monthReports->where('status', 'approved')->count(),
                 'all_denied'     => $allDenied,
+                'all_denied_by_fee' => $allDeniedByFee,
                 'expected_pay'   => $expectedPay,
                 'pay_status'     => $payStatus,
             ];
@@ -252,13 +254,6 @@ class ReferralController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        $rejectedReports = MonitorReport::with(['campaign:id,referral_fee'])
-            ->whereIn('user_id', $referredUserIds)
-            ->where('status', 'rejected')
-            ->where('purchase_type', 'initial')
-            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
-            ->get();
-
         $payStatus = ReferralPaymentStatus::getStatus($agent->id, (int) $month->format('Y'), (int) $month->format('n'));
 
         // 自分のコードを登録者数順にソート
@@ -283,7 +278,7 @@ class ReferralController extends Controller
             ->pluck('campaign_id')->unique();
 
         return view('admin.referrals.show', compact(
-            'agent', 'referredUsers', 'reports', 'rejectedReports', 'month', 'codeStrings', 'payStatus',
+            'agent', 'referredUsers', 'reports', 'month', 'codeStrings', 'payStatus',
             'sortedCodes', 'userCounts', 'childrenWithSortedCodes', 'allDeniedCampaignIds'
         ));
     }

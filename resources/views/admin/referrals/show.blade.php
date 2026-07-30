@@ -171,8 +171,8 @@
                 <th class="px-3 py-3 text-left">LINE表示名</th>
                 <th class="px-3 py-3 text-left">名前</th>
                 <th class="px-3 py-3 text-left">フリガナ</th>
-                <th class="px-3 py-3 text-center">報告数<br><span class="font-normal text-xs">(¥500)</span></th>
-                <th class="px-3 py-3 text-center">報告数<br><span class="font-normal text-xs">(¥1000)</span></th>
+                <th class="px-3 py-3 text-center">確定数<br><span class="font-normal text-xs">(¥500)</span></th>
+                <th class="px-3 py-3 text-center">確定数<br><span class="font-normal text-xs">(¥1000)</span></th>
                 <th class="px-3 py-3 text-center">全否認数<br><span class="font-normal text-xs">(¥500)</span></th>
                 <th class="px-3 py-3 text-center">全否認数<br><span class="font-normal text-xs">(¥1000)</span></th>
                 <th class="px-3 py-3 text-right">紹介報酬合計</th>
@@ -182,14 +182,13 @@
             @foreach($activeUsers as $ru)
             @php
                 $userApproved  = $reports->where('user_id', $ru->id);
-                $userRejected  = $rejectedReports->where('user_id', $ru->id);
+                $userAllDenied = $userApproved->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id));
                 $approved500   = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
                 $approved1000  = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
-                $rejected500   = $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
-                $rejected1000  = $userRejected->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
+                $allDenied500  = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
+                $allDenied1000 = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
                 $total         = $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
-                               - $userApproved->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
-                                              ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+                               - $userAllDenied->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
             @endphp
             <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-3 py-3 text-xs text-gray-500">{{ $ru->created_at?->format('Y/m/d') }}</td>
@@ -197,10 +196,10 @@
                 <td class="px-3 py-3 text-xs text-gray-600">{{ $ru->line_display_name ?? '-' }}</td>
                 <td class="px-3 py-3 text-gray-800">{{ $ru->name ?? '-' }}</td>
                 <td class="px-3 py-3 text-gray-600">{{ $ru->name_kana ?? '-' }}</td>
-                <td class="px-3 py-3 text-center">{{ $approved500 ?: '-' }}</td>
-                <td class="px-3 py-3 text-center">{{ $approved1000 ?: '-' }}</td>
-                <td class="px-3 py-3 text-center {{ $rejected500 ? 'text-red-500' : 'text-gray-400' }}">{{ $rejected500 ?: '-' }}</td>
-                <td class="px-3 py-3 text-center {{ $rejected1000 ? 'text-red-500' : 'text-gray-400' }}">{{ $rejected1000 ?: '-' }}</td>
+                <td class="px-3 py-3 text-center">{{ ($approved500 - $allDenied500) ?: '-' }}</td>
+                <td class="px-3 py-3 text-center">{{ ($approved1000 - $allDenied1000) ?: '-' }}</td>
+                <td class="px-3 py-3 text-center {{ $allDenied500 ? 'text-red-500' : 'text-gray-400' }}">{{ $allDenied500 ?: '-' }}</td>
+                <td class="px-3 py-3 text-center {{ $allDenied1000 ? 'text-red-500' : 'text-gray-400' }}">{{ $allDenied1000 ?: '-' }}</td>
                 <td class="px-3 py-3 text-right font-bold text-green-600">¥{{ number_format($total) }}</td>
             </tr>
             @endforeach

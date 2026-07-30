@@ -60,8 +60,8 @@ function syncMonth(sel) {
                 <th class="px-4 py-3 text-left">紹介コード</th>
                 <th class="px-4 py-3 text-right">登録人数</th>
                 <th class="px-4 py-3 text-right">応募数</th>
-                <th class="px-4 py-3 text-right">報告数(¥500)</th>
-                <th class="px-4 py-3 text-right">報告数(¥1000)</th>
+                <th class="px-4 py-3 text-right">確定数(¥500)</th>
+                <th class="px-4 py-3 text-right">確定数(¥1000)</th>
                 <th class="px-4 py-3 text-right">全否認数</th>
                 <th class="px-4 py-3 text-right">紹介報酬合計</th>
                 <th class="px-4 py-3 text-center">ステータス</th>
@@ -89,8 +89,8 @@ function syncMonth(sel) {
                 </td>
                 <td class="px-4 py-3 text-right">{{ $row['registered'] }}</td>
                 <td class="px-4 py-3 text-right">{{ $row['applications'] }}</td>
-                <td class="px-4 py-3 text-right">{{ $row['reports_by_fee']->get(500)?->count() ?? 0 }}</td>
-                <td class="px-4 py-3 text-right">{{ $row['reports_by_fee']->get(1000)?->count() ?? 0 }}</td>
+                <td class="px-4 py-3 text-right">{{ ($row['reports_by_fee']->get(500)?->count() ?? 0) - ($row['all_denied_by_fee']->get(500)?->count() ?? 0) }}</td>
+                <td class="px-4 py-3 text-right">{{ ($row['reports_by_fee']->get(1000)?->count() ?? 0) - ($row['all_denied_by_fee']->get(1000)?->count() ?? 0) }}</td>
                 <td class="px-4 py-3 text-right">
                     @if($row['all_denied'] > 0)
                         <span class="text-red-500 font-medium">{{ $row['all_denied'] }}</span>
