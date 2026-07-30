@@ -430,6 +430,13 @@ class ApplicationController extends Controller
             ]);
         }
 
+        // 手動キャンセル時、予約中の案内・リマインドLINEが後から送られてしまわないよう未送信ジョブを止める
+        if ($request->status === 'cancelled') {
+            LineMessageJob::where('application_id', $application->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'canceled']);
+        }
+
         $adminId = auth('web')->id();
         $application->changeStatus($request->status, $adminId, $request->memo);
 
