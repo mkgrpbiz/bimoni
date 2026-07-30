@@ -19,7 +19,12 @@ class CampaignController extends Controller
     {
         $status = $request->input('status', 'published');
 
-        $query = Campaign::with('category')->orderBy('sort_order')->orderBy('id')
+        $query = Campaign::with('category')
+            ->withCount([
+                'applications as applications_total_count',
+                'applications as applications_pending_count' => fn ($q) => $q->where('status', 'pending'),
+            ])
+            ->orderBy('sort_order')->orderBy('id')
             ->where('status', $status);
 
         if ($request->filled('campaign_type')) {

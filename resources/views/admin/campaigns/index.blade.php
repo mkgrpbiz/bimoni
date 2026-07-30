@@ -82,10 +82,10 @@ $tabs = [
                 <th class="px-3 py-3 text-left">ステータス</th>
                 <th class="px-3 py-3 text-left">PR媒体</th>
                 <th class="px-3 py-3 text-left">種別</th>
-                <th class="px-3 py-3 text-right">初回費</th>
-                <th class="px-3 py-3 text-right">継続費</th>
-                <th class="px-3 py-3 text-right">初回協力金</th>
-                <th class="px-3 py-3 text-right">継続協力金</th>
+                <th class="px-3 py-3 text-right">応募総数</th>
+                <th class="px-3 py-3 text-right">応募残数</th>
+                <th class="px-3 py-3 text-left">継続必須</th>
+                <th class="px-3 py-3 text-right">粗利</th>
                 <th class="px-3 py-3 text-center">操作</th>
             </tr>
         </thead>
@@ -117,15 +117,17 @@ $tabs = [
                 </td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->getPrMediaLabel() }}</td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->getTypeLabel() }}</td>
-                <td class="px-3 py-3 text-right">¥{{ number_format($campaign->initial_purchase_fee ?? 0) }}</td>
-                <td class="px-3 py-3 text-right">¥{{ number_format($campaign->recurring_purchase_fee ?? 0) }}</td>
-                <td class="px-3 py-3 text-right text-gray-600">+¥{{ number_format($campaign->cooperation_fee ?? 0) }}</td>
-                <td class="px-3 py-3 text-right text-gray-600">
-                    @if($campaign->continuation_cooperation_fee !== null)
-                        +¥{{ number_format($campaign->continuation_cooperation_fee) }}
+                <td class="px-3 py-3 text-right text-gray-700">{{ number_format($campaign->applications_total_count) }}件</td>
+                <td class="px-3 py-3 text-right text-gray-700">{{ number_format($campaign->applications_pending_count) }}件</td>
+                <td class="px-3 py-3">
+                    @if($campaign->continuation_condition)
+                        <span class="text-gray-700">{{ $campaign->continuation_condition }}</span>
                     @else
                         <span class="text-gray-300">-</span>
                     @endif
+                </td>
+                <td class="px-3 py-3 text-right {{ $campaign->gross_profit < 0 ? 'text-red-600' : 'text-gray-700' }}">
+                    ¥{{ number_format($campaign->gross_profit ?? 0) }}
                 </td>
                 <td class="px-3 py-3">
                     <div class="flex gap-1 justify-center flex-wrap">
