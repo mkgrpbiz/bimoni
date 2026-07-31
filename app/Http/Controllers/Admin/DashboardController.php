@@ -67,6 +67,13 @@ class DashboardController extends Controller
             ->map(fn($r) => ['year' => (int)$r->y, 'month' => (int)$r->m, 'label' => Carbon::createFromDate($r->y, $r->m, 1)->format('Y年n月')])
             ->toArray();
 
+        // 当月がまだ応募0件でも選べるよう、含まれていなければ先頭に追加
+        $nowY = now()->year;
+        $nowM = now()->month;
+        if (!collect($months)->contains(fn($m) => $m['year'] === $nowY && $m['month'] === $nowM)) {
+            array_unshift($months, ['year' => $nowY, 'month' => $nowM, 'label' => now()->format('Y年n月')]);
+        }
+
         return view('admin.dashboard', compact(
             'pendingReportsCount', 'pendingReportsAmount',
             'pendingCollectionCount',
