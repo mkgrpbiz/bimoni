@@ -267,7 +267,9 @@ class DashboardController extends Controller
 
         // 協力金: 毎月5日以降で前月分にpendingが残っている場合
         if ($today->day >= 5) {
-            $prevMonth = $today->copy()->subMonth()->startOfMonth();
+            // 31日など月末日からsubMonth()すると、対象月にその日が存在せず翌月に繰り上がる
+            // （Carbonの月またぎオーバーフロー）バグがあったため、必ずstartOfMonth()してから引く
+            $prevMonth = $today->copy()->startOfMonth()->subMonth();
             $unpaidCount = MonitorReport::where('status', 'approved')
                 ->where('payment_status', 'pending')
                 ->whereBetween('created_at', [$prevMonth, $prevMonth->copy()->endOfMonth()])
@@ -286,7 +288,9 @@ class DashboardController extends Controller
 
         // 紹介報酬: 毎月25日以降で前月分に処理済みでない代理店がある場合
         if ($today->day >= 25) {
-            $prevMonth = $today->copy()->subMonth()->startOfMonth();
+            // 31日など月末日からsubMonth()すると、対象月にその日が存在せず翌月に繰り上がる
+            // （Carbonの月またぎオーバーフロー）バグがあったため、必ずstartOfMonth()してから引く
+            $prevMonth = $today->copy()->startOfMonth()->subMonth();
             $py = (int) $prevMonth->format('Y');
             $pm = (int) $prevMonth->format('n');
 
@@ -389,7 +393,8 @@ class DashboardController extends Controller
         $approvals = [];
 
         for ($i = 11; $i >= 0; $i--) {
-            $d = now()->subMonths($i);
+            // 月末日からsubMonths()すると対象月にその日が存在せず繰り上がるバグを避けるためstartOfMonth()してから引く
+            $d = now()->startOfMonth()->subMonths($i);
             $y = (int)$d->format('Y');
             $m = (int)$d->format('n');
 

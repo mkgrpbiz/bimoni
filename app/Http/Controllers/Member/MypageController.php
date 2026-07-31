@@ -21,8 +21,9 @@ class MypageController extends Controller
             ->get();
 
         $now = now();
-        $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
-        $lastMonthEnd   = $now->copy()->subMonth()->endOfMonth();
+        // 月末日からsubMonth()すると対象月にその日が存在せず繰り上がるバグを避けるためstartOfMonth()してから引く
+        $lastMonthStart = $now->copy()->startOfMonth()->subMonth();
+        $lastMonthEnd   = $now->copy()->startOfMonth()->subMonth()->endOfMonth();
         $thisMonthStart = $now->copy()->startOfMonth();
         $thisMonthEnd   = $now->copy()->endOfMonth();
 

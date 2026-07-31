@@ -28,7 +28,8 @@ class PointController extends Controller
     {
         // 先月・当月ブロック
         $blocks = [];
-        foreach ([Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->startOfMonth()] as $m) {
+        // 月末日からsubMonth()すると対象月にその日が存在せず繰り上がるバグを避けるためstartOfMonth()してから引く
+        foreach ([Carbon::now()->startOfMonth()->subMonth(), Carbon::now()->startOfMonth()] as $m) {
             $start = $m->copy()->startOfMonth();
             $end   = $m->copy()->endOfMonth();
 
