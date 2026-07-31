@@ -75,6 +75,13 @@ class PointController extends Controller
             ->map(fn($r) => ['year' => (int)$r->y, 'month' => (int)$r->m, 'label' => Carbon::createFromDate($r->y, $r->m, 1)->format('Y年n月')])
             ->toArray();
 
+        // 当月がまだ承認済み報告0件でも選べるよう、含まれていなければ先頭に追加
+        $nowY = now()->year;
+        $nowM = now()->month;
+        if (!collect($months)->contains(fn($m) => $m['year'] === $nowY && $m['month'] === $nowM)) {
+            array_unshift($months, ['year' => $nowY, 'month' => $nowM, 'label' => now()->format('Y年n月')]);
+        }
+
         $monitorQuery = MonitorReport::with(['user', 'campaign', 'application'])
             ->where('status', 'approved')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);

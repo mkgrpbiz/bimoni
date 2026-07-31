@@ -120,7 +120,7 @@ class ApprovalReflectionController extends Controller
 
     private function getAvailableMonths(): array
     {
-        return \App\Models\Application::whereNotNull('completed_at')
+        $months = \App\Models\Application::whereNotNull('completed_at')
             ->whereRaw("completed_at >= '2026-02-01'")
             ->selectRaw('YEAR(completed_at) as y, MONTH(completed_at) as m')
             ->groupBy('y', 'm')
@@ -128,5 +128,14 @@ class ApprovalReflectionController extends Controller
             ->get()
             ->map(fn($r) => ['year' => (int)$r->y, 'month' => (int)$r->m, 'label' => \Carbon\Carbon::createFromDate($r->y, $r->m, 1)->format('Y年n月')])
             ->toArray();
+
+        // 当月がまだ実施完了0件でも選べるよう、含まれていなければ先頭に追加
+        $nowY = now()->year;
+        $nowM = now()->month;
+        if (!collect($months)->contains(fn($m) => $m['year'] === $nowY && $m['month'] === $nowM)) {
+            array_unshift($months, ['year' => $nowY, 'month' => $nowM, 'label' => now()->format('Y年n月')]);
+        }
+
+        return $months;
     }
 }
