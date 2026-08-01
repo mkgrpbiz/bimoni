@@ -28,7 +28,7 @@
         </div>
         <div class="flex justify-between">
             <span class="text-gray-500">回収時の金額</span>
-            <span class="font-medium text-gray-800">800×{{ $application->campaign->collection_count_judgment }}＝{{ number_format($collectionFee) }}円</span>
+            <span class="font-medium text-gray-800">800×{{ $application->campaign->collection_count_judgment }}＝{{ number_format($collectionFee) }}P</span>
         </div>
         @endif
     </div>
