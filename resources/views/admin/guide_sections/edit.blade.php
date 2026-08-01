@@ -16,7 +16,7 @@
 {{-- セクション基本情報 --}}
 <div class="bg-white rounded-lg shadow p-6 mb-6">
     <h2 class="font-bold text-gray-700 mb-4">セクション基本情報</h2>
-    <form method="POST" action="{{ route('admin.guide_sections.update', $section) }}" class="space-y-4">
+    <form id="section-update-form" method="POST" action="{{ route('admin.guide_sections.update', $section) }}" class="space-y-4">
         @csrf
         @method('PUT')
         <div>
@@ -28,20 +28,20 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">説明文（ステップの前に表示、任意）</label>
             <textarea name="intro_text" rows="4" class="w-full border rounded px-3 py-2 text-sm">{{ old('intro_text', $section->intro_text) }}</textarea>
         </div>
-        <div class="flex items-center justify-between pt-2 border-t">
-            <form method="POST" action="{{ route('admin.guide_sections.toggle_visible', $section) }}">
-                @csrf @method('PATCH')
-                <button type="submit"
-                        class="text-xs px-3 py-1.5 rounded
-                            {{ $section->is_visible
-                                ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                : 'bg-pink-500 text-white hover:bg-pink-600' }}">
-                    {{ $section->is_visible ? '非表示にする' : '表示にする' }}
-                </button>
-            </form>
-            <button type="submit" class="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 text-sm">更新する</button>
-        </div>
     </form>
+    <div class="flex items-center justify-between pt-2 mt-4 border-t">
+        <form method="POST" action="{{ route('admin.guide_sections.toggle_visible', $section) }}">
+            @csrf @method('PATCH')
+            <button type="submit"
+                    class="text-xs px-3 py-1.5 rounded
+                        {{ $section->is_visible
+                            ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            : 'bg-pink-500 text-white hover:bg-pink-600' }}">
+                {{ $section->is_visible ? '非表示にする' : '表示にする' }}
+            </button>
+        </form>
+        <button type="submit" form="section-update-form" class="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600 text-sm">更新する</button>
+    </div>
 </div>
 
 {{-- 注意書きボックス --}}
