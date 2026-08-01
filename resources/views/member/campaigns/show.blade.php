@@ -35,7 +35,13 @@
             <div class="flex justify-between items-center py-1 {{ $activeBonus ? 'border-b border-gray-50' : '' }}">
                 <span class="text-sm text-gray-600">ポイント還元</span>
                 <span class="font-bold text-pink-600">
-                    {{ number_format($campaign->cooperation_fee ?? 0) }}P
+                    @if($campaign->initial_purchase_fee && $campaign->cooperation_fee)
+                        {{ number_format($campaign->initial_purchase_fee) }}+{{ number_format($campaign->cooperation_fee) }}P
+                    @elseif($campaign->initial_purchase_fee)
+                        {{ number_format($campaign->initial_purchase_fee) }}P
+                    @else
+                        {{ number_format($campaign->cooperation_fee ?? 0) }}P
+                    @endif
                 </span>
             </div>
             @if($activeBonus)
@@ -160,7 +166,13 @@
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-gray-500">継続ポイント還元</span>
                         <span class="text-pink-600 font-bold">
-                            {{ number_format($campaign->continuation_cooperation_fee ?? 0) }}P
+                            @if($campaign->recurring_purchase_fee && $campaign->continuation_cooperation_fee)
+                                {{ number_format($campaign->recurring_purchase_fee) }}+{{ number_format($campaign->continuation_cooperation_fee) }}P
+                            @elseif($campaign->recurring_purchase_fee)
+                                {{ number_format($campaign->recurring_purchase_fee) }}P
+                            @else
+                                {{ number_format($campaign->continuation_cooperation_fee ?? 0) }}P
+                            @endif
                         </span>
                     </div>
                 </div>
