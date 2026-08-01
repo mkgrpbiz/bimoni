@@ -123,7 +123,7 @@ class Campaign extends Model
             [
                 $this->title ?? '',
                 $this->initial_purchase_fee ? number_format($this->initial_purchase_fee) . '円' : '',
-                number_format($this->cooperation_fee) . '円',
+                number_format($this->cooperation_fee) . 'P',
                 $this->cancellation_info ?? '',
                 $this->monitor_guide ?? '',
                 $this->link ?? '',

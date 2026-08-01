@@ -98,7 +98,7 @@
             <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-3" id="collection-fee-box">
                 <div class="flex justify-between items-center">
                     <span class="text-sm text-gray-600">回収サービス協力金</span>
-                    <span class="font-bold text-pink-600 text-base" id="collection-fee-display">0円</span>
+                    <span class="font-bold text-pink-600 text-base" id="collection-fee-display">0P</span>
                 </div>
                 <p class="text-xs text-gray-500 mt-1" id="collection-fee-note"></p>
             </div>
@@ -178,13 +178,13 @@ function updateCollectionFee() {
     const effectiveCount = gross / 800;
     const fee = effectiveCount >= 5 ? gross + shippingFee : gross;
 
-    document.getElementById('collection-fee-display').textContent = fee.toLocaleString() + '円';
+    document.getElementById('collection-fee-display').textContent = fee.toLocaleString() + 'P';
 
     if (count > 0 && effectiveCount >= 5) {
         document.getElementById('collection-fee-note').textContent =
-            gross.toLocaleString() + '円 + 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + '円';
+            gross.toLocaleString() + 'P + 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + 'P';
     } else if (count > 0) {
-        document.getElementById('collection-fee-note').textContent = gross.toLocaleString() + '円（送料なし）';
+        document.getElementById('collection-fee-note').textContent = gross.toLocaleString() + 'P（送料なし）';
     } else {
         document.getElementById('collection-fee-note').textContent = '';
     }

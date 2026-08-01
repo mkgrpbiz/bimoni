@@ -25,11 +25,11 @@
         <div class="grid grid-cols-2 gap-2">
             <div class="bg-white/20 rounded-xl px-3 py-3 text-center">
                 <p class="text-pink-100 text-xs mb-1">{{ $payCurrentDate }}支払い</p>
-                <p class="text-2xl font-bold">¥{{ number_format($payCurrentMonth) }}</p>
+                <p class="text-2xl font-bold">{{ number_format($payCurrentMonth) }}P</p>
             </div>
             <div class="bg-white/20 rounded-xl px-3 py-3 text-center">
                 <p class="text-pink-100 text-xs mb-1">{{ $payNextDate }}支払い</p>
-                <p class="text-2xl font-bold">¥{{ number_format($payNextMonth) }}</p>
+                <p class="text-2xl font-bold">{{ number_format($payNextMonth) }}P</p>
             </div>
         </div>
     </div>
@@ -249,7 +249,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right flex-shrink-0">
-                                    <p class="text-sm font-bold text-pink-600">¥{{ number_format($cr->totalFee()) }}</p>
+                                    <p class="text-sm font-bold text-pink-600">{{ number_format($cr->totalFee()) }}P</p>
                                 </div>
                             </div>
                             <div class="ml-13 pl-1 flex items-end justify-between">

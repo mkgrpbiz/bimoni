@@ -73,11 +73,11 @@
             <dd class="text-gray-800">¥{{ number_format($purchaseAmt) }}</dd>
             @if($report->purchase_type !== 'other')
             <dt class="text-gray-500">モニター協力金</dt>
-            <dd class="text-pink-600 font-medium">¥{{ number_format($coopFee) }}</dd>
+            <dd class="text-pink-600 font-medium">{{ number_format($coopFee) }}P</dd>
             @endif
             @if($adjustAmt)
             <dt class="text-gray-500">調整金額</dt>
-            <dd class="{{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}¥{{ number_format($adjustAmt) }}</dd>
+            <dd class="{{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}{{ number_format($adjustAmt) }}P</dd>
             @if($report->adjustment_reason)
             <dt class="text-gray-500">調整理由</dt>
             <dd class="text-gray-800">{{ $report->adjustment_reason }}</dd>
@@ -85,7 +85,7 @@
             @endif
             @if($report->purchase_type !== 'other')
             <dt class="text-gray-500 font-medium">合計</dt>
-            <dd class="font-bold text-gray-800">¥{{ number_format($total) }}</dd>
+            <dd class="font-bold text-gray-800">{{ number_format($total) }}P</dd>
             @endif
             @if($report->payment_method)
             @php

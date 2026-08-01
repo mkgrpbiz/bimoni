@@ -52,13 +52,13 @@
                         <div class="absolute top-2 right-2 bg-gray-700 text-white text-xs px-2 py-0.5 rounded-full">応募済み</div>
                     @endif
                     <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                        +{{ number_format($bonus->bonus_amount) }}円
+                        +{{ number_format($bonus->bonus_amount) }}P
                     </div>
                 </div>
                 <div class="p-3">
                     <p class="text-xs font-medium text-gray-800 leading-snug line-clamp-2 mb-2">{{ $campaign->title }}</p>
                     @php $totalFee = ($campaign->initial_purchase_fee ?? 0) + ($campaign->cooperation_fee ?? 0) + $bonus->bonus_amount; @endphp
-                    <p class="text-pink-600 font-bold text-sm">{{ number_format($totalFee) }}円</p>
+                    <p class="text-pink-600 font-bold text-sm">{{ number_format($totalFee) }}P</p>
                     <p class="text-gray-400 text-xs">モニター協力金合計</p>
                     <p class="text-red-400 text-xs mt-1">対象期間 {{ $bonus->start_at->format('n/j') }}〜{{ $bonus->end_at->format('n/j') }}</p>
                     <div class="mt-2.5">
@@ -114,14 +114,14 @@
                         @endif
                         @if($bonus)
                             <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                +{{ number_format($bonus->bonus_amount) }}円
+                                +{{ number_format($bonus->bonus_amount) }}P
                             </div>
                         @endif
                     </div>
                     <div class="p-3">
                         <p class="text-xs font-medium text-gray-800 leading-snug line-clamp-2 mb-2">{{ $campaign->title }}</p>
                         @php $totalFee = ($campaign->initial_purchase_fee ?? 0) + ($campaign->cooperation_fee ?? 0) + ($bonus?->bonus_amount ?? 0); @endphp
-                        <p class="text-pink-600 font-bold text-sm">{{ number_format($totalFee) }}円</p>
+                        <p class="text-pink-600 font-bold text-sm">{{ number_format($totalFee) }}P</p>
                         <p class="text-gray-400 text-xs">モニター協力金合計</p>
                         <div class="mt-2.5">
                             @if($appliedStatus)

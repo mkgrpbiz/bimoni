@@ -122,7 +122,7 @@
             </div>
             <div class="flex justify-between items-center text-sm" id="display-bonus-row" style="display:none!important">
                 <span class="text-gray-600">＋ キャンペーン</span>
-                <span class="font-medium text-red-500" id="display-bonus">0円</span>
+                <span class="font-medium text-red-500" id="display-bonus">0P</span>
             </div>
             <div class="border-t border-pink-200 pt-2 flex justify-between items-center">
                 <span class="text-sm font-bold text-gray-700">合計（モニター協力金）</span>
@@ -265,16 +265,16 @@ function recalcFee() {
 
     document.getElementById('display-expense').textContent = purchaseAmt.toLocaleString() + '円';
     const extraRow = document.getElementById('display-extra').closest('.flex');
-    document.getElementById('display-extra').textContent = '+' + extraBonus.toLocaleString() + '円';
+    document.getElementById('display-extra').textContent = '+' + extraBonus.toLocaleString() + 'P';
     if (extraRow) extraRow.style.setProperty('display', extraBonus > 0 ? '' : 'none', 'important');
     const bonusRow = document.getElementById('display-bonus-row');
     if (campaignBonus > 0) {
-        document.getElementById('display-bonus').textContent = '+' + campaignBonus.toLocaleString() + '円';
+        document.getElementById('display-bonus').textContent = '+' + campaignBonus.toLocaleString() + 'P';
         bonusRow.style.removeProperty('display');
     } else {
         bonusRow.style.setProperty('display', 'none', 'important');
     }
-    document.getElementById('monitor-fee-display').textContent = totalFee.toLocaleString() + '円';
+    document.getElementById('monitor-fee-display').textContent = totalFee.toLocaleString() + 'P';
 }
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -127,7 +127,7 @@
             @elseif($field->type === 'campaign_cooperation_fee')
                 <div class="flex justify-between items-center bg-white rounded-xl border border-gray-100 px-4 py-3 text-sm">
                     <span class="text-gray-500">モニター協力金</span>
-                    <span class="font-bold text-pink-600 text-base">¥{{ number_format($c->cooperation_fee) }}</span>
+                    <span class="font-bold text-pink-600 text-base">{{ number_format($c->cooperation_fee) }}P</span>
                 </div>
             @endif
         @endif

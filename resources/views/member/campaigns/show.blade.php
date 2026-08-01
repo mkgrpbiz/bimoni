@@ -38,13 +38,13 @@
                     @php
                         $coopDisplay = '';
                         if ($campaign->initial_purchase_fee && $campaign->cooperation_fee) {
-                            $coopDisplay = number_format($campaign->initial_purchase_fee) . '+' . number_format($campaign->cooperation_fee) . '円';
+                            $coopDisplay = number_format($campaign->initial_purchase_fee) . '円+' . number_format($campaign->cooperation_fee) . 'P';
                         } elseif ($campaign->initial_purchase_fee) {
                             $coopDisplay = number_format($campaign->initial_purchase_fee) . '円';
                         } elseif ($campaign->cooperation_fee) {
-                            $coopDisplay = number_format($campaign->cooperation_fee) . '円';
+                            $coopDisplay = number_format($campaign->cooperation_fee) . 'P';
                         } else {
-                            $coopDisplay = '0円';
+                            $coopDisplay = '0P';
                         }
                     @endphp
                     {{ $coopDisplay }}
@@ -53,7 +53,7 @@
             @if($activeBonus)
             <div class="flex justify-between items-center py-1">
                 <span class="text-sm text-gray-600">キャンペーン</span>
-                <span class="font-bold text-red-500">+{{ number_format($activeBonus->bonus_amount) }}円</span>
+                <span class="font-bold text-red-500">+{{ number_format($activeBonus->bonus_amount) }}P</span>
             </div>
             @endif
         </div>
@@ -173,7 +173,7 @@
                         <span class="text-gray-500">継続モニター協力金</span>
                         <span class="text-pink-600 font-bold">
                             @if($campaign->continuation_cooperation_fee)
-                                @if($campaign->recurring_purchase_fee){{ number_format($campaign->recurring_purchase_fee) }}+@endif{{ number_format($campaign->continuation_cooperation_fee) }}円
+                                @if($campaign->recurring_purchase_fee){{ number_format($campaign->recurring_purchase_fee) }}円+@endif{{ number_format($campaign->continuation_cooperation_fee) }}P
                             @else
                                 {{ number_format($campaign->recurring_purchase_fee ?? 0) }}円
                             @endif
