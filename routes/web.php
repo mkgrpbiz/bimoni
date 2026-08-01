@@ -190,11 +190,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // フォーム項目管理（ページ編集）
         Route::get('form-fields', [FormFieldController::class, 'index'])->name('form_fields.index');
         Route::post('form-fields', [FormFieldController::class, 'store'])->name('form_fields.store');
+        // 固定パスのルートは {formField} ワイルドカードに先取りされないよう先に定義する
+        Route::patch('form-fields/legal/{slug}', [FormFieldController::class, 'updateLegal'])->name('form_fields.legal');
+        Route::patch('form-fields/end-cancel-setting', [EndCancelSettingController::class, 'update'])->name('form_fields.end_cancel_setting');
         Route::patch('form-fields/{formField}', [FormFieldController::class, 'update'])->name('form_fields.update');
         Route::delete('form-fields/{formField}', [FormFieldController::class, 'destroy'])->name('form_fields.destroy');
         Route::patch('form-fields/{formField}/toggle', [FormFieldController::class, 'toggle'])->name('form_fields.toggle');
-        Route::patch('form-fields/legal/{slug}', [FormFieldController::class, 'updateLegal'])->name('form_fields.legal');
-        Route::patch('form-fields/end-cancel-setting', [EndCancelSettingController::class, 'update'])->name('form_fields.end_cancel_setting');
         // よくある質問管理
         Route::get('faqs', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('faqs.index');
         Route::get('faqs/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('faqs.create');
