@@ -1,10 +1,10 @@
 @extends('layouts.admin')
 
-@section('title', '協力金管理')
+@section('title', 'ポイント還元管理')
 
 @section('content')
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">協力金管理</h1>
+    <h1 class="text-2xl font-bold text-gray-800">ポイント還元管理</h1>
     <button onclick="document.getElementById('adjust-form').classList.toggle('hidden')"
             class="bg-gray-500 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-600">手動調整</button>
 </div>
@@ -91,14 +91,14 @@
 
             @if($block['hasPending'] && $block['total'] > 0)
             <form method="POST" action="{{ route('admin.points.mark_reserved') }}"
-                  onsubmit="return confirm('{{ $block['month']->format('Y年n月') }}の協力金をすべて予約済にしますか？')">
+                  onsubmit="return confirm('{{ $block['month']->format('Y年n月') }}のポイント還元をすべて予約済にしますか？')">
                 @csrf @method('PATCH')
                 <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
                 <button type="submit" class="bg-green-500 text-white px-3 py-1.5 rounded text-sm hover:bg-green-600">→ 予約済にする</button>
             </form>
             @elseif(!$block['hasPending'] && $block['total'] > 0)
             <form method="POST" action="{{ route('admin.points.mark_paid') }}"
-                  onsubmit="return confirm('{{ $block['month']->format('Y年n月') }}の協力金をすべて支払い済にしますか？')">
+                  onsubmit="return confirm('{{ $block['month']->format('Y年n月') }}のポイント還元をすべて支払い済にしますか？')">
                 @csrf @method('PATCH')
                 <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
                 <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">→ 支払い済にする</button>
@@ -141,7 +141,7 @@ function syncMonth(sel) {
 <div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600 flex items-center gap-4">
     <span>{{ $month->format('Y年n月') }} 合計: <strong>¥{{ number_format($totalAmount) }}</strong></span>
     <form method="POST" action="{{ route('admin.points.mark_paid') }}"
-          onsubmit="return confirm('{{ $month->format('Y年n月') }}の協力金をすべて支払い済にしますか？')">
+          onsubmit="return confirm('{{ $month->format('Y年n月') }}のポイント還元をすべて支払い済にしますか？')">
         @csrf @method('PATCH')
         <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
         <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">→ 支払い済にする</button>
@@ -158,7 +158,7 @@ function syncMonth(sel) {
                 <th class="px-4 py-3 text-left">フリガナ</th>
                 <th class="px-4 py-3 text-right">モニター件数</th>
                 <th class="px-4 py-3 text-right">回収件数</th>
-                <th class="px-4 py-3 text-right">協力金合計</th>
+                <th class="px-4 py-3 text-right">ポイント還元合計</th>
                 <th class="px-4 py-3 text-center">ステータス</th>
             </tr>
         </thead>

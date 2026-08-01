@@ -72,7 +72,7 @@
             <dt class="text-gray-500">モニター経費</dt>
             <dd class="text-gray-800">¥{{ number_format($purchaseAmt) }}</dd>
             @if($report->purchase_type !== 'other')
-            <dt class="text-gray-500">モニター協力金</dt>
+            <dt class="text-gray-500">ポイント還元</dt>
             <dd class="text-pink-600 font-medium">{{ number_format($coopFee) }}P</dd>
             @endif
             @if($adjustAmt)

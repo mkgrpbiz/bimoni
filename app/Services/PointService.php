@@ -24,7 +24,7 @@ class PointService
                 'user_id'        => $user->id,
                 'type'           => 'earn',
                 'amount'         => $amount,
-                'reason'         => "案件「{$campaign->title}」モニター協力金",
+                'reason'         => "案件「{$campaign->title}」ポイント還元",
                 'application_id' => $application->id,
                 'granted_by'     => Auth::guard('web')->id(),
                 'created_at'     => now(),

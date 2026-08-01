@@ -151,7 +151,7 @@
             <input type="text" id="f-monitor-cost" readonly
                    class="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-700"
                    value="{{ number_format(isset($campaign) ? $campaign->calculatedMonitorCost() : 0) }}円">
-            <p class="text-xs text-gray-400 mt-0.5">初回+継続×継続率+協力金+紹介単価（コース設定が有の場合はコース金額×％の加重平均+協力金+紹介単価）</p>
+            <p class="text-xs text-gray-400 mt-0.5">初回+継続×継続率+ポイント還元+紹介単価（コース設定が有の場合はコース金額×％の加重平均+ポイント還元+紹介単価）</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">粗利（自動計算）</label>
@@ -188,9 +188,9 @@
             </select>
         </div>
 
-        {{-- Row 3: モニター協力金 / 回収必須 --}}
+        {{-- Row 3: ポイント還元 / 回収必須 --}}
         <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">モニター協力金（+○円部分）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">ポイント還元（+○円部分）</label>
             <div class="flex items-center gap-1">
                 <span class="text-sm text-gray-500 whitespace-nowrap">初回購入費(<span id="lbl-initial">{{ number_format($campaign->initial_purchase_fee ?? 0) }}</span>円)+</span>
                 <input type="number" name="cooperation_fee" id="f-coop"
@@ -212,9 +212,9 @@
             </select>
         </div>
 
-        {{-- Row 4: 継続モニター協力金 / 回収個数判定 --}}
+        {{-- Row 4: 継続ポイント還元 / 回収個数判定 --}}
         <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">継続モニター協力金（+○円部分）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">継続ポイント還元（+○円部分）</label>
             <div class="flex items-center gap-1">
                 <span class="text-sm text-gray-500 whitespace-nowrap">継続購入費(<span id="lbl-recurring">{{ number_format($campaign->recurring_purchase_fee ?? 0) }}</span>円)+</span>
                 <input type="number" name="continuation_cooperation_fee" id="f-cont-coop"
@@ -485,7 +485,7 @@
         <div class="grid grid-cols-2 gap-1 font-mono">
             <span>@{{商品名}}</span><span class="text-gray-400">→ 商品名</span>
             <span>@{{初回購入費}}</span><span class="text-gray-400">→ 初回購入費（円）</span>
-            <span>@{{モニター協力金}}</span><span class="text-gray-400">→ モニター協力金（円）</span>
+            <span>@{{モニター協力金}}</span><span class="text-gray-400">→ ポイント還元（P、会員向け表示）</span>
             <span>@{{解約について}}</span><span class="text-gray-400">→ 解約についての内容</span>
             <span>@{{モニター案内文}}</span><span class="text-gray-400">→ モニター案内文の内容</span>
             <span>@{{リンク}}</span><span class="text-gray-400">→ リンクURL</span>

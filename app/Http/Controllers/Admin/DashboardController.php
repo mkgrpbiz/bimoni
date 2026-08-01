@@ -285,9 +285,9 @@ class DashboardController extends Controller
             if ($unpaidCount > 0 && !($dismissed[$coopKey] ?? false)) {
                 $alerts[] = [
                     'level'       => 'warning',
-                    'message'     => "前月（{$prevMonth->format('Y年n月')}）の協力金 {$unpaidCount}件 が予約待ちのままです（毎月5日までに対応してください）。",
+                    'message'     => "前月（{$prevMonth->format('Y年n月')}）のポイント還元 {$unpaidCount}件 が予約待ちのままです（毎月5日までに対応してください）。",
                     'link'        => route('admin.points.index', ['year' => $prevMonth->year, 'month' => $prevMonth->month]),
-                    'label'       => '協力金管理',
+                    'label'       => 'ポイント還元管理',
                     'dismiss_key' => $coopKey,
                 ];
             }

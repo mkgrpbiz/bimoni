@@ -34,7 +34,7 @@
             </div>
 
             <dl class="grid grid-cols-2 gap-y-3 text-sm">
-                <dt class="text-gray-500">協力金</dt>
+                <dt class="text-gray-500">ポイント還元</dt>
                 <dd class="font-bold text-pink-600 text-base">¥{{ number_format($collectionReport->cooperation_fee) }}
                     <span class="text-xs font-normal text-gray-400 ml-1">
                         ({{ $collectionReport->item_count }}点×800円
@@ -183,7 +183,7 @@
                     </div>
                     <dl class="grid grid-cols-2 gap-y-2 text-sm mb-3">
                         <dt class="text-gray-500">商品数</dt><dd>{{ $dup->item_count }}点</dd>
-                        <dt class="text-gray-500">協力金</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->cooperation_fee) }}</dd>
+                        <dt class="text-gray-500">ポイント還元</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->cooperation_fee) }}</dd>
                         <dt class="text-gray-500">送料</dt><dd>¥{{ number_format($dup->shipping_fee) }}</dd>
                         <dt class="text-gray-500">追跡番号</dt><dd class="font-mono text-xs">{{ $dup->tracking_number }}</dd>
                         <dt class="text-gray-500">到着予定日</dt><dd>{{ $dup->estimated_arrival_date?->format('Y/m/d') ?? '-' }}</dd>

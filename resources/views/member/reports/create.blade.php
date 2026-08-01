@@ -110,14 +110,14 @@
             </div>
         </div>
 
-        {{-- モニター協力金（自動計算） --}}
+        {{-- ポイント還元（自動計算） --}}
         <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-4 space-y-2" id="monitor-fee-box">
             <div class="flex justify-between items-center text-sm">
                 <span class="text-gray-600">モニター経費</span>
                 <span class="font-medium text-gray-800" id="display-expense">0円</span>
             </div>
             <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-600">＋ モニター協力金</span>
+                <span class="text-gray-600">＋ ポイント還元</span>
                 <span class="font-medium text-gray-800" id="display-extra">-</span>
             </div>
             <div class="flex justify-between items-center text-sm" id="display-bonus-row" style="display:none!important">
@@ -125,7 +125,7 @@
                 <span class="font-medium text-red-500" id="display-bonus">0P</span>
             </div>
             <div class="border-t border-pink-200 pt-2 flex justify-between items-center">
-                <span class="text-sm font-bold text-gray-700">合計（モニター協力金）</span>
+                <span class="text-sm font-bold text-gray-700">合計（ポイント還元）</span>
                 <span class="font-bold text-pink-600 text-lg" id="monitor-fee-display">-</span>
             </div>
         </div>
@@ -206,7 +206,7 @@
                     class="w-full bg-pink-500 text-white py-4 rounded-xl font-bold text-base shadow-md hover:bg-pink-600">
                 報告する
             </button>
-            <p class="text-xs text-gray-400 text-center mt-2">※報告確認後、問題がなければモニター協力金に反映されます。</p>
+            <p class="text-xs text-gray-400 text-center mt-2">※報告確認後、問題がなければポイント還元に反映されます。</p>
         </div>
     </form>
 

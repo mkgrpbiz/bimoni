@@ -16,7 +16,7 @@
     <div class="bg-red-50 rounded-xl border border-red-200 p-5 mb-4">
         <p class="text-base font-bold text-red-600 mb-2">【注意事項】</p>
         <ul class="text-sm text-gray-700 space-y-1">
-            <li>・モニター対象時間外の購入は協力金対象外です。</li>
+            <li>・モニター対象時間外の購入はポイント還元対象外です。</li>
             <li>・案内があるまで購入しないでください。</li>
         </ul>
     </div>

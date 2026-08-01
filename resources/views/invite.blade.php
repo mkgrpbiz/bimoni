@@ -30,11 +30,11 @@
         <p class="text-2xl font-black text-gray-800 leading-tight mb-2">
             美容商品やサービスを<br>
             <span class="text-pink-500">モニターして</span><br>
-            協力金をもらおう
+            ポイント還元をもらおう
         </p>
         <p class="text-sm text-gray-500 leading-relaxed">
             実際に購入や体験し、報告するだけ。<br>
-            モニター協力金をお支払いします。
+            ポイント還元をお支払いします。
         </p>
     </div>
 
@@ -57,7 +57,7 @@
         <div class="flex items-start gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
             <span class="text-xl shrink-0">💰</span>
             <div>
-                <p class="text-sm font-bold text-gray-800">購入費＋協力金をお支払い</p>
+                <p class="text-sm font-bold text-gray-800">購入費＋ポイント還元をお支払い</p>
                 <p class="text-xs text-gray-500">商品代金は全額還元。さらに謝礼あり</p>
             </div>
         </div>
@@ -65,7 +65,7 @@
             <span class="text-xl shrink-0">📱</span>
             <div>
                 <p class="text-sm font-bold text-gray-800">LINEで簡単管理</p>
-                <p class="text-xs text-gray-500">案件・報告・協力金の確認がすべてLINEで</p>
+                <p class="text-xs text-gray-500">案件・報告・ポイント還元の確認がすべてLINEで</p>
             </div>
         </div>
     </div>

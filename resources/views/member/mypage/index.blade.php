@@ -21,7 +21,7 @@
             </a>
         </div>
 
-        <p class="text-pink-100 text-xs mb-2 text-center">モニター協力金 支払い予定</p>
+        <p class="text-pink-100 text-xs mb-2 text-center">ポイント還元 支払い予定</p>
         <div class="grid grid-cols-2 gap-2">
             <div class="bg-white/20 rounded-xl px-3 py-3 text-center">
                 <p class="text-pink-100 text-xs mb-1">{{ $payCurrentDate }}支払い</p>

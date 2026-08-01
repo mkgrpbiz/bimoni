@@ -243,6 +243,6 @@ class ReportController extends Controller
             'status'                 => 'pending',
         ]);
 
-        return redirect()->route('member.mypage')->with('success', '回収サービスの報告を送信しました。確認後、協力金に反映されます。');
+        return redirect()->route('member.mypage')->with('success', '回収サービスの報告を送信しました。確認後、ポイント還元に反映されます。');
     }
 }

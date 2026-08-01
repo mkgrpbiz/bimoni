@@ -25,10 +25,10 @@
                 'proposal_reservations' => ['label' => '状況確認', 'route' => 'admin.proposal_reservations.index'],
                 'manual_addition'       => ['label' => '手動追加', 'route' => 'admin.manual_addition.index'],
             ],
-            '協力金関連' => [
-                'reports'            => ['label' => '報告管理',   'route' => 'admin.reports.index'],
-                'collection_reports' => ['label' => '回収管理',   'route' => 'admin.collection_reports.index'],
-                'points'             => ['label' => '協力金管理', 'route' => 'admin.points.index'],
+            'ポイント還元関連' => [
+                'reports'            => ['label' => '報告管理',       'route' => 'admin.reports.index'],
+                'collection_reports' => ['label' => '回収管理',       'route' => 'admin.collection_reports.index'],
+                'points'             => ['label' => 'ポイント還元管理', 'route' => 'admin.points.index'],
             ],
             'ユーザー・代理店関連' => [
                 'users'      => ['label' => 'ユーザー管理', 'route' => 'admin.users.index'],

@@ -57,7 +57,7 @@
                 <dt class="text-gray-500 dark:text-gray-400">モニター経費</dt>
                 <dd class="dark:text-gray-200">¥{{ number_format($purchaseAmt) }}</dd>
                 @if($report->purchase_type !== 'other')
-                <dt class="text-gray-500 dark:text-gray-400">モニター協力金</dt>
+                <dt class="text-gray-500 dark:text-gray-400">ポイント還元</dt>
                 <dd class="text-pink-600 dark:text-pink-400 font-medium">¥{{ number_format($coopFee) }}</dd>
                 @endif
                 @if($adjustAmt)
@@ -264,7 +264,7 @@
                         <dt class="text-gray-500">報告種別</dt><dd>{{ $dupPurchaseLabel }}</dd>
                         @if($dup->purchase_type !== 'other')
                         <dt class="text-gray-500">モニター経費</dt><dd>¥{{ number_format($dup->purchase_amount ?? 0) }}</dd>
-                        <dt class="text-gray-500">協力金</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->purchase_type === 'continuation' ? ($dup->campaign?->continuation_cooperation_fee ?? 0) : ($dup->campaign?->cooperation_fee ?? 0)) }}</dd>
+                        <dt class="text-gray-500">ポイント還元</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->purchase_type === 'continuation' ? ($dup->campaign?->continuation_cooperation_fee ?? 0) : ($dup->campaign?->cooperation_fee ?? 0)) }}</dd>
                         <dt class="text-gray-500">支払方法</dt><dd>{{ $dupPayLabel }}</dd>
                         @endif
                     </dl>

@@ -33,7 +33,7 @@ class AdminManagerController extends Controller
             'collection_reports'    => '回収管理',
             'users'                 => 'ユーザー管理',
             'line_links'            => 'LINE紐付け',
-            'points'                => '協力金管理',
+            'points'                => 'ポイント還元管理',
             'referrals'             => '紹介報酬',
             'agents'                => '代理店',
             'import'                => 'インポート',

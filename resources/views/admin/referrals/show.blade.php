@@ -122,7 +122,7 @@
                 <th class="px-4 py-3 text-left">ユーザーID</th>
                 <th class="px-4 py-3 text-left">名前</th>
                 <th class="px-4 py-3 text-left">案件名</th>
-                <th class="px-4 py-3 text-right">協力金</th>
+                <th class="px-4 py-3 text-right">ポイント還元</th>
                 <th class="px-4 py-3 text-right">紹介報酬</th>
             </tr>
         </thead>

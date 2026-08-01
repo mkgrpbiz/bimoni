@@ -49,7 +49,7 @@ $tabs = [
                 <th class="px-3 py-2 text-left whitespace-nowrap">名前</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">フリガナ</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">案件名</th>
-                <th class="px-3 py-2 text-right whitespace-nowrap">モニター協力金</th>
+                <th class="px-3 py-2 text-right whitespace-nowrap">ポイント還元</th>
                 <th class="px-3 py-2 text-left whitespace-nowrap">ステータス</th>
                 <th class="px-3 py-2 text-center whitespace-nowrap">詳細</th>
             </tr>

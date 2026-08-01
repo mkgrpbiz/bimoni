@@ -88,7 +88,7 @@
             <p class="font-bold text-yellow-800">モニター報告 承認待ち</p>
             <p class="text-sm text-yellow-700">
                 {{ $pendingReportsCount }}件　¥{{ number_format($pendingReportsAmount) }}
-                （モニター経費＋協力金 合計）
+                （モニター経費＋ポイント還元 合計）
             </p>
         </div>
     </div>
@@ -167,7 +167,7 @@ $pm = $prevMetrics;
 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
     @php
     $cards2 = [
-        ['label' => '協力金',     'value' => $m['cooperationFee'], 'prev' => $pm['cooperationFee'], 'suffix' => ''],
+        ['label' => 'ポイント還元', 'value' => $m['cooperationFee'], 'prev' => $pm['cooperationFee'], 'suffix' => ''],
         ['label' => '売上',       'value' => $m['sales'],          'prev' => $pm['sales'],          'suffix' => ''],
         ['label' => '漏れ経費',   'value' => $m['leakCost'],       'prev' => $pm['leakCost'],       'suffix' => ''],
         ['label' => '全否認',     'value' => $m['allDenied'],      'prev' => $pm['allDenied'],      'suffix' => ''],
@@ -185,7 +185,7 @@ $pm = $prevMetrics;
         @if($card['label'] === '売上' && $m['salesLastReflectedAt'])
             <span class="text-xs text-gray-400">（最終反映：{{ $m['salesLastReflectedAt']->format('n/j H:i') }}）</span>
         @endif
-        @if($card['label'] === '協力金' && $m['cooperationFeeLastApprovedAt'])
+        @if($card['label'] === 'ポイント還元' && $m['cooperationFeeLastApprovedAt'])
             <span class="text-xs text-gray-400">（最終承認：{{ $m['cooperationFeeLastApprovedAt']->format('n/j H:i') }}）</span>
         @endif
     </div>
@@ -195,7 +195,7 @@ $pm = $prevMetrics;
 {{-- グラフ --}}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-sm font-bold text-gray-700 mb-3">売上・協力金推移（直近12ヶ月）</h3>
+        <h3 class="text-sm font-bold text-gray-700 mb-3">売上・ポイント還元推移（直近12ヶ月）</h3>
         <canvas id="chart-sales" height="200"></canvas>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
@@ -213,7 +213,7 @@ function syncMonth(sel) {
 
 const chartData = @json($chartData);
 
-// 売上・協力金
+// 売上・ポイント還元
 new Chart(document.getElementById('chart-sales'), {
     type: 'line',
     data: {
@@ -228,7 +228,7 @@ new Chart(document.getElementById('chart-sales'), {
                 fill: true,
             },
             {
-                label: '協力金',
+                label: 'ポイント還元',
                 data: chartData.fees,
                 borderColor: '#8b5cf6',
                 backgroundColor: 'rgba(139,92,246,0.08)',

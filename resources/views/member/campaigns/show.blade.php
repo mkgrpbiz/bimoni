@@ -33,7 +33,7 @@
             </div>
             @endif
             <div class="flex justify-between items-center py-1 {{ $activeBonus ? 'border-b border-gray-50' : '' }}">
-                <span class="text-sm text-gray-600">モニター協力金</span>
+                <span class="text-sm text-gray-600">ポイント還元</span>
                 <span class="font-bold text-pink-600">
                     @php
                         $coopDisplay = '';
@@ -170,7 +170,7 @@
                     </div>
                     @endif
                     <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-500">継続モニター協力金</span>
+                        <span class="text-gray-500">継続ポイント還元</span>
                         <span class="text-pink-600 font-bold">
                             @if($campaign->continuation_cooperation_fee)
                                 @if($campaign->recurring_purchase_fee){{ number_format($campaign->recurring_purchase_fee) }}円+@endif{{ number_format($campaign->continuation_cooperation_fee) }}P

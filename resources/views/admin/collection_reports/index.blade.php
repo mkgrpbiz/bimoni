@@ -52,7 +52,7 @@ $tabs = [
                 <th class="px-3 py-3 text-right whitespace-nowrap">商品数</th>
                 <th class="px-3 py-3 text-left whitespace-nowrap">到着予定日</th>
                 <th class="px-3 py-3 text-left whitespace-nowrap">追跡番号</th>
-                <th class="px-3 py-3 text-right whitespace-nowrap">協力金合計</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">ポイント還元合計</th>
                 <th class="px-3 py-3 text-left whitespace-nowrap">ステータス</th>
                 <th class="px-3 py-3 text-center whitespace-nowrap">詳細</th>
             </tr>

@@ -75,7 +75,7 @@
         <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-4">
             <div>
                 <h2 class="text-sm font-bold text-gray-700">銀行口座情報</h2>
-                <p class="text-xs text-red-500 mt-0.5">※協力金支払いに必要な為、必須項目</p>
+                <p class="text-xs text-red-500 mt-0.5">※ポイント還元支払いに必要な為、必須項目</p>
             </div>
 
             {{-- 銀行名 --}}

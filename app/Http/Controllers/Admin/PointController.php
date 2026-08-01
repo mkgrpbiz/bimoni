@@ -161,7 +161,7 @@ class PointController extends Controller
     public function grant(MonitorReport $report, PointService $pointService): RedirectResponse
     {
         $pointService->grantForReport($report);
-        return back()->with('success', '協力金を付与しました。');
+        return back()->with('success', 'ポイント還元を付与しました。');
     }
 
     public function markReserved(Request $request): RedirectResponse

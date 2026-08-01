@@ -94,10 +94,10 @@
                 </div>
             </div>
 
-            {{-- 回収サービス協力金表示 --}}
+            {{-- 回収サービスポイント還元表示 --}}
             <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-3" id="collection-fee-box">
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">回収サービス協力金</span>
+                    <span class="text-sm text-gray-600">回収サービスポイント還元</span>
                     <span class="font-bold text-pink-600 text-base" id="collection-fee-display">0P</span>
                 </div>
                 <p class="text-xs text-gray-500 mt-1" id="collection-fee-note"></p>
@@ -156,7 +156,7 @@
                     class="w-full bg-pink-500 text-white py-4 rounded-xl font-bold text-base shadow-md hover:bg-pink-600">
                 報告する
             </button>
-            <p class="text-xs text-gray-400 text-center mt-2">※商品確認後、問題がなければモニター協力金に反映されます。</p>
+            <p class="text-xs text-gray-400 text-center mt-2">※商品確認後、問題がなければポイント還元に反映されます。</p>
         </div>
     </form>
 </div>

@@ -64,7 +64,7 @@
             <dd class="text-gray-800 font-mono text-xs">{{ $report->tracking_number ?? '-' }}</dd>
             <dt class="text-gray-500">到着予定日</dt>
             <dd class="text-gray-800">{{ $report->estimated_arrival_date?->format('Y/m/d') ?? '-' }}</dd>
-            <dt class="text-gray-500">協力金</dt>
+            <dt class="text-gray-500">ポイント還元</dt>
             <dd class="text-pink-600 font-medium">{{ number_format($report->cooperation_fee) }}P</dd>
             @if($adjustAmt)
             <dt class="text-gray-500">調整金額</dt>
