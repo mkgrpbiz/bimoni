@@ -41,7 +41,9 @@ class TransferController extends Controller
             'birthdate'           => 'required|date',
             'email'               => 'required|email|max:255',
             'bank_name'           => 'required|string|max:100',
+            'bank_code'           => 'required|string',
             'bank_branch_name'    => 'required|string|max:100',
+            'bank_branch_code'    => 'required|string',
             'bank_account_type'   => 'required|in:普通,当座',
             'bank_account_number' => 'required|digits_between:7,8',
             'bank_account_name'   => 'required|string|max:100|regex:/^\S+$/',
@@ -50,6 +52,8 @@ class TransferController extends Controller
             'agree_terms.accepted'       => '利用規約とプライバシーポリシーへの同意が必要です。',
             'bank_account_name.regex'    => '口座名義にスペースは使用できません。',
             'bank_account_number.digits_between' => '口座番号は7〜8桁で入力してください。',
+            'bank_code.required'         => '銀行名は候補一覧から選択してください。',
+            'bank_branch_code.required'  => '支店名は候補一覧から選択してください。',
         ]);
 
         $target = [

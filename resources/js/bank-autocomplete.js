@@ -52,6 +52,15 @@ export function initBankAutocomplete() {
     let selectedBankCode = bankCodeEl?.value || null;
     let branchCache = {};
 
+    // 候補を選ばずに文字だけ手で編集された場合、古いコードが残らないようクリアする
+    // （選択時のみ createSuggest の onSelect コールバックでコードを設定する）
+    bankNameEl.addEventListener('input', () => {
+        if (bankCodeEl) bankCodeEl.value = '';
+        selectedBankCode = null;
+        if (branchNameEl) branchNameEl.value = '';
+        if (branchCodeEl) branchCodeEl.value = '';
+    });
+
     // 銀行名オートコンプリート（「銀行」「信金」など末尾の一般語を除去して検索）
     function normQuery(q) {
         return q.replace(/銀行|信用金庫|信金|信組|農協|漁協|労金/g, '').trim();
@@ -87,6 +96,11 @@ export function initBankAutocomplete() {
         } catch { branchCache[code] = []; }
         return branchCache[code];
     }
+
+    // 候補を選ばずに文字だけ手で編集された場合、古いコードが残らないようクリアする
+    branchNameEl.addEventListener('input', () => {
+        if (branchCodeEl) branchCodeEl.value = '';
+    });
 
     // 支店名オートコンプリート（AJAX）
     branchNameEl.addEventListener('input', async () => {
