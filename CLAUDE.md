@@ -124,6 +124,24 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 
 ---
 
+## 銀行口座・全銀データ
+
+### データソース（`scripts/extract-zengin.cjs`）
+- npmパッケージ `zengin-code` から生成。`resources/js/data/banks.json`（銀行マスタ、Viteバンドル）と `public/data/zengin/branches/{bankCode}.json`（支店データ、静的配置、1146銀行分）
+- **静的スナップショットのため実世界の商号変更等は自動反映されない**。2026-08-03の住信SBIネット銀行→株式会社ドコモSMTBネット銀行への商号変更時、`banks.json`のコード`"0038"`エントリを手動更新して対応した（公式発表等で裏取りしてから編集、憶測で書き換えない）
+- **銀行によっては支店データが実際より少ない**（`zengin-code`パッケージ側の制約）。例: ゆうちょ銀行（コード`9900`）は94件のみ収録。実際の支店（袋井など）が見つからない場合、こちらの実装バグではなくデータ側の限界の可能性を疑うこと
+- **紛らわしい銀行名の取り違えに注意**: コード`2845`は「熊本県信組」であり「熊本銀行」ではない（熊本銀行の正しいコードは`0587`、zengin-code上の表示名は「熊本」）。名称の部分一致だけで銀行を特定しない。支店データが見つからない＝コード自体が別の金融機関を指している可能性を先に疑う（実例: BMN011514の`bank_branch_code`がNULLだった原因は支店データ不足ではなく`bank_code=2845`という誤ったコードだった。正しいコード`0587`の支店データには本人の登録支店名「下通」が実在した）
+
+### 会員登録・引き継ぎフォームの銀行選択（`resources/js/bank-autocomplete.js`）
+- 銀行名・支店名は候補一覧からのクリック選択でのみ、隠しフィールド`bank_code`/`bank_branch_code`に値がセットされる（`createSuggest`の`onSelect`コールバック内、`mousedown`イベント）
+- **以前は`bank_code`/`bank_branch_code`がサーバー側バリデーションで`required`になっておらず**、表示用テキスト（`bank_name`/`bank_branch_name`）だけ入力して候補を一切選ばずに送信できてしまっていた（自由入力バイパス）。これにより67ユーザーの`bank_branch_code`がNULL/空のまま登録され、全銀CSVエクスポート時に`str_pad(..., '0', STR_PAD_LEFT)`で実在しない支店コード「000」に化けていた（`PointController::exportZengin()`）。`RegisterController`（`store`/`updateProfile`）・`TransferController`（`store`）の3箇所すべてに`bank_code`/`bank_branch_code`の`required`ルールを追加して修正（2026-08-04）
+- **隠しフィールドの値が古いまま残るstaleバグ**もあわせて修正: 候補選択後にユーザーがテキストだけを手で編集しても、選択時にセットされた古い`bank_code`/`bank_branch_code`はクリアされずに残っていた（プログラムによる`.value`代入はネイティブ`input`イベントを発火しないため、選択自体には影響しない）。`bankNameEl`/`branchNameEl`に`input`リスナーを追加し、手動編集時は関連する隠しフィールドを都度クリアするように修正。この不整合が実際に本番データを壊した例: BMN011692は`bank_name`="SMBC信託銀行"（正しいコード`0300`）なのに`bank_code`="9900"（ゆうちょ銀行のコード）のまま保存されていた＝おそらく先にゆうちょを選択→テキストだけ書き換えた結果
+
+### 全銀CSVエクスポート（`PointController::exportZengin()`）
+- `bank_branch_code`がNULL/空の場合`str_pad`で機械的に`"000"`が入る。一見それらしいが**実在しない支店コード**であり、実際の振込は失敗し得る。CSVに「000」が多い＝データ不備のサインとして扱うこと
+
+---
+
 ## LINE LIFF
 
 ### 招待ページ（`resources/views/invite.blade.php`）
