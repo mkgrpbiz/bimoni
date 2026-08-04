@@ -41,7 +41,7 @@ class ReportController extends Controller
 
         // 全完了済み応募
         $allCompleted = Application::where('user_id', $user->id)
-            ->whereIn('status', ['completed', 'reported', 'approved'])
+            ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
             ->with('campaign')
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
@@ -69,7 +69,7 @@ class ReportController extends Controller
         $user = Auth::guard('liff')->user();
 
         $allCompleted = Application::where('user_id', $user->id)
-            ->whereIn('status', ['completed', 'reported', 'approved'])
+            ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
             ->with('campaign')
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
