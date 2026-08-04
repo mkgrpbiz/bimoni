@@ -68,6 +68,16 @@ class User extends Authenticatable
         ];
     }
 
+    public function hasCompleteBankInfo(): bool
+    {
+        foreach (['bank_name', 'bank_code', 'bank_branch_name', 'bank_branch_code', 'bank_account_type', 'bank_account_number', 'bank_account_name'] as $field) {
+            if (empty($this->$field)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public function applications()   { return $this->hasMany(Application::class); }
     public function points()         { return $this->hasMany(Point::class); }
     public function pointExchanges() { return $this->hasMany(PointExchange::class); }

@@ -10,6 +10,9 @@
     @if(session('success'))
         <div class="bg-green-100 text-green-800 rounded-xl px-4 py-3 text-sm mb-4">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="bg-red-100 text-red-800 rounded-xl px-4 py-3 text-sm mb-4">{{ session('error') }}</div>
+    @endif
 
     <form method="POST" action="{{ route('member.profile.update') }}" class="space-y-5">
         @csrf @method('PATCH')

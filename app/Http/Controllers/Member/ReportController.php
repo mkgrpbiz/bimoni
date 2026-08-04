@@ -35,9 +35,21 @@ class ReportController extends Controller
         return view('member.reports.show_collection', ['report' => $collectionReport, 'campaigns' => $campaigns]);
     }
 
-    public function create(): View
+    private function ensureBankInfo($user): ?RedirectResponse
+    {
+        if ($user->hasCompleteBankInfo()) {
+            return null;
+        }
+        return redirect()->route('member.profile.edit')
+            ->with('error', 'ポイント還元をお支払いするため、報告の前に振込先の口座情報を登録してください。');
+    }
+
+    public function create(): View|RedirectResponse
     {
         $user = Auth::guard('liff')->user();
+        if ($redirect = $this->ensureBankInfo($user)) {
+            return $redirect;
+        }
 
         // 全完了済み応募
         $allCompleted = Application::where('user_id', $user->id)
@@ -64,9 +76,12 @@ class ReportController extends Controller
         return view('member.reports.create', compact('monitorInitialApps', 'monitorContinuationApps'));
     }
 
-    public function createCollection(): View
+    public function createCollection(): View|RedirectResponse
     {
         $user = Auth::guard('liff')->user();
+        if ($redirect = $this->ensureBankInfo($user)) {
+            return $redirect;
+        }
 
         $allCompleted = Application::where('user_id', $user->id)
             ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
@@ -85,6 +100,9 @@ class ReportController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = Auth::guard('liff')->user();
+        if ($redirect = $this->ensureBankInfo($user)) {
+            return $redirect;
+        }
 
         $isOther = $request->input('purchase_type') === 'other';
 
@@ -176,6 +194,9 @@ class ReportController extends Controller
     public function storeCollection(Request $request): RedirectResponse
     {
         $user = Auth::guard('liff')->user();
+        if ($redirect = $this->ensureBankInfo($user)) {
+            return $redirect;
+        }
 
         $request->validate([
             'initial_app_ids'         => 'nullable|array',
