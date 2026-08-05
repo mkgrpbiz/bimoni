@@ -294,3 +294,8 @@ Route::prefix('portal')->name('portal.')->middleware('portal.auth')->group(funct
     Route::get('settings',        [PortalSettings::class, 'index'])->name('settings');
     Route::patch('settings',      [PortalSettings::class, 'update'])->name('settings.update');
 });
+
+// ■ AI OFFICE 連携用 内部API（読み取り専用、既存admin/member/portalルートとは完全に独立）
+Route::prefix("api/ai-office")->middleware("ai-office.token")->group(function () {
+    Route::get("bimoni/dashboard", [\App\Http\Controllers\Api\AiOfficeDashboardController::class, "summary"])->name("api.ai-office.bimoni.dashboard");
+});

@@ -43,4 +43,10 @@ return [
         'official_account_id'  => env('LINE_OFFICIAL_ACCOUNT_ID'),
     ],
 
+    'ai_office' => [
+        // Shared secret AI OFFICE sends as a Bearer token when calling
+        // api/ai-office/* (see App\Http\Middleware\VerifyAiOfficeToken).
+        'token' => env('AI_OFFICE_API_TOKEN'),
+    ],
+
 ];
