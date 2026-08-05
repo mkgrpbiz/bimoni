@@ -334,6 +334,18 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 
 ---
 
+## AI OFFICE連携（2026-08-05〜）
+
+姉妹プロジェクト`c:\laragon\www\ai-office`（office.mkgrp.biz）のBIMONI部ダッシュボードから、BIMONIの集計データを参照できるようにする読み取り専用の内部APIを追加した。**既存のadmin/member/portalルート・画面の挙動は一切変更していない**。
+
+- `app/Services/DashboardSummaryService.php`: `Admin\DashboardController`が元々privateメソッドとして持っていた`calcDailyKpi()`/`buildAlerts()`/`calcMetrics()`（`monthlyMetrics()`に改名）＋`index()`冒頭の承認待ち集計（`pendingApprovals()`）を、**ロジックを一切変えずに**このServiceへ抽出。`DashboardController`はこのServiceを呼ぶだけになり、管理画面ダッシュボードの表示内容・計算結果は移行前と完全に同一
+  - `campaignCounts()`（公開・終了案件数）だけは既存のどこにも無かった集計のため、AI OFFICE向けに新規追加した唯一のロジック（`Campaign.status`は`draft/published/closed`の3値で、「停止」という状態は存在しない）
+- `GET /api/ai-office/bimoni/dashboard`: 上記Serviceの結果をJSONで返す内部API。管理画面のセッション認証とは別に、`App\Http\Middleware\VerifyAiOfficeToken`でBearerトークン認証（`.env`の`AI_OFFICE_API_TOKEN`と一致するトークンが必要、無ければ401）。Sanctum等は導入せず、単一の信頼できるサーバー間呼び出し用に共有シークレット方式にした
+- **STGと本番でトークンは別の値**（STG用・本番用をそれぞれ`openssl`的なランダム生成で作成し、両サーバーの`.env`に個別追加。BIMONIの「STGと本番のLINEチャンネルは混ぜない」という既存方針と同じ考え方）。AI OFFICE側の`.env`にも対応するトークンを保存して使う
+- 今回追加したのはBIMONI側のこの1エンドポイントのみ。AI OFFICE側は将来SharePoy等へ横展開する際、`DashboardProviderInterface`の実装を部署ごとに追加する想定（BIMONIはHTTP経由、他部署はAI OFFICE内で完結する可能性もある）
+
+---
+
 ## 注意事項・過去のミス
 
 - LIFF WebView（iOS WKWebView）はCSRFセッションが引き継がれないため、`member/auth/liff-callback` と `member/register` をCSRF除外している（`bootstrap/app.php` の `validateCsrfTokens(except: [...])` で設定）
