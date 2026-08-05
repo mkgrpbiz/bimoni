@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('picture_url')->nullable();
             $table->boolean('is_anonymous_group_sender')->default(false);
             $table->string('line_group_id')->nullable();
-            $table->timestamp('first_seen_at');
-            $table->timestamp('last_seen_at');
+            $table->timestamp('first_seen_at')->useCurrent();
+            $table->timestamp('last_seen_at')->useCurrent();
             $table->timestamps();
 
             $table->unique('line_user_id');

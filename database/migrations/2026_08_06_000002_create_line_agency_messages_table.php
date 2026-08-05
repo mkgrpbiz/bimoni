@@ -24,7 +24,7 @@ return new class extends Migration
             $table->unsignedBigInteger('file_size')->nullable();
             $table->string('attachment_path')->nullable();
             $table->string('attachment_mime')->nullable();
-            $table->timestamp('line_sent_at');
+            $table->timestamp('line_sent_at')->useCurrent();
             $table->json('raw_payload');
             $table->timestamp('relayed_to_ai_office_at')->nullable();
             $table->unsignedTinyInteger('relay_attempts')->default(0);
