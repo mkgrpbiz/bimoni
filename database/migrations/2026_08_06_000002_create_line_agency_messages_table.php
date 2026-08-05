@@ -31,7 +31,7 @@ return new class extends Migration
             $table->text('relay_last_error')->nullable();
             $table->timestamps();
 
-            $table->index(['relayed_to_ai_office_at', 'relay_attempts']);
+            $table->index(['relayed_to_ai_office_at', 'relay_attempts'], 'line_agency_messages_relay_idx');
             $table->index('line_sent_at');
         });
     }
