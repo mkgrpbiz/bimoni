@@ -15,8 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'portal.auth' => \App\Http\Middleware\PortalAuth::class,
             'ai-office.token' => \App\Http\Middleware\VerifyAiOfficeToken::class,
+            'line-agency.signature' => \App\Http\Middleware\VerifyLineAgencySignature::class,
         ]);
-        $middleware->validateCsrfTokens(except: ['member/auth/liff-callback', 'member/register', 'member/transfer']);
+        $middleware->validateCsrfTokens(except: ['member/auth/liff-callback', 'member/register', 'member/transfer', 'webhooks/line-agency']);
         // member/* へのアクセスは member.login へリダイレクト
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('member/*') || $request->is('member')) {

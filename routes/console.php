@@ -16,3 +16,6 @@ Schedule::command('proposals:auto-cancel')->everyFiveMinutes();
 
 // 継続依頼LINE送信から24時間経過し未回答の応募を自動的に継続NGにする（毎5分）
 Schedule::command('continuations:auto-decline')->everyFiveMinutes();
+
+// LINE代理店連絡: AI OFFICEへのリレー失敗分を再送（毎分）
+Schedule::command('line-agency:retry-relay')->everyMinute();
