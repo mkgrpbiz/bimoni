@@ -111,7 +111,8 @@ class DashboardController extends Controller
                 ->get();
 
             $monthSales = $refs->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
-            $monthGross = $refs->sum(fn($r) => $r->reflection_count * ($r->campaign?->gross_profit ?? 0));
+            // 粗利は漏れ経費・全否認コストの差引きも含めメインKPIカードと完全に同じ計算式（monthlyMetrics）を使う
+            $monthGross = $this->summary->monthlyMetrics($y, $m, 'monthly')['grossProfit'];
 
             // 協力金 = 承認済み報告のモニター経費+協力金+ボーナス（メインKPIカードと同じ計算式）
             $monthReports = MonitorReport::with('campaign')->where('status', 'approved')
@@ -130,8 +131,12 @@ class DashboardController extends Controller
             $monthApplied = Application::whereYear('applied_at', $y)->whereMonth('applied_at', $m)->count();
             $monthCompleted = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                 ->whereYear('invited_at', $y)->whereMonth('invited_at', $m)->count();
-            $monthNewMembers = User::whereNotNull('profile_completed_at')
-                ->whereYear('created_at', $y)->whereMonth('created_at', $m)->count();
+            // 会員増加数は旧体制からの一括インポートで過去分のcreated_atが実際の登録日を反映しておらず
+            // 数字が跳ねて見えるため、実運用が安定した2026年8月以降のみ表示する
+            $monthNewMembers = ($y > 2026 || ($y === 2026 && $m >= 8))
+                ? User::whereNotNull('profile_completed_at')
+                    ->whereYear('created_at', $y)->whereMonth('created_at', $m)->count()
+                : null;
 
             $sales[]      = $monthSales;
             $fees[]       = $monthFee;
