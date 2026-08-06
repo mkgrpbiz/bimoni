@@ -8,6 +8,7 @@ use App\Models\Application;
 use App\Models\CampaignApprovalReflection;
 use App\Models\CollectionReport;
 use App\Models\MonitorReport;
+use App\Models\User;
 use App\Services\DashboardSummaryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -84,11 +85,13 @@ class DashboardController extends Controller
 
     private function getChartData(): array
     {
-        $labels    = [];
-        $sales     = [];
-        $fees      = [];
-        $grossArr  = [];
-        $approvals = [];
+        $labels     = [];
+        $sales      = [];
+        $fees       = [];
+        $grossArr   = [];
+        $applied    = [];
+        $completed  = [];
+        $newMembers = [];
 
         for ($i = 11; $i >= 0; $i--) {
             // 月末日からsubMonths()すると対象月にその日が存在せず繰り上がるバグを避けるためstartOfMonth()してから引く
@@ -122,15 +125,22 @@ class DashboardController extends Controller
             }) + CollectionReport::where('status', 'approved')
                 ->whereYear('created_at', $y)->whereMonth('created_at', $m)
                 ->get()->sum(fn($r) => $r->totalFee());
-            $completed  = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
-                ->whereYear('completed_at', $y)->whereMonth('completed_at', $m)->count();
 
-            $sales[]     = $monthSales;
-            $fees[]      = $monthFee;
-            $grossArr[]  = $monthGross;
-            $approvals[] = $completed > 0 ? round($refs->sum('reflection_count') / $completed * 100, 1) : 0;
+            // 応募数・実施数・会員増加数はメインKPI（monthlyMetrics）と同じ定義・同じ基準日で揃える
+            $monthApplied = Application::whereYear('applied_at', $y)->whereMonth('applied_at', $m)->count();
+            $monthCompleted = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
+                ->whereYear('invited_at', $y)->whereMonth('invited_at', $m)->count();
+            $monthNewMembers = User::whereNotNull('profile_completed_at')
+                ->whereYear('created_at', $y)->whereMonth('created_at', $m)->count();
+
+            $sales[]      = $monthSales;
+            $fees[]       = $monthFee;
+            $grossArr[]   = $monthGross;
+            $applied[]    = $monthApplied;
+            $completed[]  = $monthCompleted;
+            $newMembers[] = $monthNewMembers;
         }
 
-        return compact('labels', 'sales', 'fees', 'grossArr', 'approvals');
+        return compact('labels', 'sales', 'fees', 'grossArr', 'applied', 'completed', 'newMembers');
     }
 }

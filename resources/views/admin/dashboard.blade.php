@@ -195,11 +195,11 @@ $pm = $prevMetrics;
 {{-- グラフ --}}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-sm font-bold text-gray-700 mb-3">売上・ポイント還元推移（直近12ヶ月）</h3>
+        <h3 class="text-sm font-bold text-gray-700 mb-3">売上・ポイント還元・粗利推移（直近12ヶ月）</h3>
         <canvas id="chart-sales" height="200"></canvas>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-sm font-bold text-gray-700 mb-3">粗利・承認率推移（直近12ヶ月）</h3>
+        <h3 class="text-sm font-bold text-gray-700 mb-3">応募数・実施数・会員増加数推移（直近12ヶ月）</h3>
         <canvas id="chart-gross" height="200"></canvas>
     </div>
 </div>
@@ -213,7 +213,7 @@ function syncMonth(sel) {
 
 const chartData = @json($chartData);
 
-// 売上・ポイント還元
+// 売上・ポイント還元・粗利
 new Chart(document.getElementById('chart-sales'), {
     type: 'line',
     data: {
@@ -235,6 +235,14 @@ new Chart(document.getElementById('chart-sales'), {
                 tension: 0.3,
                 fill: true,
             },
+            {
+                label: '粗利',
+                data: chartData.grossArr,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16,185,129,0.08)',
+                tension: 0.3,
+                fill: true,
+            },
         ],
     },
     options: {
@@ -248,29 +256,35 @@ new Chart(document.getElementById('chart-sales'), {
     }
 });
 
-// 粗利・承認率
+// 応募数・実施数・会員増加数
 new Chart(document.getElementById('chart-gross'), {
     type: 'line',
     data: {
         labels: chartData.labels,
         datasets: [
             {
-                label: '粗利',
-                data: chartData.grossArr,
+                label: '応募数',
+                data: chartData.applied,
+                borderColor: '#ec4899',
+                backgroundColor: 'rgba(236,72,153,0.08)',
+                tension: 0.3,
+                fill: true,
+            },
+            {
+                label: '実施数',
+                data: chartData.completed,
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139,92,246,0.08)',
+                tension: 0.3,
+                fill: true,
+            },
+            {
+                label: '会員増加数',
+                data: chartData.newMembers,
                 borderColor: '#10b981',
                 backgroundColor: 'rgba(16,185,129,0.08)',
                 tension: 0.3,
                 fill: true,
-                yAxisID: 'y',
-            },
-            {
-                label: '承認率(%)',
-                data: chartData.approvals,
-                borderColor: '#f59e0b',
-                borderDash: [4, 4],
-                tension: 0.3,
-                fill: false,
-                yAxisID: 'y2',
             },
         ],
     },
@@ -278,8 +292,9 @@ new Chart(document.getElementById('chart-gross'), {
         responsive: true,
         plugins: { legend: { position: 'bottom' } },
         scales: {
-            y:  { ticks: { callback: v => '¥' + v.toLocaleString() } },
-            y2: { position: 'right', min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { drawOnChartArea: false } },
+            y: {
+                ticks: { callback: v => v.toLocaleString() + '件' },
+            }
         }
     }
 });
