@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ai-office.token' => \App\Http\Middleware\VerifyAiOfficeToken::class,
             'kanrikun.signature' => \App\Http\Middleware\VerifyKanrikunSignature::class,
         ]);
-        $middleware->validateCsrfTokens(except: ['member/auth/liff-callback', 'member/register', 'member/transfer', 'webhooks/kanrikun']);
+        $middleware->validateCsrfTokens(except: ['member/auth/liff-callback', 'member/register', 'member/transfer', 'webhooks/kanrikun', 'api/ai-office/bimoni/campaigns/draft']);
         // member/* へのアクセスは member.login へリダイレクト
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('member/*') || $request->is('member')) {

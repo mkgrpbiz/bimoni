@@ -295,9 +295,11 @@ Route::prefix('portal')->name('portal.')->middleware('portal.auth')->group(funct
     Route::patch('settings',      [PortalSettings::class, 'update'])->name('settings.update');
 });
 
-// ■ AI OFFICE 連携用 内部API（読み取り専用、既存admin/member/portalルートとは完全に独立）
+// ■ AI OFFICE 連携用 内部API（既存admin/member/portalルートとは完全に独立）
 Route::prefix("api/ai-office")->middleware("ai-office.token")->group(function () {
     Route::get("bimoni/dashboard", [\App\Http\Controllers\Api\AiOfficeDashboardController::class, "summary"])->name("api.ai-office.bimoni.dashboard");
+    // Slice2 Phase4: 新着案件情報の「確認して下書きに追加」から呼ばれる唯一の書き込みエンドポイント
+    Route::post("bimoni/campaigns/draft", [\App\Http\Controllers\Api\AiOfficeCampaignDraftController::class, "store"])->name("api.ai-office.bimoni.campaigns.draft");
 });
 
 // ■ BIMONI管理君 用Webhook（会員登録用チャンネルとは別の新規チャンネル、署名検証のみ・セッション認証なし）
