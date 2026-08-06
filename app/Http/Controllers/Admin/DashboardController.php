@@ -112,7 +112,7 @@ class DashboardController extends Controller
 
             $monthSales = $refs->sum(fn($r) => $r->reflection_count * ($r->campaign?->campaign_unit_price ?? 0));
             // 粗利は漏れ経費・全否認コストの差引きも含めメインKPIカードと完全に同じ計算式（monthlyMetrics）を使う
-            $monthGross = $this->summary->monthlyMetrics($y, $m, 'monthly')['grossProfit'];
+            $monthGross = (int) round($this->summary->monthlyMetrics($y, $m, 'monthly')['grossProfit']);
 
             // 協力金 = 承認済み報告のモニター経費+協力金+ボーナス（メインKPIカードと同じ計算式）
             $monthReports = MonitorReport::with('campaign')->where('status', 'approved')
