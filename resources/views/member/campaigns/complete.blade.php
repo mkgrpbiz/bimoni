@@ -27,7 +27,7 @@
         <p class="text-sm text-gray-700 mb-3 leading-relaxed">
             また、下のリンクからモニター実施時専用インスタグラムアカウントのフォローをお願いします。
         </p>
-        <a href="https://bimoni.online/insta/pre_follow/"
+        <a href="https://bimoni.online/instagram/pre_follow/"
            target="_blank"
            class="block w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white text-center py-3 rounded-xl font-bold text-sm">
             Instagramをフォローする
