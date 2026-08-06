@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Storage;
  * content API. Stored on the existing 'public' disk (already symlinked via
  * storage:link), same convention as LineMessagingService::sendVideo().
  */
-class LineAgencyContentFetcher
+class KanrikunContentFetcher
 {
     public function fetchAndStore(array $message): array
     {
-        $token = config('services.line_agency.channel_access_token');
+        $token = config('services.kanrikun.channel_access_token');
 
         if (! $token) {
             // チャンネル未設定（本番稼働前など）。メッセージ自体は保存を続行し、添付なしとする。
@@ -27,7 +27,7 @@ class LineAgencyContentFetcher
             ->get("https://api-data.line.me/v2/bot/message/{$message['id']}/content");
 
         if ($response->failed()) {
-            Log::warning('line-agency content fetch failed', [
+            Log::warning('kanrikun content fetch failed', [
                 'message_id' => $message['id'],
                 'status' => $response->status(),
             ]);
@@ -35,7 +35,7 @@ class LineAgencyContentFetcher
         }
 
         $mime = $response->header('Content-Type');
-        $path = 'line-agency/'.date('Y/m').'/'.$message['id'].'.'.$this->extensionFor($mime);
+        $path = 'kanrikun/'.date('Y/m').'/'.$message['id'].'.'.$this->extensionFor($mime);
 
         Storage::disk('public')->put($path, $response->body());
 

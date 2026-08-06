@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-class LineAgencyWebhookTest extends TestCase
+class KanrikunWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -30,11 +30,11 @@ class LineAgencyWebhookTest extends TestCase
 
     private function signedPost(array $payload, ?string $secret = 'test-secret')
     {
-        config(['services.line_agency.channel_secret' => $secret]);
+        config(['services.kanrikun.channel_secret' => $secret]);
         $body = json_encode($payload);
         $signature = base64_encode(hash_hmac('sha256', $body, $secret, true));
 
-        return $this->call('POST', '/webhooks/line-agency', [], [], [], [
+        return $this->call('POST', '/webhooks/kanrikun', [], [], [], [
             'HTTP_X-Line-Signature' => $signature,
             'CONTENT_TYPE' => 'application/json',
         ], $body);
@@ -42,20 +42,20 @@ class LineAgencyWebhookTest extends TestCase
 
     public function test_rejects_request_with_missing_signature(): void
     {
-        config(['services.line_agency.channel_secret' => 'test-secret']);
+        config(['services.kanrikun.channel_secret' => 'test-secret']);
 
-        $response = $this->postJson('/webhooks/line-agency', $this->textEventPayload());
+        $response = $this->postJson('/webhooks/kanrikun', $this->textEventPayload());
 
         $response->assertStatus(401);
     }
 
     public function test_rejects_request_with_invalid_signature(): void
     {
-        config(['services.line_agency.channel_secret' => 'test-secret']);
+        config(['services.kanrikun.channel_secret' => 'test-secret']);
         $body = json_encode($this->textEventPayload());
         $wrongSignature = base64_encode(hash_hmac('sha256', $body, 'wrong-secret', true));
 
-        $response = $this->call('POST', '/webhooks/line-agency', [], [], [], [
+        $response = $this->call('POST', '/webhooks/kanrikun', [], [], [], [
             'HTTP_X-Line-Signature' => $wrongSignature,
             'CONTENT_TYPE' => 'application/json',
         ], $body);
@@ -68,11 +68,11 @@ class LineAgencyWebhookTest extends TestCase
         $response = $this->signedPost($this->textEventPayload());
 
         $response->assertOk();
-        $this->assertDatabaseHas('line_agency_messages', [
+        $this->assertDatabaseHas('kanrikun_messages', [
             'line_message_id' => 'msg-1',
             'text_body' => '新規案件お願いします.',
         ]);
-        $this->assertDatabaseHas('line_agency_contacts', ['line_user_id' => 'U-test-1']);
+        $this->assertDatabaseHas('kanrikun_contacts', ['line_user_id' => 'U-test-1']);
     }
 
     public function test_duplicate_line_message_id_is_not_stored_twice(): void
@@ -82,7 +82,7 @@ class LineAgencyWebhookTest extends TestCase
         $this->signedPost($payload)->assertOk();
         $this->signedPost($payload)->assertOk();
 
-        $this->assertDatabaseCount('line_agency_messages', 1);
+        $this->assertDatabaseCount('kanrikun_messages', 1);
     }
 
     public function test_image_message_triggers_content_fetch_and_relay(): void
@@ -93,9 +93,9 @@ class LineAgencyWebhookTest extends TestCase
         ]);
         Storage::fake('public');
         config([
-            'services.line_agency.channel_access_token' => 'token',
-            'services.ai_office.relay_url' => 'https://office.mkgrp.biz/api/bimoni/line-messages',
-            'services.ai_office.relay_token' => 'x',
+            'services.kanrikun.channel_access_token' => 'token',
+            'services.kanrikun.relay_url' => 'https://office.mkgrp.biz/api/kanrikun/messages',
+            'services.kanrikun.relay_token' => 'x',
         ]);
 
         $payload = [
@@ -111,7 +111,7 @@ class LineAgencyWebhookTest extends TestCase
 
         $this->signedPost($payload)->assertOk();
 
-        $this->assertDatabaseHas('line_agency_messages', ['line_message_id' => 'msg-2', 'message_type' => 'image']);
+        $this->assertDatabaseHas('kanrikun_messages', ['line_message_id' => 'msg-2', 'message_type' => 'image']);
         Http::assertSent(fn ($request) => str_contains($request->url(), 'office.mkgrp.biz'));
     }
 
@@ -119,14 +119,14 @@ class LineAgencyWebhookTest extends TestCase
     {
         Http::fake(['office.mkgrp.biz/*' => Http::response([], 500)]);
         config([
-            'services.ai_office.relay_url' => 'https://office.mkgrp.biz/api/bimoni/line-messages',
-            'services.ai_office.relay_token' => 'x',
+            'services.kanrikun.relay_url' => 'https://office.mkgrp.biz/api/kanrikun/messages',
+            'services.kanrikun.relay_token' => 'x',
         ]);
 
         $response = $this->signedPost($this->textEventPayload());
 
         $response->assertOk();
-        $this->assertDatabaseHas('line_agency_messages', [
+        $this->assertDatabaseHas('kanrikun_messages', [
             'line_message_id' => 'msg-1',
             'relayed_to_ai_office_at' => null,
         ]);
@@ -136,16 +136,16 @@ class LineAgencyWebhookTest extends TestCase
     {
         Http::fake(['office.mkgrp.biz/*' => Http::response([], 500)]);
         config([
-            'services.ai_office.relay_url' => 'https://office.mkgrp.biz/api/bimoni/line-messages',
-            'services.ai_office.relay_token' => 'x',
+            'services.kanrikun.relay_url' => 'https://office.mkgrp.biz/api/kanrikun/messages',
+            'services.kanrikun.relay_token' => 'x',
         ]);
         $this->signedPost($this->textEventPayload())->assertOk();
-        $this->assertDatabaseHas('line_agency_messages', ['relayed_to_ai_office_at' => null]);
+        $this->assertDatabaseHas('kanrikun_messages', ['relayed_to_ai_office_at' => null]);
 
         Http::fake(['office.mkgrp.biz/*' => Http::response(['status' => 'ok'], 200)]);
-        Artisan::call('line-agency:retry-relay');
+        Artisan::call('kanrikun:retry-relay');
 
-        $this->assertDatabaseMissing('line_agency_messages', ['relayed_to_ai_office_at' => null]);
+        $this->assertDatabaseMissing('kanrikun_messages', ['relayed_to_ai_office_at' => null]);
     }
 
     public function test_group_message_without_user_id_is_stored_under_anonymous_contact(): void
@@ -155,8 +155,8 @@ class LineAgencyWebhookTest extends TestCase
         $response = $this->signedPost($payload);
 
         $response->assertOk();
-        $this->assertDatabaseHas('line_agency_messages', ['line_message_id' => 'msg-1']);
-        $this->assertDatabaseHas('line_agency_contacts', [
+        $this->assertDatabaseHas('kanrikun_messages', ['line_message_id' => 'msg-1']);
+        $this->assertDatabaseHas('kanrikun_contacts', [
             'line_group_id' => 'G-test-1',
             'is_anonymous_group_sender' => true,
         ]);

@@ -2,22 +2,22 @@
 
 namespace App\Services;
 
-use App\Models\LineAgencyMessage;
+use App\Models\KanrikunMessage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Relays a stored LineAgencyMessage to AI OFFICE (BIMONI → AI OFFICE
+ * Relays a stored KanrikunMessage to AI OFFICE (BIMONI → AI OFFICE
  * direction, distinct token from services.ai_office.token which authenticates
  * the opposite direction). Must never throw — a relay failure must not affect
  * the LINE webhook's own 200 response or any other BIMONI behavior.
  */
-class AiOfficeRelayService
+class KanrikunRelayService
 {
-    public function push(LineAgencyMessage $message): void
+    public function push(KanrikunMessage $message): void
     {
-        $url = config('services.ai_office.relay_url');
-        $token = config('services.ai_office.relay_token');
+        $url = config('services.kanrikun.relay_url');
+        $token = config('services.kanrikun.relay_token');
 
         if (! $url || ! $token) {
             Log::info('AI OFFICE relay未設定のためスキップ', ['message_id' => $message->id]);
@@ -37,19 +37,19 @@ class AiOfficeRelayService
         }
     }
 
-    private function recordFailure(LineAgencyMessage $message, string $error): void
+    private function recordFailure(KanrikunMessage $message, string $error): void
     {
         $message->increment('relay_attempts');
         $message->update(['relay_last_error' => $error]);
         Log::warning('AI OFFICE relay failed', ['message_id' => $message->id, 'error' => $error]);
     }
 
-    private function payload(LineAgencyMessage $message): array
+    private function payload(KanrikunMessage $message): array
     {
         $contact = $message->contact;
 
         return [
-            'bimoni_message_id' => $message->id,
+            'kanrikun_message_id' => $message->id,
             'contact' => [
                 'line_user_id' => $contact->line_user_id,
                 'display_name' => $contact->display_name,

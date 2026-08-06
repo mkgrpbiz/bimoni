@@ -8,15 +8,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Verifies LINE's X-Line-Signature header (HMAC-SHA256 of the raw request
- * body, base64-encoded) for the agency/staff LINE channel webhook. Must use
+ * body, base64-encoded) for BIMONI管理君's LINE channel webhook. Must use
  * the raw body ($request->getContent()), not re-serialized JSON, since LINE
  * signs the exact bytes it sent.
  */
-class VerifyLineAgencySignature
+class VerifyKanrikunSignature
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $secret = config('services.line_agency.channel_secret');
+        $secret = config('services.kanrikun.channel_secret');
         $signature = $request->header('X-Line-Signature');
 
         if (! $secret || ! $signature) {

@@ -2,22 +2,22 @@
 
 namespace App\Services;
 
-use App\Models\LineAgencyContact;
-use App\Models\LineAgencyMessage;
+use App\Models\KanrikunContact;
+use App\Models\KanrikunMessage;
 use Illuminate\Support\Carbon;
 
 /**
- * Ingests a single LINE webhook event for the agency/staff channel: resolves
+ * Ingests a single LINE webhook event for BIMONI管理君's channel: resolves
  * (or creates) the sending contact, stores the message idempotently on
  * line_message_id, then relays it to AI OFFICE. Group messages without a
  * source.userId (LINE doesn't always expose this) are not dropped — they're
  * bucketed under a per-group anonymous contact instead.
  */
-class LineAgencyMessageIngestService
+class KanrikunMessageIngestService
 {
     public function __construct(
-        private LineAgencyContentFetcher $contentFetcher,
-        private AiOfficeRelayService $relay,
+        private KanrikunContentFetcher $contentFetcher,
+        private KanrikunRelayService $relay,
     ) {}
 
     public function handle(array $event): void
@@ -27,7 +27,7 @@ class LineAgencyMessageIngestService
         }
 
         $message = $event['message'] ?? [];
-        if (! isset($message['id']) || LineAgencyMessage::where('line_message_id', $message['id'])->exists()) {
+        if (! isset($message['id']) || KanrikunMessage::where('line_message_id', $message['id'])->exists()) {
             return;
         }
 
@@ -37,7 +37,7 @@ class LineAgencyMessageIngestService
         }
 
         $attrs = [
-            'line_agency_contact_id' => $contact->id,
+            'kanrikun_contact_id' => $contact->id,
             'line_message_id' => $message['id'],
             'line_event_id' => $event['webhookEventId'] ?? null,
             'source_type' => $event['source']['type'] ?? 'user',
@@ -57,17 +57,17 @@ class LineAgencyMessageIngestService
             default => $attrs,
         };
 
-        $record = LineAgencyMessage::create($attrs);
+        $record = KanrikunMessage::create($attrs);
 
         $this->relay->push($record);
     }
 
-    private function resolveContact(array $source): ?LineAgencyContact
+    private function resolveContact(array $source): ?KanrikunContact
     {
         $lineUserId = $source['userId'] ?? null;
 
         if ($lineUserId) {
-            $contact = LineAgencyContact::firstOrCreate(
+            $contact = KanrikunContact::firstOrCreate(
                 ['line_user_id' => $lineUserId],
                 ['first_seen_at' => now(), 'last_seen_at' => now()]
             );
@@ -82,7 +82,7 @@ class LineAgencyMessageIngestService
             return null;
         }
 
-        $contact = LineAgencyContact::firstOrCreate(
+        $contact = KanrikunContact::firstOrCreate(
             ['line_group_id' => $groupId, 'is_anonymous_group_sender' => true],
             [
                 'display_name' => 'グループ参加者（送信者不明）',

@@ -300,7 +300,7 @@ Route::prefix("api/ai-office")->middleware("ai-office.token")->group(function ()
     Route::get("bimoni/dashboard", [\App\Http\Controllers\Api\AiOfficeDashboardController::class, "summary"])->name("api.ai-office.bimoni.dashboard");
 });
 
-// ■ LINE代理店連絡用Webhook（会員登録用チャンネルとは別の新規チャンネル、署名検証のみ・セッション認証なし）
-Route::post("webhooks/line-agency", [\App\Http\Controllers\Webhooks\LineAgencyWebhookController::class, "handle"])
-    ->middleware("line-agency.signature")
-    ->name("webhooks.line-agency");
+// ■ BIMONI管理君 用Webhook（会員登録用チャンネルとは別の新規チャンネル、署名検証のみ・セッション認証なし）
+Route::post("webhooks/kanrikun", [\App\Http\Controllers\Webhooks\KanrikunWebhookController::class, "handle"])
+    ->middleware("kanrikun.signature")
+    ->name("webhooks.kanrikun");

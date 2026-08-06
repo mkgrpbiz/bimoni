@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class LineAgencyContact extends Model
+class KanrikunContact extends Model
 {
     protected $fillable = [
         'line_user_id', 'display_name', 'picture_url',
@@ -24,6 +24,6 @@ class LineAgencyContact extends Model
 
     public function messages(): HasMany
     {
-        return $this->hasMany(LineAgencyMessage::class);
+        return $this->hasMany(KanrikunMessage::class);
     }
 }

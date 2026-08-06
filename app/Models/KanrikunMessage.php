@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class LineAgencyMessage extends Model
+class KanrikunMessage extends Model
 {
     protected $fillable = [
-        'line_agency_contact_id', 'line_message_id', 'line_event_id', 'source_type',
+        'kanrikun_contact_id', 'line_message_id', 'line_event_id', 'source_type',
         'line_group_id', 'line_group_name', 'message_type', 'text_body',
         'sticker_package_id', 'sticker_id', 'file_name', 'file_size',
         'attachment_path', 'attachment_mime', 'line_sent_at', 'raw_payload',
@@ -26,7 +26,7 @@ class LineAgencyMessage extends Model
 
     public function contact(): BelongsTo
     {
-        return $this->belongsTo(LineAgencyContact::class, 'line_agency_contact_id');
+        return $this->belongsTo(KanrikunContact::class, 'kanrikun_contact_id');
     }
 
     public function attachmentUrl(): ?string
