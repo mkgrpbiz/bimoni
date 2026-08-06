@@ -131,12 +131,8 @@ class DashboardController extends Controller
             $monthApplied = Application::whereYear('applied_at', $y)->whereMonth('applied_at', $m)->count();
             $monthCompleted = Application::whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
                 ->whereYear('invited_at', $y)->whereMonth('invited_at', $m)->count();
-            // 会員増加数は旧体制からの一括インポートで過去分のcreated_atが実際の登録日を反映しておらず
-            // 数字が跳ねて見えるため、実運用が安定した2026年8月以降のみ表示する
-            $monthNewMembers = ($y > 2026 || ($y === 2026 && $m >= 8))
-                ? User::whereNotNull('profile_completed_at')
-                    ->whereYear('created_at', $y)->whereMonth('created_at', $m)->count()
-                : null;
+            $monthNewMembers = User::whereNotNull('profile_completed_at')
+                ->whereYear('created_at', $y)->whereMonth('created_at', $m)->count();
 
             $sales[]      = $monthSales;
             $fees[]       = $monthFee;
