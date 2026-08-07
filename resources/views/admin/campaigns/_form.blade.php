@@ -99,6 +99,15 @@
             @error('link')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
 
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">回収可否</label>
+            <select name="collection_available" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="1" @selected(old('collection_available', ($campaign->collection_available ?? true) ? '1' : '0') === '1')>回収可能</option>
+                <option value="0" @selected(old('collection_available', ($campaign->collection_available ?? true) ? '1' : '0') === '0')>回収不可</option>
+            </select>
+            <p class="text-xs text-gray-400 mt-1">回収不可にすると、実施完了後も回収報告の選択肢に出なくなります。</p>
+        </div>
+
         {{-- 重複禁止商品 --}}
         @php
             $duplicateInit = (($campaign->duplicateProhibitedCampaigns ?? collect()))

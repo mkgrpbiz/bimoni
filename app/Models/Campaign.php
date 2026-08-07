@@ -22,7 +22,7 @@ class Campaign extends Model
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
         'continuation_rate', 'closing_date', 'payment_timing',
         'collection_info',
-        'collection_requirement', 'collection_count_judgment',
+        'collection_requirement', 'collection_available', 'collection_count_judgment',
         'target_gender_ratio', 'target_male_ratio', 'target_female_ratio',
         'capacity', 'solicitation_target', 'thumbnail',
         'application_start_at', 'application_end_at', 'created_by',
@@ -39,6 +39,7 @@ class Campaign extends Model
             'application_show_fields' => 'array',
             'cancellation_visible'    => 'boolean',
             'course_settings_enabled' => 'boolean',
+            'collection_available'    => 'boolean',
         ];
     }
 

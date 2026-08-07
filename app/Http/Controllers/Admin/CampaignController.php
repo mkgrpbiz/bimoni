@@ -71,6 +71,7 @@ class CampaignController extends Controller
         $courses = $validated['courses'] ?? [];
         unset($validated['courses']);
         $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
+        $validated['collection_available']    = ($validated['collection_available'] ?? '1') === '1';
 
         $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
         unset($validated['duplicate_campaign_ids']);
@@ -141,6 +142,7 @@ class CampaignController extends Controller
         $courses = $validated['courses'] ?? [];
         unset($validated['courses']);
         $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
+        $validated['collection_available']    = ($validated['collection_available'] ?? '1') === '1';
 
         $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
         unset($validated['duplicate_campaign_ids']);
@@ -360,6 +362,7 @@ class CampaignController extends Controller
             'courses.*.percentage'             => 'nullable|numeric|min:0|max:100',
             'courses.*.invite_message'         => 'nullable|string',
             'collection_requirement'    => 'nullable|in:回収必須,回収不要',
+            'collection_available'      => 'nullable|in:0,1',
             'collection_count_judgment' => 'nullable|integer|in:1,2,3',
             'closing_date'           => 'nullable|in:20日,25日,月末',
             'payment_timing'         => 'nullable|in:翌月末,翌々月末',

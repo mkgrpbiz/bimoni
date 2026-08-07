@@ -89,8 +89,8 @@ class ReportController extends Controller
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
 
-        // 回収サービス用（体験モニターは除外）
-        $collectionTargets        = $allCompleted->filter(fn($a) => $a->campaign?->campaign_type !== 'experience');
+        // 回収サービス用（体験モニター・回収不可商品は除外）
+        $collectionTargets        = $allCompleted->filter(fn($a) => $a->campaign?->campaign_type !== 'experience' && $a->campaign?->collection_available);
         $initialApplications      = $collectionTargets->values();
         $continuationApplications = $collectionTargets->values();
 
@@ -232,14 +232,14 @@ class ReportController extends Controller
 
         foreach ($initialIds as $appId) {
             $app = $applications->get($appId);
-            if (!$app) continue;
+            if (!$app || !$app->campaign?->collection_available) continue;
             $grossFee += 800;
             $campaignIds[] = $app->campaign_id;
             $itemCount++;
         }
         foreach ($continuationIds as $appId) {
             $app = $applications->get($appId);
-            if (!$app) continue;
+            if (!$app || !$app->campaign?->collection_available) continue;
             $count      = (int) ($app->campaign?->collection_count_judgment ?? 1);
             $grossFee  += 800 * $count;
             $itemCount += $count;
