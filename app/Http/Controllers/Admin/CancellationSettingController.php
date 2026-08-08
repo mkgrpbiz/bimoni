@@ -14,7 +14,10 @@ class CancellationSettingController extends Controller
     {
         $visible = $request->input('visible', '1');
 
-        $query = Campaign::where('cancellation_visible', $visible === '1')
+        $query = Campaign::when($visible === 'draft',
+                fn ($q) => $q->where('cancellation_draft', true),
+                fn ($q) => $q->where('cancellation_draft', false)->where('cancellation_visible', $visible === '1')
+            )
             ->orderByRaw('CASE WHEN cancellation_method IS NULL AND cancellation_phone IS NULL AND cancellation_hours IS NULL AND cancellation_mypage_url IS NULL AND cancellation_email IS NULL THEN 0 ELSE 1 END')
             ->orderByDesc('id');
 
@@ -24,11 +27,13 @@ class CancellationSettingController extends Controller
 
         $campaigns = $query->paginate(50)->withQueryString();
 
-        $visibleCounts = Campaign::selectRaw('cancellation_visible, count(*) as count')
+        $visibleCounts = Campaign::where('cancellation_draft', false)
+            ->selectRaw('cancellation_visible, count(*) as count')
             ->groupBy('cancellation_visible')
             ->pluck('count', 'cancellation_visible');
+        $draftCount = Campaign::where('cancellation_draft', true)->count();
 
-        return view('admin.cancellation_settings.index', compact('campaigns', 'visible', 'visibleCounts'));
+        return view('admin.cancellation_settings.index', compact('campaigns', 'visible', 'visibleCounts', 'draftCount'));
     }
 
     public function edit(Campaign $campaign): View
@@ -52,10 +57,23 @@ class CancellationSettingController extends Controller
             ->with('success', '解約方法を更新しました。');
     }
 
-    public function toggleVisible(Campaign $campaign): RedirectResponse
+    public function setVisible(Request $request, Campaign $campaign): RedirectResponse
     {
-        $campaign->update(['cancellation_visible' => !$campaign->cancellation_visible]);
+        $request->validate(['visible' => 'required|in:0,1']);
+
+        // 表示/非表示を明示的に選ぶ操作なので、下書き中だった場合は下書きから抜ける
+        $campaign->update([
+            'cancellation_visible' => $request->visible === '1',
+            'cancellation_draft'   => false,
+        ]);
 
         return back()->with('success', '表示設定を変更しました。');
+    }
+
+    public function moveToDraft(Campaign $campaign): RedirectResponse
+    {
+        $campaign->update(['cancellation_draft' => true]);
+
+        return back()->with('success', '下書きに移しました。');
     }
 }

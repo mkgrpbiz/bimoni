@@ -80,7 +80,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('cancellation-settings', [\App\Http\Controllers\Admin\CancellationSettingController::class, 'index'])->name('cancellation_settings.index');
         Route::get('cancellation-settings/{campaign}/edit', [\App\Http\Controllers\Admin\CancellationSettingController::class, 'edit'])->name('cancellation_settings.edit');
         Route::put('cancellation-settings/{campaign}', [\App\Http\Controllers\Admin\CancellationSettingController::class, 'update'])->name('cancellation_settings.update');
-        Route::patch('cancellation-settings/{campaign}/toggle-visible', [\App\Http\Controllers\Admin\CancellationSettingController::class, 'toggleVisible'])->name('cancellation_settings.toggle_visible');
+        Route::patch('cancellation-settings/{campaign}/set-visible', [\App\Http\Controllers\Admin\CancellationSettingController::class, 'setVisible'])->name('cancellation_settings.set_visible');
+        Route::patch('cancellation-settings/{campaign}/move-to-draft', [\App\Http\Controllers\Admin\CancellationSettingController::class, 'moveToDraft'])->name('cancellation_settings.move_to_draft');
         // 承認反映管理
         Route::get('approval-reflections', [ApprovalReflectionController::class, 'index'])->name('approval_reflections.index');
         Route::patch('approval-reflections/{campaign}', [ApprovalReflectionController::class, 'update'])->name('approval_reflections.update');

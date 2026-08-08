@@ -11,16 +11,17 @@
     <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
 @endif
 
-{{-- 表示・非表示タブ --}}
+{{-- 下書き・表示・非表示タブ --}}
 @php
 $tabs = [
-    '1' => ['label' => '表示',   'color' => 'bg-green-500'],
-    '0' => ['label' => '非表示', 'color' => 'bg-gray-500'],
+    'draft' => ['label' => '下書き', 'color' => 'bg-yellow-500'],
+    '1'     => ['label' => '表示',   'color' => 'bg-green-500'],
+    '0'     => ['label' => '非表示', 'color' => 'bg-gray-500'],
 ];
 @endphp
 <div class="flex border-b border-gray-200 mb-4">
     @foreach($tabs as $key => $tab)
-    @php $count = $visibleCounts->get($key === '1' ? 1 : 0, 0); @endphp
+    @php $count = $key === 'draft' ? $draftCount : $visibleCounts->get($key === '1' ? 1 : 0, 0); @endphp
     <a href="{{ route('admin.cancellation_settings.index', array_merge(request()->except(['visible', 'page']), ['visible' => $key])) }}"
        class="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors
               {{ $visible === $key
@@ -76,16 +77,36 @@ $tabs = [
                     @endif
                 </td>
                 <td class="px-3 py-3 text-center">
-                    <form method="POST" action="{{ route('admin.cancellation_settings.toggle_visible', $campaign) }}">
-                        @csrf @method('PATCH')
-                        <button type="submit"
-                                class="text-xs px-3 py-1 rounded
-                                    {{ $campaign->cancellation_visible
-                                        ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                        : 'bg-pink-500 text-white hover:bg-pink-600' }}">
-                            {{ $campaign->cancellation_visible ? '非表示にする' : '表示にする' }}
-                        </button>
-                    </form>
+                    <div class="flex items-center justify-center gap-1.5">
+                    @if($campaign->cancellation_draft)
+                        <form method="POST" action="{{ route('admin.cancellation_settings.set_visible', $campaign) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="visible" value="1">
+                            <button type="submit" class="text-xs px-3 py-1 rounded bg-pink-500 text-white hover:bg-pink-600">表示にする</button>
+                        </form>
+                        <form method="POST" action="{{ route('admin.cancellation_settings.set_visible', $campaign) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="visible" value="0">
+                            <button type="submit" class="text-xs px-3 py-1 rounded bg-gray-200 text-gray-600 hover:bg-gray-300">非表示にする</button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('admin.cancellation_settings.set_visible', $campaign) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="visible" value="{{ $campaign->cancellation_visible ? '0' : '1' }}">
+                            <button type="submit"
+                                    class="text-xs px-3 py-1 rounded
+                                        {{ $campaign->cancellation_visible
+                                            ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                            : 'bg-pink-500 text-white hover:bg-pink-600' }}">
+                                {{ $campaign->cancellation_visible ? '非表示にする' : '表示にする' }}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ route('admin.cancellation_settings.move_to_draft', $campaign) }}">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="text-xs px-3 py-1 rounded bg-yellow-100 text-yellow-700 hover:bg-yellow-200">下書きに移す</button>
+                        </form>
+                    @endif
+                    </div>
                 </td>
             </tr>
             @empty

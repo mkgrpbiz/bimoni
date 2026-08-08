@@ -19,7 +19,7 @@ class CancellationController extends Controller
             ->orderByRaw('COALESCE(invited_at, applied_at) DESC')
             ->get()
             ->pluck('campaign')
-            ->filter(fn ($campaign) => $campaign && $campaign->cancellation_visible && $campaign->hasCancellationInfo())
+            ->filter(fn ($campaign) => $campaign && $campaign->cancellation_visible && !$campaign->cancellation_draft && $campaign->hasCancellationInfo())
             ->unique('id')
             ->values();
 
