@@ -300,6 +300,9 @@ Route::prefix("api/ai-office")->middleware("ai-office.token")->group(function ()
     Route::get("bimoni/dashboard", [\App\Http\Controllers\Api\AiOfficeDashboardController::class, "summary"])->name("api.ai-office.bimoni.dashboard");
     // Slice2 Phase4: 新着案件情報の「確認して下書きに追加」から呼ばれる唯一の書き込みエンドポイント
     Route::post("bimoni/campaigns/draft", [\App\Http\Controllers\Api\AiOfficeCampaignDraftController::class, "store"])->name("api.ai-office.bimoni.campaigns.draft");
+    // 全体テンプレート機能: AI OFFICE側が既存案件を複製する際の読み取り専用API（Admin\CampaignControllerは無改修）
+    Route::get("bimoni/campaigns", [\App\Http\Controllers\Api\AiOfficeCampaignReadController::class, "index"])->name("api.ai-office.bimoni.campaigns.index");
+    Route::get("bimoni/campaigns/{campaign}", [\App\Http\Controllers\Api\AiOfficeCampaignReadController::class, "show"])->name("api.ai-office.bimoni.campaigns.show");
 });
 
 // ■ BIMONI管理君 用Webhook（会員登録用チャンネルとは別の新規チャンネル、署名検証のみ・セッション認証なし）

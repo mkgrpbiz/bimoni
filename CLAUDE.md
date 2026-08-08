@@ -342,7 +342,19 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - `campaignCounts()`（公開・終了案件数）だけは既存のどこにも無かった集計のため、AI OFFICE向けに新規追加した唯一のロジック（`Campaign.status`は`draft/published/closed`の3値で、「停止」という状態は存在しない）
 - `GET /api/ai-office/bimoni/dashboard`: 上記Serviceの結果をJSONで返す内部API。管理画面のセッション認証とは別に、`App\Http\Middleware\VerifyAiOfficeToken`でBearerトークン認証（`.env`の`AI_OFFICE_API_TOKEN`と一致するトークンが必要、無ければ401）。Sanctum等は導入せず、単一の信頼できるサーバー間呼び出し用に共有シークレット方式にした
 - **STGと本番でトークンは別の値**（STG用・本番用をそれぞれ`openssl`的なランダム生成で作成し、両サーバーの`.env`に個別追加。BIMONIの「STGと本番のLINEチャンネルは混ぜない」という既存方針と同じ考え方）。AI OFFICE側の`.env`にも対応するトークンを保存して使う
-- 今回追加したのはBIMONI側のこの1エンドポイントのみ。AI OFFICE側は将来SharePoy等へ横展開する際、`DashboardProviderInterface`の実装を部署ごとに追加する想定（BIMONIはHTTP経由、他部署はAI OFFICE内で完結する可能性もある）
+- AI OFFICE側は将来SharePoy等へ横展開する際、`DashboardProviderInterface`の実装を部署ごとに追加する想定（BIMONIはHTTP経由、他部署はAI OFFICE内で完結する可能性もある）
+
+### 新着案件のBIMONI下書き登録（`POST /api/ai-office/bimoni/campaigns/draft`）
+
+`App\Http\Controllers\Api\AiOfficeCampaignDraftController`。AI OFFICE側で人が確認した新着案件情報を`status=draft`固定の`Campaign`として作成する唯一の書き込みエンドポイント（`ai-office.token`ミドルウェアで認証）。**`Admin\CampaignController`（約380行・未テスト）は意図的に一切呼ばない・変更しない**——独自の最小バリデーションで`Campaign::create()`するのみ。`gross_profit`/`cooperation_fee_formula`/`continuation_cooperation_fee_formula`はBIMONI側で計算される値のため受け付けない（`Admin\CampaignController`のprivateな`recalculateGrossProfit()`/`applyCooperationFormula()`は流用できないため。draft登録後、管理画面の編集画面を一度保存すれば自動で正しく再計算される）。コース指定設定（`course_settings_enabled`等・`courses`）も受け付けない。
+
+### 全体テンプレート用の読み取り専用API（2026-08-08〜）
+
+AI OFFICE側の「全体テンプレート」機能（正常に運用されている既存BIMONI案件をあらかじめAI OFFICEへ全項目複製しておき、新着案件はそのテンプレートを使う方式）のために、`App\Http\Controllers\Api\AiOfficeCampaignReadController`を追加した。**`Admin\CampaignController`は無改修**、既存の書き込みエンドポイントと同じ`ai-office.token`ミドルウェアを使う読み取り専用の新規コントローラ。
+
+- `GET /api/ai-office/bimoni/campaigns`: 案件一覧（id/title/status/campaign_type/updated_at）。AI OFFICE側の複製元選択ピッカー用
+- `GET /api/ai-office/bimoni/campaigns/{campaign}`: 単一案件の全項目。コース指定設定（`course_settings_enabled`/`course_normal_name`/`course_normal_percentage`/`courses`）と、書き込みエンドポイントと同じ理由で`gross_profit`/`*_formula`系は返さない
+- AI OFFICEとの通信はこの複製元取得時と、下書き完成後のdraft登録時（上記）の2箇所のみに限定する設計（新着案件が来るたびにBIMONIへ問い合わせる方式にはしない）
 
 ---
 
