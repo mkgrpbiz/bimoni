@@ -346,7 +346,10 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 
 ### 新着案件のBIMONI下書き登録（`POST /api/ai-office/bimoni/campaigns/draft`）
 
-`App\Http\Controllers\Api\AiOfficeCampaignDraftController`。AI OFFICE側で人が確認した新着案件情報を`status=draft`固定の`Campaign`として作成する唯一の書き込みエンドポイント（`ai-office.token`ミドルウェアで認証）。**`Admin\CampaignController`（約380行・未テスト）は意図的に一切呼ばない・変更しない**——独自の最小バリデーションで`Campaign::create()`するのみ。`gross_profit`/`cooperation_fee_formula`/`continuation_cooperation_fee_formula`はBIMONI側で計算される値のため受け付けない（`Admin\CampaignController`のprivateな`recalculateGrossProfit()`/`applyCooperationFormula()`は流用できないため。draft登録後、管理画面の編集画面を一度保存すれば自動で正しく再計算される）。コース指定設定（`course_settings_enabled`等・`courses`）も受け付けない。
+`App\Http\Controllers\Api\AiOfficeCampaignDraftController`。AI OFFICE側で人が確認した新着案件情報を`status=draft`固定の`Campaign`として作成する唯一の書き込みエンドポイント（`ai-office.token`ミドルウェアで認証）。**`Admin\CampaignController`（約380行・未テスト）は意図的に一切呼ばない・変更しない**——独自の最小バリデーションで`Campaign::create()`するのみ。`gross_profit`/`cooperation_fee_formula`/`continuation_cooperation_fee_formula`はBIMONI側で計算される値のため受け付けない（`Admin\CampaignController`のprivateな`recalculateGrossProfit()`/`applyCooperationFormula()`は流用できないため。draft登録後、管理画面の編集画面を一度保存すれば自動で正しく再計算される）。コース指定設定（`course_settings_enabled`等・`courses`）・`category_id`も受け付けない。
+
+- 常に`cancellation_draft=true`で作成する（2026-08-09、BIMONI側に新設された解約方法管理の下書き機能に対応。AI OFFICEは解約連絡先の正確性を保証できないため、BIMONIスタッフが解約方法管理画面で改めて確認・公開する運用）
+- `thumbnail`/`monitor_video`/`monitor_video_thumbnail`は実ファイルアップロードとして受け取る（2026-08-09〜。それまでは文字列パスのみ受付）。バリデーション・保存先ディスク/パスは`Admin\CampaignController::store()`と完全に同じ（`public`ディスクの`campaigns`/`campaigns/videos`/`campaigns/video_thumbnails`）
 
 ### 全体テンプレート用の読み取り専用API（2026-08-08〜）
 
