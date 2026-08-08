@@ -11,12 +11,12 @@
     <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
 @endif
 
-{{-- 下書き・表示・非表示タブ --}}
+{{-- 表示・非表示・下書きタブ --}}
 @php
 $tabs = [
-    'draft' => ['label' => '下書き', 'color' => 'bg-yellow-500'],
     '1'     => ['label' => '表示',   'color' => 'bg-green-500'],
     '0'     => ['label' => '非表示', 'color' => 'bg-gray-500'],
+    'draft' => ['label' => '下書き', 'color' => 'bg-yellow-500'],
 ];
 @endphp
 <div class="flex border-b border-gray-200 mb-4">
