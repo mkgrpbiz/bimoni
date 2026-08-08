@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Campaign;
 use App\Models\CampaignCourse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AiOfficeCampaignApiTest extends TestCase
@@ -159,5 +161,39 @@ class AiOfficeCampaignApiTest extends TestCase
         $response->assertOk();
         $campaign = Campaign::findOrFail($response->json('campaign_id'));
         $this->assertNull($campaign->category_id);
+    }
+
+    public function test_draft_endpoint_accepts_and_stores_an_uploaded_thumbnail(): void
+    {
+        // 2026-08-09: AI OFFICE側がmultipartで実ファイルを添付できるように
+        // なったため、thumbnailは文字列パスではなく実ファイルとして受け付ける
+        // （Admin\CampaignController::store()と同じ保存先・ルール）。
+        Storage::fake('public');
+
+        $response = $this->withToken('test-token')->withHeaders(['Accept' => 'application/json'])
+            ->post('/api/ai-office/bimoni/campaigns/draft', [
+                'title' => '新規案件',
+                'campaign_type' => 'experience',
+                'thumbnail' => UploadedFile::fake()->image('thumb.png'),
+            ]);
+
+        $response->assertOk();
+        $campaign = Campaign::findOrFail($response->json('campaign_id'));
+        $this->assertStringStartsWith('campaigns/', $campaign->thumbnail);
+        Storage::disk('public')->assertExists($campaign->thumbnail);
+    }
+
+    public function test_draft_endpoint_rejects_a_non_image_thumbnail_upload(): void
+    {
+        Storage::fake('public');
+
+        $this->withToken('test-token')->withHeaders(['Accept' => 'application/json'])
+            ->post('/api/ai-office/bimoni/campaigns/draft', [
+                'title' => '新規案件',
+                'campaign_type' => 'experience',
+                'thumbnail' => UploadedFile::fake()->create('doc.pdf', 10),
+            ])->assertStatus(422);
+
+        $this->assertDatabaseMissing('campaigns', ['title' => '新規案件']);
     }
 }

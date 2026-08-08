@@ -39,6 +39,13 @@ use Illuminate\Http\Request;
  * for cancellation_visible — a campaign AI OFFICE just drafted hasn't been
  * reviewed by BIMONI staff on the 解約方法管理 screen yet, so it always
  * starts in that screen's draft bucket for them to check before publishing.
+ *
+ * 2026-08-09(画像・動画アップロード対応): thumbnail/monitor_video/
+ * monitor_video_thumbnailは元々パス文字列として受けていたが、AI OFFICE側
+ * が実ファイルをmultipart添付できるようになったため実ファイルアップロード
+ * として受け付けるよう変更した。バリデーション・保存先ディスク/パスは
+ * Admin\CampaignController::store()と完全に同じにしている（同じ`public`
+ * ディスクの`campaigns`/`campaigns/videos`/`campaigns/video_thumbnails`）。
  */
 class AiOfficeCampaignDraftController extends Controller
 {
@@ -48,7 +55,7 @@ class AiOfficeCampaignDraftController extends Controller
             'title' => 'required|string|max:255',
             'campaign_type' => 'required|in:experience,product,pr',
             'pr_media' => 'nullable|in:AD,IF,LINE,monitor',
-            'thumbnail' => 'nullable|string|max:255',
+            'thumbnail' => 'nullable|image|max:5120',
             'description' => 'nullable|string',
             'requirements' => 'nullable|string',
             'notes' => 'nullable|string',
@@ -61,8 +68,8 @@ class AiOfficeCampaignDraftController extends Controller
             'cancellation_visible' => 'nullable|boolean',
             'monitor_guide' => 'nullable|string',
             'link' => 'nullable|string|max:500',
-            'monitor_video' => 'nullable|string|max:255',
-            'monitor_video_thumbnail' => 'nullable|string|max:255',
+            'monitor_video' => 'nullable|mimes:mp4,mov,avi,webm|max:204800',
+            'monitor_video_thumbnail' => 'nullable|image|max:5120',
             'monitor_invite_message' => 'nullable|string',
             'monitor_end_message' => 'nullable|string',
             'product_name' => 'nullable|string|max:255',
@@ -89,6 +96,16 @@ class AiOfficeCampaignDraftController extends Controller
             'application_start_at' => 'nullable|date',
             'application_end_at' => 'nullable|date|after_or_equal:application_start_at',
         ]);
+
+        if ($request->hasFile('thumbnail')) {
+            $validated['thumbnail'] = $request->file('thumbnail')->store('campaigns', 'public');
+        }
+        if ($request->hasFile('monitor_video')) {
+            $validated['monitor_video'] = $request->file('monitor_video')->store('campaigns/videos', 'public');
+        }
+        if ($request->hasFile('monitor_video_thumbnail')) {
+            $validated['monitor_video_thumbnail'] = $request->file('monitor_video_thumbnail')->store('campaigns/video_thumbnails', 'public');
+        }
 
         $campaign = Campaign::create([...$validated, 'status' => 'draft', 'cancellation_draft' => true]);
 
