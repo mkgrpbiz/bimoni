@@ -31,7 +31,14 @@ use Illuminate\Http\Request;
  * gets them correctly filled in the first time staff open and save it in
  * the normal edit screen. course_settings_enabled and the course_ prefixed
  * fields / courses relation are also out of scope (コース指定設定 is
- * excluded from 全体テンプレート by design).
+ * excluded from 全体テンプレート by design). `category_id` is also not
+ * accepted (2026-08-09, unused on the BIMONI side today).
+ *
+ * 2026-08-09(解約方法管理下書き): every AI-OFFICE-created campaign is always
+ * created with cancellation_draft=true, regardless of what AI OFFICE sends
+ * for cancellation_visible — a campaign AI OFFICE just drafted hasn't been
+ * reviewed by BIMONI staff on the 解約方法管理 screen yet, so it always
+ * starts in that screen's draft bucket for them to check before publishing.
  */
 class AiOfficeCampaignDraftController extends Controller
 {
@@ -40,7 +47,6 @@ class AiOfficeCampaignDraftController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'campaign_type' => 'required|in:experience,product,pr',
-            'category_id' => 'nullable|exists:categories,id',
             'pr_media' => 'nullable|in:AD,IF,LINE,monitor',
             'thumbnail' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -84,7 +90,7 @@ class AiOfficeCampaignDraftController extends Controller
             'application_end_at' => 'nullable|date|after_or_equal:application_start_at',
         ]);
 
-        $campaign = Campaign::create([...$validated, 'status' => 'draft']);
+        $campaign = Campaign::create([...$validated, 'status' => 'draft', 'cancellation_draft' => true]);
 
         return response()->json([
             'campaign_id' => $campaign->id,

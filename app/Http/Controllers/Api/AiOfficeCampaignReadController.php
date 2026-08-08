@@ -22,6 +22,14 @@ use Illuminate\Http\JsonResponse;
  * are also excluded: these are values BIMONI recalculates server-side
  * (Admin\CampaignController::recalculateGrossProfit()/applyCooperationFormula(),
  * both private), so returning stale copies here would be misleading.
+ * `category_id` is also excluded (2026-08-09) — effectively unused on the
+ * BIMONI side today, so it was dropped from AI OFFICE's managed field set
+ * entirely rather than adding a categories-list endpoint for it.
+ *
+ * This CLONEABLE_FIELDS list must be kept in manual sync with AI OFFICE's
+ * `App\Support\CampaignFieldDefinitions::keys()` — separate repositories,
+ * no shared code, so any field added/removed on one side needs the same
+ * change made here by hand.
  */
 class AiOfficeCampaignReadController extends Controller
 {
@@ -29,7 +37,7 @@ class AiOfficeCampaignReadController extends Controller
      * @var list<string>
      */
     private const CLONEABLE_FIELDS = [
-        'category_id', 'title', 'campaign_type', 'pr_media', 'thumbnail',
+        'title', 'campaign_type', 'pr_media', 'thumbnail',
         'description', 'requirements', 'notes',
         'cancellation_info', 'cancellation_method', 'cancellation_phone',
         'cancellation_hours', 'cancellation_mypage_url', 'cancellation_email', 'cancellation_visible',

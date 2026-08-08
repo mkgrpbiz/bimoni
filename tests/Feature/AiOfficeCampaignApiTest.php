@@ -76,6 +76,9 @@ class AiOfficeCampaignApiTest extends TestCase
         // BIMONI側で再計算される値も含めない
         $this->assertArrayNotHasKey('gross_profit', $fields);
         $this->assertArrayNotHasKey('cooperation_fee_formula', $fields);
+
+        // category_idはBIMONI側で実質未使用のため複製対象から除外（2026-08-09決定）
+        $this->assertArrayNotHasKey('category_id', $fields);
     }
 
     public function test_draft_endpoint_still_accepts_the_original_six_field_payload(): void
@@ -131,5 +134,30 @@ class AiOfficeCampaignApiTest extends TestCase
         $campaign = Campaign::findOrFail($response->json('campaign_id'));
         $this->assertFalse((bool) $campaign->course_settings_enabled);
         $this->assertNull($campaign->gross_profit);
+    }
+
+    public function test_draft_endpoint_always_marks_the_campaign_as_cancellation_draft(): void
+    {
+        // 2026-08-09: AI OFFICE経由で作成した案件はBIMONIスタッフが解約方法
+        // 管理画面で改めて確認する運用のため、常にcancellation_draft=trueで
+        // 登録する（cancellation_visibleの送信値に関わらず）。
+        $response = $this->withToken('test-token')->postJson('/api/ai-office/bimoni/campaigns/draft', [
+            'title' => '新規案件', 'campaign_type' => 'experience', 'cancellation_visible' => true,
+        ]);
+
+        $response->assertOk();
+        $campaign = Campaign::findOrFail($response->json('campaign_id'));
+        $this->assertTrue($campaign->cancellation_draft);
+    }
+
+    public function test_draft_endpoint_ignores_category_id_even_if_sent(): void
+    {
+        $response = $this->withToken('test-token')->postJson('/api/ai-office/bimoni/campaigns/draft', [
+            'title' => '新規案件', 'campaign_type' => 'experience', 'category_id' => 9999,
+        ]);
+
+        $response->assertOk();
+        $campaign = Campaign::findOrFail($response->json('campaign_id'));
+        $this->assertNull($campaign->category_id);
     }
 }
