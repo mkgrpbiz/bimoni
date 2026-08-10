@@ -88,18 +88,20 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">銀行名 <span class="text-red-500 text-xs">必須</span></label>
                 <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name') }}"
                        placeholder="銀行名を入力（例：みずほ）" autocomplete="off"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm @error('bank_name') border-red-400 @enderror">
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm {{ $errors->hasAny(['bank_name', 'bank_code']) ? 'border-red-400' : '' }}">
                 <input type="hidden" id="bank_code" name="bank_code" value="{{ old('bank_code') }}">
                 @error('bank_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                @error('bank_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">支店名 <span class="text-red-500 text-xs">必須</span></label>
                 <input type="text" id="bank_branch_name" name="bank_branch_name" value="{{ old('bank_branch_name') }}"
                        placeholder="銀行名を選択後に入力" autocomplete="off"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm @error('bank_branch_name') border-red-400 @enderror">
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm {{ $errors->hasAny(['bank_branch_name', 'bank_branch_code']) ? 'border-red-400' : '' }}">
                 <input type="hidden" id="bank_branch_code" name="bank_branch_code" value="{{ old('bank_branch_code') }}">
                 @error('bank_branch_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                @error('bank_branch_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div class="grid grid-cols-2 gap-3">
