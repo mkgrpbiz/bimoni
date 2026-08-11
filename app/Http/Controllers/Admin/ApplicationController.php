@@ -333,6 +333,12 @@ class ApplicationController extends Controller
             $application->loadMissing('campaign');
             $isPrIf = $application->isPrIfCampaign();
 
+            // 古い打診案内・モニター案内・リマインドジョブをキャンセル（未送信のまま残ると新しい打診と二重で届く）
+            LineMessageJob::where('application_id', $application->id)
+                ->whereIn('send_type', ['proposal', 'monitor_guide', 'reminder'])
+                ->where('status', 'pending')
+                ->update(['status' => 'canceled']);
+
             if (!$isPrIf) {
                 // 通常案件：ロック・48h制限チェック
                 $others = $this->getOtherApplicationsMap(
@@ -616,9 +622,9 @@ class ApplicationController extends Controller
 
         $application->loadMissing(['campaign', 'user']);
 
-        // 進行中のモニター案内・リマインドジョブをキャンセル
+        // 古い打診案内・モニター案内・リマインドジョブをキャンセル（未送信のまま残ると新しい打診と二重で届く）
         LineMessageJob::where('application_id', $application->id)
-            ->whereIn('send_type', ['monitor_guide', 'reminder'])
+            ->whereIn('send_type', ['proposal', 'monitor_guide', 'reminder'])
             ->where('status', 'pending')
             ->update(['status' => 'canceled']);
 
