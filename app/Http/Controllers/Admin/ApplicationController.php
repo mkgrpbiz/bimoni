@@ -320,12 +320,17 @@ class ApplicationController extends Controller
             $application->update(['course_id' => $request->course_id ?: null]);
         }
 
-        // 応募中に戻す場合は案内日時をクリア
+        // 応募中に戻す場合は案内日時をクリアし、残っている打診・案内・リマインドジョブもキャンセル
         if ($request->status === 'pending') {
             $application->update([
                 'invited_at'     => null,
                 'invited_end_at' => null,
             ]);
+
+            LineMessageJob::where('application_id', $application->id)
+                ->whereIn('send_type', ['proposal', 'monitor_guide', 'reminder'])
+                ->where('status', 'pending')
+                ->update(['status' => 'canceled']);
         }
 
         // 打診中への変更処理
@@ -338,6 +343,12 @@ class ApplicationController extends Controller
                 ->whereIn('send_type', ['proposal', 'monitor_guide', 'reminder'])
                 ->where('status', 'pending')
                 ->update(['status' => 'canceled']);
+
+            // 前回の打診回答を持ち越さない（残っていると再打診中なのに旧回答が表示され続ける）
+            $application->update([
+                'proposal_answered_at' => null,
+                'proposal_answer'      => null,
+            ]);
 
             if (!$isPrIf) {
                 // 通常案件：ロック・48h制限チェック
