@@ -306,7 +306,5 @@ Route::prefix("api/ai-office")->middleware("ai-office.token")->group(function ()
     Route::get("bimoni/campaigns/{campaign}", [\App\Http\Controllers\Api\AiOfficeCampaignReadController::class, "show"])->name("api.ai-office.bimoni.campaigns.show");
 });
 
-// ■ BIMONI管理君 用Webhook（会員登録用チャンネルとは別の新規チャンネル、署名検証のみ・セッション認証なし）
-Route::post("webhooks/kanrikun", [\App\Http\Controllers\Webhooks\KanrikunWebhookController::class, "handle"])
-    ->middleware("kanrikun.signature")
-    ->name("webhooks.kanrikun");
+// 2026-08-11: BIMONI管理君LINEのWebhook受信・AI OFFICEへのリレーは廃止した
+// （AI OFFICE側が直接LINE Webhookを受信する新方式へ移行のため）。

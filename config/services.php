@@ -49,15 +49,9 @@ return [
         'token' => env('AI_OFFICE_API_TOKEN'),
     ],
 
-    // BIMONI管理君: 代理店・社内スタッフとのやりとり用の新規LINEチャンネル（会員登録用の'line'とは別チャンネル）
-    'kanrikun' => [
-        'channel_id' => env('KANRIKUN_CHANNEL_ID'),
-        'channel_secret' => env('KANRIKUN_CHANNEL_SECRET'),
-        'channel_access_token' => env('KANRIKUN_CHANNEL_ACCESS_TOKEN'),
-
-        // BIMONI → AI OFFICE方向（管理君メッセージのリレー）。api/ai-office/*用のtokenとは別物。
-        'relay_url' => env('KANRIKUN_RELAY_URL'),
-        'relay_token' => env('KANRIKUN_RELAY_TOKEN'),
-    ],
+    // 2026-08-11: BIMONI管理君LINEのWebhook受信・AI OFFICEへのリレーは廃止
+    // した（AI OFFICE側が直接LINE Webhookを受信する新方式へ移行のため）。
+    // 'kanrikun'ブロック（channel_id/channel_secret/channel_access_token/
+    // relay_url/relay_token）はここでは使わなくなった。
 
 ];
