@@ -20,7 +20,7 @@ class Campaign extends Model
         'continuation_condition', 'course_settings_enabled', 'course_normal_name', 'course_normal_percentage',
         'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
-        'continuation_rate', 'closing_date', 'payment_timing',
+        'continuation_rate', 'continuation_rate_calc_from', 'closing_date', 'payment_timing',
         'collection_info',
         'collection_requirement', 'collection_available', 'collection_count_judgment',
         'target_gender_ratio', 'target_male_ratio', 'target_female_ratio',
@@ -36,6 +36,7 @@ class Campaign extends Model
         return [
             'application_start_at'   => 'date',
             'application_end_at'     => 'date',
+            'continuation_rate_calc_from' => 'date',
             'application_show_fields' => 'array',
             'cancellation_visible'    => 'boolean',
             'cancellation_draft'      => 'boolean',
@@ -57,6 +58,19 @@ class Campaign extends Model
         return $this->belongsToMany(Campaign::class, 'campaign_duplicate_prohibitions', 'campaign_id', 'duplicate_campaign_id');
     }
     public function courses()             { return $this->hasMany(CampaignCourse::class)->orderBy('sort_order'); }
+
+    // 継続率集計の起算日。案件個別に設定（募集条件変更等で過去分を除外したい場合）が
+    // あればそちらを優先し、なければ全案件共通の起算日（2026-06-01、旧体制除外）を使う
+    public function continuationRateCutoff(): string
+    {
+        $default = '2026-06-01';
+        if (!$this->continuation_rate_calc_from) {
+            return $default;
+        }
+        return $this->continuation_rate_calc_from->toDateString() > $default
+            ? $this->continuation_rate_calc_from->toDateString()
+            : $default;
+    }
 
     // コース設定が有効な場合、通常案内％分の既定コスト＋各コースの初回/継続購入費×％の加重平均でモニターコストを算出
     public function calculatedMonitorCost(): float

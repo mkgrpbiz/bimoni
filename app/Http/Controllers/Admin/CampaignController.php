@@ -347,6 +347,7 @@ class CampaignController extends Controller
             'recurring_purchase_fee' => 'nullable|integer|min:0',
             'gross_profit'           => 'nullable|integer',
             'continuation_rate'      => 'nullable|numeric|min:0|max:100',
+            'continuation_rate_calc_from' => 'nullable|date',
             'continuation_condition' => 'nullable|in:2回前提,3回前提',
             'course_settings_enabled'          => 'nullable|in:0,1',
             'course_normal_name'               => 'nullable|string|max:255',

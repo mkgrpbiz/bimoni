@@ -32,6 +32,33 @@ class ApplicationController extends Controller
         return max(0, (int) ceil($needed));
     }
 
+    // アラート: 未達成目標継続率（実施完了以上のデータで計算）
+    // 起算日は案件ごとに継続率計算対象を絞れるcontinuationRateCutoff()を使うため、
+    // 集計はキャンペーンをまたいだ一括グループ集計ではなく1件ずつ問い合わせる
+    private function continuationRateAlerts(): Collection
+    {
+        $contCampaigns = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->whereIn('status', ['published', 'paused'])->get();
+        $contCompletedStatuses = ['completed', 'reported', 'approved', 'point_granted'];
+
+        return $contCampaigns->map(function ($c) use ($contCompletedStatuses) {
+            $stats = Application::where('campaign_id', $c->id)
+                ->whereIn('status', $contCompletedStatuses)
+                ->where('completed_at', '>=', $c->continuationRateCutoff())
+                ->whereNull('course_id')
+                ->selectRaw('COUNT(*) as total, COALESCE(SUM(continuation_response = "possible"), 0) as ok_count')
+                ->first();
+            return ['campaign' => $c, 'stats' => $stats];
+        })->filter(function ($row) {
+            $s = $row['stats'];
+            return $s && $s->total > 0 && ($s->ok_count / $s->total * 100) < $row['campaign']->continuation_rate;
+        })->map(function ($row) {
+            $c = $row['campaign'];
+            $s = $row['stats'];
+            $needed = $this->neededOkCountForTargetRate($s->total, $s->ok_count, (float) $c->continuation_rate);
+            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate, 'needed' => $needed];
+        })->values();
+    }
+
     public function index(Request $request): View
     {
         $campaignStatus = $request->input('status', 'published');
@@ -110,24 +137,7 @@ class ApplicationController extends Controller
         }
         $tomorrowUnderAlerts = $tomorrowUnderAlerts->sortBy('pending')->values();
 
-        // アラート: 未達成目標継続率（実施完了以上のデータで計算）
-        $contCampaigns = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->whereIn('status', ['published', 'paused'])->get();
-        $contCompletedStatuses = ['completed', 'reported', 'approved', 'point_granted'];
-        $contStats = Application::whereIn('campaign_id', $contCampaigns->pluck('id'))
-            ->whereIn('status', $contCompletedStatuses)
-            ->where('completed_at', '>=', '2026-06-01')
-            ->whereNull('course_id')
-            ->selectRaw('campaign_id, COUNT(*) as total, COALESCE(SUM(continuation_response = "possible"), 0) as ok_count')
-            ->groupBy('campaign_id')
-            ->get()->keyBy('campaign_id');
-        $continuationRateAlerts = $contCampaigns->filter(function ($c) use ($contStats) {
-            $s = $contStats->get($c->id);
-            return $s && $s->total > 0 && ($s->ok_count / $s->total * 100) < $c->continuation_rate;
-        })->map(function ($c) use ($contStats) {
-            $s = $contStats->get($c->id);
-            $needed = $this->neededOkCountForTargetRate($s->total, $s->ok_count, (float) $c->continuation_rate);
-            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate, 'needed' => $needed];
-        })->values();
+        $continuationRateAlerts = $this->continuationRateAlerts();
 
         return view('admin.applications.index', compact(
             'applications', 'campaigns', 'campaignStatus', 'tabCounts',
@@ -202,7 +212,7 @@ class ApplicationController extends Controller
             $slot->completed_count = $dayCounts->filter(fn($r) => in_array($r->status, ['confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
         }
 
-        $completedApps = $campaign->applications()->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])->where('completed_at', '>=', '2026-06-01')->with('user')->get();
+        $completedApps = $campaign->applications()->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])->where('completed_at', '>=', $campaign->continuationRateCutoff())->with('user')->get();
         // 継続率指標はコース未指定（通常コース）の応募のみで集計する（コースの「継続」タイプは確率的な継続確認の対象ではないため）
         $normalCompletedApps = $completedApps->filter(fn($a) => $a->course_id === null);
         $summary = [
@@ -263,24 +273,7 @@ class ApplicationController extends Controller
         }
         $tomorrowUnderAlerts = $tomorrowUnderAlerts->sortBy('pending')->values();
 
-        // アラート: 未達成目標継続率（実施完了以上のデータで計算）
-        $contCampaigns2 = Campaign::whereNotNull('continuation_rate')->where('continuation_rate', '>', 0)->whereIn('status', ['published', 'paused'])->get();
-        $contCompletedStatuses2 = ['completed', 'reported', 'approved', 'point_granted'];
-        $contStats2 = Application::whereIn('campaign_id', $contCampaigns2->pluck('id'))
-            ->whereIn('status', $contCompletedStatuses2)
-            ->where('completed_at', '>=', '2026-06-01')
-            ->whereNull('course_id')
-            ->selectRaw('campaign_id, COUNT(*) as total, COALESCE(SUM(continuation_response = "possible"), 0) as ok_count')
-            ->groupBy('campaign_id')
-            ->get()->keyBy('campaign_id');
-        $continuationRateAlerts = $contCampaigns2->filter(function ($c) use ($contStats2) {
-            $s = $contStats2->get($c->id);
-            return $s && $s->total > 0 && ($s->ok_count / $s->total * 100) < $c->continuation_rate;
-        })->map(function ($c) use ($contStats2) {
-            $s = $contStats2->get($c->id);
-            $needed = $this->neededOkCountForTargetRate($s->total, $s->ok_count, (float) $c->continuation_rate);
-            return ['campaign' => $c, 'actual' => round($s->ok_count / $s->total * 100), 'target' => (int) $c->continuation_rate, 'needed' => $needed];
-        })->values();
+        $continuationRateAlerts = $this->continuationRateAlerts();
 
         return view('admin.applications.campaign_index', compact(
             'campaign', 'applications', 'summary', 'allCampaigns', 'tabCounts', 'campaignStatus',
