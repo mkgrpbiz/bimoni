@@ -37,7 +37,7 @@
     {{-- アクションボタン --}}
     <div class="space-y-3 mb-5">
         <a href="{{ route('member.referral_program') }}"
-           class="block bg-pink-100 text-pink-600 py-3 rounded-xl text-sm font-medium text-center shadow-sm">
+           class="block bg-white border-2 border-pink-500 text-gray-800 py-3 rounded-xl text-sm font-medium text-center">
             🎁 お友達招待プログラム
         </a>
         <a href="{{ route('member.reports.create') }}"
