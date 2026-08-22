@@ -20,7 +20,15 @@
             </div>
             <div class="flex gap-2">
                 <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">登録コード</dt>
-                <dd class="font-mono text-gray-800 dark:text-gray-200">{{ $user->referred_by_code ?? '-' }}</dd>
+                <dd class="font-mono text-gray-800 dark:text-gray-200">
+                    @if($user->referred_by_code)
+                        {{ $user->referred_by_code }}
+                    @elseif($user->referrer)
+                        招待:{{ $user->referrer->bimoni_user_id }}（{{ $user->referrer->name }}）
+                    @else
+                        -
+                    @endif
+                </dd>
             </div>
             <div class="flex gap-2">
                 <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">氏名</dt>

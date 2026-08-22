@@ -46,7 +46,13 @@
                     {{ $user->bimoni_user_id ?? '-' }}
                 </td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-800 dark:text-gray-200">
-                    {{ $user->referred_by_code ?? '-' }}
+                    @if($user->referred_by_code)
+                        {{ $user->referred_by_code }}
+                    @elseif($user->referrer)
+                        招待:{{ $user->referrer->bimoni_user_id }}
+                    @else
+                        -
+                    @endif
                 </td>
                 <td class="px-4 py-3 text-gray-800 dark:text-gray-200 max-w-32 truncate">
                     {{ $user->line_display_name ?? '-' }}

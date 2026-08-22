@@ -13,6 +13,7 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $query = User::withCount(['applications'])
+            ->with('referrer:id,bimoni_user_id')
             ->whereNotNull('profile_completed_at')
             ->orderByDesc('profile_completed_at');
 
@@ -58,6 +59,8 @@ class UserController extends Controller
 
     public function show(User $user): View
     {
+        $user->load('referrer:id,bimoni_user_id,name');
+
         $reports = $user->monitorReports()
             ->with('campaign:id,title,cooperation_fee,continuation_cooperation_fee')
             ->orderByDesc('created_at')
