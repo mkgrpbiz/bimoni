@@ -203,6 +203,7 @@ class ReportController extends Controller
             'initial_app_ids.*'       => 'integer|exists:applications,id',
             'continuation_app_ids'    => 'nullable|array',
             'continuation_app_ids.*'  => 'integer|exists:applications,id',
+            'other_count'             => 'nullable|integer|min:0',
             'box_image'               => 'required|image|max:10240',
             'label_image'             => 'required|image|max:10240',
             'estimated_arrival_date'  => 'required|date|after:today',
@@ -212,8 +213,9 @@ class ReportController extends Controller
 
         $initialIds      = $request->initial_app_ids ?? [];
         $continuationIds = $request->continuation_app_ids ?? [];
+        $otherCount      = (int) ($request->other_count ?? 0);
 
-        if (empty($initialIds) && empty($continuationIds)) {
+        if (empty($initialIds) && empty($continuationIds) && $otherCount <= 0) {
             return back()->withErrors(['initial_app_ids' => '返送する商品を1つ以上選択してください。'])->withInput();
         }
 
@@ -246,6 +248,10 @@ class ReportController extends Controller
             $campaignIds[] = $app->campaign_id;
         }
 
+        // その他（運営確認必須）: 案件に紐付かないため campaignIds には加えない
+        $grossFee  += 800 * $otherCount;
+        $itemCount += $otherCount;
+
         $fee = CollectionReport::calcFee($itemCount, $shippingFee);
 
         $boxPath   = $request->file('box_image')->store('collection', 'public');
@@ -260,6 +266,7 @@ class ReportController extends Controller
             'shipping_fee'           => $shippingFee,
             'estimated_arrival_date' => $request->estimated_arrival_date,
             'item_count'             => $itemCount,
+            'other_count'            => $otherCount,
             'cooperation_fee'        => $fee,
             'status'                 => 'pending',
         ]);

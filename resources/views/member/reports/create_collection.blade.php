@@ -80,6 +80,22 @@
             </div>
             @endif
 
+            {{-- その他（運営確認必須） --}}
+            <div class="mt-2 bg-white border border-gray-200 rounded-xl px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-800">その他（運営確認必須）</span>
+                    <div class="flex items-center gap-1">
+                        <span class="text-gray-500 text-sm">×</span>
+                        <input type="number" name="other_count" id="other-count-input" min="0"
+                               value="{{ old('other_count', 0) }}"
+                               onchange="updateCollectionFee()"
+                               class="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-center">
+                        <span class="text-gray-500 text-sm">件</span>
+                    </div>
+                </div>
+                <p class="text-xs text-amber-600 mt-2">※その他は運営確認なしで発送されますと回収できない場合があります。</p>
+            </div>
+
             {{-- 送料 --}}
             <div class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -169,21 +185,23 @@ function updateCollectionFee() {
         ...document.querySelectorAll('input[name="initial_app_ids[]"]:checked'),
         ...document.querySelectorAll('input[name="continuation_app_ids[]"]:checked'),
     ];
-    const count = checked.length;
+    const otherCount = parseInt(document.getElementById('other-count-input')?.value || 0) || 0;
     const shippingFee = parseInt(document.getElementById('shipping-fee-input')?.value || 0);
 
     let gross = 0;
     checked.forEach(cb => { gross += parseInt(cb.dataset.fee || 800); });
+    gross += otherCount * 800;
 
+    const hasItems = checked.length > 0 || otherCount > 0;
     const effectiveCount = gross / 800;
     const fee = effectiveCount >= 5 ? gross + shippingFee : gross;
 
     document.getElementById('collection-fee-display').textContent = fee.toLocaleString() + 'P';
 
-    if (count > 0 && effectiveCount >= 5) {
+    if (hasItems && effectiveCount >= 5) {
         document.getElementById('collection-fee-note').textContent =
             gross.toLocaleString() + 'P + 送料' + shippingFee.toLocaleString() + '円 = ' + fee.toLocaleString() + 'P';
-    } else if (count > 0) {
+    } else if (hasItems) {
         document.getElementById('collection-fee-note').textContent = gross.toLocaleString() + 'P（送料なし）';
     } else {
         document.getElementById('collection-fee-note').textContent = '';

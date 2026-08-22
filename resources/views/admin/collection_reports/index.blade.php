@@ -66,7 +66,12 @@ $tabs = [
                 <td class="px-3 py-3 max-w-xs truncate">{{ $report->user->line_display_name ?? '-' }}</td>
                 <td class="px-3 py-3 font-medium">{{ $report->user->name ?? '-' }}</td>
                 <td class="px-3 py-3 text-gray-600">{{ $report->user->name_kana ?? '-' }}</td>
-                <td class="px-3 py-3 text-right font-bold">{{ $report->item_count }}</td>
+                <td class="px-3 py-3 text-right font-bold">
+                    {{ $report->item_count }}
+                    @if($report->other_count > 0)
+                    <span class="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-normal whitespace-nowrap">その他×{{ $report->other_count }}</span>
+                    @endif
+                </td>
                 <td class="px-3 py-3 whitespace-nowrap">{{ $report->estimated_arrival_date?->format('m/d') ?? '-' }}</td>
                 <td class="px-3 py-3 font-mono text-xs">{{ $report->tracking_number ?? '-' }}</td>
                 <td class="px-3 py-3 text-right whitespace-nowrap font-medium text-pink-600">

@@ -33,6 +33,13 @@
                 </div>
             </div>
 
+            @if($collectionReport->other_count > 0)
+            <div class="mb-4 bg-amber-50 border border-amber-300 rounded px-3 py-2">
+                <p class="text-sm text-amber-800 font-medium">その他 ×{{ $collectionReport->other_count }}件（運営確認必須）</p>
+                <p class="text-xs text-amber-600 mt-0.5">案件に紐付かない商品です。回収可否を確認してください。</p>
+            </div>
+            @endif
+
             <dl class="grid grid-cols-2 gap-y-3 text-sm">
                 <dt class="text-gray-500">ポイント還元</dt>
                 <dd class="font-bold text-pink-600 text-base">¥{{ number_format($collectionReport->cooperation_fee) }}

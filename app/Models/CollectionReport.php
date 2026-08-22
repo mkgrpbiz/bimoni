@@ -9,7 +9,7 @@ class CollectionReport extends Model
     protected $fillable = [
         'user_id', 'campaign_ids', 'box_image', 'label_image',
         'tracking_number', 'shipping_fee', 'estimated_arrival_date',
-        'item_count', 'cooperation_fee',
+        'item_count', 'other_count', 'cooperation_fee',
         'adjustment_amount', 'adjustment_reason',
         'status', 'rejection_reason', 'reviewed_by', 'reviewed_at',
     ];
