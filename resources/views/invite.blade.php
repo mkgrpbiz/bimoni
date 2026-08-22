@@ -57,8 +57,8 @@
         <div class="flex items-start gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
             <span class="text-xl shrink-0">💰</span>
             <div>
-                <p class="text-sm font-bold text-gray-800">購入費＋ポイント還元をお支払い</p>
-                <p class="text-xs text-gray-500">商品代金は全額還元。さらに謝礼あり</p>
+                <p class="text-sm font-bold text-gray-800">モニター完了でポイント還元</p>
+                <p class="text-xs text-gray-500">商品代金相当額＋謝礼分をポイントで還元</p>
             </div>
         </div>
         <div class="flex items-start gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
