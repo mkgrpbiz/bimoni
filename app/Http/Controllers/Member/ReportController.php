@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Member\Concerns\RequiresBankInfo;
 use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\CollectionReport;
@@ -15,6 +16,10 @@ use Illuminate\View\View;
 
 class ReportController extends Controller
 {
+    use RequiresBankInfo;
+
+    private const BANK_INFO_MESSAGE = 'ポイント還元をお支払いするため、報告の前に振込先の口座情報を登録してください。';
+
     public function show(MonitorReport $report): View|RedirectResponse
     {
         $user = Auth::guard('liff')->user();
@@ -35,19 +40,10 @@ class ReportController extends Controller
         return view('member.reports.show_collection', ['report' => $collectionReport, 'campaigns' => $campaigns]);
     }
 
-    private function ensureBankInfo($user): ?RedirectResponse
-    {
-        if ($user->hasCompleteBankInfo()) {
-            return null;
-        }
-        return redirect()->route('member.profile.edit')
-            ->with('error', 'ポイント還元をお支払いするため、報告の前に振込先の口座情報を登録してください。');
-    }
-
     public function create(): View|RedirectResponse
     {
         $user = Auth::guard('liff')->user();
-        if ($redirect = $this->ensureBankInfo($user)) {
+        if ($redirect = $this->ensureBankInfo($user, self::BANK_INFO_MESSAGE)) {
             return $redirect;
         }
 
@@ -79,7 +75,7 @@ class ReportController extends Controller
     public function createCollection(): View|RedirectResponse
     {
         $user = Auth::guard('liff')->user();
-        if ($redirect = $this->ensureBankInfo($user)) {
+        if ($redirect = $this->ensureBankInfo($user, self::BANK_INFO_MESSAGE)) {
             return $redirect;
         }
 
@@ -100,7 +96,7 @@ class ReportController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = Auth::guard('liff')->user();
-        if ($redirect = $this->ensureBankInfo($user)) {
+        if ($redirect = $this->ensureBankInfo($user, self::BANK_INFO_MESSAGE)) {
             return $redirect;
         }
 
@@ -194,7 +190,7 @@ class ReportController extends Controller
     public function storeCollection(Request $request): RedirectResponse
     {
         $user = Auth::guard('liff')->user();
-        if ($redirect = $this->ensureBankInfo($user)) {
+        if ($redirect = $this->ensureBankInfo($user, self::BANK_INFO_MESSAGE)) {
             return $redirect;
         }
 

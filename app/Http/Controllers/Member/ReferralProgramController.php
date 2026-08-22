@@ -3,15 +3,22 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Member\Concerns\RequiresBankInfo;
 use App\Models\UserReferralReward;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ReferralProgramController extends Controller
 {
-    public function index(): View
+    use RequiresBankInfo;
+
+    public function index(): View|RedirectResponse
     {
         $user = Auth::guard('liff')->user();
+        if ($redirect = $this->ensureBankInfo($user, '招待報酬を受け取るため、先に振込先の口座情報を登録してください。')) {
+            return $redirect;
+        }
 
         // 代理店の招待リンクと同じ招待LP（/invite/{code}）を使う
         $referralLink = route('invite', ['code' => $user->bimoni_user_id]);
