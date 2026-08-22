@@ -11,7 +11,7 @@
 
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
         <p class="font-bold text-gray-800 mb-1">🎁 お友達を招待しよう！</p>
-        <p class="text-xs text-gray-500 mb-4">招待したお友達が初めてモニター実施を完了すると、1,000Pがポイント還元されます。</p>
+        <p class="text-xs text-gray-500 mb-4">招待したお友達が初めてモニター実施を完了すると、あなたに1,000Pがポイント還元されます。</p>
 
         <p class="text-xs text-gray-500 mb-1">あなたの招待リンク</p>
         <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 mb-3">
