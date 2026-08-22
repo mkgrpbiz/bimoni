@@ -142,8 +142,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('referrals/{agent}', [ReferralController::class, 'show'])->name('referrals.show');
         Route::get('referrals/{agent}/csv', [ReferralController::class, 'exportCsv'])->name('referrals.csv');
         Route::get('user-referrals', [\App\Http\Controllers\Admin\UserReferralController::class, 'index'])->name('user_referrals.index');
-        Route::get('user-referral-settings', [\App\Http\Controllers\Admin\UserReferralController::class, 'settingsEdit'])->name('user_referral_settings.edit');
-        Route::patch('user-referral-settings', [\App\Http\Controllers\Admin\UserReferralController::class, 'settingsUpdate'])->name('user_referral_settings.update');
         Route::get('points', [PointController::class, 'index'])->name('points.index');
         Route::get('points/zengin', [PointController::class, 'exportZengin'])->name('points.zengin');
         Route::patch('points/grant/{report}', [PointController::class, 'grant'])->name('points.grant');

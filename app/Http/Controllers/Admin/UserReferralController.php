@@ -6,9 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\MonitorReport;
 use App\Models\UserReferralReward;
-use App\Models\UserReferralSetting;
 use Carbon\Carbon;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -60,27 +58,6 @@ class UserReferralController extends Controller
         }
 
         return view('admin.user_referrals.index', compact('summary', 'month', 'year', 'mon', 'months', 'currentTotal', 'prevTotal'));
-    }
-
-    public function settingsEdit(): View
-    {
-        $setting = UserReferralSetting::current();
-        return view('admin.user_referrals.settings', compact('setting'));
-    }
-
-    public function settingsUpdate(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'enabled'       => 'nullable|in:0,1',
-            'reward_amount' => 'required|integer|min:0',
-        ]);
-
-        UserReferralSetting::current()->update([
-            'enabled'       => ($validated['enabled'] ?? '0') === '1',
-            'reward_amount' => $validated['reward_amount'],
-        ]);
-
-        return back()->with('success', '設定を更新しました。');
     }
 
     // ダッシュボードに出す紹介ユーザー数・会員数・単価別初回利用数・削減額

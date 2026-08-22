@@ -38,11 +38,10 @@
                 'user_referrals' => ['label' => '紹介報酬（ユーザー）', 'route' => 'admin.user_referrals.index'],
             ],
             '設定・その他' => [
-                'import'                  => ['label' => 'インポート', 'route' => 'admin.import.index'],
-                'form_fields'             => ['label' => '編集',       'route' => 'admin.form_fields.index'],
-                'faqs'                    => ['label' => 'よくある質問管理', 'route' => 'admin.faqs.index'],
-                'guide_pages'             => ['label' => 'ガイドページ管理', 'route' => 'admin.guide_pages.index'],
-                'user_referral_settings'  => ['label' => 'ユーザー紹介管理', 'route' => 'admin.user_referral_settings.edit'],
+                'import'      => ['label' => 'インポート', 'route' => 'admin.import.index'],
+                'form_fields' => ['label' => '編集',       'route' => 'admin.form_fields.index'],
+                'faqs'        => ['label' => 'よくある質問管理', 'route' => 'admin.faqs.index'],
+                'guide_pages' => ['label' => 'ガイドページ管理', 'route' => 'admin.guide_pages.index'],
             ],
         ];
     @endphp
