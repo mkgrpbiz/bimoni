@@ -10,10 +10,10 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
-        <p class="font-bold text-gray-800 mb-1">🎁 友達を紹介しよう！</p>
-        <p class="text-xs text-gray-500 mb-4">紹介した方が初めてモニターを完了すると、ポイントがもらえます。</p>
+        <p class="font-bold text-gray-800 mb-1">🎁 お友達を招待しよう！</p>
+        <p class="text-xs text-gray-500 mb-4">招待したお友達が初めてモニター実施を完了すると、1,000Pがポイント還元されます。</p>
 
-        <p class="text-xs text-gray-500 mb-1">あなたの紹介リンク</p>
+        <p class="text-xs text-gray-500 mb-1">あなたの招待リンク</p>
         <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 mb-3">
             <input type="text" id="referral-link-input" value="{{ $referralLink }}" readonly
                    class="flex-1 min-w-0 bg-transparent text-xs text-gray-600 outline-none">
@@ -28,7 +28,7 @@
     <p class="font-bold text-gray-700 mb-3">あなたの実績</p>
     <div class="grid grid-cols-2 gap-3 mb-5">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-            <p class="text-xs text-gray-500 mb-1">紹介人数</p>
+            <p class="text-xs text-gray-500 mb-1">招待人数</p>
             <p class="text-2xl font-bold text-gray-800">{{ number_format($stats['referral_count']) }}</p>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
