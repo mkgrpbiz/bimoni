@@ -13,9 +13,8 @@ class ReferralProgramController extends Controller
     {
         $user = Auth::guard('liff')->user();
 
-        $referralLink = config('services.line.liff_id')
-            ? 'https://liff.line.me/' . config('services.line.liff_id') . '?referral_code=' . $user->bimoni_user_id
-            : '';
+        // 代理店の招待リンクと同じ招待LP（/invite/{code}）を使う
+        $referralLink = route('invite', ['code' => $user->bimoni_user_id]);
 
         $rewards = UserReferralReward::where('referrer_user_id', $user->id)
             ->orderByDesc('created_at')

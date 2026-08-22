@@ -66,18 +66,14 @@
 @push('scripts')
 <script>
 function copyReferralLink() {
-    const url = document.getElementById('referral-link-input').value;
+    // readonly の既存inputをそのまま選択してコピーする（新規にeditable要素を作るとiOSでキーボードが開いてしまう）
+    const input = document.getElementById('referral-link-input');
     try {
-        const el = document.createElement('textarea');
-        el.value = url;
-        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
-        document.body.appendChild(el);
-        el.focus();
-        el.select();
+        input.focus();
+        input.setSelectionRange(0, input.value.length);
         document.execCommand('copy');
-        document.body.removeChild(el);
     } catch (e) {
-        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+        if (navigator.clipboard) navigator.clipboard.writeText(input.value).catch(() => {});
     }
     alert('コピーしました');
 }
