@@ -43,6 +43,8 @@ php8.3 artisan route:clear
 
 > **注意**: サーバーのデフォルトPHPは8.0。必ず `php8.3` を使う。
 
+> **⚠️ 2026-08-22〜: 本番とSTGが意図的に乖離中**。お友達招待プログラム機能（下記セクション参照）をSTGで開発中だが本番はまだ未リリース。本番は`git revert`でこの機能追加コミットを打ち消した状態（コミット`f6ab4ee`）で止まっており、それ以降にmainへpushされた変更（招待プログラム関連はもちろん、それ以外の無関係な修正も含めて全部）はSTGにしか入っていない。**本番で何か直したい時、うっかり`git pull`すると招待プログラム一式（未完成機能・マイグレーション込み）が丸ごと本番に入ってしまうので注意**。招待プログラムと無関係な単発の修正を今すぐ本番だけに入れたい場合は、gitを経由せず該当ファイルを本番へ直接SSH経由で書き換えること（このセッションでは「モニター報告をする」ボタン文言変更がこのケースに該当し、対応保留中）。招待プログラムが本番リリース準備できたら、通常通り`git pull`でSTG・本番とも追いつかせて、この注意書き自体を削除する。
+
 ### DBバックアップ
 Xserver側にDB自動バックアップの設定がなく、コース機能のバグでデータが消えた際に復元手段が一切なかった教訓から追加（2026-07-28）。
 - 毎日4:10に `/home/mkgrp/db_backups/backup.sh` がcron実行され、STG・本番両方を`mysqldump | gzip`で `/home/mkgrp/db_backups/{stg,prod}_YYYYmmdd.sql.gz` に保存
@@ -331,6 +333,42 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - **`line_contacted` 以外のステータスはすべて expired ページ**（回答済みのリンクを再度開いても変更・キャンセル不可）
 - 「いいえ」→別日程選択にも制限なし（管理画面側での打診送信時のみロックチェック）
 - `declineNo` にもステータスチェックあり（`line_contacted` 以外は expired ページ）
+
+---
+
+## お友達招待プログラム（2026-08-22〜、STGのみ・本番未リリース）
+
+会員が自分のIDを使って別の会員を招待し、招待された人の初回モニター報告が承認されると招待した人に1回だけポイント還元される機能。既存の「代理店紹介」（`Agent`/`AgentReferralCode`/`referred_by_code`）とは完全に別経路。
+
+### 表記ルール
+**代理店＝「紹介」、ユーザー＝「招待」**で統一。管理画面の「紹介報酬（代理店）」「招待報酬（ユーザー）」の呼び分けもこのルールに従う。DBカラム名・モデル名（`referred_by_user_id`／`UserReferralReward`／`referrals()`）は内部実装なので「紹介」のまま（表記統一の対象外）。
+
+### DB設計
+- `User.referred_by_user_id`: 誰に招待されたか（nullable、`nullOnDelete`）。代理店の`referred_by_code`とは別カラムで、登録時にどちらか一方だけが入る
+- `UserReferralReward`（`user_referral_rewards`）: `referrer_user_id`（招待した人）/ `referred_user_id`（招待された人、UNIQUE制約で1人1回きりを保証）/ `monitor_report_id`（きっかけになった報告） / `amount`（1,000固定） / `payment_status`（pending/reserved/paid、`MonitorReport`と同じ運用）
+
+### 招待コードの判定（`AuthController::liffCallback()`）
+招待リンクの`referral_code`パラメータを、まず`AgentReferralCode`（代理店）に一致するか確認し、一致しなければ`User.bimoni_user_id`として逆引きする。どちらにも一致しなければ何も設定しない。**招待リンク自体は代理店と共通の`/invite/{code}`ページ**（`InviteController`）を使う。コードが代理店コードでなければエージェント名バッジは出ないだけで、ページとしては問題なく機能する。
+
+### 報酬付与（`UserReferralService::grantForApprovedReport()`）
+- `ReportController::approve()`（管理画面での報告承認、MonitorReportをapprovedにする唯一の場所）でのみ発火
+- `purchase_type === 'initial'` の報告のみ対象（`continuation`/`other`は対象外）
+- 「招待された人の初回報告」でグローバルに1回きり（`UserReferralReward.referred_user_id`のUNIQUE制約が二重付与を防ぐ。案件をまたいでも2回目以降は発生しない）
+- CSVインポート経由の報告（`ImportService`、`status=approved`で直接作成）は`approve()`を経由しないため対象外（過去データの遡及付与を防ぐ意図的な仕様）
+- 報酬額は`UserReferralService::REWARD_AMOUNT`定数（1,000固定）。当初ON/OFF設定・金額変更UIを作ったが「いらん」ということで削除済み（2026-08-22）
+
+### 支払いパイプラインへの統合
+実際に銀行振込されるよう、`PointController`（一覧・`markReserved`/`markPaid`・`exportZengin`）と`DashboardSummaryService::monthlyMetrics()`のポイント還元KPIすべてに`UserReferralReward`を合算済み。`Point`/`point_balance`モデルは別物（どの画面からも参照されていない死んだ仕組み）で、こちらには乗せていない。
+
+### 口座情報必須チェック（`RequiresBankInfo`トレイト）
+モニター報告と同様、口座情報が未登録だと`member.profile.edit`へリダイレクトされる。招待だけして自分は一度も報告を出さない会員が口座未登録に気づけない穴があったため、招待プログラムページ（`ReferralProgramController::index()`）にも同じチェックを追加。`app/Http/Controllers/Member/Concerns/RequiresBankInfo.php`に共通化し、`ReportController`と`ReferralProgramController`の両方で使用。
+
+### ダッシュボード集計（`UserReferralController::buildStats()`）
+「招待者数」「会員数（ユーザー招待）」「初回利用数（500円/1,000円）」「削減額」をダッシュボードに表示。削減額の算出式:
+```
+削減額 = (招待された人の2回目以降のinitial報告 × その案件自身のreferral_fee) − (初回利用数が500円単価案件だった件数 × 500)
+```
+報酬は常に1,000P固定なので、案件の代理店紹介単価が500円のところで初回に1,000P払うとその分は赤字（500円の過払い）になる。これを削減額から差し引く。
 
 ---
 
