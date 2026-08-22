@@ -201,8 +201,8 @@ $pm = $prevMetrics;
     $referralCards = [
         ['label' => '招待者数',            'value' => $referralStats['referral_user_count'], 'suffix' => '名', 'money' => false],
         ['label' => '会員数（ユーザー招待）', 'value' => $referralStats['member_count'],        'suffix' => '名', 'money' => false],
-        ['label' => '初回利用数（500円）',  'value' => $referralStats['tier_500'],            'suffix' => '件', 'money' => false],
-        ['label' => '初回利用数（1,000円）', 'value' => $referralStats['tier_1000'],           'suffix' => '件', 'money' => false],
+        ['label' => '初回実施数（500円）',  'value' => $referralStats['tier_500'],            'suffix' => '件', 'money' => false],
+        ['label' => '初回実施数（1,000円）', 'value' => $referralStats['tier_1000'],           'suffix' => '件', 'money' => false],
         ['label' => '削減額',              'value' => $referralStats['savings'],             'suffix' => '',   'money' => true],
     ];
     @endphp

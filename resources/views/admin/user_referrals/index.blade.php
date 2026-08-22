@@ -56,7 +56,7 @@ function syncMonth(sel) {
                 <th class="px-4 py-3 text-left">招待者</th>
                 <th class="px-4 py-3 text-left">ユーザーID</th>
                 <th class="px-4 py-3 text-right">招待人数（累計）</th>
-                <th class="px-4 py-3 text-right">今月の初回利用数</th>
+                <th class="px-4 py-3 text-right">今月の初回実施数</th>
                 <th class="px-4 py-3 text-right">招待報酬合計</th>
                 <th class="px-4 py-3 text-center">ステータス</th>
             </tr>

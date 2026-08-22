@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MonitorReport;
 use App\Models\User;
+use App\Models\UserReferralReward;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -75,6 +76,15 @@ class UserController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('admin.users.show', compact('user', 'reports', 'applications', 'collectionReports'));
+        $referralRewards = UserReferralReward::where('referrer_user_id', $user->id)
+            ->with('referredUser:id,bimoni_user_id,name')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $referralCount = $user->referrals()->count();
+
+        return view('admin.users.show', compact(
+            'user', 'reports', 'applications', 'collectionReports', 'referralRewards', 'referralCount'
+        ));
     }
 }

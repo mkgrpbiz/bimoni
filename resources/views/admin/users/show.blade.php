@@ -121,12 +121,20 @@
                 <dt class="text-gray-700 dark:text-gray-400">累計支払い金額</dt>
                 <dd class="font-medium text-green-600 dark:text-green-400">¥{{ number_format($paidTotal) }}</dd>
             </div>
+            <div class="flex justify-between">
+                <dt class="text-gray-700 dark:text-gray-400">ユーザー招待数</dt>
+                <dd class="font-medium text-gray-800 dark:text-gray-200">{{ $referralCount }} 名</dd>
+            </div>
+            <div class="flex justify-between">
+                <dt class="text-gray-700 dark:text-gray-400">初回実施数</dt>
+                <dd class="font-medium text-gray-800 dark:text-gray-200">{{ $referralRewards->count() }} 件</dd>
+            </div>
         </dl>
     </div>
 </div>
 
 {{-- 応募履歴 --}}
-<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6" open>
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
     <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
         応募履歴（{{ $applications->count() }}件）
     </summary>
@@ -183,7 +191,7 @@
 </details>
 
 {{-- モニター報告履歴 --}}
-<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6" open>
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
     <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
         モニター報告履歴（{{ $reports->count() }}件）
     </summary>
@@ -245,7 +253,7 @@
 </details>
 
 {{-- 回収報告履歴 --}}
-<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden" open>
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
     <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
         回収報告履歴（{{ $collectionReports->count() }}件）
     </summary>
@@ -296,6 +304,52 @@
             @empty
             <tr>
                 <td colspan="7" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">回収報告履歴がありません</td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+</details>
+
+{{-- ユーザー招待履歴 --}}
+<details class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <summary class="px-5 py-3 border-b dark:border-gray-700 font-bold text-gray-700 dark:text-gray-200 cursor-pointer select-none">
+        ユーザー招待履歴（{{ $referralRewards->count() }}件）
+    </summary>
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+            <tr>
+                <th class="px-4 py-3 text-left">発生日時</th>
+                <th class="px-4 py-3 text-left">招待した相手</th>
+                <th class="px-4 py-3 text-right">招待報酬</th>
+                <th class="px-4 py-3 text-left">支払いステータス</th>
+                <th class="px-4 py-3 text-left">支払日</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y dark:divide-gray-700">
+            @forelse($referralRewards as $rr)
+            <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
+                <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400 whitespace-nowrap">
+                    {{ $rr->created_at->format('Y/m/d H:i') }}
+                </td>
+                <td class="px-4 py-3 text-gray-800 dark:text-gray-200">
+                    {{ $rr->referredUser?->name ?? '-' }}（{{ $rr->referredUser?->bimoni_user_id ?? '-' }}）
+                </td>
+                <td class="px-4 py-3 text-right font-medium text-gray-800 dark:text-gray-200">
+                    ¥{{ number_format($rr->amount) }}
+                </td>
+                <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-0.5 rounded
+                        {{ $rr->payment_status === 'paid' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white' }}">
+                        {{ $rr->payment_status === 'paid' ? '支払済' : '支払待ち' }}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">
+                    {{ $rr->paid_at?->format('Y/m/d') ?? '-' }}
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="5" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">招待履歴がありません</td>
             </tr>
             @endforelse
         </tbody>
