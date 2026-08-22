@@ -42,7 +42,7 @@
         </a>
         <a href="{{ route('member.reports.create') }}"
            class="block bg-pink-500 text-white py-3 rounded-xl text-sm font-medium text-center">
-            📋 モニター報告
+            📋 モニター報告をする
         </a>
         <div class="grid grid-cols-2 gap-3">
             <a href="{{ route('member.collections.create') }}"
