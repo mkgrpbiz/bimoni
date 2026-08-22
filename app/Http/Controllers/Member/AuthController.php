@@ -53,17 +53,8 @@ class AuthController extends Controller
         }
 
         // 招待リンク経由の紹介コードをDBに直接保存
-        // 代理店の招待コード（AgentReferralCode）とユーザー個人の紹介コード（bimoni_user_id）を判定して振り分ける
-        if ($request->filled('referral_code') && !$user->referred_by_code && !$user->referred_by_user_id) {
-            $code = strtoupper($request->referral_code);
-            if (\App\Models\AgentReferralCode::where('code', $code)->exists()) {
-                $user->update(['referred_by_code' => $code]);
-            } else {
-                $referrer = User::where('bimoni_user_id', $code)->first();
-                if ($referrer && $referrer->id !== $user->id) {
-                    $user->update(['referred_by_user_id' => $referrer->id]);
-                }
-            }
+        if ($request->filled('referral_code') && !$user->referred_by_code) {
+            $user->update(['referred_by_code' => strtoupper($request->referral_code)]);
         }
 
         Auth::guard('liff')->login($user);

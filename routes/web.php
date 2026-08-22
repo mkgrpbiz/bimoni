@@ -141,9 +141,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('referrals/mark-pending', [ReferralController::class, 'markPending'])->name('referrals.mark_pending');
         Route::get('referrals/{agent}', [ReferralController::class, 'show'])->name('referrals.show');
         Route::get('referrals/{agent}/csv', [ReferralController::class, 'exportCsv'])->name('referrals.csv');
-        Route::get('user-referrals', [\App\Http\Controllers\Admin\UserReferralController::class, 'index'])->name('user_referrals.index');
-        Route::get('user-referral-settings', [\App\Http\Controllers\Admin\UserReferralController::class, 'settingsEdit'])->name('user_referral_settings.edit');
-        Route::patch('user-referral-settings', [\App\Http\Controllers\Admin\UserReferralController::class, 'settingsUpdate'])->name('user_referral_settings.update');
         Route::get('points', [PointController::class, 'index'])->name('points.index');
         Route::get('points/zengin', [PointController::class, 'exportZengin'])->name('points.zengin');
         Route::patch('points/grant/{report}', [PointController::class, 'grant'])->name('points.grant');
@@ -268,7 +265,6 @@ Route::prefix('member')->name('member.')->group(function () {
             Route::post('campaigns/{campaign}/apply', [MemberCampaign::class, 'apply'])->name('campaigns.apply');
             Route::post('campaigns/{campaign}/cancel', [MemberCampaign::class, 'cancel'])->name('campaigns.cancel');
             Route::get('mypage', [MemberMypage::class, 'index'])->name('mypage');
-            Route::get('referral-program', [\App\Http\Controllers\Member\ReferralProgramController::class, 'index'])->name('referral_program');
             Route::get('cancellations', [\App\Http\Controllers\Member\CancellationController::class, 'index'])->name('cancellations');
             Route::get('profile/edit', [MemberRegister::class, 'edit'])->name('profile.edit');
             Route::patch('profile', [MemberRegister::class, 'updateProfile'])->name('profile.update');

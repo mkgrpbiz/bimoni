@@ -129,15 +129,8 @@ class DashboardSummaryService
         } else {
             $collectionQuery->whereRaw($exDate('created_at'));
         }
-        $referralRewardQuery = \App\Models\UserReferralReward::query();
-        if ($mode === 'monthly') {
-            $referralRewardQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
-        } else {
-            $referralRewardQuery->whereRaw($exDate('created_at'));
-        }
         $reports = $reportQuery->get();
         $collectionReports = $collectionQuery->get();
-        $referralRewards = $referralRewardQuery->get();
         $cooperationFee = $reports->sum(function ($r) {
             $c = $r->campaign;
             $coopFee = $r->purchase_type === 'continuation'
@@ -145,7 +138,7 @@ class DashboardSummaryService
                 : ($c?->cooperation_fee ?? 0);
 
             return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
-        }) + $collectionReports->sum(fn ($r) => $r->totalFee()) + $referralRewards->sum('amount');
+        }) + $collectionReports->sum(fn ($r) => $r->totalFee());
 
         $cooperationFeeLastApprovedAt = $reports->pluck('reviewed_at')
             ->merge($collectionReports->pluck('reviewed_at'))

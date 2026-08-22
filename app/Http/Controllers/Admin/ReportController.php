@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\MonitorReport;
 use App\Services\LineMessagingService;
-use App\Services\UserReferralService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -58,7 +57,7 @@ class ReportController extends Controller
         return view('admin.reports.show', compact('report', 'duplicates', 'campaigns'));
     }
 
-    public function approve(MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
+    public function approve(MonitorReport $report): RedirectResponse
     {
         $report->update([
             'status'      => 'approved',
@@ -71,8 +70,6 @@ class ReportController extends Controller
             'status'      => 'approved',
             'approved_at' => now(),
         ]);
-
-        $userReferralService->grantForApprovedReport($report->fresh('user'));
 
         return back()->with('success', '報告を承認しました。');
     }

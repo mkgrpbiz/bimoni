@@ -158,7 +158,6 @@ function syncMonth(sel) {
                 <th class="px-4 py-3 text-left">フリガナ</th>
                 <th class="px-4 py-3 text-right">モニター件数</th>
                 <th class="px-4 py-3 text-right">回収件数</th>
-                <th class="px-4 py-3 text-right">紹介報酬件数</th>
                 <th class="px-4 py-3 text-right">ポイント還元合計</th>
                 <th class="px-4 py-3 text-center">ステータス</th>
             </tr>
@@ -173,7 +172,6 @@ function syncMonth(sel) {
                 <td class="px-4 py-3 text-gray-600">{{ $u?->name_kana ?? '-' }}</td>
                 <td class="px-4 py-3 text-right text-gray-600">{{ $row['monitorCount'] }}件</td>
                 <td class="px-4 py-3 text-right text-blue-600">{{ $row['collectionCount'] }}件</td>
-                <td class="px-4 py-3 text-right text-purple-600">{{ $row['referralCount'] }}件</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($row['total']) }}</td>
                 <td class="px-4 py-3 text-center">
                     @if($row['total'] === 0)
@@ -189,7 +187,7 @@ function syncMonth(sel) {
             </tr>
             @empty
             <tr>
-                <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                <td colspan="8" class="px-4 py-8 text-center text-gray-400">
                     {{ $month->format('Y年n月') }}の承認済み報告はありません
                 </td>
             </tr>
