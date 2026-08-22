@@ -30,11 +30,11 @@
         <p class="text-2xl font-black text-gray-800 leading-tight mb-2">
             美容商品やサービスを<br>
             <span class="text-pink-500">モニターして</span><br>
-            ポイント還元をもらおう
+            ポイント還元を受け取ろう
         </p>
         <p class="text-sm text-gray-500 leading-relaxed">
-            実際に購入や体験し、報告するだけ。<br>
-            ポイント還元をお支払いします。
+            実際に商品購入やサービスを体験し、<br>
+            モニター報告をするとポイントが還元されます。
         </p>
     </div>
 
