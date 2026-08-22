@@ -93,7 +93,7 @@
                         <span class="text-gray-500 text-sm">件</span>
                     </div>
                 </div>
-                <p class="text-xs text-amber-600 mt-2">※その他は運営確認なしで発送されますと回収できない場合があります。</p>
+                <p class="text-xs text-amber-600 mt-2">※運営確認なしで発送されますと回収できない場合があります。</p>
             </div>
 
             {{-- 送料 --}}
