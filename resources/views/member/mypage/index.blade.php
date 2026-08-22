@@ -36,6 +36,10 @@
 
     {{-- アクションボタン --}}
     <div class="space-y-3 mb-5">
+        <a href="{{ route('member.referral_program') }}"
+           class="block bg-gradient-to-r from-amber-400 to-pink-400 text-white py-3 rounded-xl text-sm font-medium text-center shadow-sm">
+            🎁 お友達紹介プログラム
+        </a>
         <a href="{{ route('member.reports.create') }}"
            class="block bg-pink-500 text-white py-3 rounded-xl text-sm font-medium text-center">
             📋 モニター報告

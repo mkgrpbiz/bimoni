@@ -45,6 +45,9 @@ class DashboardController extends Controller
         // グラフ用データ（直近12ヶ月）
         $chartData = $this->getChartData();
 
+        // お友達紹介プログラム指標
+        $referralStats = app(\App\Http\Controllers\Admin\UserReferralController::class)->buildStats();
+
         // 月一覧（旧体制期間を除外）
         $months = Application::selectRaw('YEAR(applied_at) as y, MONTH(applied_at) as m')
             ->whereRaw(sprintf(self::EXCLUDE_DATE_SQL, 'applied_at'))
@@ -65,7 +68,7 @@ class DashboardController extends Controller
             'pendingReportsCount', 'pendingReportsAmount',
             'pendingCollectionCount',
             'metrics', 'prevMetrics', 'chartData',
-            'year', 'month', 'mode', 'months', 'alerts', 'dailyKpi'
+            'year', 'month', 'mode', 'months', 'alerts', 'dailyKpi', 'referralStats'
         ));
     }
 
@@ -125,7 +128,8 @@ class DashboardController extends Controller
                 return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
             }) + CollectionReport::where('status', 'approved')
                 ->whereYear('created_at', $y)->whereMonth('created_at', $m)
-                ->get()->sum(fn($r) => $r->totalFee());
+                ->get()->sum(fn($r) => $r->totalFee())
+                + \App\Models\UserReferralReward::whereYear('created_at', $y)->whereMonth('created_at', $m)->sum('amount');
 
             // 応募数・実施数・会員増加数はメインKPI（monthlyMetrics）と同じ定義・同じ基準日で揃える
             $monthApplied = Application::whereYear('applied_at', $y)->whereMonth('applied_at', $m)->count();

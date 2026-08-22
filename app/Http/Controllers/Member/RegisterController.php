@@ -155,8 +155,9 @@ class RegisterController extends Controller
         $lineUserId      = $liffUser->line_user_id;
         $lineDisplayName = $liffUser->line_display_name;
         $referredByCode  = $liffUser->referred_by_code;
+        $referredByUserId = $liffUser->referred_by_user_id;
 
-        DB::transaction(function () use ($existing, $liffUser, $lineUserId, $lineDisplayName, $referredByCode, $request) {
+        DB::transaction(function () use ($existing, $liffUser, $lineUserId, $lineDisplayName, $referredByCode, $referredByUserId, $request) {
             // 先にLINEログイン時に作られた空ユーザーを削除してから既存ユーザーを更新
             // （line_user_idのユニーク制約に引っかかるため、更新→削除の順だと失敗する）
             $liffUser->delete();
@@ -171,6 +172,7 @@ class RegisterController extends Controller
                 'birthdate'            => $request->birthdate,
                 'email'                => $request->email,
                 'referred_by_code'     => $existing->referred_by_code ?: $referredByCode,
+                'referred_by_user_id'  => $existing->referred_by_user_id ?: $referredByUserId,
                 'profile_completed_at' => now(),
             ]);
             $this->saveBank($existing, $request);
