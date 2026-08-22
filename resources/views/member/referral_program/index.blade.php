@@ -1,6 +1,6 @@
 @extends('layouts.member')
 
-@section('title', 'お友達紹介プログラム')
+@section('title', 'お友達招待プログラム')
 
 @section('content')
 <div class="py-2">
@@ -52,7 +52,7 @@
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center justify-between">
             <div>
                 <p class="text-xs text-gray-400">{{ $reward->created_at->format('n/j') }}</p>
-                <p class="text-sm text-gray-800">お友達紹介プログラム</p>
+                <p class="text-sm text-gray-800">お友達招待プログラム</p>
             </div>
             <p class="font-bold text-pink-600">＋{{ number_format($reward->amount) }}P</p>
         </div>
