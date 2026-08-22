@@ -192,15 +192,15 @@ $pm = $prevMetrics;
     @endforeach
 </div>
 
-{{-- お友達紹介プログラム --}}
+{{-- お友達招待プログラム --}}
 <div class="flex items-center justify-between mb-3">
-    <h2 class="text-sm font-bold text-gray-600">お友達紹介プログラム（累計）</h2>
+    <h2 class="text-sm font-bold text-gray-600">お友達招待プログラム（累計）</h2>
 </div>
 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
     @php
     $referralCards = [
-        ['label' => '紹介ユーザー数',      'value' => $referralStats['referral_user_count'], 'suffix' => '名', 'money' => false],
-        ['label' => '会員数（ユーザー紹介）', 'value' => $referralStats['member_count'],        'suffix' => '名', 'money' => false],
+        ['label' => '招待者数',            'value' => $referralStats['referral_user_count'], 'suffix' => '名', 'money' => false],
+        ['label' => '会員数（ユーザー招待）', 'value' => $referralStats['member_count'],        'suffix' => '名', 'money' => false],
         ['label' => '初回利用数（500円）',  'value' => $referralStats['tier_500'],            'suffix' => '件', 'money' => false],
         ['label' => '初回利用数（1,000円）', 'value' => $referralStats['tier_1000'],           'suffix' => '件', 'money' => false],
         ['label' => '削減額',              'value' => $referralStats['savings'],             'suffix' => '',   'money' => true],

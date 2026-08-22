@@ -35,7 +35,7 @@
                 'line_links' => ['label' => 'LINE紐付け',   'route' => 'admin.line_links.index'],
                 'agents'         => ['label' => '代理店',           'route' => 'admin.agents.index'],
                 'referrals'      => ['label' => '紹介報酬（代理店）', 'route' => 'admin.referrals.index'],
-                'user_referrals' => ['label' => '紹介報酬（ユーザー）', 'route' => 'admin.user_referrals.index'],
+                'user_referrals' => ['label' => '招待報酬（ユーザー）', 'route' => 'admin.user_referrals.index'],
             ],
             '設定・その他' => [
                 'import'      => ['label' => 'インポート', 'route' => 'admin.import.index'],

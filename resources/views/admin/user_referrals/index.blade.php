@@ -1,10 +1,10 @@
 @extends('layouts.admin')
 
-@section('title', '紹介報酬管理（ユーザー）')
+@section('title', '招待報酬管理（ユーザー）')
 
 @section('content')
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">紹介報酬管理（ユーザー）</h1>
+    <h1 class="text-2xl font-bold text-gray-800">招待報酬管理（ユーザー）</h1>
 </div>
 
 @if(session('success'))
@@ -36,12 +36,12 @@ function syncMonth(sel) {
 
 <div class="grid grid-cols-2 gap-4 mb-4">
     <div class="bg-white rounded-lg shadow px-5 py-4">
-        <p class="text-xs text-gray-400 mb-1">先月 紹介報酬合計</p>
+        <p class="text-xs text-gray-400 mb-1">先月 招待報酬合計</p>
         <p class="text-2xl font-bold text-gray-600">¥{{ number_format($prevTotal) }}</p>
         <p class="text-xs text-gray-400 mt-1">{{ $month->copy()->subMonth()->format('Y年n月') }}</p>
     </div>
     <div class="bg-white rounded-lg shadow px-5 py-4 border-l-4 border-pink-400">
-        <p class="text-xs text-gray-400 mb-1">当月 紹介報酬合計</p>
+        <p class="text-xs text-gray-400 mb-1">当月 招待報酬合計</p>
         <p class="text-2xl font-bold text-pink-600">¥{{ number_format($currentTotal) }}</p>
         <p class="text-xs text-gray-400 mt-1">{{ $month->format('Y年n月') }}</p>
     </div>
@@ -53,11 +53,11 @@ function syncMonth(sel) {
     <table class="w-full text-sm whitespace-nowrap">
         <thead class="bg-gray-50 text-gray-700">
             <tr>
-                <th class="px-4 py-3 text-left">紹介者</th>
+                <th class="px-4 py-3 text-left">招待者</th>
                 <th class="px-4 py-3 text-left">ユーザーID</th>
-                <th class="px-4 py-3 text-right">紹介人数（累計）</th>
+                <th class="px-4 py-3 text-right">招待人数（累計）</th>
                 <th class="px-4 py-3 text-right">今月の初回利用数</th>
-                <th class="px-4 py-3 text-right">紹介報酬合計</th>
+                <th class="px-4 py-3 text-right">招待報酬合計</th>
                 <th class="px-4 py-3 text-center">ステータス</th>
             </tr>
         </thead>
@@ -82,7 +82,7 @@ function syncMonth(sel) {
             @empty
             <tr>
                 <td colspan="6" class="px-4 py-8 text-center text-gray-400">
-                    {{ $month->format('Y年n月') }}の紹介報酬データがありません
+                    {{ $month->format('Y年n月') }}の招待報酬データがありません
                 </td>
             </tr>
             @endforelse
