@@ -75,6 +75,10 @@
             <dt class="text-gray-500">ポイント還元</dt>
             <dd class="text-pink-600 font-medium">{{ number_format($coopFee) }}P</dd>
             @endif
+            @if($report->bonus_amount)
+            <dt class="text-gray-500">キャンペーン</dt>
+            <dd class="text-green-600 font-medium">+{{ number_format($report->bonus_amount) }}P</dd>
+            @endif
             @if($adjustAmt)
             <dt class="text-gray-500">調整金額</dt>
             <dd class="{{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}{{ number_format($adjustAmt) }}P</dd>

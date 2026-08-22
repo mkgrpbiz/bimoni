@@ -16,8 +16,11 @@ class PointService
         $campaign    = $application->campaign;
         $user        = $application->user;
 
-        // 実際の支払い額 = モニター経費 + 協力金(+○円部分)
-        $amount = ($report->purchase_amount ?? 0) + ($campaign->cooperation_fee ?? 0);
+        // 実際の支払い額 = モニター経費 + 協力金(+○円部分) + キャンペーン分 + 修正金額
+        $coopFee = $report->purchase_type === 'continuation'
+            ? ($campaign->continuation_cooperation_fee ?? 0)
+            : ($campaign->cooperation_fee ?? 0);
+        $amount = ($report->purchase_amount ?? 0) + $coopFee + ($report->bonus_amount ?? 0) + ($report->adjustment_amount ?? 0);
 
         DB::transaction(function () use ($application, $campaign, $user, $amount) {
             Point::create([

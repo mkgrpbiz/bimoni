@@ -41,6 +41,7 @@
                     ? ($report->campaign?->continuation_cooperation_fee ?? 0)
                     : ($report->campaign?->cooperation_fee ?? 0);
                 $purchaseAmt = $report->purchase_amount ?? 0;
+                $bonusAmt = $report->bonus_amount ?? 0;
                 $adjustAmt = $report->adjustment_amount ?? 0;
             @endphp
             <dl class="grid grid-cols-2 gap-y-3 text-sm">
@@ -60,13 +61,17 @@
                 <dt class="text-gray-500 dark:text-gray-400">ポイント還元</dt>
                 <dd class="text-pink-600 dark:text-pink-400 font-medium">¥{{ number_format($coopFee) }}</dd>
                 @endif
+                @if($bonusAmt)
+                <dt class="text-gray-500 dark:text-gray-400">キャンペーン</dt>
+                <dd class="text-green-600 dark:text-green-400 font-medium">+¥{{ number_format($bonusAmt) }}</dd>
+                @endif
                 @if($adjustAmt)
                 <dt class="text-gray-500 dark:text-gray-400">修正金額</dt>
                 <dd class="dark:text-gray-200 {{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}¥{{ number_format($adjustAmt) }}</dd>
                 @endif
                 @if($report->purchase_type !== 'other')
                 <dt class="text-gray-500 dark:text-gray-400">支払合計</dt>
-                <dd class="font-bold dark:text-gray-200">¥{{ number_format($purchaseAmt + $coopFee + $adjustAmt) }}</dd>
+                <dd class="font-bold dark:text-gray-200">¥{{ number_format($purchaseAmt + $coopFee + $bonusAmt + $adjustAmt) }}</dd>
                 @endif
                 @if($paymentLabel !== '-')
                 <dt class="text-gray-500 dark:text-gray-400">お支払方法</dt>
