@@ -288,12 +288,6 @@
                    oninput="calcGross()">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">継続率集計の起算日 <span class="text-gray-400 text-xs">任意・募集条件変更等でこれより前の実施分を集計から除外</span></label>
-            <input type="date" name="continuation_rate_calc_from"
-                   value="{{ old('continuation_rate_calc_from', optional($campaign->continuation_rate_calc_from ?? null)->toDateString()) }}"
-                   class="w-full border rounded px-3 py-2 text-sm">
-        </div>
-        <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">目標男性比率（%）</label>
             <input type="number" name="target_male_ratio"
                    value="{{ old('target_male_ratio', $campaign->target_male_ratio ?? '') }}"
@@ -319,11 +313,10 @@
                    class="w-full border rounded px-3 py-2 text-sm">
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">募集終了日</label>
-            <input type="date" name="application_end_at"
-                   value="{{ old('application_end_at', isset($campaign) ? $campaign->application_end_at?->format('Y-m-d') : '') }}"
+            <label class="block text-sm font-medium text-gray-700 mb-1">継続率集計の起算日 <span class="text-gray-400 text-xs">任意・募集条件変更等でこれより前の実施分を集計から除外</span></label>
+            <input type="date" name="continuation_rate_calc_from"
+                   value="{{ old('continuation_rate_calc_from', optional($campaign->continuation_rate_calc_from ?? null)->toDateString()) }}"
                    class="w-full border rounded px-3 py-2 text-sm">
-            @error('application_end_at')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
 
