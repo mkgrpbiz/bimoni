@@ -42,7 +42,7 @@
             </div>
             <div class="flex gap-2">
                 <dt class="text-gray-700 dark:text-gray-400 w-28 shrink-0">登録日</dt>
-                <dd class="text-gray-800 dark:text-gray-200">{{ $user->created_at?->format('Y/m/d') ?? '-' }}</dd>
+                <dd class="text-gray-800 dark:text-gray-200">{{ $user->profile_completed_at?->format('Y/m/d') ?? '-' }}</dd>
             </div>
         </dl>
     </div>

@@ -14,7 +14,7 @@ class UserController extends Controller
     {
         $query = User::withCount(['applications'])
             ->whereNotNull('profile_completed_at')
-            ->orderByDesc('created_at');
+            ->orderByDesc('profile_completed_at');
 
         if ($request->filled('q')) {
             $q = $request->q;

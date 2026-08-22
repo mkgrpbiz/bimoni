@@ -40,7 +40,7 @@
             @forelse($users as $user)
             <tr class="even:bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-750">
                 <td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-400">
-                    {{ $user->created_at?->format('Y/m/d') ?? '-' }}
+                    {{ $user->profile_completed_at?->format('Y/m/d') ?? '-' }}
                 </td>
                 <td class="px-4 py-3 font-mono text-xs text-gray-800 dark:text-gray-200">
                     {{ $user->bimoni_user_id ?? '-' }}
