@@ -26,6 +26,7 @@ class User extends Authenticatable
     protected $fillable = [
         'bimoni_user_id',
         'referred_by_code',
+        'referred_by_user_id',
         'line_user_id',
         'line_display_name',
         'erme_respondent_id',
@@ -83,4 +84,9 @@ class User extends Authenticatable
     public function pointExchanges() { return $this->hasMany(PointExchange::class); }
     public function monitorReports() { return $this->hasMany(MonitorReport::class); }
     public function collectionReports() { return $this->hasMany(CollectionReport::class); }
+
+    // お友達紹介プログラム
+    public function referrer()  { return $this->belongsTo(User::class, 'referred_by_user_id'); }
+    public function referrals() { return $this->hasMany(User::class, 'referred_by_user_id'); }
+    public function referralRewardsEarned() { return $this->hasMany(UserReferralReward::class, 'referrer_user_id'); }
 }

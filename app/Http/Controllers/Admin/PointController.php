@@ -7,6 +7,7 @@ use App\Models\Application;
 use App\Models\CollectionReport;
 use App\Models\MonitorReport;
 use App\Models\User;
+use App\Models\UserReferralReward;
 use App\Services\PointService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -48,14 +49,17 @@ class PointController extends Controller
                 ->whereBetween('created_at', [$start, $end])
                 ->exists();
 
-            $hasPending = $monitors->contains('payment_status', 'pending') || $hasPendingCollection;
+            $referralRewards = UserReferralReward::whereBetween('created_at', [$start, $end])->get();
+            $hasPendingReferral = $referralRewards->contains('payment_status', 'pending');
+
+            $hasPending = $monitors->contains('payment_status', 'pending') || $hasPendingCollection || $hasPendingReferral;
             $allPaid    = $monitors->count() > 0
                 && $monitors->every(fn($r) => $r->payment_status === 'paid')
-                && !$hasPendingCollection;
+                && !$hasPendingCollection && !$hasPendingReferral;
 
             $blocks[] = [
                 'month'      => $m->copy(),
-                'total'      => $monitors->sum(fn($r) => $this->monitorFee($r)) + $collectionFee,
+                'total'      => $monitors->sum(fn($r) => $this->monitorFee($r)) + $collectionFee + $referralRewards->sum('amount'),
                 'count'      => $monitors->count(),
                 'hasPending' => $hasPending,
                 'allPaid'    => $allPaid,
@@ -90,6 +94,9 @@ class PointController extends Controller
             ->where('status', 'approved')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
 
+        $referralQuery = UserReferralReward::with('referrer')
+            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
+
         if ($request->filled('q')) {
             $q       = $request->q;
             $userIds = User::where('bimoni_user_id', 'like', '%' . $q . '%')
@@ -99,10 +106,12 @@ class PointController extends Controller
                 ->pluck('id');
             $monitorQuery->whereIn('user_id', $userIds);
             $collectionQuery->whereIn('user_id', $userIds);
+            $referralQuery->whereIn('referrer_user_id', $userIds);
         }
 
         $monitorReports     = $monitorQuery->get();
         $collectionReports  = $collectionQuery->get();
+        $referralRewards    = $referralQuery->get();
 
         // ユーザー別集計
         $userMap = [];
@@ -121,6 +130,8 @@ class PointController extends Controller
                 'monitorCount'    => $rows->count(),
                 'collectionTotal' => 0,
                 'collectionCount' => 0,
+                'referralTotal'   => 0,
+                'referralCount'   => 0,
                 'status'          => $status,
             ];
         }
@@ -134,6 +145,8 @@ class PointController extends Controller
                     'monitorCount'    => 0,
                     'collectionTotal' => 0,
                     'collectionCount' => 0,
+                    'referralTotal'   => 0,
+                    'referralCount'   => 0,
                     'status'          => $cr->payment_status === 'paid' ? 'paid' : 'reserved',
                 ];
             }
@@ -146,8 +159,31 @@ class PointController extends Controller
             }
         }
 
+        foreach ($referralRewards as $rr) {
+            $uid = $rr->referrer_user_id;
+            if (!isset($userMap[$uid])) {
+                $userMap[$uid] = [
+                    'user'            => $rr->referrer,
+                    'monitorTotal'    => 0,
+                    'monitorCount'    => 0,
+                    'collectionTotal' => 0,
+                    'collectionCount' => 0,
+                    'referralTotal'   => 0,
+                    'referralCount'   => 0,
+                    'status'          => $rr->payment_status === 'paid' ? 'paid' : 'reserved',
+                ];
+            }
+            $userMap[$uid]['referralTotal'] += $rr->amount;
+            $userMap[$uid]['referralCount'] += 1;
+            if ($rr->payment_status === 'pending') {
+                $userMap[$uid]['status'] = 'pending';
+            } elseif ($rr->payment_status !== 'paid' && $userMap[$uid]['status'] === 'paid') {
+                $userMap[$uid]['status'] = 'reserved';
+            }
+        }
+
         $userSummary = collect($userMap)
-            ->map(fn($r) => array_merge($r, ['total' => $r['monitorTotal'] + $r['collectionTotal']]))
+            ->map(fn($r) => array_merge($r, ['total' => $r['monitorTotal'] + $r['collectionTotal'] + $r['referralTotal']]))
             ->sortByDesc('total')
             ->values();
 
@@ -182,6 +218,10 @@ class PointController extends Controller
             ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'reserved']);
 
+        UserReferralReward::where('payment_status', 'pending')
+            ->whereBetween('created_at', [$start, $end])
+            ->update(['payment_status' => 'reserved']);
+
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
             ->with('success', $month->format('Y年n月') . 'の支払いを予約済みにしました。');
     }
@@ -213,6 +253,10 @@ class PointController extends Controller
             ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
+        UserReferralReward::whereIn('payment_status', ['pending', 'reserved'])
+            ->whereBetween('created_at', [$start, $end])
+            ->update(['payment_status' => 'paid', 'paid_at' => now()]);
+
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
             ->with('success', $month->format('Y年n月') . 'の支払いを支払済みにしました。');
     }
@@ -238,6 +282,11 @@ class PointController extends Controller
 
         $collections = CollectionReport::with('user')
             ->where('status', 'approved')
+            ->where('payment_status', 'pending')
+            ->whereBetween('created_at', [$zenginStart, $zenginEnd])
+            ->get();
+
+        $referralRewards = UserReferralReward::with('referrer')
             ->where('payment_status', 'pending')
             ->whereBetween('created_at', [$zenginStart, $zenginEnd])
             ->get();
@@ -280,6 +329,10 @@ class PointController extends Controller
 
         foreach ($collections as $r) {
             $accumulate($r->user, $r->totalFee());
+        }
+
+        foreach ($referralRewards as $rr) {
+            $accumulate($rr->referrer, $rr->amount);
         }
 
         $totalCount  = count($recipients);

@@ -192,6 +192,31 @@ $pm = $prevMetrics;
     @endforeach
 </div>
 
+{{-- お友達紹介プログラム --}}
+<div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm font-bold text-gray-600">お友達紹介プログラム（累計）</h2>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+    @php
+    $referralCards = [
+        ['label' => '紹介ユーザー数',      'value' => $referralStats['referral_user_count'], 'suffix' => '名', 'money' => false],
+        ['label' => '会員数（ユーザー紹介）', 'value' => $referralStats['member_count'],        'suffix' => '名', 'money' => false],
+        ['label' => '初回利用数（500円）',  'value' => $referralStats['tier_500'],            'suffix' => '件', 'money' => false],
+        ['label' => '初回利用数（1,000円）', 'value' => $referralStats['tier_1000'],           'suffix' => '件', 'money' => false],
+        ['label' => '削減額',              'value' => $referralStats['savings'],             'suffix' => '',   'money' => true],
+    ];
+    @endphp
+    @foreach($referralCards as $card)
+    @php $isNegative = $card['value'] < 0; @endphp
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-xs text-gray-700 mb-1">{{ $card['label'] }}</p>
+        <p class="text-2xl font-bold {{ $isNegative ? 'text-red-600' : 'text-gray-800' }}">
+            {{ $card['money'] ? '¥' : '' }}{{ number_format($card['value']) }}{{ $card['suffix'] }}
+        </p>
+    </div>
+    @endforeach
+</div>
+
 {{-- グラフ --}}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <div class="bg-white rounded-lg shadow p-4">
