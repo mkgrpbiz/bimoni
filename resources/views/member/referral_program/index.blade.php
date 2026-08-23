@@ -46,7 +46,7 @@
     </div>
 
     {{-- 獲得履歴 --}}
-    <p class="font-bold text-gray-700 mb-3">獲得履歴</p>
+    <p class="font-bold text-gray-700 mb-3">最近の獲得履歴</p>
     <div class="space-y-2 pb-8">
         @forelse($rewards as $reward)
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center justify-between">
