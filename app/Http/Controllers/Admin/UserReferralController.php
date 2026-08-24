@@ -31,7 +31,7 @@ class UserReferralController extends Controller
 
             return [
                 'referrer'       => $referrer,
-                'referral_count' => $referrer ? $referrer->referrals()->count() : 0,
+                'referral_count' => $referrer ? $referrer->referrals()->whereNotNull('profile_completed_at')->count() : 0,
                 'reward_count'   => $rows->count(),
                 'total'          => $rows->sum('amount'),
                 'status'         => $status,
@@ -63,9 +63,14 @@ class UserReferralController extends Controller
     // ダッシュボードに出す紹介ユーザー数・会員数・単価別初回利用数・削減額
     public function buildStats(): array
     {
+        // referred_by_user_idはLIFFコールバック時点（登録完了前）にセットされるため、
+        // 実際に会員登録を完了した（profile_completed_atがある）ユーザーのみに絞る
         $referralUserCount = \App\Models\User::whereNotNull('referred_by_user_id')
+            ->whereNotNull('profile_completed_at')
             ->distinct('referred_by_user_id')->count('referred_by_user_id');
-        $memberCount = \App\Models\User::whereNotNull('referred_by_user_id')->count();
+        $memberCount = \App\Models\User::whereNotNull('referred_by_user_id')
+            ->whereNotNull('profile_completed_at')
+            ->count();
 
         $rewards = UserReferralReward::with('monitorReport.campaign')->get();
         $tier500 = $rewards->filter(fn ($r) => ($r->monitorReport?->campaign?->referral_fee ?? 0) == 500)->count();

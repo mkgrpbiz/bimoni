@@ -81,7 +81,7 @@ class UserController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $referralCount = $user->referrals()->count();
+        $referralCount = $user->referrals()->whereNotNull('profile_completed_at')->count();
 
         return view('admin.users.show', compact(
             'user', 'reports', 'applications', 'collectionReports', 'referralRewards', 'referralCount'

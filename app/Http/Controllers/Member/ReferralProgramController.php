@@ -30,7 +30,7 @@ class ReferralProgramController extends Controller
         $rewards = $allRewards->take(10);
 
         $stats = [
-            'referral_count' => $user->referrals()->count(),
+            'referral_count' => $user->referrals()->whereNotNull('profile_completed_at')->count(),
             'first_use_count' => $allRewards->count(),
             'this_month_points' => $allRewards->filter(fn ($r) => $r->created_at->isSameMonth(now()))->sum('amount'),
             'total_points' => $allRewards->sum('amount'),
