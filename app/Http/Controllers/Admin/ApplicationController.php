@@ -113,7 +113,7 @@ class ApplicationController extends Controller
         });
 
         $tabCounts = $this->getTabCounts();
-        $campaigns = Campaign::orderBy('title')->get();
+        $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get();
 
         // アラート: 翌日未達成打診
         $tomorrowDate  = now()->addDay()->toDateString();
@@ -247,7 +247,7 @@ class ApplicationController extends Controller
                 : collect(),
         ];
 
-        $allCampaigns   = Campaign::orderBy('title')->get(['id', 'title', 'status']);
+        $allCampaigns   = Campaign::orderBy('sort_order')->orderBy('id')->get(['id', 'title', 'status']);
         $tabCounts      = $this->getTabCounts();
         $campaignStatus = $campaign->status;
 
