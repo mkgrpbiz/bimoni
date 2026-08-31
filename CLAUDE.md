@@ -222,6 +222,17 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - 案件名はリンクではない（クリックしても編集画面等には遷移しない）。編集・複製・削除・ステータス変更などの操作は一切なし、完全に閲覧専用
   - 検索・絞り込み（キーワード／種別／PR媒体）は`admin/campaigns`と同じ項目をそのまま流用
 - `bootstrap/app.php`の`redirectGuestsTo`に`agency-share/*`未ログイン時のリダイレクト先分岐を追加（`admin/*`はadmin.login、`member/*`はmember.login、`agency-share/*`はad_agency_share.loginへ）
+- 一覧に`last_login_at`（最終ログイン日時）を表示。`AdAgencyShare\AuthController::store()`でログイン成功時に更新。未ログインは「未ログイン」表示
+
+### 監査ログ（`admin/audit-logs`、2026-08-31〜）
+「だれが・いつ・何を更新したか」を管理画面全体で自動記録する仕組み。特定モデルにトレイトを付ける方式ではなく、`AppServiceProvider::boot()`でEloquentの`created`/`updated`/`deleted`イベントをワイルドカード（`eloquent.created: *`等）でグローバルに監視し、**そのリクエストが管理画面（`web`ガード）にログイン中の場合のみ**記録する。これによりcronコマンドや会員（`liff`ガード）側の自動更新は自然に対象外になり、将来追加されるモデルも個別対応なしで自動的に監査対象に入る。
+
+- `AuditLog`モデル（`audit_logs`テーブル）: `admin_id`（nullOnDelete）/`admin_name`（削除後も読めるようスナップショット）/`action`（created/updated/deleted）/`model`（フルクラス名）/`model_id`/`label`（`title`/`name`/`email`/`bimoni_user_id`のいずれかがあれば自動取得、無ければnull）/`changes`（json）
+  - created: 属性一式を記録 / updated: 実際に変更されたフィールドのみ`{from, to}`で記録 / deleted: 削除直前の属性一式を記録
+  - `$model->getHidden()`（password/remember_token等）に加えて`bank_account_number`/`bank_account_name`も明示的に除外（機微情報が監査ログに残らないように）
+  - `updated`イベントは実質的な変更（`getChanges()`が空でない）がある時しかEloquent自体が発火しないため`touch()`のみの更新等は記録されない
+  - `AuditLog`自身の作成はこの仕組みの対象外（自己参照の無限ループ防止のため`AppServiceProvider::recordAudit()`内で明示的に除外）
+- 一覧画面は管理者／対象種別／操作／期間で絞り込み可能。`updated`は変更前後の差分、`created`/`deleted`は記録された項目数を`<details>`で展開表示
 
 ### 紹介報酬管理
 - 月次の報酬一覧・承認/支払い処理
