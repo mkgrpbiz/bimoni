@@ -28,6 +28,8 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        Auth::guard('ad_agency_share')->user()->update(['last_login_at' => now()]);
+
         return redirect()->route('ad_agency_share.campaigns');
     }
 

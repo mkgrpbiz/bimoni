@@ -35,6 +35,7 @@
                 <th class="px-4 py-2 text-left">名前</th>
                 <th class="px-4 py-2 text-left">メールアドレス</th>
                 <th class="px-4 py-2 text-left">追加日</th>
+                <th class="px-4 py-2 text-left">最終ログイン</th>
                 <th class="px-4 py-2 text-left">操作</th>
             </tr>
         </thead>
@@ -44,6 +45,7 @@
                 <td class="px-4 py-2 font-medium dark:text-gray-200">{{ $su->name }}</td>
                 <td class="px-4 py-2 text-gray-600 dark:text-gray-400">{{ $su->email }}</td>
                 <td class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">{{ $su->created_at->format('Y/m/d') }}</td>
+                <td class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">{{ $su->last_login_at?->format('Y/m/d H:i') ?? '未ログイン' }}</td>
                 <td class="px-4 py-2">
                     <form method="POST" action="{{ route('admin.ad_agency_shares.destroy', $su) }}">
                         @csrf @method('DELETE')
@@ -57,7 +59,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="4" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">共有アカウントがありません</td>
+                <td colspan="5" class="px-4 py-8 text-center text-gray-700 dark:text-gray-500">共有アカウントがありません</td>
             </tr>
             @endforelse
         </tbody>
