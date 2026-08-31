@@ -234,6 +234,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // 案件別応募フォームフィールド設定
         Route::post('campaigns/{campaign}/form-fields', [CampaignController::class, 'syncFormFields'])->name('campaigns.form_fields.sync');
 
+        // 監査ログ（管理者が管理画面で行った作成・更新・削除の記録）
+        Route::get('audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit_logs.index');
+
         // 広告代理店共有管理（案件一覧を外部共有するための閲覧専用アカウント管理）
         Route::get('ad-agency-shares', [\App\Http\Controllers\Admin\AdAgencyShareController::class, 'index'])->name('ad_agency_shares.index');
         Route::get('ad-agency-shares/create', [\App\Http\Controllers\Admin\AdAgencyShareController::class, 'create'])->name('ad_agency_shares.create');

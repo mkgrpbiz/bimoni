@@ -41,6 +41,7 @@ class AdminManagerController extends Controller
             'faqs'                  => 'よくある質問管理',
             'guide_pages'           => 'ガイドページ管理',
             'ad_agency_shares'      => '広告代理店共有管理',
+            'audit_logs'            => '監査ログ',
         ];
     }
 

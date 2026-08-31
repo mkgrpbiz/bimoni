@@ -43,6 +43,7 @@
                 'faqs'              => ['label' => 'よくある質問管理', 'route' => 'admin.faqs.index'],
                 'guide_pages'       => ['label' => 'ガイドページ管理', 'route' => 'admin.guide_pages.index'],
                 'ad_agency_shares'  => ['label' => '広告代理店共有管理', 'route' => 'admin.ad_agency_shares.index'],
+                'audit_logs'        => ['label' => '監査ログ', 'route' => 'admin.audit_logs.index'],
             ],
         ];
     @endphp
