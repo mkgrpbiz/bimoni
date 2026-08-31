@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIMONI 案件一覧 - ログイン</title>
+    <title>BIMONI 代理店共有 - ログイン</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="w-full max-w-sm">
-        <h1 class="text-center font-bold text-xl text-pink-700 mb-6">BIMONI 案件一覧</h1>
+        <h1 class="text-center font-bold text-xl text-pink-700 mb-6">BIMONI 代理店共有</h1>
 
         <form method="POST" action="{{ route('ad_agency_share.login') }}"
               class="bg-white rounded-lg shadow p-6 space-y-4">
