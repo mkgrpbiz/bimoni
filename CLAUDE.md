@@ -419,6 +419,7 @@ AI OFFICE側の「全体テンプレート」機能（正常に運用されて�
 - フリガナ入力はIME変換中に `oninput` が発火するバグがある → `compositionstart`/`compositionend` で変換中フラグを管理し、変換確定後に `hiraToKata()` を呼ぶ（`layouts/member.blade.php` でグローバル処理済み）
 - `alert()` を Promise の `.then()/.catch()` 内で呼ぶとブラウザにブロックされる → `document.execCommand('copy')` で同期コピー後に `alert()` を呼ぶ
 - コピーボタンは必ず同期処理 + `alert('コピーしました')` のセットで実装
+- **ログイン済みユーザーが自分のログイン画面を開くと無限リダイレクトループ（`ERR_TOO_MANY_REDIRECTS`）になるバグがあった**（2026-08-31発見）。アプリに`dashboard`/`home`という名前のルートが存在しないため、`guest:xxx`ミドルウェアの既定リダイレクト先（`RedirectIfAuthenticated`）が常に`/`になり、`/`は`admin.login`へリダイレクトする作りだったのが原因。新しいガード（`web`/`liff`/`ad_agency_share`等）やログイン画面を追加する時は、`bootstrap/app.php`の`redirectUsersTo()`にそのガードの遷移先を必ず追加すること（`redirectGuestsTo()`と対になる設定、片方だけ設定すると再発する）
 - SSHの秘密鍵は `C:\Users\user\.ssh\xserver.key`
 - STGのDBをtinker経由で操作するときは、PowerShellからの直接実行は特殊文字で失敗する。PHPファイルをSCPで転送して `php8.3 /home/mkgrp/bimoni/xxx.php` で実行するのが確実（`/tmp/` はパスが解決できない）
 - STGのcrontab編集は `crontab -e`（viが開く）ではなく PHP経由で: `php8.3 -r "file_put_contents('/tmp/nc.txt', '...' . PHP_EOL); passthru('crontab /tmp/nc.txt');"`
