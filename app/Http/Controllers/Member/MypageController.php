@@ -59,7 +59,7 @@ class MypageController extends Controller
             ->get()->sum(fn($r) => $r->totalFee());
 
         $payCurrentDate = $now->copy()->day(10)->format('n月j日');
-        $payNextDate    = $now->copy()->addMonth()->day(10)->format('n月j日');
+        $payNextDate    = $now->copy()->addMonthNoOverflow()->day(10)->format('n月j日');
 
         $applying = $applications->filter(fn($a) => in_array($a->status, ['pending', 'selected', 'line_contacted', 'scheduled', 'confirming']));
 
