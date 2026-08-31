@@ -211,6 +211,18 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - 一覧: 代理店名・子代理店数・コード数・登録数・応募数・報告数・詳細/削除
 - 削除: 登録者がいない代理店のみ可（子代理店・コードも一括削除）
 
+### 広告代理店共有管理（`admin/ad-agency-shares`、2026-08-31〜）
+既存の「代理店」（`Agent`/招待コードでユーザーを集める仕組み）とは無関係の、**案件一覧を広告代理店に閲覧専用で見せるための別ログイン**。管理画面「設定・その他」から追加。
+
+- 認証は管理画面（`web`ガード）ともLIFF会員（`liff`ガード）とも別の**独立ガード`ad_agency_share`**（`config/auth.php`、モデルは`App\Models\AdAgencyShareUser`、テーブル`ad_agency_share_users`）
+- 管理画面側（`Admin\AdAgencyShareController`）: 共有用ログインURL（`route('ad_agency_share.login')`）の表示＋名前・メールアドレス・パスワードを直接入力してアカウント追加／削除。編集機能はなし（作り直し＝削除→再追加で運用）
+- 共有ポータル側（`AdAgencyShare\AuthController` / `AdAgencyShare\CampaignController`、URLは`/agency-share`）: ログイン後は`admin/campaigns`（案件管理）と似た一覧のみ表示する専用ページ。以下の点で意図的に機能を絞っている
+  - タブは公開中/募集停止/案内終了の3つのみ（下書きタブは無し。`status`パラメータもこの3値以外なら`published`に強制）
+  - 列は案件名/ステータス/PR媒体/種別/応募総数/応募残数のみ（粗利・回収必須・操作ボタンは一切表示しない）
+  - 案件名はリンクではない（クリックしても編集画面等には遷移しない）。編集・複製・削除・ステータス変更などの操作は一切なし、完全に閲覧専用
+  - 検索・絞り込み（キーワード／種別／PR媒体）は`admin/campaigns`と同じ項目をそのまま流用
+- `bootstrap/app.php`の`redirectGuestsTo`に`agency-share/*`未ログイン時のリダイレクト先分岐を追加（`admin/*`はadmin.login、`member/*`はmember.login、`agency-share/*`はad_agency_share.loginへ）
+
 ### 紹介報酬管理
 - 月次の報酬一覧・承認/支払い処理
 - 詳細: 代理店のコード別登録者・承認済み報告を表示
