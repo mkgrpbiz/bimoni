@@ -31,6 +31,16 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             return route('admin.login');
         });
+        // guest:xxx ミドルウェアは認証済みユーザーが「ログイン画面」等にアクセスした際にここへリダイレクトする。
+        // アプリに 'dashboard'/'home' という名前のルートが無いため、未設定だとフレームワークの既定処理が
+        // 常に '/' へ飛ばし、'/' は admin.login へリダイレクトするため、ログイン済みで /admin/login や
+        // /agency-share/login を開くと無限リダイレクトループになるバグがあった（2026-08-31発見）
+        $middleware->redirectUsersTo(function (Request $request) {
+            if ($request->is('agency-share/*') || $request->is('agency-share')) {
+                return route('ad_agency_share.campaigns');
+            }
+            return route('admin.dashboard');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
