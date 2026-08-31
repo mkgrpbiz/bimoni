@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Admin;
+use App\Models\AdAgencyShareUser;
 use App\Models\User;
 
 return [
@@ -47,6 +48,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'ad_agency_share' => [
+            'driver' => 'session',
+            'provider' => 'ad_agency_share_users',
+        ],
     ],
 
     /*
@@ -74,6 +79,10 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => User::class,
+        ],
+        'ad_agency_share_users' => [
+            'driver' => 'eloquent',
+            'model' => AdAgencyShareUser::class,
         ],
     ],
 

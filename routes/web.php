@@ -233,6 +233,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('guide-steps/reorder', [\App\Http\Controllers\Admin\GuideStepController::class, 'reorder'])->name('guide_steps.reorder');
         // 案件別応募フォームフィールド設定
         Route::post('campaigns/{campaign}/form-fields', [CampaignController::class, 'syncFormFields'])->name('campaigns.form_fields.sync');
+
+        // 広告代理店共有管理（案件一覧を外部共有するための閲覧専用アカウント管理）
+        Route::get('ad-agency-shares', [\App\Http\Controllers\Admin\AdAgencyShareController::class, 'index'])->name('ad_agency_shares.index');
+        Route::get('ad-agency-shares/create', [\App\Http\Controllers\Admin\AdAgencyShareController::class, 'create'])->name('ad_agency_shares.create');
+        Route::post('ad-agency-shares', [\App\Http\Controllers\Admin\AdAgencyShareController::class, 'store'])->name('ad_agency_shares.store');
+        Route::delete('ad-agency-shares/{adAgencyShareUser}', [\App\Http\Controllers\Admin\AdAgencyShareController::class, 'destroy'])->name('ad_agency_shares.destroy');
+    });
+});
+
+// ■ 広告代理店共有ポータル（案件一覧を閲覧専用で外部共有する、管理画面とは別ログイン）
+Route::prefix('agency-share')->name('ad_agency_share.')->group(function () {
+    Route::middleware('guest:ad_agency_share')->group(function () {
+        Route::get('login', [\App\Http\Controllers\AdAgencyShare\AuthController::class, 'create'])->name('login');
+        Route::post('login', [\App\Http\Controllers\AdAgencyShare\AuthController::class, 'store']);
+    });
+
+    Route::middleware('auth:ad_agency_share')->group(function () {
+        Route::post('logout', [\App\Http\Controllers\AdAgencyShare\AuthController::class, 'destroy'])->name('logout');
+        Route::get('/', [\App\Http\Controllers\AdAgencyShare\CampaignController::class, 'index'])->name('campaigns');
     });
 });
 

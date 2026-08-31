@@ -38,10 +38,11 @@
                 'user_referrals' => ['label' => '招待報酬（ユーザー）', 'route' => 'admin.user_referrals.index'],
             ],
             '設定・その他' => [
-                'import'      => ['label' => 'インポート', 'route' => 'admin.import.index'],
-                'form_fields' => ['label' => '編集',       'route' => 'admin.form_fields.index'],
-                'faqs'        => ['label' => 'よくある質問管理', 'route' => 'admin.faqs.index'],
-                'guide_pages' => ['label' => 'ガイドページ管理', 'route' => 'admin.guide_pages.index'],
+                'import'            => ['label' => 'インポート', 'route' => 'admin.import.index'],
+                'form_fields'       => ['label' => '編集',       'route' => 'admin.form_fields.index'],
+                'faqs'              => ['label' => 'よくある質問管理', 'route' => 'admin.faqs.index'],
+                'guide_pages'       => ['label' => 'ガイドページ管理', 'route' => 'admin.guide_pages.index'],
+                'ad_agency_shares'  => ['label' => '広告代理店共有管理', 'route' => 'admin.ad_agency_shares.index'],
             ],
         ];
     @endphp

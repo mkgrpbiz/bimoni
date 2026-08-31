@@ -26,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
                 return $loginUrl;
             }
+            if ($request->is('agency-share/*') || $request->is('agency-share')) {
+                return route('ad_agency_share.login');
+            }
             return route('admin.login');
         });
     })

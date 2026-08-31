@@ -40,6 +40,7 @@ class AdminManagerController extends Controller
             'form_fields'           => 'ページ編集',
             'faqs'                  => 'よくある質問管理',
             'guide_pages'           => 'ガイドページ管理',
+            'ad_agency_shares'      => '広告代理店共有管理',
         ];
     }
 
