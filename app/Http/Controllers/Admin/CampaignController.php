@@ -244,10 +244,34 @@ class CampaignController extends Controller
         $new->title      = $campaign->title . '（コピー）';
         $new->status     = 'draft';
         $new->sort_order = Campaign::max('sort_order') + 1;
+
+        // replicate()はファイルパスの文字列だけをコピーし実ファイルは複製しないため、
+        // このままだと複製元・複製先が同じファイルを参照してしまう。
+        // 片方の画像/動画を差し替えた際に旧ファイルが削除され、もう片方も再生できなくなるバグがあったため、
+        // 複製時に実ファイルも独立してコピーする
+        foreach (['thumbnail', 'monitor_video', 'monitor_video_thumbnail'] as $field) {
+            if ($campaign->$field) {
+                $new->$field = $this->duplicateStoredFile($campaign->$field);
+            }
+        }
+
         $new->save();
         $new->tags()->sync($campaign->tags->pluck('id'));
 
         return redirect()->route('admin.campaigns.edit', $new)->with('success', '案件を複製しました。');
+    }
+
+    private function duplicateStoredFile(string $path): ?string
+    {
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        if (!$disk->exists($path)) {
+            return $path;
+        }
+
+        $newPath = dirname($path) . '/' . \Illuminate\Support\Str::random(40) . '.' . pathinfo($path, PATHINFO_EXTENSION);
+        $disk->copy($path, $newPath);
+
+        return $newPath;
     }
 
     public function toggleVisible(Campaign $campaign): RedirectResponse
