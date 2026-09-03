@@ -172,14 +172,16 @@ class ReportController extends Controller
             return back()->with('error', 'この応募は対象ユーザーのものではありません。');
         }
 
+        // リンク元の報告はまだ「その他」のままのことが多く、その時点のpurchase_typeで比較しても
+        // 意味がないため、応募に既に紐づいている初回/継続報告の有無そのものをチェックする
         $duplicate = MonitorReport::where('application_id', $application->id)
-            ->where('purchase_type', $report->purchase_type)
             ->where('id', '!=', $report->id)
             ->where('status', '!=', 'rejected')
-            ->exists();
+            ->whereIn('purchase_type', ['initial', 'continuation'])
+            ->first();
 
         if ($duplicate) {
-            return back()->with('error', 'この応募には既に同じ報告種別の報告が紐付いています。重複の可能性があるため紐付けを中止しました。報告種別を確認してください。');
+            return back()->with('error', "この応募には既に報告（report_id={$duplicate->id}、{$duplicate->getStatusLabel()}）が紐付いています。重複の可能性があるため紐付けを中止しました。");
         }
 
         $report->update([
