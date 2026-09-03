@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\MonitorReport;
 use App\Services\LineMessagingService;
@@ -55,7 +56,18 @@ class ReportController extends Controller
 
         $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get(['id', 'title', 'status']);
 
-        return view('admin.reports.show', compact('report', 'duplicates', 'campaigns'));
+        // 「その他」報告を応募と紐付けるための候補（同じユーザーの応募。既に別の報告が紐付いている応募は
+        // 選ぶと確実に重複になるため除外する）
+        $linkedApplicationIds = MonitorReport::where('id', '!=', $report->id)
+            ->whereNotNull('application_id')
+            ->pluck('application_id');
+        $linkableApplications = Application::with('campaign:id,title')
+            ->where('user_id', $report->user_id)
+            ->whereNotIn('id', $linkedApplicationIds)
+            ->orderByDesc('applied_at')
+            ->get();
+
+        return view('admin.reports.show', compact('report', 'duplicates', 'campaigns', 'linkableApplications'));
     }
 
     public function approve(MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
@@ -124,7 +136,7 @@ class ReportController extends Controller
 
         $userReferralService->grantForApprovedReport($report->fresh('user'));
 
-        return back()->with('success', '案件を変更しました。');
+        return $this->redirectWithDuplicateWarning($report->fresh(), '案件を変更しました。');
     }
 
     public function updatePurchaseType(Request $request, MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
@@ -139,7 +151,70 @@ class ReportController extends Controller
         // approve()時点では対象外だった報告がここで初めて招待報酬の対象になることがあるため再チェックする
         $userReferralService->grantForApprovedReport($report->fresh('user'));
 
-        return back()->with('success', '報告種別を変更しました。');
+        return $this->redirectWithDuplicateWarning($report->fresh(), '報告種別を変更しました。');
+    }
+
+    // 「その他」報告を、実際に応募済みのApplicationと紐付ける。
+    // 案件変更・報告種別変更だけでは application_id が入らず、同じ応募に対する
+    // 重複報告の検知（通常の応募経由フローが使う仕組み）が効かないまま二重支払いが起きたことがあったため、
+    // 応募と紐付けた場合はここで確実に重複チェックし、campaign_id・bonus_amountも応募から引き継ぐ
+    public function linkApplication(Request $request, MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
+    {
+        $request->validate([
+            'application_id' => 'required|exists:applications,id',
+        ]);
+
+        $application = Application::where('id', $request->application_id)
+            ->where('user_id', $report->user_id)
+            ->first();
+
+        if (!$application) {
+            return back()->with('error', 'この応募は対象ユーザーのものではありません。');
+        }
+
+        $duplicate = MonitorReport::where('application_id', $application->id)
+            ->where('purchase_type', $report->purchase_type)
+            ->where('id', '!=', $report->id)
+            ->where('status', '!=', 'rejected')
+            ->exists();
+
+        if ($duplicate) {
+            return back()->with('error', 'この応募には既に同じ報告種別の報告が紐付いています。重複の可能性があるため紐付けを中止しました。報告種別を確認してください。');
+        }
+
+        $report->update([
+            'application_id' => $application->id,
+            'campaign_id'    => $application->campaign_id,
+            'bonus_amount'   => $report->bonus_amount ?? $application->bonus_amount,
+        ]);
+
+        $userReferralService->grantForApprovedReport($report->fresh('user'));
+
+        return back()->with('success', '応募と紐付けました。');
+    }
+
+    // 案件変更・報告種別変更の直後に、同じユーザー・同じ案件・同じ報告種別で
+    // 既に他の報告（却下済み以外）が無いか確認し、あれば警告を出す
+    private function redirectWithDuplicateWarning(MonitorReport $report, string $successMessage): RedirectResponse
+    {
+        $redirect = back()->with('success', $successMessage);
+
+        if (!$report->campaign_id || $report->purchase_type === 'other') {
+            return $redirect;
+        }
+
+        $duplicate = MonitorReport::where('user_id', $report->user_id)
+            ->where('campaign_id', $report->campaign_id)
+            ->where('purchase_type', $report->purchase_type)
+            ->where('id', '!=', $report->id)
+            ->where('status', '!=', 'rejected')
+            ->first();
+
+        if ($duplicate) {
+            $redirect->with('warning', "同じユーザー・案件・報告種別の報告が他にもあります（report_id={$duplicate->id}、ステータス: {$duplicate->getStatusLabel()}）。重複していないか下の「重複申請チェック」欄で必ず確認してください。");
+        }
+
+        return $redirect;
     }
 
     public function adjust(Request $request, MonitorReport $report): RedirectResponse

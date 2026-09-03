@@ -13,6 +13,12 @@
 @if(session('success'))
     <div class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
 @endif
+@if(session('error'))
+    <div class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-4 py-2 rounded mb-4 text-sm">{{ session('error') }}</div>
+@endif
+@if(session('warning'))
+    <div class="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-4 py-2 rounded mb-4 text-sm font-medium">⚠ {{ session('warning') }}</div>
+@endif
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
@@ -83,6 +89,42 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">報告内容</p>
                 <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{{ $report->report_body }}</p>
             </div>
+            @endif
+        </div>
+
+        {{-- 応募と紐付け --}}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+            <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-1">応募と紐付け</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                「その他」報告など応募と紐付いていない報告を、実際の応募（Application）に紐付けます。
+                案件・キャンペーン金額が応募から引き継がれ、同じ応募に対する重複報告もここでチェックされます。
+                @if($report->application_id)
+                    現在の紐付け先: 応募ID {{ $report->application_id }}
+                @endif
+            </p>
+            @if($linkableApplications->isEmpty())
+                <p class="text-sm text-gray-400">紐付け可能な応募がありません。</p>
+            @else
+            <form method="POST" action="{{ route('admin.reports.link_application', $report) }}" class="flex flex-wrap items-end gap-3">
+                @csrf @method('PATCH')
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">応募</label>
+                    <select name="application_id" required
+                            class="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 min-w-[20rem]">
+                        <option value="">選択してください</option>
+                        @foreach($linkableApplications as $la)
+                        <option value="{{ $la->id }}" @selected($report->application_id === $la->id)>
+                            {{ $la->applied_at?->format('Y/m/d') }} - {{ $la->campaign?->title ?? '不明' }}（{{ $la->getStatusLabel() }}）
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit"
+                        onclick="return confirm('この応募と紐付けますか？案件・キャンペーン金額が応募の内容で上書きされます。')"
+                        class="bg-gray-700 text-white px-5 py-2 rounded hover:bg-gray-800 text-sm">
+                    紐付ける
+                </button>
+            </form>
             @endif
         </div>
 
