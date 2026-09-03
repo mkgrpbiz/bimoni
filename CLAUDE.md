@@ -102,6 +102,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - 回収必須の場合、応募フォームに警告メッセージ表示
 - `collection_info`: DBカラムは残存しているがフォーム・会員ページからは削除済み（未使用）
 - LINE自動送信設定（`monitor_invite_message` / `monitor_end_message`）は案件ごとに設定。新規案件は既存案件を複製して作成する想定（デフォルト機能は廃止）
+- **案件複製（`CampaignController::duplicate()`）は`thumbnail`/`monitor_video`/`monitor_video_thumbnail`の実ファイルもコピーする**（2026-09-02修正）。以前は`replicate()`でDBのファイルパス文字列だけがコピーされ複製元・複製先が同じ実ファイルを参照する状態になっており、どちらかの画像/動画を差し替えると更新処理が「旧ファイル削除」を行うためもう片方の案件でも再生・表示できなくなるバグがあった（「新規案件は複製して作成」が標準フローのため頻発していた）
 - `continuation_condition`: ENUM('2回前提', '3回前提') nullable。継続前提の商品用。設定すると会員応募フォームの継続希望確認欄を非表示にし、応募時点で`continuation_wish='希望'` + `continuation_response='possible'` + `continuation_responded_at=now()`を自動セット（バッジ表示は「OK」になる。`continuation_response`が`continuation_wish`より優先されるため）
 
 ### コース指定設定（`course_settings_enabled` / `CampaignCourse` / `Application.course_id`）
@@ -373,8 +374,8 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 招待リンクの`referral_code`パラメータを、まず`AgentReferralCode`（代理店）に一致するか確認し、一致しなければ`User.bimoni_user_id`として逆引きする。どちらにも一致しなければ何も設定しない。**招待リンク自体は代理店と共通の`/invite/{code}`ページ**（`InviteController`）を使う。コードが代理店コードでなければエージェント名バッジは出ないだけで、ページとしては問題なく機能する。
 
 ### 報酬付与（`UserReferralService::grantForApprovedReport()`）
-- `ReportController::approve()`（管理画面での報告承認、MonitorReportをapprovedにする唯一の場所）でのみ発火
-- `purchase_type === 'initial'` の報告のみ対象（`continuation`/`other`は対象外）
+- `ReportController::approve()`に加え、`updateCampaign()`/`updatePurchaseType()`（案件変更・報告種別変更、承認後でも実行可能）でも発火する
+- `purchase_type === 'initial'` かつ `status === 'approved'` の報告のみ対象（`continuation`/`other`は対象外）。**「その他」報告として承認された後に案件変更・報告種別変更で`initial`に修正されるケースがある**ため、承認時だけでなく修正時にも再チェックが必要だった（2026-09-02修正。修正前はapprove()時点のpurchase_typeしか見ておらず、後からinitialに直しても報酬が発生しないまま漏れる穴があった。本番実データでは幸い実害0件だった）
 - 「招待された人の初回報告」でグローバルに1回きり（`UserReferralReward.referred_user_id`のUNIQUE制約が二重付与を防ぐ。案件をまたいでも2回目以降は発生しない）
 - CSVインポート経由の報告（`ImportService`、`status=approved`で直接作成）は`approve()`を経由しないため対象外（過去データの遡及付与を防ぐ意図的な仕様）
 - 報酬額は`UserReferralService::REWARD_AMOUNT`定数（1,000固定）。当初ON/OFF設定・金額変更UIを作ったが「いらん」ということで削除済み（2026-08-22）
