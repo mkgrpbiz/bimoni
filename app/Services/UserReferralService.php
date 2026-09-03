@@ -14,6 +14,13 @@ class UserReferralService
     // （2回目以降の報告や、紹介コードが未設定のユーザーは対象外）
     public function grantForApprovedReport(MonitorReport $report): void
     {
+        // 承認済みの報告のみ対象。承認前に呼ばれても付与しない
+        // （「その他」報告として承認された後に案件変更・報告種別変更でinitialへ修正された場合など、
+        // approve()以外の場所からも呼ばれることがあるため、statusは呼び出し側任せにせずここで確認する）
+        if ($report->status !== 'approved') {
+            return;
+        }
+
         if ($report->purchase_type !== 'initial') {
             return;
         }

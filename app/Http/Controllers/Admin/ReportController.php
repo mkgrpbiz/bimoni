@@ -114,7 +114,7 @@ class ReportController extends Controller
         return back()->with('success', '承認待ちに戻しました。');
     }
 
-    public function updateCampaign(Request $request, MonitorReport $report): RedirectResponse
+    public function updateCampaign(Request $request, MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
     {
         $request->validate([
             'campaign_id' => 'required|exists:campaigns,id',
@@ -122,16 +122,22 @@ class ReportController extends Controller
 
         $report->update(['campaign_id' => $request->campaign_id]);
 
+        $userReferralService->grantForApprovedReport($report->fresh('user'));
+
         return back()->with('success', '案件を変更しました。');
     }
 
-    public function updatePurchaseType(Request $request, MonitorReport $report): RedirectResponse
+    public function updatePurchaseType(Request $request, MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
     {
         $request->validate([
             'purchase_type' => 'required|in:initial,continuation,other',
         ]);
 
         $report->update(['purchase_type' => $request->purchase_type]);
+
+        // 「その他」で承認済みだった報告を後からinitialへ修正した場合など、
+        // approve()時点では対象外だった報告がここで初めて招待報酬の対象になることがあるため再チェックする
+        $userReferralService->grantForApprovedReport($report->fresh('user'));
 
         return back()->with('success', '報告種別を変更しました。');
     }
