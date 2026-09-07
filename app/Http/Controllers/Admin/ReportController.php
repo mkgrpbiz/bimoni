@@ -69,7 +69,7 @@ class ReportController extends Controller
             ->map(fn($r) => $r->application_id . ':' . $r->continuation_round)
             ->all();
 
-        $candidateApplications = Application::with('campaign:id,title')
+        $candidateApplications = Application::with('campaign:id,title,continuation_condition')
             ->where('user_id', $report->user_id)
             ->orderByDesc('applied_at')
             ->get();
