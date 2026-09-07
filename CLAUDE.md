@@ -104,6 +104,11 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - LINE自動送信設定（`monitor_invite_message` / `monitor_end_message`）は案件ごとに設定。新規案件は既存案件を複製して作成する想定（デフォルト機能は廃止）
 - **案件複製（`CampaignController::duplicate()`）は`thumbnail`/`monitor_video`/`monitor_video_thumbnail`の実ファイルもコピーする**（2026-09-02修正）。以前は`replicate()`でDBのファイルパス文字列だけがコピーされ複製元・複製先が同じ実ファイルを参照する状態になっており、どちらかの画像/動画を差し替えると更新処理が「旧ファイル削除」を行うためもう片方の案件でも再生・表示できなくなるバグがあった（「新規案件は複製して作成」が標準フローのため頻発していた）
 - `continuation_condition`: ENUM('2回前提', '3回前提') nullable。継続前提の商品用。設定すると会員応募フォームの継続希望確認欄を非表示にし、応募時点で`continuation_wish='希望'` + `continuation_response='possible'` + `continuation_responded_at=now()`を自動セット（バッジ表示は「OK」になる。`continuation_response`が`continuation_wish`より優先されるため）
+  - `Campaign::continuationRoundCount()`: '2回前提'→2, '3回前提'→3, それ以外はnullを返すヘルパー
+  - **`MonitorReport.continuation_round`（2026-09-07追加、STGのみ・本番未リリース）**: 継続前提商品の「何回目の継続購入か」（2 or 3、nullable）。継続前提でない商品・初回報告・その他報告は常にnull。会員報告フォームの継続選択欄と管理画面「応募と紐付け」（`admin/reports/{report}`）の両方で、継続前提商品は「商品名/2回目」「商品名/3回目」を個別候補として表示し、`(application_id, purchase_type, continuation_round)`の組み合わせで回ごとに独立して重複チェック・報告済み判定を行う（`Member\ReportController::create()`/`store()`, `Admin\ReportController::show()`/`linkApplication()`）
+    - 協力金（`continuation_cooperation_fee`）は回によらず共通の1本のみ（2回目・3回目で金額を分ける仕組みはない。分けたい要望が出たら`CampaignCourse`の`continuation_fee_2`/`_3`のような列追加を検討）
+    - 2回目・3回目の提出順は不問（3回目を2回目より先に、または同時に提出してもブロックしない）
+    - 管理画面「応募と紐付け」の候補生成では`Application::with('campaign:id,title')`のように列を絞ると`continuation_condition`が読み込めず回数判定が効かなくなるバグがあった（`continuation_condition`を明示的に含める必要がある）
 
 ### コース指定設定（`course_settings_enabled` / `CampaignCourse` / `Application.course_id`）
 1商品に複数の購入コース（単発○本、継続○回など）があり、コースによって初回/継続購入費や案内文が異なる案件向けの機能。
