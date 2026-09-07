@@ -88,6 +88,16 @@ class Campaign extends Model
         return $normalCost + $extra;
     }
 
+    // 継続前提（'2回前提'/'3回前提'）商品の合計購入回数。継続前提でなければnull
+    public function continuationRoundCount(): ?int
+    {
+        return match ($this->continuation_condition) {
+            '2回前提' => 2,
+            '3回前提' => 3,
+            default   => null,
+        };
+    }
+
     public function getTypeLabel(): string
     {
         return match($this->campaign_type) {

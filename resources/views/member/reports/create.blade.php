@@ -24,6 +24,7 @@
         @csrf
         <input type="hidden" name="purchase_type" id="monitor-purchase-type" value="{{ $oldMode }}">
         <input type="hidden" name="application_id" id="monitor-application-id" value="{{ old('application_id') }}">
+        <input type="hidden" name="continuation_round" id="monitor-continuation-round" value="{{ old('continuation_round') }}">
 
         {{-- 購入区分 --}}
         <div x-data="{ mode: '{{ $oldMode }}' }">
@@ -68,12 +69,14 @@
                 <select id="monitor-cont-select" onchange="onMonitorSelectChange(this)"
                         class="w-full border border-gray-300 rounded-xl px-3 py-3 text-sm">
                     <option value="">選択してください</option>
-                    @foreach($monitorContinuationApps as $app)
-                    <option value="{{ $app->id }}"
-                            data-fee="{{ $app->campaign->continuation_cooperation_fee ?? 0 }}"
-                            data-bonus="{{ $app->bonus_amount ?? 0 }}"
-                            {{ (string) old('application_id') === (string) $app->id ? 'selected' : '' }}>
-                        {{ $app->campaign->title }}
+                    @foreach($monitorContinuationOptions as $opt)
+                    @php $optApp = $opt['application']; $optRound = $opt['round']; @endphp
+                    <option value="{{ $optApp->id }}"
+                            data-round="{{ $optRound }}"
+                            data-fee="{{ $optApp->campaign->continuation_cooperation_fee ?? 0 }}"
+                            data-bonus="{{ $optApp->bonus_amount ?? 0 }}"
+                            {{ (string) old('application_id') === (string) $optApp->id && (string) old('continuation_round') === (string) $optRound ? 'selected' : '' }}>
+                        {{ $optApp->campaign->title }}{{ $optRound ? '/'.$optRound.'回目' : '' }}
                     </option>
                     @endforeach
                     <option value="other" data-fee="0" data-bonus="0">その他報告</option>
@@ -222,6 +225,7 @@ function currentMode() {
 
 function onModeChange(mode) {
     document.getElementById('monitor-application-id').value = '';
+    document.getElementById('monitor-continuation-round').value = '';
     document.getElementById('monitor-purchase-type').value = mode;
     document.getElementById('other-report-box').classList.add('hidden');
     document.getElementById('monitor-fee-box').style.display = '';
@@ -239,6 +243,9 @@ function onMonitorSelectChange(sel) {
 
     document.getElementById('monitor-purchase-type').value  = isOther ? 'other' : mode;
     document.getElementById('monitor-application-id').value = isOther ? '' : sel.value;
+
+    const opt = sel.options[sel.selectedIndex];
+    document.getElementById('monitor-continuation-round').value = (!isOther && opt && opt.dataset.round) ? opt.dataset.round : '';
 
     if (isOther) return;
     recalcFee();

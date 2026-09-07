@@ -30,7 +30,7 @@
             @php
                 $purchaseTypeLabel = match($report->purchase_type) {
                     'initial'      => '初回購入',
-                    'continuation' => '継続購入',
+                    'continuation' => '継続購入' . ($report->continuation_round ? "（{$report->continuation_round}回目）" : ''),
                     'other'        => 'その他',
                     default        => $report->purchase_type ?? '-',
                 };
@@ -102,22 +102,28 @@
                     現在の紐付け先: 応募ID {{ $report->application_id }}
                 @endif
             </p>
-            @if($linkableApplications->isEmpty())
+            @if($linkableOptions->isEmpty())
                 <p class="text-sm text-gray-400">紐付け可能な応募がありません。</p>
             @else
             <form method="POST" action="{{ route('admin.reports.link_application', $report) }}" class="flex flex-wrap items-end gap-3">
                 @csrf @method('PATCH')
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">応募</label>
-                    <select name="application_id" required
+                    <select id="link-application-select" onchange="onLinkSelectChange(this)" required
                             class="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 min-w-[20rem]">
                         <option value="">選択してください</option>
-                        @foreach($linkableApplications as $la)
-                        <option value="{{ $la->id }}" @selected($report->application_id === $la->id)>
-                            {{ $la->applied_at?->format('Y/m/d') }} - {{ $la->campaign?->title ?? '不明' }}（{{ $la->getStatusLabel() }}）
+                        @foreach($linkableOptions as $opt)
+                        @php $la = $opt['application']; $round = $opt['round']; @endphp
+                        <option value="{{ $la->id }}-{{ $round }}"
+                                data-app-id="{{ $la->id }}"
+                                data-round="{{ $round }}"
+                                @selected($report->application_id === $la->id && (int) $report->continuation_round === (int) $round)>
+                            {{ $la->applied_at?->format('Y/m/d') }} - {{ $la->campaign?->title ?? '不明' }}{{ $round ? '/'.$round.'回目' : '' }}（{{ $la->getStatusLabel() }}）
                         </option>
                         @endforeach
                     </select>
+                    <input type="hidden" name="application_id" id="link-application-id">
+                    <input type="hidden" name="continuation_round" id="link-continuation-round">
                 </div>
                 <button type="submit"
                         onclick="return confirm('この応募と紐付けますか？案件・キャンペーン金額が応募の内容で上書きされます。')"
@@ -287,7 +293,7 @@
                 @php
                     $dupPurchaseLabel = match($dup->purchase_type) {
                         'initial'      => '初回購入',
-                        'continuation' => '継続購入',
+                        'continuation' => '継続購入' . ($dup->continuation_round ? "（{$dup->continuation_round}回目）" : ''),
                         'other'        => 'その他',
                         default        => $dup->purchase_type ?? '-',
                     };
@@ -404,6 +410,16 @@
             opt.disabled = !matches;
         });
     });
+})();
+
+function onLinkSelectChange(sel) {
+    var opt = sel.options[sel.selectedIndex];
+    document.getElementById('link-application-id').value = (opt && opt.dataset.appId) || '';
+    document.getElementById('link-continuation-round').value = (opt && opt.dataset.round) || '';
+}
+(function () {
+    var linkSelect = document.getElementById('link-application-select');
+    if (linkSelect) onLinkSelectChange(linkSelect);
 })();
 
 function openLightbox(src) {

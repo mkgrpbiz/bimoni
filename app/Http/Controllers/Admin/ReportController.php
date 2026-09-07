@@ -57,17 +57,43 @@ class ReportController extends Controller
         $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get(['id', 'title', 'status']);
 
         // 「その他」報告を応募と紐付けるための候補（同じユーザーの応募。既に別の報告が紐付いている応募は
-        // 選ぶと確実に重複になるため除外する）
+        // 選ぶと確実に重複になるため除外する）。継続前提（2回前提/3回前提）商品は2回目・3回目を
+        // 個別の候補として出せるよう、応募単位ではなく「応募×回数」単位で候補を作る
         $linkedApplicationIds = MonitorReport::where('id', '!=', $report->id)
             ->whereNotNull('application_id')
             ->pluck('application_id');
-        $linkableApplications = Application::with('campaign:id,title')
+        $linkedRoundKeys = MonitorReport::where('id', '!=', $report->id)
+            ->whereNotNull('application_id')
+            ->whereNotNull('continuation_round')
+            ->get(['application_id', 'continuation_round'])
+            ->map(fn($r) => $r->application_id . ':' . $r->continuation_round)
+            ->all();
+
+        $candidateApplications = Application::with('campaign:id,title')
             ->where('user_id', $report->user_id)
-            ->whereNotIn('id', $linkedApplicationIds)
             ->orderByDesc('applied_at')
             ->get();
 
-        return view('admin.reports.show', compact('report', 'duplicates', 'campaigns', 'linkableApplications'));
+        $linkableOptions = collect();
+        foreach ($candidateApplications as $la) {
+            $roundCount = $la->campaign?->continuationRoundCount();
+            if ($roundCount) {
+                // 初回相当（round=null）は従来通り、他の報告が1件でも紐付いていれば除外
+                if (!$linkedApplicationIds->contains($la->id)) {
+                    $linkableOptions->push(['application' => $la, 'round' => null]);
+                }
+                // 2回目・3回目は回ごとに個別判定（同じ応募に複数の継続報告を許容するため）
+                foreach (range(2, $roundCount) as $round) {
+                    if (!in_array($la->id . ':' . $round, $linkedRoundKeys)) {
+                        $linkableOptions->push(['application' => $la, 'round' => $round]);
+                    }
+                }
+            } elseif (!$linkedApplicationIds->contains($la->id)) {
+                $linkableOptions->push(['application' => $la, 'round' => null]);
+            }
+        }
+
+        return view('admin.reports.show', compact('report', 'duplicates', 'campaigns', 'linkableOptions'));
     }
 
     public function approve(MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
@@ -161,7 +187,8 @@ class ReportController extends Controller
     public function linkApplication(Request $request, MonitorReport $report, UserReferralService $userReferralService): RedirectResponse
     {
         $request->validate([
-            'application_id' => 'required|exists:applications,id',
+            'application_id'     => 'required|exists:applications,id',
+            'continuation_round' => 'nullable|integer|in:2,3',
         ]);
 
         $application = Application::where('id', $request->application_id)
@@ -172,22 +199,33 @@ class ReportController extends Controller
             return back()->with('error', 'この応募は対象ユーザーのものではありません。');
         }
 
-        // リンク元の報告はまだ「その他」のままのことが多く、その時点のpurchase_typeで比較しても
-        // 意味がないため、応募に既に紐づいている初回/継続報告の有無そのものをチェックする
-        $duplicate = MonitorReport::where('application_id', $application->id)
-            ->where('id', '!=', $report->id)
-            ->where('status', '!=', 'rejected')
-            ->whereIn('purchase_type', ['initial', 'continuation'])
-            ->first();
+        if ($request->continuation_round) {
+            // 継続前提商品の2回目・3回目: 同じ応募・同じ回の非却下報告がある場合のみ重複とみなす
+            $duplicate = MonitorReport::where('application_id', $application->id)
+                ->where('id', '!=', $report->id)
+                ->where('status', '!=', 'rejected')
+                ->where('continuation_round', $request->continuation_round)
+                ->first();
+        } else {
+            // リンク元の報告はまだ「その他」のままのことが多く、その時点のpurchase_typeで比較しても
+            // 意味がないため、応募に既に紐づいている初回/継続（回数指定なし）報告の有無そのものをチェックする
+            $duplicate = MonitorReport::where('application_id', $application->id)
+                ->where('id', '!=', $report->id)
+                ->where('status', '!=', 'rejected')
+                ->whereNull('continuation_round')
+                ->whereIn('purchase_type', ['initial', 'continuation'])
+                ->first();
+        }
 
         if ($duplicate) {
             return back()->with('error', "この応募には既に報告（report_id={$duplicate->id}、{$duplicate->getStatusLabel()}）が紐付いています。重複の可能性があるため紐付けを中止しました。");
         }
 
         $report->update([
-            'application_id' => $application->id,
-            'campaign_id'    => $application->campaign_id,
-            'bonus_amount'   => $report->bonus_amount ?? $application->bonus_amount,
+            'application_id'     => $application->id,
+            'campaign_id'        => $application->campaign_id,
+            'bonus_amount'       => $report->bonus_amount ?? $application->bonus_amount,
+            'continuation_round' => $request->continuation_round,
         ]);
 
         $userReferralService->grantForApprovedReport($report->fresh('user'));
@@ -208,6 +246,7 @@ class ReportController extends Controller
         $duplicate = MonitorReport::where('user_id', $report->user_id)
             ->where('campaign_id', $report->campaign_id)
             ->where('purchase_type', $report->purchase_type)
+            ->where('continuation_round', $report->continuation_round)
             ->where('id', '!=', $report->id)
             ->where('status', '!=', 'rejected')
             ->first();

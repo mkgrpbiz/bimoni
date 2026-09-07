@@ -59,17 +59,30 @@ class ReportController extends Controller
             ->where('purchase_type', 'initial')
             ->where('status', '!=', 'rejected')
             ->pluck('application_id')->all();
-        $reportedContinuationIds = MonitorReport::where('user_id', $user->id)
+
+        // 継続前提（2回前提/3回前提）商品は「何回目か」で別々に報告済み判定する。
+        // 継続前提でない商品は従来通りcontinuation_roundがnullのまま1回のみ
+        $reportedContinuationKeys = MonitorReport::where('user_id', $user->id)
             ->where('purchase_type', 'continuation')
             ->where('status', '!=', 'rejected')
-            ->pluck('application_id')->all();
+            ->get(['application_id', 'continuation_round'])
+            ->map(fn($r) => $r->application_id . ':' . ($r->continuation_round ?? 'null'))
+            ->all();
 
-        $monitorInitialApps      = $allCompleted->whereNotIn('id', $reportedInitialIds)->values();
-        $monitorContinuationApps = $allCompleted
-            ->whereNotIn('id', $reportedContinuationIds)
-            ->values();
+        $monitorInitialApps = $allCompleted->whereNotIn('id', $reportedInitialIds)->values();
 
-        return view('member.reports.create', compact('monitorInitialApps', 'monitorContinuationApps'));
+        $monitorContinuationOptions = collect();
+        foreach ($allCompleted as $app) {
+            $roundCount = $app->campaign->continuationRoundCount();
+            $rounds = $roundCount ? range(2, $roundCount) : [null];
+            foreach ($rounds as $round) {
+                if (!in_array($app->id . ':' . ($round ?? 'null'), $reportedContinuationKeys)) {
+                    $monitorContinuationOptions->push(['application' => $app, 'round' => $round]);
+                }
+            }
+        }
+
+        return view('member.reports.create', compact('monitorInitialApps', 'monitorContinuationOptions'));
     }
 
     public function createCollection(): View|RedirectResponse
@@ -113,6 +126,7 @@ class ReportController extends Controller
             $rules['report_body'] = 'required|string|max:2000';
         } else {
             $rules['application_id']       = 'required|exists:applications,id';
+            $rules['continuation_round']   = 'nullable|integer|in:2,3';
             $rules['purchase_amount']      = 'required|integer|min:0';
             $rules['payment_method']       = 'required|string|max:50';
             $rules['payment_method_other'] = 'nullable|string|max:100';
@@ -153,6 +167,7 @@ class ReportController extends Controller
 
         if (MonitorReport::where('application_id', $application->id)
             ->where('purchase_type', $request->purchase_type)
+            ->where('continuation_round', $request->continuation_round)
             ->where('status', '!=', 'rejected')
             ->exists()) {
             return back()->with('error', 'この案件のこの種類の報告は既に送信済みです。');
@@ -163,6 +178,7 @@ class ReportController extends Controller
             'campaign_id'          => $application->campaign_id,
             'application_id'       => $application->id,
             'purchase_type'        => $request->purchase_type,
+            'continuation_round'   => $request->continuation_round,
             'purchase_amount'      => $request->purchase_amount,
             'bonus_amount'         => $application->bonus_amount,
             'payment_method'       => $request->payment_method === 'other'
