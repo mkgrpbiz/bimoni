@@ -125,7 +125,7 @@ class DashboardController extends Controller
                 $coopFee = $r->purchase_type === 'continuation'
                     ? ($c?->continuation_cooperation_fee ?? 0)
                     : ($c?->cooperation_fee ?? 0);
-                return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+                return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
             }) + CollectionReport::where('status', 'approved')
                 ->whereYear('created_at', $y)->whereMonth('created_at', $m)
                 ->get()->sum(fn($r) => $r->totalFee())

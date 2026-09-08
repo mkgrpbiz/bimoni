@@ -144,7 +144,7 @@ class DashboardSummaryService
                 ? ($c?->continuation_cooperation_fee ?? 0)
                 : ($c?->cooperation_fee ?? 0);
 
-            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0);
+            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
         }) + $collectionReports->sum(fn ($r) => $r->totalFee()) + $referralRewards->sum('amount');
 
         $cooperationFeeLastApprovedAt = $reports->pluck('reviewed_at')
