@@ -63,10 +63,8 @@
                 <dd class="font-medium dark:text-gray-200">{{ $purchaseTypeLabel }}</dd>
                 <dt class="text-gray-500 dark:text-gray-400">モニター経費</dt>
                 <dd class="dark:text-gray-200">¥{{ number_format($purchaseAmt) }}</dd>
-                @if($report->purchase_type !== 'other')
                 <dt class="text-gray-500 dark:text-gray-400">ポイント還元</dt>
                 <dd class="text-pink-600 dark:text-pink-400 font-medium">¥{{ number_format($coopFee) }}</dd>
-                @endif
                 @if($bonusAmt)
                 <dt class="text-gray-500 dark:text-gray-400">キャンペーン</dt>
                 <dd class="text-green-600 dark:text-green-400 font-medium">+¥{{ number_format($bonusAmt) }}</dd>
@@ -75,10 +73,8 @@
                 <dt class="text-gray-500 dark:text-gray-400">修正金額</dt>
                 <dd class="dark:text-gray-200 {{ $adjustAmt > 0 ? 'text-green-600' : 'text-red-600' }}">{{ $adjustAmt > 0 ? '+' : '' }}¥{{ number_format($adjustAmt) }}</dd>
                 @endif
-                @if($report->purchase_type !== 'other')
                 <dt class="text-gray-500 dark:text-gray-400">支払合計</dt>
                 <dd class="font-bold dark:text-gray-200">¥{{ number_format($purchaseAmt + $coopFee + $bonusAmt + $adjustAmt) }}</dd>
-                @endif
                 @if($paymentLabel !== '-')
                 <dt class="text-gray-500 dark:text-gray-400">お支払方法</dt>
                 <dd class="dark:text-gray-200">{{ $paymentLabel }}</dd>
@@ -315,9 +311,9 @@
                     </div>
                     <dl class="grid grid-cols-2 gap-y-2 text-sm">
                         <dt class="text-gray-500">報告種別</dt><dd>{{ $dupPurchaseLabel }}</dd>
-                        @if($dup->purchase_type !== 'other')
                         <dt class="text-gray-500">モニター経費</dt><dd>¥{{ number_format($dup->purchase_amount ?? 0) }}</dd>
                         <dt class="text-gray-500">ポイント還元</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->purchase_type === 'continuation' ? ($dup->campaign?->continuation_cooperation_fee ?? 0) : ($dup->campaign?->cooperation_fee ?? 0)) }}</dd>
+                        @if($dup->purchase_type !== 'other')
                         <dt class="text-gray-500">支払方法</dt><dd>{{ $dupPayLabel }}</dd>
                         @endif
                     </dl>
