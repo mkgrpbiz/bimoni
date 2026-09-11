@@ -54,6 +54,7 @@ $tabs = [
                 <th class="px-4 py-3 text-left">案件名</th>
                 <th class="px-3 py-3 text-left">電話番号</th>
                 <th class="px-3 py-3 text-left">マイページ</th>
+                <th class="px-3 py-3 text-left">お問い合わせフォーム</th>
                 <th class="px-3 py-3 text-left">メールアドレス</th>
                 <th class="px-3 py-3 text-center">設定状況</th>
                 <th class="px-3 py-3 text-center">操作</th>
@@ -68,6 +69,7 @@ $tabs = [
                 </td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->cancellation_phone ?: '-' }}</td>
                 <td class="px-3 py-3 text-gray-700 max-w-xs truncate">{{ $campaign->cancellation_mypage_url ?: '-' }}</td>
+                <td class="px-3 py-3 text-gray-700 max-w-xs truncate">{{ $campaign->cancellation_inquiry_form_url ?: '-' }}</td>
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->cancellation_email ?: '-' }}</td>
                 <td class="px-3 py-3 text-center">
                     @if($campaign->hasCancellationInfo())
@@ -111,7 +113,7 @@ $tabs = [
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
             </tr>
             @endforelse
         </tbody>

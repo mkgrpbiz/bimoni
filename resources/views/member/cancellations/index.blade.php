@@ -50,6 +50,12 @@
                         <a href="{{ $campaign->cancellation_mypage_url }}" target="_blank" rel="noopener" class="text-sm text-pink-600 break-all underline">{{ $campaign->cancellation_mypage_url }}</a>
                     </div>
                     @endif
+                    @if($campaign->cancellation_inquiry_form_url)
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 mb-1">お問い合わせフォーム</p>
+                        <a href="{{ $campaign->cancellation_inquiry_form_url }}" target="_blank" rel="noopener" class="text-sm text-pink-600 break-all underline">{{ $campaign->cancellation_inquiry_form_url }}</a>
+                    </div>
+                    @endif
                     @if($campaign->cancellation_email)
                     <div>
                         <p class="text-xs font-bold text-gray-500 mb-1">メールアドレス</p>

@@ -11,7 +11,7 @@ class Campaign extends Model
         'description', 'requirements', 'notes',
         'cancellation_info',
         'cancellation_method', 'cancellation_phone', 'cancellation_hours',
-        'cancellation_mypage_url', 'cancellation_email', 'cancellation_visible', 'cancellation_draft',
+        'cancellation_mypage_url', 'cancellation_inquiry_form_url', 'cancellation_email', 'cancellation_visible', 'cancellation_draft',
         'monitor_guide', 'link', 'monitor_video', 'monitor_video_thumbnail',
         'monitor_invite_message', 'monitor_end_message',
         'product_name', 'product_price',
@@ -127,6 +127,7 @@ class Campaign extends Model
             || filled($this->cancellation_phone)
             || filled($this->cancellation_hours)
             || filled($this->cancellation_mypage_url)
+            || filled($this->cancellation_inquiry_form_url)
             || filled($this->cancellation_email);
     }
 

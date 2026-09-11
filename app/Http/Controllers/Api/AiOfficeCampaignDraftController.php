@@ -64,6 +64,7 @@ class AiOfficeCampaignDraftController extends Controller
             'cancellation_phone' => 'nullable|string|max:255',
             'cancellation_hours' => 'nullable|string|max:255',
             'cancellation_mypage_url' => 'nullable|string|max:255',
+            'cancellation_inquiry_form_url' => 'nullable|string|max:255',
             'cancellation_email' => 'nullable|string|max:255',
             'cancellation_visible' => 'nullable|boolean',
             'monitor_guide' => 'nullable|string',

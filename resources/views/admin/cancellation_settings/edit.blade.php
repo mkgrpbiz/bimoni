@@ -42,6 +42,13 @@
         @error('cancellation_mypage_url')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">お問い合わせフォーム</label>
+        <input type="text" name="cancellation_inquiry_form_url" value="{{ old('cancellation_inquiry_form_url', $campaign->cancellation_inquiry_form_url ?? '') }}"
+               class="w-full border rounded px-3 py-2 text-sm @error('cancellation_inquiry_form_url') border-red-400 @enderror"
+               placeholder="https://example.com/inquiry">
+        @error('cancellation_inquiry_form_url')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+    </div>
+    <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
         <input type="email" name="cancellation_email" value="{{ old('cancellation_email', $campaign->cancellation_email ?? '') }}"
                class="w-full border rounded px-3 py-2 text-sm @error('cancellation_email') border-red-400 @enderror"

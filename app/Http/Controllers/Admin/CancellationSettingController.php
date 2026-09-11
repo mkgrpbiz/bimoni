@@ -18,7 +18,7 @@ class CancellationSettingController extends Controller
                 fn ($q) => $q->where('cancellation_draft', true),
                 fn ($q) => $q->where('cancellation_draft', false)->where('cancellation_visible', $visible === '1')
             )
-            ->orderByRaw('CASE WHEN cancellation_method IS NULL AND cancellation_phone IS NULL AND cancellation_hours IS NULL AND cancellation_mypage_url IS NULL AND cancellation_email IS NULL THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN cancellation_method IS NULL AND cancellation_phone IS NULL AND cancellation_hours IS NULL AND cancellation_mypage_url IS NULL AND cancellation_inquiry_form_url IS NULL AND cancellation_email IS NULL THEN 0 ELSE 1 END')
             ->orderByDesc('id');
 
         if ($request->filled('q')) {
@@ -48,6 +48,7 @@ class CancellationSettingController extends Controller
             'cancellation_phone'      => 'nullable|string|max:50',
             'cancellation_hours'      => 'nullable|string|max:255',
             'cancellation_mypage_url' => 'nullable|url|max:500',
+            'cancellation_inquiry_form_url' => 'nullable|url|max:500',
             'cancellation_email'      => 'nullable|email|max:255',
         ]);
 

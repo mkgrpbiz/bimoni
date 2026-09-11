@@ -40,7 +40,7 @@ class AiOfficeCampaignReadController extends Controller
         'title', 'campaign_type', 'pr_media', 'thumbnail',
         'description', 'requirements', 'notes',
         'cancellation_info', 'cancellation_method', 'cancellation_phone',
-        'cancellation_hours', 'cancellation_mypage_url', 'cancellation_email', 'cancellation_visible',
+        'cancellation_hours', 'cancellation_mypage_url', 'cancellation_inquiry_form_url', 'cancellation_email', 'cancellation_visible',
         'monitor_guide', 'link', 'monitor_video', 'monitor_video_thumbnail',
         'monitor_invite_message', 'monitor_end_message',
         'product_name', 'product_price',
