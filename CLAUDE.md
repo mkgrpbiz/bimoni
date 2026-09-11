@@ -101,6 +101,8 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - 条件チェックは必ず `=== '回収必須'`（truthy判定だと'回収不要'でも引っかかる）
   - 回収必須の場合、応募フォームに警告メッセージ表示
 - `collection_info`: DBカラムは残存しているがフォーム・会員ページからは削除済み（未使用）
+- **解約方法管理（`admin/cancellation-settings`、案件編集とは別画面）**: `cancellation_method`（自由記述）/`cancellation_phone`/`cancellation_hours`/`cancellation_mypage_url`/`cancellation_inquiry_form_url`（お問い合わせフォームURL、2026-09-11追加）/`cancellation_email`の6項目。1つでも入力があれば`Campaign::hasCancellationInfo()`がtrueになり、`cancellation_visible`かつ`cancellation_draft=false`の場合に会員向け解約方法一覧（`member/cancellations`）に表示される。AI OFFICE連携の下書き作成・全体テンプレートclone対象フィールド（`AiOfficeCampaignDraftController`/`AiOfficeCampaignReadController::CLONEABLE_FIELDS`）にも含まれるため、**新しい解約関連フィールドを追加する時はこの6箇所すべてに反映すること**: ①マイグレーション ②`Campaign.$fillable` ③`hasCancellationInfo()` ④`CancellationSettingController::update()`のバリデーション ⑤管理画面編集フォーム・一覧 ⑥会員向け表示。加えてAI OFFICE側の`App\Support\CampaignFieldDefinitions::keys()`（別リポジトリ、手動同期が必要）
+  - `{{解約について}}` LINEテンプレートは別カラムの`cancellation_info`（案件編集フォームの方）を使う。この6項目とは無関係
 - LINE自動送信設定（`monitor_invite_message` / `monitor_end_message`）は案件ごとに設定。新規案件は既存案件を複製して作成する想定（デフォルト機能は廃止）
 - **案件複製（`CampaignController::duplicate()`）は`thumbnail`/`monitor_video`/`monitor_video_thumbnail`の実ファイルもコピーする**（2026-09-02修正）。以前は`replicate()`でDBのファイルパス文字列だけがコピーされ複製元・複製先が同じ実ファイルを参照する状態になっており、どちらかの画像/動画を差し替えると更新処理が「旧ファイル削除」を行うためもう片方の案件でも再生・表示できなくなるバグがあった（「新規案件は複製して作成」が標準フローのため頻発していた）
 - `continuation_condition`: ENUM('2回前提', '3回前提') nullable。継続前提の商品用。設定すると会員応募フォームの継続希望確認欄を非表示にし、応募時点で`continuation_wish='希望'` + `continuation_response='possible'` + `continuation_responded_at=now()`を自動セット（バッジ表示は「OK」になる。`continuation_response`が`continuation_wish`より優先されるため）
