@@ -52,11 +52,12 @@ class CampaignCourse extends Model
         return $this->hasMany(Application::class, 'course_id');
     }
 
-    // 単発=初回購入費のみ、継続前提かつ継続判定有=初回購入費+継続購入費2（3回の場合はさらに+継続購入費3）。
-    // 継続判定無の継続前提コースは継続購入費を設定しない運用のため単発と同じ初回購入費のみ
+    // 単発=初回購入費のみ、継続前提=初回購入費+継続購入費2（3回前提の場合はさらに+継続購入費3）。
+    // 継続判定の有無は単発コース側の設定（実際に継続するかを確認するかどうか）で、
+    // 継続前提（継続が確定している）とは無関係のためcost()の計算には影響しない
     public function cost(): float
     {
-        if ($this->course_type === '継続前提' && $this->continuation_judgment_enabled) {
+        if ($this->course_type === '継続前提') {
             $cost = ($this->initial_purchase_fee ?? 0) + ($this->continuation_fee_2 ?? 0);
             if ((int) $this->continuation_count === 3) {
                 $cost += ($this->continuation_fee_3 ?? 0);

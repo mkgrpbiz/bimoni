@@ -167,8 +167,11 @@ class CampaignController extends Controller
 
         foreach ($courses as $i => $row) {
             if (empty($row['name'])) continue;
-            $isContinuationPremised = ($row['course_type'] ?? '単発') === '継続前提';
-            $judgmentEnabled = $isContinuationPremised && (string) ($row['continuation_judgment_enabled'] ?? '0') === '1';
+            // 継続前提（継続が確定している）と継続判定の有無（単発コースで実際に継続するか確認・追跡するか）は
+            // 全く別の概念。継続判定は単発コース側にのみ持たせる
+            $isSingle = ($row['course_type'] ?? '単発') === '単発';
+            $isContinuationPremised = !$isSingle;
+            $judgmentEnabled = $isSingle && (string) ($row['continuation_judgment_enabled'] ?? '0') === '1';
 
             $attrs = [
                 'name'                 => $row['name'],
@@ -177,8 +180,8 @@ class CampaignController extends Controller
                 'continuation_count'   => $isContinuationPremised ? ($row['continuation_count'] ?? null) : null,
                 'continuation_judgment_enabled' => $judgmentEnabled,
                 'continuation_rate'    => $judgmentEnabled ? ($row['continuation_rate'] ?? null) : null,
-                'continuation_fee_2'   => $judgmentEnabled ? ($row['continuation_fee_2'] ?? 0) : null,
-                'continuation_fee_3'   => ($judgmentEnabled && ($row['continuation_count'] ?? null) == 3) ? ($row['continuation_fee_3'] ?? 0) : null,
+                'continuation_fee_2'   => $isContinuationPremised ? ($row['continuation_fee_2'] ?? 0) : null,
+                'continuation_fee_3'   => ($isContinuationPremised && ($row['continuation_count'] ?? null) == 3) ? ($row['continuation_fee_3'] ?? 0) : null,
                 'percentage'           => $row['percentage'] ?? 0,
                 'invite_message'       => $row['invite_message'] ?? null,
                 'sort_order'           => $i,
