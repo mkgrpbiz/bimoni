@@ -236,14 +236,27 @@ class ApplicationController extends Controller
                         ? round($normalCompletedApps->count() / $completedApps->count() * 100)
                         : null,
                     'count'  => $normalCompletedApps->count(),
-                ]])->merge($campaign->courses->map(fn($course) => [
-                    'name'   => $course->name,
-                    'target' => $course->percentage,
-                    'actual' => $completedApps->count() > 0
-                        ? round($completedApps->where('course_id', $course->id)->count() / $completedApps->count() * 100)
-                        : null,
-                    'count'  => $completedApps->where('course_id', $course->id)->count(),
-                ]))
+                ]])->merge($campaign->courses->map(function ($course) use ($completedApps) {
+                    $courseCompleted = $completedApps->where('course_id', $course->id);
+                    $courseOkCount = $courseCompleted->where('continuation_response', 'possible')->count();
+
+                    return [
+                        'name'   => $course->name,
+                        'target' => $course->percentage,
+                        'actual' => $completedApps->count() > 0
+                            ? round($courseCompleted->count() / $completedApps->count() * 100)
+                            : null,
+                        'count'  => $courseCompleted->count(),
+                        // 継続判定「有」のコースのみ、このコース内での継続率（目標vs実績）を追加表示する
+                        'continuation_judgment_enabled' => $course->continuation_judgment_enabled,
+                        'continuation_target' => $course->continuation_rate,
+                        'continuation_actual' => $courseCompleted->count() > 0
+                            ? round($courseOkCount / $courseCompleted->count() * 100)
+                            : null,
+                        'continuation_ok_count' => $courseOkCount,
+                        'continuation_total_count' => $courseCompleted->count(),
+                    ];
+                }))
                 : collect(),
         ];
 

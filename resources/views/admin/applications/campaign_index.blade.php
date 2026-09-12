@@ -150,6 +150,14 @@ $statusTabs = [
             <span class="font-bold text-indigo-600 ml-1">/ 完了 {{ $cs['actual'] !== null ? $cs['actual'].'%' : '-' }}</span>
             <span class="text-gray-400 text-xs">（{{ $cs['count'] }}件）</span>
         </div>
+        @if($cs['continuation_judgment_enabled'] ?? false)
+        <div>
+            <span class="text-gray-500">{{ $cs['name'] }}の継続率</span>
+            <span class="text-gray-400 text-xs ml-1">目標 {{ $cs['continuation_target'] !== null ? number_format($cs['continuation_target'], 1).'%' : '-' }}</span>
+            <span class="font-bold text-green-600 ml-1">/ 完了 {{ $cs['continuation_actual'] !== null ? $cs['continuation_actual'].'%' : '-' }}</span>
+            <span class="text-gray-400 text-xs">（{{ $cs['continuation_ok_count'] }}/{{ $cs['continuation_total_count'] }}件）</span>
+        </div>
+        @endif
         @endforeach
     </div>
 </div>
@@ -376,7 +384,7 @@ $statusTabs = [
                                     onclick="return confirm('キャンセルしますか？')">取消</button>
                         </form>
                         @endif
-                        @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']) && !$app->continuation_response && !$app->continuation_sent_at && !$app->course_id)
+                        @if($app->continuation_wish === '希望' && in_array($app->status, ['completed','reported','approved']) && !$app->continuation_response && !$app->continuation_sent_at && (!$app->course_id || $app->course?->continuation_judgment_enabled))
                         <button type="button"
                                 class="bg-green-500 text-white px-1.5 py-0.5 rounded hover:bg-green-600 text-xs"
                                 onclick="openContModal('{{ route('admin.applications.continuation_line', $app) }}', '{{ addslashes($app->user?->name) }}')">

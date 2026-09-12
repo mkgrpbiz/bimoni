@@ -167,13 +167,18 @@ class CampaignController extends Controller
 
         foreach ($courses as $i => $row) {
             if (empty($row['name'])) continue;
+            $isContinuationPremised = ($row['course_type'] ?? '単発') === '継続前提';
+            $judgmentEnabled = $isContinuationPremised && (string) ($row['continuation_judgment_enabled'] ?? '0') === '1';
+
             $attrs = [
                 'name'                 => $row['name'],
                 'initial_purchase_fee' => $row['initial_purchase_fee'] ?? 0,
                 'course_type'          => $row['course_type'] ?? '単発',
-                'continuation_count'   => $row['course_type'] === '継続' ? ($row['continuation_count'] ?? null) : null,
-                'continuation_fee_2'   => $row['course_type'] === '継続' ? ($row['continuation_fee_2'] ?? 0) : null,
-                'continuation_fee_3'   => ($row['course_type'] === '継続' && ($row['continuation_count'] ?? null) == 3) ? ($row['continuation_fee_3'] ?? 0) : null,
+                'continuation_count'   => $isContinuationPremised ? ($row['continuation_count'] ?? null) : null,
+                'continuation_judgment_enabled' => $judgmentEnabled,
+                'continuation_rate'    => $judgmentEnabled ? ($row['continuation_rate'] ?? null) : null,
+                'continuation_fee_2'   => $judgmentEnabled ? ($row['continuation_fee_2'] ?? 0) : null,
+                'continuation_fee_3'   => ($judgmentEnabled && ($row['continuation_count'] ?? null) == 3) ? ($row['continuation_fee_3'] ?? 0) : null,
                 'percentage'           => $row['percentage'] ?? 0,
                 'invite_message'       => $row['invite_message'] ?? null,
                 'sort_order'           => $i,
@@ -380,8 +385,10 @@ class CampaignController extends Controller
             'courses.*.id'                     => 'nullable|integer',
             'courses.*.name'                   => 'nullable|string|max:255',
             'courses.*.initial_purchase_fee'   => 'nullable|integer|min:0',
-            'courses.*.course_type'            => 'nullable|in:単発,継続',
+            'courses.*.course_type'            => 'nullable|in:単発,継続前提',
             'courses.*.continuation_count'     => 'nullable|in:2,3',
+            'courses.*.continuation_judgment_enabled' => 'nullable|boolean',
+            'courses.*.continuation_rate'      => 'nullable|numeric|min:0|max:100',
             'courses.*.continuation_fee_2'     => 'nullable|integer|min:0',
             'courses.*.continuation_fee_3'     => 'nullable|integer|min:0',
             'courses.*.percentage'             => 'nullable|numeric|min:0|max:100',

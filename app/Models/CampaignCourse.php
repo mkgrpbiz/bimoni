@@ -8,7 +8,8 @@ class CampaignCourse extends Model
 {
     protected $fillable = [
         'campaign_id', 'name', 'initial_purchase_fee', 'course_type',
-        'continuation_count', 'continuation_fee_2', 'continuation_fee_3',
+        'continuation_count', 'continuation_judgment_enabled', 'continuation_rate',
+        'continuation_fee_2', 'continuation_fee_3',
         'percentage', 'invite_message', 'sort_order',
     ];
 
@@ -16,6 +17,8 @@ class CampaignCourse extends Model
     {
         return [
             'percentage' => 'decimal:2',
+            'continuation_rate' => 'decimal:2',
+            'continuation_judgment_enabled' => 'boolean',
         ];
     }
 
@@ -49,10 +52,11 @@ class CampaignCourse extends Model
         return $this->hasMany(Application::class, 'course_id');
     }
 
-    // 単発=初回購入費のみ、継続=初回購入費+継続購入費2（3回の場合はさらに+継続購入費3）
+    // 単発=初回購入費のみ、継続前提かつ継続判定有=初回購入費+継続購入費2（3回の場合はさらに+継続購入費3）。
+    // 継続判定無の継続前提コースは継続購入費を設定しない運用のため単発と同じ初回購入費のみ
     public function cost(): float
     {
-        if ($this->course_type === '継続') {
+        if ($this->course_type === '継続前提' && $this->continuation_judgment_enabled) {
             $cost = ($this->initial_purchase_fee ?? 0) + ($this->continuation_fee_2 ?? 0);
             if ((int) $this->continuation_count === 3) {
                 $cost += ($this->continuation_fee_3 ?? 0);

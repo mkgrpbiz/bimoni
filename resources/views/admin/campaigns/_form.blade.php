@@ -344,6 +344,8 @@
         'initial_purchase_fee' => $c->initial_purchase_fee,
         'course_type'          => $c->course_type,
         'continuation_count'   => $c->continuation_count,
+        'continuation_judgment_enabled' => $c->continuation_judgment_enabled ? '1' : '0',
+        'continuation_rate'    => $c->continuation_rate,
         'continuation_fee_2'   => $c->continuation_fee_2,
         'continuation_fee_3'   => $c->continuation_fee_3,
         'percentage'           => $c->percentage,
@@ -407,27 +409,44 @@
                             <button type="button" @click="removeCourse(index)" class="text-red-500 text-xs hover:underline pb-2">削除</button>
                         </div>
                     </div>
-                    {{-- 2行目: 単発/継続・継続回数・継続購入費2/3 --}}
+                    {{-- 2行目: 単発/継続前提・継続条件・継続判定の有無 --}}
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
                         <div class="md:col-span-2">
-                            <label class="block text-xs text-gray-500 mb-1">単発/継続</label>
+                            <label class="block text-xs text-gray-500 mb-1">単発/継続前提</label>
                             <select :name="`courses[${index}][course_type]`" x-model="course.course_type"
                                     onchange="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
                                 <option value="単発">単発</option>
-                                <option value="継続">継続</option>
+                                <option value="継続前提">継続前提</option>
                             </select>
                         </div>
-                        <template x-if="course.course_type === '継続'">
+                        <template x-if="course.course_type === '継続前提'">
                             <div class="md:col-span-2">
-                                <label class="block text-xs text-gray-500 mb-1">継続回数</label>
+                                <label class="block text-xs text-gray-500 mb-1">継続条件</label>
                                 <select :name="`courses[${index}][continuation_count]`" x-model="course.continuation_count"
                                         onchange="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
-                                    <option value="2">2回</option>
-                                    <option value="3">3回</option>
+                                    <option value="2">2回前提</option>
+                                    <option value="3">3回前提</option>
                                 </select>
                             </div>
                         </template>
-                        <template x-if="course.course_type === '継続'">
+                        <template x-if="course.course_type === '継続前提'">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">継続判定の有無</label>
+                                <select :name="`courses[${index}][continuation_judgment_enabled]`" x-model="course.continuation_judgment_enabled"
+                                        onchange="calcGross()" class="w-full border rounded px-2 py-1.5 text-sm">
+                                    <option value="0">無</option>
+                                    <option value="1">有</option>
+                                </select>
+                            </div>
+                        </template>
+                        <template x-if="course.course_type === '継続前提' && String(course.continuation_judgment_enabled) === '1'">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">目標継続率（％）</label>
+                                <input type="number" :name="`courses[${index}][continuation_rate]`" x-model="course.continuation_rate"
+                                       min="0" max="100" step="0.01" class="w-full border rounded px-2 py-1.5 text-sm">
+                            </div>
+                        </template>
+                        <template x-if="course.course_type === '継続前提' && String(course.continuation_judgment_enabled) === '1'">
                             <div class="md:col-span-2">
                                 <label class="block text-xs text-gray-500 mb-1">継続購入費2（円）</label>
                                 <input type="number" :name="`courses[${index}][continuation_fee_2]`" x-model="course.continuation_fee_2"
@@ -435,7 +454,7 @@
                                 <p class="text-xs text-gray-400 font-mono mt-0.5" x-text="'コード: ' + courseCode('継続購入費' + (index+2) + '-2')"></p>
                             </div>
                         </template>
-                        <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
+                        <template x-if="course.course_type === '継続前提' && String(course.continuation_judgment_enabled) === '1' && String(course.continuation_count) === '3'">
                             <div class="md:col-span-2">
                                 <label class="block text-xs text-gray-500 mb-1">継続購入費3（円）</label>
                                 <input type="number" :name="`courses[${index}][continuation_fee_3]`" x-model="course.continuation_fee_3"
@@ -452,16 +471,16 @@
                             <div class="grid grid-cols-2 gap-0.5 font-mono">
                                 <span x-text="courseCode('コース名' + (index+2))"></span><span class="text-gray-400">→ このコースのコース名</span>
                                 <span x-text="courseCode('初回購入費' + (index+2))"></span><span class="text-gray-400">→ このコースの初回購入費</span>
-                                <template x-if="course.course_type === '継続'">
+                                <template x-if="course.course_type === '継続前提' && String(course.continuation_judgment_enabled) === '1'">
                                     <span x-text="courseCode('継続購入費' + (index+2) + '-2')"></span>
                                 </template>
-                                <template x-if="course.course_type === '継続'">
+                                <template x-if="course.course_type === '継続前提' && String(course.continuation_judgment_enabled) === '1'">
                                     <span class="text-gray-400">→ このコースの継続購入費2</span>
                                 </template>
-                                <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
+                                <template x-if="course.course_type === '継続前提' && String(course.continuation_judgment_enabled) === '1' && String(course.continuation_count) === '3'">
                                     <span x-text="courseCode('継続購入費' + (index+2) + '-3')"></span>
                                 </template>
-                                <template x-if="course.course_type === '継続' && String(course.continuation_count) === '3'">
+                                <template x-if="course.course_type === '継続前提' && String(course.continuation_judgment_enabled) === '1' && String(course.continuation_count) === '3'">
                                     <span class="text-gray-400">→ このコースの継続購入費3</span>
                                 </template>
                             </div>
@@ -474,7 +493,7 @@
             </template>
             <button type="button" @click="addCourse()"
                     class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-200">+ 行追加</button>
-            <p class="text-xs text-gray-400">通常案内％+各コースの目標％の合計が100%になるようにしてください。モニターコストは「通常案内の既定コスト×通常割合」＋「各コースのコスト×目標％」の加重平均（単発=初回購入費のみ、継続=初回購入費+継続購入費2〈3回の場合はさらに+継続購入費3〉）で自動計算されます。「有」にした案件は打診時にコース選択プルダウンが表示され、指定したコースの「モニター案内メッセージ」が案件共通の案内文の代わりに送信されます（モニター終了案内文は共通のまま）。</p>
+            <p class="text-xs text-gray-400">通常案内％+各コースの目標％の合計が100%になるようにしてください。モニターコストは「通常案内の既定コスト×通常割合」＋「各コースのコスト×目標％」の加重平均（単発=初回購入費のみ、継続前提かつ継続判定有=初回購入費+継続購入費2〈3回前提の場合はさらに+継続購入費3〉、継続判定無は初回購入費のみ）で自動計算されます。「有」にした案件は打診時にコース選択プルダウンが表示され、指定したコースの「モニター案内メッセージ」が案件共通の案内文の代わりに送信されます（モニター終了案内文は共通のまま）。継続判定を「有」にしたコースは応募管理の継続打診ボタンが使えるようになり、応募管理の「目標」欄に目標継続率も表示されます。</p>
         </div>
     </template>
 </div>
@@ -592,8 +611,10 @@ function calcMonitorCost() {
             const initialFee = parseFloat(row.querySelector('[name$="[initial_purchase_fee]"]')?.value) || 0;
             const type       = row.querySelector('[name$="[course_type]"]')?.value;
             const pct        = parseFloat(row.querySelector('[name$="[percentage]"]')?.value) || 0;
+            const judgmentSelect = row.querySelector('[name$="[continuation_judgment_enabled]"]');
+            const judgmentEnabled = judgmentSelect ? judgmentSelect.value === '1' : false;
             let courseCost = initialFee;
-            if (type === '継続') {
+            if (type === '継続前提' && judgmentEnabled) {
                 const countSelect = row.querySelector('[name$="[continuation_count]"]');
                 const count = countSelect ? parseInt(countSelect.value) : null;
                 const fee2 = parseFloat(row.querySelector('[name$="[continuation_fee_2]"]')?.value) || 0;
@@ -648,7 +669,8 @@ function courseSettings() {
         addCourse() {
             this.courses.push({
                 name: '', initial_purchase_fee: '', course_type: '単発',
-                continuation_count: '2', continuation_fee_2: '', continuation_fee_3: '',
+                continuation_count: '2', continuation_judgment_enabled: '0', continuation_rate: '',
+                continuation_fee_2: '', continuation_fee_3: '',
                 percentage: '', invite_message: '',
             });
             this.$nextTick(() => calcGross());
