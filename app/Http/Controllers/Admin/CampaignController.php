@@ -172,16 +172,21 @@ class CampaignController extends Controller
             $isSingle = ($row['course_type'] ?? '単発') === '単発';
             $isContinuationPremised = !$isSingle;
             $judgmentEnabled = $isSingle && (string) ($row['continuation_judgment_enabled'] ?? '0') === '1';
+            // 継続前提（確定、最大3回）・単発+継続判定有（未確定、目標継続率で期待値化、最大4回）
+            // どちらも回数・継続購入費を使うが、上限回数が異なる
+            $usesContinuationFees = $isContinuationPremised || $judgmentEnabled;
+            $count = (int) ($row['continuation_count'] ?? 0);
 
             $attrs = [
                 'name'                 => $row['name'],
                 'initial_purchase_fee' => $row['initial_purchase_fee'] ?? 0,
                 'course_type'          => $row['course_type'] ?? '単発',
-                'continuation_count'   => $isContinuationPremised ? ($row['continuation_count'] ?? null) : null,
+                'continuation_count'   => $usesContinuationFees ? ($row['continuation_count'] ?? null) : null,
                 'continuation_judgment_enabled' => $judgmentEnabled,
                 'continuation_rate'    => $judgmentEnabled ? ($row['continuation_rate'] ?? null) : null,
-                'continuation_fee_2'   => $isContinuationPremised ? ($row['continuation_fee_2'] ?? 0) : null,
-                'continuation_fee_3'   => ($isContinuationPremised && ($row['continuation_count'] ?? null) == 3) ? ($row['continuation_fee_3'] ?? 0) : null,
+                'continuation_fee_2'   => $usesContinuationFees ? ($row['continuation_fee_2'] ?? 0) : null,
+                'continuation_fee_3'   => ($usesContinuationFees && $count >= 3) ? ($row['continuation_fee_3'] ?? 0) : null,
+                'continuation_fee_4'   => ($judgmentEnabled && $count >= 4) ? ($row['continuation_fee_4'] ?? 0) : null,
                 'percentage'           => $row['percentage'] ?? 0,
                 'invite_message'       => $row['invite_message'] ?? null,
                 'sort_order'           => $i,
@@ -389,11 +394,12 @@ class CampaignController extends Controller
             'courses.*.name'                   => 'nullable|string|max:255',
             'courses.*.initial_purchase_fee'   => 'nullable|integer|min:0',
             'courses.*.course_type'            => 'nullable|in:単発,継続前提',
-            'courses.*.continuation_count'     => 'nullable|in:2,3',
+            'courses.*.continuation_count'     => 'nullable|in:2,3,4',
             'courses.*.continuation_judgment_enabled' => 'nullable|boolean',
             'courses.*.continuation_rate'      => 'nullable|numeric|min:0|max:100',
             'courses.*.continuation_fee_2'     => 'nullable|integer|min:0',
             'courses.*.continuation_fee_3'     => 'nullable|integer|min:0',
+            'courses.*.continuation_fee_4'     => 'nullable|integer|min:0',
             'courses.*.percentage'             => 'nullable|numeric|min:0|max:100',
             'courses.*.invite_message'         => 'nullable|string',
             'collection_requirement'    => 'nullable|in:回収必須,回収不要',
