@@ -180,7 +180,8 @@ class ReportController extends Controller
             'purchase_type'        => $request->purchase_type,
             'continuation_round'   => $request->continuation_round,
             'purchase_amount'      => $request->purchase_amount,
-            'bonus_amount'         => $application->bonus_amount,
+            // キャンペーンボーナスは初回購入のみ対象（継続報告には付与しない）
+            'bonus_amount'         => $request->purchase_type === 'initial' ? $application->bonus_amount : null,
             'payment_method'       => $request->payment_method === 'other'
                                         ? 'other:' . $request->payment_method_other
                                         : $request->payment_method,

@@ -171,7 +171,17 @@ class ReportController extends Controller
             'purchase_type' => 'required|in:initial,continuation,other',
         ]);
 
-        $report->update(['purchase_type' => $request->purchase_type]);
+        $data = ['purchase_type' => $request->purchase_type];
+
+        // キャンペーンボーナスは初回購入のみ対象。継続/その他に変更した場合は取り消し、
+        // 初回に変更した場合でまだ未設定なら応募から補完する
+        if ($request->purchase_type !== 'initial') {
+            $data['bonus_amount'] = null;
+        } elseif (blank($report->bonus_amount) && $report->application) {
+            $data['bonus_amount'] = $report->application->bonus_amount;
+        }
+
+        $report->update($data);
 
         // 「その他」で承認済みだった報告を後からinitialへ修正した場合など、
         // approve()時点では対象外だった報告がここで初めて招待報酬の対象になることがあるため再チェックする
@@ -221,10 +231,16 @@ class ReportController extends Controller
             return back()->with('error', "この応募には既に報告（report_id={$duplicate->id}、{$duplicate->getStatusLabel()}）が紐付いています。重複の可能性があるため紐付けを中止しました。");
         }
 
+        // キャンペーンボーナスは初回購入のみ対象。continuation_round指定時（継続の2・3回目）や
+        // 既にpurchase_typeがcontinuationに設定されている場合は対象外
+        $bonusAmount = ($request->continuation_round || $report->purchase_type === 'continuation')
+            ? null
+            : ($report->bonus_amount ?? $application->bonus_amount);
+
         $report->update([
             'application_id'     => $application->id,
             'campaign_id'        => $application->campaign_id,
-            'bonus_amount'       => $report->bonus_amount ?? $application->bonus_amount,
+            'bonus_amount'       => $bonusAmount,
             'continuation_round' => $request->continuation_round,
         ]);
 
