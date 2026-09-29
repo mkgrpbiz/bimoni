@@ -102,15 +102,14 @@ class RewardController extends Controller
             $campaign    = $rows->first()?->campaign ?? $rejectedRows->first()?->campaign;
             $fee         = $campaign?->referral_fee ?? 0;
 
-            // 全否認: 管理者が承認反映ページで手動設定したフラグ（優先。報告自身の発生月で判定。
-            // 累計モードでは同じ案件でも月によって全否認/そうでないが混在し得るため報告単位で判定する）、
-            // またはこの代理店経由では承認済みが1件もないのに否認だけあるユーザーがいる場合
+            // 全否認: 管理者が承認反映ページで手動設定したフラグのみを対象とする（報告自身の発生月で判定。
+            // 累計モードでは同じ案件でも月によって全否認/そうでないが混在し得るため報告単位で判定する）。
+            // 以前は「この代理店経由では承認済みが1件もないのに却下だけあるユーザーがいる場合」も
+            // オーガニックに全否認扱いしていたが、却下報告はそもそも報酬計算に含まれておらず金額には無関係な上、
+            // 管理画面の全否認数と数字が食い違って紛らわしいとの指摘で廃止し、管理画面と同じ基準に統一した（2026-09-29）
             $adminAllDeniedRows = $rows->filter($reportIsAllDenied);
-            $isAdminAllDenied = $adminAllDeniedRows->isNotEmpty();
-            $approvedUserIds = $rows->pluck('user_id')->unique();
-            $organicAllDenied = $rejectedRows->pluck('user_id')->unique()->diff($approvedUserIds)->count();
-            $allDenied = $isAdminAllDenied ? $adminAllDeniedRows->count() : $organicAllDenied;
-            $isAllDenied = $isAdminAllDenied || ($rows->count() === 0 && $organicAllDenied > 0);
+            $isAllDenied = $adminAllDeniedRows->isNotEmpty();
+            $allDenied = $adminAllDeniedRows->count();
 
             if ($isCombinedParentView) {
                 return [
