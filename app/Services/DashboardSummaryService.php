@@ -165,11 +165,10 @@ class DashboardSummaryService
             ->groupBy('campaign_id')
             ->get()->keyBy('campaign_id');
 
-        // 全否認キャンペーンID（承認反映ページと同じ判定）
-        $allDeniedCampaignIds = CampaignApprovalReflection::where('is_all_denied', true)
-            ->pluck('campaign_id')->unique();
-
         // 漏れ経費・全否認コスト（キャンペーン単位で集計してから計算）
+        // is_all_denied は月ごとの実績フラグなので、$reflectionsが既に対象期間（月次はその月、累計は
+        // MAX(is_all_denied)で集約済み）にスコープされている前提でそのまま判定する。案件横断で
+        // 別クエリを取り直すと他の月の全否認扱いまで波及するバグになる（2026-09-29修正）
         $leakCost = 0;
         $allDenied = 0;
         $campaigns = Campaign::all()->keyBy('id');
@@ -181,7 +180,7 @@ class DashboardSummaryService
 
             $completedCount = $appStats->get($campaignId)?->completed_count ?? 0;
             $totalReflected = $recs->filter(fn ($r) => ! $r->is_all_denied)->sum('reflection_count');
-            $isAllDenied = $allDeniedCampaignIds->contains($campaignId);
+            $isAllDenied = $recs->contains(fn ($r) => $r->is_all_denied);
 
             if ($isAllDenied) {
                 // 全否認コスト = 実施数 × (初回+継続×率 + 協力金)

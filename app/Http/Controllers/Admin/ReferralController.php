@@ -28,9 +28,10 @@ class ReferralController extends Controller
         // 全AgentReferralCodeを取得してマッピング
         $allCodes = AgentReferralCode::with('agent.parent')->get()->keyBy('code');
 
-        // 全否認キャンペーンID（承認反映の is_all_denied=true）
-        $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
-            ->pluck('campaign_id')->unique();
+        // 全否認マップ（is_all_denied は月ごとの実績フラグ。campaign_idだけで判定すると他の月まで
+        // 全否認扱いになって波及するため、報告自身の発生月と突き合わせて判定する）
+        $allDeniedMap = \App\Models\CampaignApprovalReflection::allDeniedMap();
+        $isAllDenied = fn($report) => \App\Models\CampaignApprovalReflection::reportIsAllDenied($allDeniedMap, $report);
 
         // 月内の承認済み報告（初回のみ。継続・回収は紹介報酬なし）
         $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referred_by_code', 'campaign:id,title,referral_fee,cooperation_fee'])
@@ -48,7 +49,7 @@ class ReferralController extends Controller
             ->get();
 
         // 代理店別集計（親代理店単位）
-        $summary = $agents->map(function (Agent $agent) use ($reports, $allReferredUsers, $allApplications, $allCodes, $year, $mon, $allDeniedCampaignIds) {
+        $summary = $agents->map(function (Agent $agent) use ($reports, $allReferredUsers, $allApplications, $allCodes, $year, $mon, $isAllDenied) {
             $codeStrings = $agent->getAllCodeStrings();
 
             $referredUsers   = collect();
@@ -70,9 +71,9 @@ class ReferralController extends Controller
 
             $totalApps = $allApplications->filter(fn($a) => $referredUserIds->contains($a->user_id))->count();
 
-            // 全否認 = 承認反映で is_all_denied=true のキャンペーンに紐づく報告数
+            // 全否認 = 承認反映で is_all_denied=true のキャンペーンに紐づく報告数（報告自身の発生月で判定）
             $allDeniedReports = $monthReports->where('status', 'approved')
-                ->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id));
+                ->filter($isAllDenied);
             $allDenied = $allDeniedReports->count();
             $allDeniedByFee = $allDeniedReports->groupBy(fn($r) => $r->campaign?->referral_fee ?? 0);
 
@@ -80,7 +81,7 @@ class ReferralController extends Controller
             $expectedPay = $monthReports->where('status', 'approved')
                 ->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
                 - $monthReports->where('status', 'approved')
-                    ->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
+                    ->filter($isAllDenied)
                     ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
 
             $payStatus = ReferralPaymentStatus::getStatus($agent->id, $year, $mon);
@@ -179,9 +180,10 @@ class ReferralController extends Controller
         $referredUserIds = User::whereIn('referred_by_code', $codeStrings)->pluck('id');
         $referredUsers   = User::whereIn('referred_by_code', $codeStrings)->orderBy('created_at')->get();
 
-        // 全否認キャンペーンID（承認反映ページの is_all_denied=true。紹介報酬管理の他画面と同じ判定基準）
-        $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
-            ->pluck('campaign_id')->unique();
+        // 全否認マップ（承認反映ページの is_all_denied=true。紹介報酬管理の他画面と同じ判定基準。
+        // 報告自身の発生月と突き合わせて判定する。他の月まで波及させない）
+        $allDeniedMap = \App\Models\CampaignApprovalReflection::allDeniedMap();
+        $isAllDenied = fn($report) => \App\Models\CampaignApprovalReflection::reportIsAllDenied($allDeniedMap, $report);
 
         $approvedReports = MonitorReport::with(['campaign:id,referral_fee'])
             ->whereIn('user_id', $referredUserIds)
@@ -199,7 +201,7 @@ class ReferralController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function () use ($activeUsers, $approvedReports, $allDeniedCampaignIds) {
+        $callback = function () use ($activeUsers, $approvedReports, $isAllDenied) {
             $out = fopen('php://output', 'w');
             // BOM for Excel
             fwrite($out, "\xEF\xBB\xBF");
@@ -207,7 +209,7 @@ class ReferralController extends Controller
 
             foreach ($activeUsers as $ru) {
                 $userApproved   = $approvedReports->where('user_id', $ru->id);
-                $userAllDenied  = $userApproved->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id));
+                $userAllDenied  = $userApproved->filter($isAllDenied);
 
                 $approved500  = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
                 $approved1000 = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
@@ -274,7 +276,11 @@ class ReferralController extends Controller
             return $child;
         });
 
+        // このページは$reportsが単一月にスコープ済みなので、is_all_denied判定もその月に絞って取得する
+        // （月を無視すると他の月だけ全否認だったキャンペーンの報告まで巻き込まれるバグになる。2026-09-29修正）
         $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
+            ->where('period_year', (int) $month->format('Y'))
+            ->where('period_month', (int) $month->format('n'))
             ->pluck('campaign_id')->unique();
 
         return view('admin.referrals.show', compact(

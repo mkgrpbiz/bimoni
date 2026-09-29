@@ -35,9 +35,11 @@ class RewardController extends Controller
         $reports = \App\Services\PortalService::approvedReports($filteredCodes, $month);
         $rejectedReports = \App\Services\PortalService::rejectedReports($filteredCodes, $month);
 
-        // 全否認キャンペーンID（承認反映ページで管理者が手動設定したもの。個々の報告のステータスとは独立したフラグ）
-        $allDeniedCampaignIds = \App\Models\CampaignApprovalReflection::where('is_all_denied', true)
-            ->pluck('campaign_id')->unique();
+        // 全否認マップ（承認反映ページで管理者が手動設定したもの。個々の報告のステータスとは独立したフラグ）。
+        // is_all_denied は月ごとの実績フラグなので、報告自身の発生月と突き合わせて判定する
+        // （campaign_idだけで判定すると他の月まで全否認扱いになって波及するバグになる。2026-09-29修正）
+        $allDeniedMap = \App\Models\CampaignApprovalReflection::allDeniedMap();
+        $reportIsAllDenied = fn($report) => \App\Models\CampaignApprovalReflection::reportIsAllDenied($allDeniedMap, $report);
 
         // 親が「全体」（子で絞り込まず、子がいる）を見ている場合は、
         // レコードごとに実際の紹介元（親自身 or どの子か）を区別して計算する必要がある
@@ -57,8 +59,8 @@ class RewardController extends Controller
         $resolveOwner = fn($report) => $codeOwnerMap[$report->user?->referred_by_code] ?? $targetAgent;
 
         // レコード1件ごとの「支払額（受け取り側の実際の取り分）」と「子への支払額」
-        $payoutFor = function ($report) use ($isCombinedParentView, $resolveOwner, $targetAgent, $allDeniedCampaignIds) {
-            if ($allDeniedCampaignIds->contains($report->campaign_id)) return 0;
+        $payoutFor = function ($report) use ($isCombinedParentView, $resolveOwner, $targetAgent, $reportIsAllDenied) {
+            if ($reportIsAllDenied($report)) return 0;
             $owner = $isCombinedParentView ? $resolveOwner($report) : $targetAgent;
             return \App\Services\PortalService::calcReward($owner, $report);
         };
@@ -71,8 +73,8 @@ class RewardController extends Controller
         // 「全体紹介報酬」= 案件の紹介報酬合計そのもの（親/子どちらの取り分かで按分しない生の値）。
         // calcReward()は受け取り側（子なら子自身の取り分）に応じて金額を減らすため、
         // 「全体」の合計にはそのまま使えない。
-        $fullFeeFor = function ($report) use ($allDeniedCampaignIds) {
-            if ($allDeniedCampaignIds->contains($report->campaign_id)) return 0;
+        $fullFeeFor = function ($report) use ($reportIsAllDenied) {
+            if ($reportIsAllDenied($report)) return 0;
             return (int) ($report->campaign?->referral_fee ?? 0);
         };
 
@@ -94,18 +96,20 @@ class RewardController extends Controller
         // 案件別集計（承認0件・全否認のみの案件も一覧に含めるため、否認のみの案件IDも対象に含める）
         $allCampaignIds = $reports->pluck('campaign_id')->merge($rejectedReports->pluck('campaign_id'))->unique();
 
-        $campaignGroups = $allCampaignIds->map(function ($campaignId) use ($reports, $rejectedReports, $targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor, $fullFeeFor, $allDeniedCampaignIds) {
+        $campaignGroups = $allCampaignIds->map(function ($campaignId) use ($reports, $rejectedReports, $targetAgent, $isCombinedParentView, $payoutFor, $childPayoutFor, $fullFeeFor, $reportIsAllDenied) {
             $rows        = $reports->where('campaign_id', $campaignId); // 承認済みのみ
             $rejectedRows = $rejectedReports->where('campaign_id', $campaignId);
             $campaign    = $rows->first()?->campaign ?? $rejectedRows->first()?->campaign;
             $fee         = $campaign?->referral_fee ?? 0;
 
-            // 全否認: 管理者が承認反映ページで手動設定したフラグ（優先）、
+            // 全否認: 管理者が承認反映ページで手動設定したフラグ（優先。報告自身の発生月で判定。
+            // 累計モードでは同じ案件でも月によって全否認/そうでないが混在し得るため報告単位で判定する）、
             // またはこの代理店経由では承認済みが1件もないのに否認だけあるユーザーがいる場合
-            $isAdminAllDenied = $allDeniedCampaignIds->contains($campaignId);
+            $adminAllDeniedRows = $rows->filter($reportIsAllDenied);
+            $isAdminAllDenied = $adminAllDeniedRows->isNotEmpty();
             $approvedUserIds = $rows->pluck('user_id')->unique();
             $organicAllDenied = $rejectedRows->pluck('user_id')->unique()->diff($approvedUserIds)->count();
-            $allDenied = $isAdminAllDenied ? $rows->count() : $organicAllDenied;
+            $allDenied = $isAdminAllDenied ? $adminAllDeniedRows->count() : $organicAllDenied;
             $isAllDenied = $isAdminAllDenied || ($rows->count() === 0 && $organicAllDenied > 0);
 
             if ($isCombinedParentView) {

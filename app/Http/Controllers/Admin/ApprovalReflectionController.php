@@ -57,9 +57,18 @@ class ApprovalReflectionController extends Controller
             ->get()
             ->keyBy('campaign_id');
 
-        // 全否認キャンペーンID（月次/累計を問わず、いずれかの期間でis_all_denied=trueがあれば対象）
-        $allDeniedCampaignIds = CampaignApprovalReflection::where('is_all_denied', true)
-            ->pluck('campaign_id')->unique();
+        // 全否認キャンペーンID。is_all_deniedは月ごとの実績フラグなので、月次表示では選択中の月だけに
+        // 絞る（他の月まで巻き込むと表示・トグルの両方でおかしくなる。2026-09-29修正）。
+        // 累計表示は期間全体のどこかで全否認があった案件を示す一覧なので従来通り期間内のどこかでtrueなら対象
+        if ($mode === 'monthly') {
+            $allDeniedCampaignIds = CampaignApprovalReflection::where('is_all_denied', true)
+                ->where('period_year', $year)->where('period_month', $month)
+                ->pluck('campaign_id')->unique();
+        } else {
+            $allDeniedCampaignIds = CampaignApprovalReflection::where('is_all_denied', true)
+                ->whereRaw($excludePeriodSql)
+                ->pluck('campaign_id')->unique();
+        }
 
         // 月一覧（セレクトボックス用）
         $months = $this->getAvailableMonths();
@@ -101,19 +110,17 @@ class ApprovalReflectionController extends Controller
             'mode'  => 'nullable|string',
         ]);
 
-        // 全否認はキャンペーン単位のフラグ: 月次/累計関係なく全期間を一括更新
-        $current = CampaignApprovalReflection::where('campaign_id', $campaign->id)->max('is_all_denied');
-        $newVal  = !$current;
-
-        // 指定月のレコードを確保（月次から操作した場合）
-        CampaignApprovalReflection::firstOrCreate(
+        // 全否認は月ごとの実績フラグ（campaign_id + period単位）。以前はキャンペーン単位で全期間を
+        // 一括更新していたが、ある月だけ全否認だった案件のフラグが他の月の報告まで巻き込んで
+        // 紹介報酬・ダッシュボードの集計を狂わせるバグの原因になっていたため、指定した月だけを
+        // 更新するように修正（2026-09-29）。継続して全否認の月は都度トグルする運用に変更
+        $reflection = CampaignApprovalReflection::firstOrCreate(
             ['campaign_id' => $campaign->id, 'period_year' => $validated['year'], 'period_month' => $validated['month']],
             ['reflection_count' => 0, 'updated_by' => Auth::id()]
         );
 
-        // 全レコードを一括更新
-        CampaignApprovalReflection::where('campaign_id', $campaign->id)
-            ->update(['is_all_denied' => $newVal, 'updated_by' => Auth::id()]);
+        $newVal = !$reflection->is_all_denied;
+        $reflection->update(['is_all_denied' => $newVal, 'updated_by' => Auth::id()]);
 
         return response()->json(['is_all_denied' => $newVal]);
     }
