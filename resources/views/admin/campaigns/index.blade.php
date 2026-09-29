@@ -85,6 +85,7 @@ $tabs = [
                 <th class="px-3 py-3 text-right">応募総数</th>
                 <th class="px-3 py-3 text-right bg-pink-50">応募残数</th>
                 <th class="px-3 py-3 text-center">回収必須</th>
+                <th class="px-3 py-3 text-right">紹介単価</th>
                 <th class="px-3 py-3 text-right">粗利</th>
                 <th class="px-3 py-3 text-center">操作</th>
             </tr>
@@ -126,6 +127,9 @@ $tabs = [
                         <span class="text-gray-400">不要</span>
                     @endif
                 </td>
+                <td class="px-3 py-3 text-right text-gray-700">
+                    ¥{{ number_format($campaign->referral_fee ?? 0) }}
+                </td>
                 <td class="px-3 py-3 text-right {{ $campaign->gross_profit < 0 ? 'text-red-600' : 'text-gray-700' }}">
                     ¥{{ number_format($campaign->gross_profit ?? 0) }}
                 </td>
@@ -148,7 +152,7 @@ $tabs = [
                 </td>
             </tr>
             @empty
-            <tr><td colspan="10" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
+            <tr><td colspan="11" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
             @endforelse
         </tbody>
     </table>
