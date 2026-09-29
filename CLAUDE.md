@@ -249,6 +249,8 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - 詳細: 代理店のコード別登録者・承認済み報告を表示
 - **初回報告のみ対象**（`purchase_type='initial'`）。継続・回収は紹介報酬なし
 - 全否認案件（`CampaignApprovalReflection.is_all_denied=true`）の金額は期待報酬から除外
+- **`is_all_denied`は`campaign_id`+`period_year`+`period_month`単位の月ごとの実績フラグ**。判定は必ず`CampaignApprovalReflection::allDeniedMap()`＋`reportIsAllDenied($map, $report)`（報告自身の`created_at`の年月と突き合わせる）経由で行うこと。過去は`campaign_id`だけで`is_all_denied=true`の行を検索していたため、**ある月だけ全否認だった案件の報告が無関係な他の月の紹介報酬・ダッシュボード集計にまで巻き込まれて誤って除外されるバグがあった**（2026-09-29発覚・修正。本番で実際に複数代理店・複数月で紹介報酬額のズレが発生していた）。影響していたのは`Admin\ReferralController`（index/show/exportCsv）・`Portal\RewardController`・`DashboardSummaryService`の5箇所
+  - `Admin\ApprovalReflectionController::toggleAllDenied()`も以前は「全否認はキャンペーン単位のフラグだから月次/累計関係なく全期間を一括更新する」という設計で、1回トグルするとそのキャンペーンの過去～未来の全ての`period`行が一括で書き換わっていた。これが上記バグの主因（一度でも全否認判定した案件は以後ずっと全月が巻き込まれる）だったため、**指定した月のレコードだけを更新する**方式に変更（全否認が続く案件は月ごとに都度トグルする運用）
 
 ### ユーザー管理
 - 登録コード（`referred_by_code`）を表示
