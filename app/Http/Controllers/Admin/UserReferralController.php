@@ -73,8 +73,8 @@ class UserReferralController extends Controller
             ->count();
 
         $rewards = UserReferralReward::with('monitorReport.campaign')->get();
-        $tier500 = $rewards->filter(fn ($r) => ($r->monitorReport?->campaign?->referral_fee ?? 0) == 500)->count();
-        $tier1000 = $rewards->filter(fn ($r) => ($r->monitorReport?->campaign?->referral_fee ?? 0) == 1000)->count();
+        $tier500 = $rewards->filter(fn ($r) => ($r->monitorReport?->referral_fee ?? $r->monitorReport?->campaign?->referral_fee ?? 0) == 500)->count();
+        $tier1000 = $rewards->filter(fn ($r) => ($r->monitorReport?->referral_fee ?? $r->monitorReport?->campaign?->referral_fee ?? 0) == 1000)->count();
 
         // 2回目以降の実施数（紹介された各ユーザーの初回report以外の承認済みinitial report）を、
         // その案件自身の紹介単価で評価して削減額を算出。500円単価の初回は1,000P払っているため500円分の赤字として差し引く。
@@ -88,7 +88,7 @@ class UserReferralController extends Controller
                 ->where('purchase_type', 'initial')
                 ->whereNotIn('id', $firstReportIds)
                 ->get();
-            $savedFromRepeats = $repeatReports->sum(fn ($r) => $r->campaign?->referral_fee ?? 0);
+            $savedFromRepeats = $repeatReports->sum(fn ($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0);
         }
         $deficitFromTier500 = $tier500 * 500;
         $savings = $savedFromRepeats - $deficitFromTier500;

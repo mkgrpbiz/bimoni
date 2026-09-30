@@ -72,9 +72,9 @@
 
     {{-- 当月サマリー --}}
     @php
-        $expectedPay = $reports->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
+        $expectedPay = $reports->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0)
             - $reports->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id))
-                      ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+                      ->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0);
     @endphp
     <div class="bg-white rounded-lg shadow p-5">
         <h2 class="font-bold text-gray-700 mb-3">{{ $month->format('Y年n月') }} サマリー</h2>
@@ -135,7 +135,7 @@
                 <td class="px-4 py-3 text-gray-800">{{ $r->user?->name ?? '-' }}</td>
                 <td class="px-4 py-3 text-gray-700">{{ $r->campaign?->title ?? '-' }}</td>
                 <td class="px-4 py-3 text-right text-gray-700">¥{{ number_format($r->campaign?->cooperation_fee ?? 0) }}</td>
-                <td class="px-4 py-3 text-right font-bold text-green-600">¥{{ number_format($r->campaign?->referral_fee ?? 0) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-green-600">¥{{ number_format($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -183,12 +183,12 @@
             @php
                 $userApproved  = $reports->where('user_id', $ru->id);
                 $userAllDenied = $userApproved->filter(fn($r) => $allDeniedCampaignIds->contains($r->campaign_id));
-                $approved500   = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
-                $approved1000  = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
-                $allDenied500  = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
-                $allDenied1000 = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
-                $total         = $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
-                               - $userAllDenied->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+                $approved500   = $userApproved->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 500)->count();
+                $approved1000  = $userApproved->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 1000)->count();
+                $allDenied500  = $userAllDenied->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 500)->count();
+                $allDenied1000 = $userAllDenied->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 1000)->count();
+                $total         = $userApproved->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0)
+                               - $userAllDenied->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0);
             @endphp
             <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-3 py-3 text-xs text-gray-500">{{ $ru->created_at?->format('Y/m/d') }}</td>

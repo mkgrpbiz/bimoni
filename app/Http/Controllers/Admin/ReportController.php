@@ -158,7 +158,11 @@ class ReportController extends Controller
             'campaign_id' => 'required|exists:campaigns,id',
         ]);
 
-        $report->update(['campaign_id' => $request->campaign_id]);
+        // 紹介単価のスナップショットも案件変更のタイミングで更新する（変更後の案件の現在単価を使う）
+        $report->update([
+            'campaign_id'  => $request->campaign_id,
+            'referral_fee' => Campaign::find($request->campaign_id)?->referral_fee,
+        ]);
 
         $userReferralService->grantForApprovedReport($report->fresh('user'));
 
@@ -240,6 +244,7 @@ class ReportController extends Controller
         $report->update([
             'application_id'     => $application->id,
             'campaign_id'        => $application->campaign_id,
+            'referral_fee'       => $application->campaign?->referral_fee,
             'bonus_amount'       => $bonusAmount,
             'continuation_round' => $request->continuation_round,
         ]);

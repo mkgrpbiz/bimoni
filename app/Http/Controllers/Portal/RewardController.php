@@ -75,7 +75,7 @@ class RewardController extends Controller
         // 「全体」の合計にはそのまま使えない。
         $fullFeeFor = function ($report) use ($reportIsAllDenied) {
             if ($reportIsAllDenied($report)) return 0;
-            return (int) ($report->campaign?->referral_fee ?? 0);
+            return (int) ($report->referral_fee ?? $report->campaign?->referral_fee ?? 0);
         };
 
         // 2ヶ月ブロック用データ（月次モード時）
@@ -100,7 +100,8 @@ class RewardController extends Controller
             $rows        = $reports->where('campaign_id', $campaignId); // 承認済みのみ
             $rejectedRows = $rejectedReports->where('campaign_id', $campaignId);
             $campaign    = $rows->first()?->campaign ?? $rejectedRows->first()?->campaign;
-            $fee         = $campaign?->referral_fee ?? 0;
+            // 単価は報告のスナップショットを優先する（案件の単価変更後も過去の報告は当時の単価で表示するため）
+            $fee         = $rows->first()?->referral_fee ?? $rejectedRows->first()?->referral_fee ?? $campaign?->referral_fee ?? 0;
 
             // 全否認: 管理者が承認反映ページで手動設定したフラグのみを対象とする（報告自身の発生月で判定。
             // 累計モードでは同じ案件でも月によって全否認/そうでないが混在し得るため報告単位で判定する）。

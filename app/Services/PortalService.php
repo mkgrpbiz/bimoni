@@ -81,7 +81,8 @@ class PortalService
      */
     public static function calcReward(Agent $agent, MonitorReport $report): int
     {
-        $fee = (int) ($report->campaign?->referral_fee ?? 0);
+        // 単価は報告のスナップショットを優先する（案件の単価変更後も過去の報告は当時の単価のまま）
+        $fee = (int) ($report->referral_fee ?? $report->campaign?->referral_fee ?? 0);
         if ($fee === 0) return 0;
 
         if ($agent->parent_id) {

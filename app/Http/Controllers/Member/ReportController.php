@@ -176,6 +176,8 @@ class ReportController extends Controller
         $report = MonitorReport::create([
             'user_id'              => $user->id,
             'campaign_id'          => $application->campaign_id,
+            // 紹介報酬計算がここで単価を確定させる（案件のreferral_feeを後から変更しても遡って影響しない）
+            'referral_fee'         => $application->campaign?->referral_fee,
             'application_id'       => $application->id,
             'purchase_type'        => $request->purchase_type,
             'continuation_round'   => $request->continuation_round,

@@ -446,6 +446,7 @@ class ImportService
                 $report = MonitorReport::create([
                     'user_id'         => $user->id,
                     'campaign_id'     => $campaign->id,
+                    'referral_fee'    => $campaign->referral_fee,
                     'application_id'  => $application?->id,
                     'status'          => 'approved',
                     'purchase_type'   => $purchaseType,

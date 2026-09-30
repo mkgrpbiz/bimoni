@@ -64,7 +64,7 @@ class ReferralController extends Controller
 
             // 報告数は全承認済み（全否認含む）
             $reportsByFee = $monthReports->where('status', 'approved')
-                ->groupBy(fn($r) => $r->campaign?->referral_fee ?? 0);
+                ->groupBy(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0);
             $appsByFee = $allApplications
                 ->filter(fn($a) => $referredUserIds->contains($a->user_id))
                 ->groupBy(fn($a) => 0); // 単価は案件が必要なので件数のみ
@@ -75,14 +75,14 @@ class ReferralController extends Controller
             $allDeniedReports = $monthReports->where('status', 'approved')
                 ->filter($isAllDenied);
             $allDenied = $allDeniedReports->count();
-            $allDeniedByFee = $allDeniedReports->groupBy(fn($r) => $r->campaign?->referral_fee ?? 0);
+            $allDeniedByFee = $allDeniedReports->groupBy(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0);
 
             // 紹介報酬合計 = 全承認報告の合計 - 全否認分
             $expectedPay = $monthReports->where('status', 'approved')
-                ->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
+                ->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0)
                 - $monthReports->where('status', 'approved')
                     ->filter($isAllDenied)
-                    ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+                    ->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0);
 
             $payStatus = ReferralPaymentStatus::getStatus($agent->id, $year, $mon);
 
@@ -113,7 +113,7 @@ class ReferralController extends Controller
             ->whereBetween('created_at', [$prevMonth->copy()->startOfMonth(), $prevMonth->copy()->endOfMonth()])
             ->whereHas('user', fn($q) => $q->whereNotNull('referred_by_code'))
             ->get()
-            ->sum(fn($r) => $r->campaign?->referral_fee ?? 0);
+            ->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0);
 
         $months = MonitorReport::where('status', 'approved')
             ->whereHas('user', fn($q) => $q->whereNotNull('referred_by_code'))
@@ -211,10 +211,10 @@ class ReferralController extends Controller
                 $userApproved   = $approvedReports->where('user_id', $ru->id);
                 $userAllDenied  = $userApproved->filter($isAllDenied);
 
-                $approved500  = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
-                $approved1000 = $userApproved->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
-                $denied500    = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 500)->count();
-                $denied1000   = $userAllDenied->filter(fn($r) => ($r->campaign?->referral_fee ?? 0) == 1000)->count();
+                $approved500  = $userApproved->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 500)->count();
+                $approved1000 = $userApproved->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 1000)->count();
+                $denied500    = $userAllDenied->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 500)->count();
+                $denied1000   = $userAllDenied->filter(fn($r) => ($r->referral_fee ?? $r->campaign?->referral_fee ?? 0) == 1000)->count();
 
                 fputcsv($out, [
                     $ru->created_at?->format('Y/m/d'),
@@ -226,8 +226,8 @@ class ReferralController extends Controller
                     $approved1000 - $denied1000,
                     $denied500,
                     $denied1000,
-                    $userApproved->sum(fn($r) => $r->campaign?->referral_fee ?? 0)
-                        - $userAllDenied->sum(fn($r) => $r->campaign?->referral_fee ?? 0),
+                    $userApproved->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0)
+                        - $userAllDenied->sum(fn($r) => $r->referral_fee ?? $r->campaign?->referral_fee ?? 0),
                 ]);
             }
             fclose($out);
