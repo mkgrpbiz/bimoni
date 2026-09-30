@@ -81,14 +81,20 @@
         </thead>
         <tbody class="divide-y">
             @forelse($reports as $r)
-            <tr class="even:bg-gray-50 hover:bg-gray-100">
-                <td class="px-4 py-3 text-xs text-gray-500">{{ $r->created_at->format('Y/m/d') }}</td>
-                <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $r->user?->referred_by_code ?? '-' }}</td>
-                <td class="px-4 py-3 text-gray-800">{{ $r->user?->name ?? '-' }}</td>
-                <td class="px-4 py-3 text-gray-600">{{ $r->user?->name_kana ?? '-' }}</td>
-                <td class="px-4 py-3 text-gray-800">{{ $r->campaign?->title ?? '-' }}</td>
-                <td class="px-4 py-3 text-right font-medium text-gray-800" data-copy="{{ $r->reward }}">
-                    ¥{{ number_format($r->reward) }}
+            <tr class="{{ $r->isAllDenied ? 'bg-gray-100 text-gray-400' : 'even:bg-gray-50 hover:bg-gray-100' }}"
+                @if($r->isAllDenied) data-all-denied="1" @endif>
+                <td class="px-4 py-3 text-xs {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-500' }}">{{ $r->created_at->format('Y/m/d') }}</td>
+                <td class="px-4 py-3 font-mono text-xs {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-600' }}">{{ $r->user?->referred_by_code ?? '-' }}</td>
+                <td class="px-4 py-3 {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-800' }}">{{ $r->user?->name ?? '-' }}</td>
+                <td class="px-4 py-3 {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-600' }}">{{ $r->user?->name_kana ?? '-' }}</td>
+                <td class="px-4 py-3 {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-800' }}">{{ $r->campaign?->title ?? '-' }}</td>
+                <td class="px-4 py-3 text-right font-medium {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-800' }}"
+                    @if(!$r->isAllDenied) data-copy="{{ $r->reward }}" @endif>
+                    @if($r->isAllDenied)
+                        全否認
+                    @else
+                        ¥{{ number_format($r->reward) }}
+                    @endif
                 </td>
             </tr>
             @empty
@@ -101,12 +107,14 @@
 {{-- スマホ: カード --}}
 <div class="md:hidden space-y-3">
     @forelse($reports as $r)
-    <div class="bg-white rounded-lg shadow px-4 py-3">
+    <div class="bg-white rounded-lg shadow px-4 py-3 {{ $r->isAllDenied ? 'bg-gray-100' : '' }}">
         <div class="flex items-start justify-between mb-1">
-            <p class="font-medium text-gray-800 text-sm">{{ $r->campaign?->title ?? '-' }}</p>
-            <span class="font-bold text-gray-800 text-sm ml-2 shrink-0">¥{{ number_format($r->reward) }}</span>
+            <p class="font-medium text-sm {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-800' }}">{{ $r->campaign?->title ?? '-' }}</p>
+            <span class="font-bold text-sm ml-2 shrink-0 {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-800' }}">
+                {{ $r->isAllDenied ? '全否認' : '¥'.number_format($r->reward) }}
+            </span>
         </div>
-        <p class="text-xs text-gray-600">{{ $r->user?->name ?? '-' }}（{{ $r->user?->name_kana ?? '-' }}）</p>
+        <p class="text-xs {{ $r->isAllDenied ? 'text-gray-400' : 'text-gray-600' }}">{{ $r->user?->name ?? '-' }}（{{ $r->user?->name_kana ?? '-' }}）</p>
         <p class="font-mono text-xs text-gray-400 mt-0.5">{{ $r->user?->referred_by_code ?? '-' }}</p>
         <p class="text-xs text-gray-400 mt-1">{{ $r->created_at->format('Y/m/d') }}</p>
     </div>
@@ -118,7 +126,8 @@
 <script>
 function copyReportsTable(btn) {
     const table = document.getElementById('reportsTable');
-    const rows = table.querySelectorAll('thead tr, tbody tr');
+    // 全否認の行はコピーから除外する（満額の単価で誤って支払われるのを防ぐため）
+    const rows = table.querySelectorAll('thead tr, tbody tr:not([data-all-denied="1"])');
     const lines = [];
     rows.forEach(row => {
         const cells = row.querySelectorAll('th, td');

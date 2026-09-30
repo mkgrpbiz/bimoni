@@ -50,11 +50,17 @@ class ReportController extends Controller
             }
         }
 
-        $reports->each(function ($report) use ($isCombinedParentView, $codeOwnerMap, $targetAgent) {
+        // 全否認（管理者が承認反映ページでフラグを立てた案件）は報酬0円扱い。報告管理ページに
+        // 全否認の除外が入っておらず、ここをコピーして支払いに使うと満額を払ってしまう穴があったため追加
+        // （2026-09-30。報酬管理ページ・管理画面の紹介報酬管理と同じ基準で判定する）
+        $allDeniedMap = \App\Models\CampaignApprovalReflection::allDeniedMap();
+
+        $reports->each(function ($report) use ($isCombinedParentView, $codeOwnerMap, $targetAgent, $allDeniedMap) {
             $owner = $isCombinedParentView
                 ? ($codeOwnerMap[$report->user?->referred_by_code] ?? $targetAgent)
                 : $targetAgent;
-            $report->reward = \App\Services\PortalService::calcReward($owner, $report);
+            $report->isAllDenied = \App\Models\CampaignApprovalReflection::reportIsAllDenied($allDeniedMap, $report);
+            $report->reward = $report->isAllDenied ? 0 : \App\Services\PortalService::calcReward($owner, $report);
         });
 
         // コードプルダウン
