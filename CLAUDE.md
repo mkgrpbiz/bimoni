@@ -342,6 +342,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - 報告管理画面（ポータル）は閲覧者自身の取り分（`calcReward()`の結果）を表示する。案件の`referral_fee`そのままを出さない
 - 報酬管理に単価別（fee別）サマリーを追加。全否認（承認0件・却下のみ）の案件も一覧に出るよう、`approvedReports()` に加えて `rejectedReports()` から案件IDを集めて集計対象にしている（承認済みだけでフィルタすると却下のみの案件が集計から漏れて全否認が常に0件になるバグがあった）
 - **「全否認数」の判定は必ず管理画面（`Admin\ReferralController`）と同じ基準（`CampaignApprovalReflection.is_all_denied`の管理者フラグのみ）を使う**。過去に代理店ポータル側だけ「この代理店経由では承認済みが1件もないのに却下だけあるユーザーがいる場合」も独自に「オーガニック全否認」として上乗せカウントしていたが、却下報告はそもそも報酬計算（`$expectedPay`等）に含まれておらず金額には無関係な一方、管理画面の全否認数と数字が食い違って紛らわしいとの指摘で廃止し、管理画面と同じ基準に統一した（2026-09-29）。案件一覧自体に承認0件・却下のみの案件を含める仕様（上記）とは別の話なので、一覧表示のためのcampaign_id収集ロジックはそのまま残している
+- **`MonitorReport.referral_fee`（2026-09-30追加）**: 報告作成時点（または`Admin\ReportController::updateCampaign()`/`linkApplication()`で案件が紐付け直された時点）の`campaign.referral_fee`のスナップショット。紹介報酬の計算は全て`$report->referral_fee ?? $report->campaign?->referral_fee ?? 0`の形で**このスナップショットを優先**して参照すること。以前は`campaign.referral_fee`を都度直接参照していたため、**案件の紹介単価を変更すると既に確定・支払い済みの過去の報告の金額まで遡って変わってしまうバグがあった**（全否認フラグが月を跨いで波及していたのと同種の設計ミス）。既存の全報告は移行時点の現在単価で一括バックフィル済み。影響箇所: `Admin\ReferralController`（index/show/exportCsv）・`Admin\UserReferralController::buildStats()`・`Portal\RewardController`・`PortalService::calcReward()`・`admin/referrals/show.blade.php`。新規に報告を作成/紐付けする箇所を追加する時は必ずこのスナップショットも一緒にセットすること（`Member\ReportController::store()`・`ImportService`の報告インポートも同様に対応済み）
 
 ---
 
