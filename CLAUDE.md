@@ -286,6 +286,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - 先月・当月ブロックで予約済み・支払済み処理
 - ダッシュボードのリンクは `['year' => $prevMonth->year, 'month' => $prevMonth->month]` 形式で渡す（`'Y-m'` 形式はNG→500エラー）
 - `markReserved` / `markPaid` の `whereBetween` は必ず `copy()` を使う（同一Carbonオブジェクトに連続で呼ぶと両方が月末になるバグあり）
+- **`MonitorReport`は報告日時（`created_at`）で月を締めるが、`CollectionReport`（回収報告）は承認日時（`reviewed_at`）で月を締める**（2026-10-01修正）。回収報告は16日以降の報告を翌月扱いで処理する運用のため、報告日時基準だと実際の支払いタイミングとズレていた。影響箇所: `Admin\PointController`（予約済み/支払済み処理・全銀エクスポート）・`Admin\DashboardController::getChartData()`・`DashboardSummaryService::monthlyMetrics()`・`Member\MypageController`（マイページの支払い予定額）。インポート（`ImportService`の回収報告インポート）は`status=approved`で即時作成するため`reviewed_at`を報告日時と同じ値で設定する（設定し忘れると月次集計から漏れる）。既存データは報告日時でバックフィル済み
 
 ### LINE紐付け管理（`admin/line-links`）
 - **未完了（インポートデータ）**: `imported_from='spreadsheet'` かつ `line_user_id` が null または `IMPORT_` 始まり。新しい順にソート
