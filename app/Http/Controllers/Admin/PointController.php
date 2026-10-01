@@ -39,14 +39,16 @@ class PointController extends Controller
                 ->whereBetween('created_at', [$start, $end])
                 ->get();
 
+            // 回収報告は16日以降の報告を翌月扱いで処理する運用のため、報告日時(created_at)ではなく
+            // 承認日時(reviewed_at)で月を締める（2026-10-01修正）
             $collectionFee = CollectionReport::where('status', 'approved')
-                ->whereBetween('created_at', [$start, $end])
+                ->whereBetween('reviewed_at', [$start, $end])
                 ->get()
                 ->sum(fn($r) => $r->totalFee());
 
             $hasPendingCollection = CollectionReport::where('status', 'approved')
                 ->where('payment_status', 'pending')
-                ->whereBetween('created_at', [$start, $end])
+                ->whereBetween('reviewed_at', [$start, $end])
                 ->exists();
 
             $referralRewards = UserReferralReward::whereBetween('created_at', [$start, $end])->get();
@@ -92,7 +94,7 @@ class PointController extends Controller
 
         $collectionQuery = CollectionReport::with('user')
             ->where('status', 'approved')
-            ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
+            ->whereBetween('reviewed_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
 
         $referralQuery = UserReferralReward::with('referrer')
             ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()]);
@@ -215,7 +217,7 @@ class PointController extends Controller
 
         CollectionReport::where('status', 'approved')
             ->where('payment_status', 'pending')
-            ->whereBetween('created_at', [$start, $end])
+            ->whereBetween('reviewed_at', [$start, $end])
             ->update(['payment_status' => 'reserved']);
 
         UserReferralReward::where('payment_status', 'pending')
@@ -250,7 +252,7 @@ class PointController extends Controller
 
         CollectionReport::where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'reserved'])
-            ->whereBetween('created_at', [$start, $end])
+            ->whereBetween('reviewed_at', [$start, $end])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
         UserReferralReward::whereIn('payment_status', ['pending', 'reserved'])
@@ -283,7 +285,7 @@ class PointController extends Controller
         $collections = CollectionReport::with('user')
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
-            ->whereBetween('created_at', [$zenginStart, $zenginEnd])
+            ->whereBetween('reviewed_at', [$zenginStart, $zenginEnd])
             ->get();
 
         $referralRewards = UserReferralReward::with('referrer')

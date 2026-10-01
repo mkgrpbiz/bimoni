@@ -41,9 +41,10 @@ class MypageController extends Controller
             ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
             ->get();
         $payCurrentMonth = $lastMonthReports->sum($calcMonitorFee);
+        // 回収報告は16日以降の報告を翌月扱いで処理する運用のため、報告日時ではなく承認日時で月を締める（2026-10-01修正）
         $payCurrentMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+            ->whereBetween('reviewed_at', [$lastMonthStart, $lastMonthEnd])
             ->get()->sum(fn($r) => $r->totalFee());
 
         // 今月報告（created_at）→ 来月10日支払い
@@ -55,7 +56,7 @@ class MypageController extends Controller
         $payNextMonth = $thisMonthReports->sum($calcMonitorFee);
         $payNextMonth += CollectionReport::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])
+            ->whereBetween('reviewed_at', [$thisMonthStart, $thisMonthEnd])
             ->get()->sum(fn($r) => $r->totalFee());
 
         $payCurrentDate = $now->copy()->day(10)->format('n月j日');

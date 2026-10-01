@@ -123,11 +123,13 @@ class DashboardSummaryService
         } else {
             $reportQuery->whereRaw($exDate('created_at'));
         }
+        // 回収報告は16日以降の報告を翌月扱いで処理する運用のため、報告日時(created_at)ではなく
+        // 承認日時(reviewed_at)で月を締める（2026-10-01修正）
         $collectionQuery = CollectionReport::where('status', 'approved');
         if ($mode === 'monthly') {
-            $collectionQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
+            $collectionQuery->whereYear('reviewed_at', $year)->whereMonth('reviewed_at', $month);
         } else {
-            $collectionQuery->whereRaw($exDate('created_at'));
+            $collectionQuery->whereRaw($exDate('reviewed_at'));
         }
         $referralRewardQuery = \App\Models\UserReferralReward::query();
         if ($mode === 'monthly') {

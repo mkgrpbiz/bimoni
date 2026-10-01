@@ -723,6 +723,9 @@ class ImportService
                     'item_count'      => $itemCount,
                     'cooperation_fee' => CollectionReport::calcFee($itemCount, $shipping),
                     'status'          => 'approved',
+                    // インポートされる時点で既承認扱いなので、月締めに使うreviewed_atも報告日時と同じにしておく
+                    // （月次集計は承認日時基準のため、ここを設定しないと一括インポートした分が集計から漏れる）
+                    'reviewed_at'     => $reportedAt,
                 ]);
 
                 DB::table('collection_reports')->where('id', $cr->id)->update(['created_at' => $reportedAt]);

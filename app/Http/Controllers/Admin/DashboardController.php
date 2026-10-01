@@ -127,7 +127,7 @@ class DashboardController extends Controller
                     : ($c?->cooperation_fee ?? 0);
                 return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
             }) + CollectionReport::where('status', 'approved')
-                ->whereYear('created_at', $y)->whereMonth('created_at', $m)
+                ->whereYear('reviewed_at', $y)->whereMonth('reviewed_at', $m)
                 ->get()->sum(fn($r) => $r->totalFee())
                 + \App\Models\UserReferralReward::whereYear('created_at', $y)->whereMonth('created_at', $m)->sum('amount');
 
