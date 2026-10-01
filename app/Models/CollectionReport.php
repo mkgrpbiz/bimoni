@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class CollectionReport extends Model
 {
+    // 回収報告の月締め基準を報告日時から承認日時に変更した切替日時（2026-10-01）。
+    // 過去に遡って集計月を変えると、既に処理済み（予約済み/支払済み）の月と食い違うため、
+    // この日時以降に承認されたものだけ承認日時(reviewed_at)基準にし、それより前に承認済みだった
+    // ものは従来通り報告日時(created_at)基準のまま扱う。monthCutoffSql()を必ず経由して判定すること
+    public const MONTH_CUTOFF_SWITCH_AT = '2026-10-01 11:11:29';
+
+    public static function monthCutoffSql(): string
+    {
+        return "CASE WHEN reviewed_at >= '" . self::MONTH_CUTOFF_SWITCH_AT . "' THEN reviewed_at ELSE created_at END";
+    }
+
     protected $fillable = [
         'user_id', 'campaign_ids', 'box_image', 'label_image',
         'tracking_number', 'shipping_fee', 'estimated_arrival_date',
