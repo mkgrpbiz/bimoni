@@ -51,10 +51,6 @@
             </div>
             @endif
         </div>
-        @if($campaign->initial_purchase_fee)
-        <p class="text-xs text-gray-400 -mt-1">※支払い方法などで多少前後する場合があります。</p>
-        @endif
-
         @if($campaign->has_return_fee)
         <div class="bg-white rounded-xl border border-gray-100 p-4">
             <p class="text-xs font-bold text-gray-500 mb-2">⚠️初回解約は容器返送が必要</p>
@@ -72,6 +68,10 @@
             @endif
             <p class="text-xs text-red-400 mt-1">※分けて報告せず、返送後に一緒に報告してください。</p>
         </div>
+        @endif
+
+        @if($campaign->initial_purchase_fee)
+        <p class="text-xs text-gray-400 -mt-1">※支払い方法などで多少前後する場合があります。</p>
         @endif
 
         @if($campaign->cancellation_info)
