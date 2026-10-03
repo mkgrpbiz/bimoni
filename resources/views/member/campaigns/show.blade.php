@@ -70,8 +70,8 @@
                 <span class="text-sm font-bold text-gray-800">{{ number_format($campaign->return_fee) }}円</span>
             </div>
             @endif
+            <p class="text-xs text-red-400 mt-1">※報告は返送後にまとめてお願いいたします。</p>
         </div>
-        <p class="text-xs text-red-400 -mt-1">※報告は返送後にまとめてお願いいたします。</p>
         @endif
 
         @if($campaign->cancellation_info)
