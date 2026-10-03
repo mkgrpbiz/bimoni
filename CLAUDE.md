@@ -111,6 +111,10 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
     - 協力金（`continuation_cooperation_fee`）は回によらず共通の1本のみ（2回目・3回目で金額を分ける仕組みはない。分けたい要望が出たら`CampaignCourse`の`continuation_fee_2`/`_3`のような列追加を検討）
     - 2回目・3回目の提出順は不問（3回目を2回目より先に、または同時に提出してもブロックしない）
     - 管理画面「応募と紐付け」の候補生成では`Application::with('campaign:id,title')`のように列を絞ると`continuation_condition`が読み込めず回数判定が効かなくなるバグがあった（`continuation_condition`を明示的に含める必要がある）
+- **初回解約返送（`has_return_fee`/`return_method`/`return_fee`、2026-10-03追加）**: 初回解約時に容器返送が必要な案件向け。`has_return_fee`が有の場合のみ`return_method`（指定返送方法、自由記述）・`return_fee`（返送費用、円）を設定できる
+  - `Campaign::calculatedMonitorCost()`: 返送費用は初回解約（＝継続しなかった）場合にのみ発生するコストなので、`return_fee × (1 - continuation_rate / 100)`（継続率の「裏側」の確率）として加算する。継続した場合は返送が発生しないため、目標継続率分には含めない。JS側`_form.blade.php`の`calcMonitorCost()`も同じ式で同期させること
+  - 会員向け応募ページ（`member/campaigns/show.blade.php`）の「初回購入費/ポイント還元/キャンペーン」ブロックの下に、有効な場合のみ「初回解約は容器返送あり」ブロック（指定返送方法・返送費用）と、薄い赤字の注記「※報告は返送後にまとめてお願いいたします。」を表示
+  - AI OFFICE連携の`AiOfficeCampaignReadController::CLONEABLE_FIELDS`/`AiOfficeCampaignDraftController`のバリデーションにも追加済み。AI OFFICE側の`CampaignFieldDefinitions::keys()`（別リポジトリ）は未同期なので、全体テンプレート機能で参照する場合は手動同期が必要
 
 ### コース指定設定（`course_settings_enabled` / `CampaignCourse` / `Application.course_id`）
 1商品に複数の購入コース（単発○本、継続○回など）があり、コースによって初回/継続購入費や案内文が異なる案件向けの機能。

@@ -72,6 +72,7 @@ class CampaignController extends Controller
         unset($validated['courses']);
         $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
         $validated['collection_available']    = ($validated['collection_available'] ?? '1') === '1';
+        $validated['has_return_fee']          = ($validated['has_return_fee'] ?? '0') === '1';
 
         $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
         unset($validated['duplicate_campaign_ids']);
@@ -143,6 +144,7 @@ class CampaignController extends Controller
         unset($validated['courses']);
         $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
         $validated['collection_available']    = ($validated['collection_available'] ?? '1') === '1';
+        $validated['has_return_fee']          = ($validated['has_return_fee'] ?? '0') === '1';
 
         $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
         unset($validated['duplicate_campaign_ids']);
@@ -385,6 +387,9 @@ class CampaignController extends Controller
             'gross_profit'           => 'nullable|integer',
             'continuation_rate'      => 'nullable|numeric|min:0|max:100',
             'continuation_rate_calc_from' => 'nullable|date',
+            'has_return_fee'         => 'nullable|in:0,1',
+            'return_method'          => 'nullable|string|max:255',
+            'return_fee'             => 'nullable|integer|min:0',
             'continuation_condition' => 'nullable|in:2回前提,3回前提',
             'course_settings_enabled'          => 'nullable|in:0,1',
             'course_normal_name'               => 'nullable|string|max:255',

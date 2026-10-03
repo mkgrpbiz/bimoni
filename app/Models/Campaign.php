@@ -21,6 +21,7 @@ class Campaign extends Model
         'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
         'continuation_rate', 'continuation_rate_calc_from', 'closing_date', 'payment_timing',
+        'has_return_fee', 'return_method', 'return_fee',
         'collection_info',
         'collection_requirement', 'collection_available', 'collection_count_judgment',
         'target_gender_ratio', 'target_male_ratio', 'target_female_ratio',
@@ -42,6 +43,7 @@ class Campaign extends Model
             'cancellation_draft'      => 'boolean',
             'course_settings_enabled' => 'boolean',
             'collection_available'    => 'boolean',
+            'has_return_fee'          => 'boolean',
         ];
     }
 
@@ -78,6 +80,12 @@ class Campaign extends Model
         $extra = ($this->cooperation_fee ?? 0) + ($this->referral_fee ?? 0);
         $normalCost = ($this->initial_purchase_fee ?? 0)
             + ($this->recurring_purchase_fee ?? 0) * (($this->continuation_rate ?? 0) / 100);
+
+        // 初回解約返送費は継続しなかった場合（＝初回解約した場合）にのみ発生するコストなので、
+        // 継続率の「裏側」の確率（1-継続率）を掛けた期待値として加算する
+        if ($this->has_return_fee) {
+            $normalCost += ($this->return_fee ?? 0) * (1 - ($this->continuation_rate ?? 0) / 100);
+        }
 
         if ($this->course_settings_enabled && $this->courses->isNotEmpty()) {
             $weighted = $normalCost * (($this->course_normal_percentage ?? 0) / 100);

@@ -49,6 +49,7 @@ class AiOfficeCampaignReadController extends Controller
         'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee',
         'continuation_rate', 'closing_date', 'payment_timing',
+        'has_return_fee', 'return_method', 'return_fee',
         'collection_info', 'collection_requirement', 'collection_available', 'collection_count_judgment',
         'target_gender_ratio', 'target_male_ratio', 'target_female_ratio',
         'capacity', 'solicitation_target',

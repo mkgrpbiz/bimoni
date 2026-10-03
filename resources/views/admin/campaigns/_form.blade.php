@@ -273,6 +273,32 @@
                 <option value="翌々月末" @selected(old('payment_timing', $campaign->payment_timing ?? '') === '翌々月末')>翌々月末</option>
             </select>
         </div>
+
+        {{-- Row 6: 初回解約返送 --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">初回解約返送の有無</label>
+            @php $hasReturnFee = (string) old('has_return_fee', ($campaign->has_return_fee ?? false) ? '1' : '0'); @endphp
+            <select name="has_return_fee" id="f-has-return-fee"
+                    onchange="toggleReturnFeeFields(); calcGross()"
+                    class="w-full border rounded px-3 py-2 text-sm">
+                <option value="0" @selected($hasReturnFee === '0')>無</option>
+                <option value="1" @selected($hasReturnFee === '1')>有</option>
+            </select>
+        </div>
+        <div id="return-fee-fields-1" class="{{ $hasReturnFee === '1' ? '' : 'hidden' }}">
+            <label class="block text-sm font-medium text-gray-700 mb-1">指定返送方法</label>
+            <input type="text" name="return_method"
+                   value="{{ old('return_method', $campaign->return_method ?? '') }}"
+                   class="w-full border rounded px-3 py-2 text-sm" placeholder="例: レターパックプラス">
+        </div>
+        <div id="return-fee-fields-2" class="{{ $hasReturnFee === '1' ? '' : 'hidden' }}">
+            <label class="block text-sm font-medium text-gray-700 mb-1">返送費用（円）</label>
+            <input type="number" name="return_fee" id="f-return-fee"
+                   value="{{ old('return_fee', $campaign->return_fee ?? '') }}"
+                   class="w-full border rounded px-3 py-2 text-sm" min="0"
+                   oninput="calcGross()">
+            <p class="text-xs text-gray-400 mt-0.5">初回解約（＝継続しなかった）場合のみ発生するコストとして粗利計算に反映されます（返送費用×(1-目標継続率)）</p>
+        </div>
     </div>
 </div>
 
@@ -652,13 +678,26 @@ function updateCoopLabels() {
     if (lblRec)  lblRec.textContent  = Math.round(recurring).toLocaleString();
 }
 
+function toggleReturnFeeFields() {
+    const hasReturnFee = document.getElementById('f-has-return-fee')?.value === '1';
+    document.getElementById('return-fee-fields-1')?.classList.toggle('hidden', !hasReturnFee);
+    document.getElementById('return-fee-fields-2')?.classList.toggle('hidden', !hasReturnFee);
+}
+
 function calcMonitorCost() {
     const rate      = parseFloat(document.getElementById('f-rate')?.value)      || 0;
     const coop      = parseFloat(document.getElementById('f-coop')?.value)      || 0;
     const referral  = parseFloat(document.getElementById('f-referral')?.value)  || 0;
     const initial   = parseFloat(document.getElementById('f-initial')?.value)   || 0;
     const recurring = parseFloat(document.getElementById('f-recurring')?.value) || 0;
-    const normalCost = initial + recurring * (rate / 100);
+    let normalCost = initial + recurring * (rate / 100);
+    // 初回解約返送費は継続しなかった場合（＝初回解約した場合）にのみ発生するコストなので、
+    // 継続率の「裏側」の確率（1-継続率）を掛けた期待値として加算する（PHP側Campaign::calculatedMonitorCost()と同じ式）
+    const hasReturnFee = document.getElementById('f-has-return-fee')?.value === '1';
+    if (hasReturnFee) {
+        const returnFee = parseFloat(document.getElementById('f-return-fee')?.value) || 0;
+        normalCost += returnFee * (1 - rate / 100);
+    }
     const courseEnabled = document.querySelector('[name="course_settings_enabled"]')?.value === '1';
 
     let cost;
