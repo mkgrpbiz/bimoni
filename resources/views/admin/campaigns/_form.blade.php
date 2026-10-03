@@ -292,7 +292,7 @@
                    class="w-full border rounded px-3 py-2 text-sm" placeholder="例: レターパックプラス">
         </div>
         <div id="return-fee-fields-2" class="{{ $hasReturnFee === '1' ? '' : 'hidden' }}">
-            <label class="block text-sm font-medium text-gray-700 mb-1">返送費用（円）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">返送費用（ポイントで還元、円）</label>
             <input type="number" name="return_fee" id="f-return-fee"
                    value="{{ old('return_fee', $campaign->return_fee ?? '') }}"
                    class="w-full border rounded px-3 py-2 text-sm" min="0"

@@ -56,18 +56,18 @@
         @endif
 
         @if($campaign->has_return_fee)
-        <div class="bg-white rounded-xl border border-gray-100 p-4 space-y-2">
-            <p class="text-sm font-bold text-gray-700">初回解約は容器返送あり</p>
+        <div class="bg-white rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-bold text-gray-500 mb-2">⚠️初回解約は容器返送が必要</p>
             @if($campaign->return_method)
             <div class="flex justify-between items-center py-1 border-b border-gray-50">
                 <span class="text-sm text-gray-600">指定返送方法</span>
-                <span class="font-bold text-gray-800">{{ $campaign->return_method }}</span>
+                <span class="text-sm font-bold text-gray-800">{{ $campaign->return_method }}</span>
             </div>
             @endif
             @if($campaign->return_fee)
             <div class="flex justify-between items-center py-1">
-                <span class="text-sm text-gray-600">返送費用</span>
-                <span class="font-bold text-gray-800">{{ number_format($campaign->return_fee) }}円</span>
+                <span class="text-sm text-gray-600">返送費用（ポイントで還元）</span>
+                <span class="text-sm font-bold text-gray-800">{{ number_format($campaign->return_fee) }}円</span>
             </div>
             @endif
         </div>
