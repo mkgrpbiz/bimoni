@@ -273,6 +273,15 @@ class CampaignController extends Controller
         $new->save();
         $new->tags()->sync($campaign->tags->pluck('id'));
 
+        // course_settings_enabled等のCampaign側フラグはreplicate()で複製されるが、
+        // コース本体（campaign_coursesテーブルの行、別テーブルのhasMany）はreplicate()では
+        // コピーされないため、個別に複製する（2026-10-10発覚・修正）
+        foreach ($campaign->courses as $course) {
+            $newCourse = $course->replicate();
+            $newCourse->campaign_id = $new->id;
+            $newCourse->save();
+        }
+
         return redirect()->route('admin.campaigns.edit', $new)->with('success', '案件を複製しました。');
     }
 
