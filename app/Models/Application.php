@@ -56,6 +56,52 @@ class Application extends Model
     public function statusLogs()      { return $this->hasMany(ApplicationStatusLog::class)->orderBy('created_at'); }
     public function lineMessageJobs() { return $this->hasMany(LineMessageJob::class); }
 
+    // statusが'completed'になった時点（管理画面の手動変更・CSVインポート・成果の手動追加、いずれの経路でも）で
+    // 重複禁止商品側の未完了の応募を自動キャンセルする。changeStatus()経由だけでなく直接update()/create()する
+    // 箇所（ImportService::importApplications()・ManualAdditionController::store()）もあるため、
+    // 特定のコントローラ内だけでなくモデルイベントで一括フックする（2026-10-13追加）
+    protected static function booted(): void
+    {
+        static::created(function (Application $application) {
+            if ($application->status === 'completed') {
+                $application->cancelConflictingDuplicateApplications();
+            }
+        });
+
+        static::updated(function (Application $application) {
+            if ($application->wasChanged('status') && $application->status === 'completed') {
+                $application->cancelConflictingDuplicateApplications();
+            }
+        });
+    }
+
+    // 重複禁止商品として設定されている相手案件のうち、このユーザーがまだ実施完了していない
+    // 応募（打診中・予約中・実施確認中など進行中のもの）を自動キャンセルする
+    public function cancelConflictingDuplicateApplications(): void
+    {
+        $this->loadMissing('campaign');
+        $prohibitedIds = $this->campaign?->duplicateProhibitedCampaigns->pluck('id') ?? collect();
+        if ($prohibitedIds->isEmpty()) {
+            return;
+        }
+
+        $conflicts = static::where('user_id', $this->user_id)
+            ->where('id', '!=', $this->id)
+            ->whereIn('campaign_id', $prohibitedIds)
+            ->whereNotIn('status', ['cancelled', 'completed', 'reported', 'approved', 'point_granted'])
+            ->with('campaign:id,title')
+            ->get();
+
+        foreach ($conflicts as $conflict) {
+            $conflict->lineMessageJobs()->where('status', 'pending')->update(['status' => 'canceled']);
+            $conflict->changeStatus(
+                'cancelled',
+                null,
+                "重複禁止商品「{$this->campaign->title}」が実施完了したため自動キャンセル"
+            );
+        }
+    }
+
     // ステータス変更を記録し、関連タイムスタンプを自動セット
     public function changeStatus(string $newStatus, ?int $adminId = null, ?string $memo = null): void
     {

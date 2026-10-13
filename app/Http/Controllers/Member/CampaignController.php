@@ -78,7 +78,10 @@ class CampaignController extends Controller
         return view('member.campaigns.show', compact('campaign', 'application', 'activeBonus', 'duplicateConflicts'));
     }
 
-    // 重複禁止商品に指定された案件のうち、既に応募済み（キャンセル除く）のものの案件名一覧
+    // 重複禁止商品に指定された案件のうち、既に実施完了（以降）しているものの案件名一覧。
+    // 以前は応募しているだけ（未実施）でも重複参加不可としていたが、開始未定の案件も含めて
+    // 先に応募リストを集めたいケースがあり、応募段階ではブロックせず実際に実施完了した
+    // 場合のみ重複を禁止する方式に変更した（2026-10-13）
     private function duplicateConflictTitles(Campaign $campaign, int $userId): \Illuminate\Support\Collection
     {
         $prohibitedIds = $campaign->duplicateProhibitedCampaigns->pluck('id');
@@ -88,7 +91,7 @@ class CampaignController extends Controller
 
         return Application::where('user_id', $userId)
             ->whereIn('campaign_id', $prohibitedIds)
-            ->whereNotIn('status', ['cancelled'])
+            ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
             ->with('campaign:id,title')
             ->get()
             ->pluck('campaign.title')
