@@ -116,6 +116,9 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - `Campaign::calculatedMonitorCost()`: 返送費用は初回解約（＝継続しなかった）場合にのみ発生するコストなので、`return_fee × (1 - continuation_rate / 100)`（継続率の「裏側」の確率）として加算する。継続した場合は返送が発生しないため、目標継続率分には含めない。JS側`_form.blade.php`の`calcMonitorCost()`も同じ式で同期させること
   - 会員向け応募ページ（`member/campaigns/show.blade.php`）の「初回購入費/ポイント還元/キャンペーン」ブロックの下に、有効な場合のみ「初回解約は容器返送あり」ブロック（指定返送方法・返送費用）と、薄い赤字の注記「※報告は返送後にまとめてお願いいたします。」を表示
   - AI OFFICE連携の`AiOfficeCampaignReadController::CLONEABLE_FIELDS`/`AiOfficeCampaignDraftController`のバリデーションにも追加済み。AI OFFICE側の`CampaignFieldDefinitions::keys()`（別リポジトリ）は未同期なので、全体テンプレート機能で参照する場合は手動同期が必要
+- **重複禁止商品（`Campaign.duplicateProhibitedCampaigns()`、`campaign_duplicate_prohibitions`ピボットテーブル）**: 同じユーザーが同時に参加してほしくない案件同士のペアリング。`CampaignController::syncDuplicateProhibitions()`で双方向に同期する（A→Bを設定するとB→Aも自動で付く）
+  - **判定基準は「実施完了（以降）しているか」のみ**（2026-10-13変更）。以前は相手案件にキャンセル以外で応募しているだけでブロックしていたが、開始未定の案件も含めて先に応募リストを集めたい運用があり、応募段階でブロックすると不都合だった。`Member\CampaignController::duplicateConflictTitles()`が`whereIn('status', ['completed','reported','approved','point_granted'])`で判定し、応募ページの表示（`show()`）と応募送信時（`apply()`）の両方で使う
+  - **片方が実施完了になった時点で、もう片方の進行中の応募（打診中・予約中・実施確認中など、cancelled/completed系以外）を自動キャンセルする**。`Application`モデルの`created`/`updated`イベント（`booted()`）でstatusが'completed'になった瞬間をフックし、`cancelConflictingDuplicateApplications()`が重複禁止の相手案件の未完了応募を`changeStatus('cancelled', ...)`する。`changeStatus()`経由（管理画面の手動ステータス変更）だけでなく、`ImportService::importApplications()`や`ManualAdditionController::store()`の直接`update()`/`create()`（`changeStatus()`を経由しない）もこのモデルイベントで一括して拾える設計にしている（コントローラ個別にフックすると漏れるため）
 
 ### コース指定設定（`course_settings_enabled` / `CampaignCourse` / `Application.course_id`）
 1商品に複数の購入コース（単発○本、継続○回など）があり、コースによって初回/継続購入費や案内文が異なる案件向けの機能。
