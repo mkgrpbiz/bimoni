@@ -94,8 +94,8 @@
         {{-- 応募済み --}}
         @if($campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee)
         @if(!$campaign->collection_available)
-        <div class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium mb-2">
-            こちらの商品は回収不可の商品です。
+        <div class="bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium mb-2">
+            こちらの商品は回収不可の商品になります。
         </div>
         @elseif($campaign->collection_requirement === '回収必須')
         <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium mb-2">
@@ -218,8 +218,8 @@
 
             @if($campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee)
             @if(!$campaign->collection_available)
-            <div class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
-                こちらの商品は回収不可の商品です。
+            <div class="bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
+                こちらの商品は回収不可の商品になります。
             </div>
             @elseif($campaign->collection_requirement === '回収必須')
             <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
