@@ -149,11 +149,16 @@ class ApplicationController extends Controller
     {
         $campaign->load('courses');
 
-        // 未対応グループ（pending等）の案内順は先着順（applied_at）ではなく、応募時点で確定した
-        // ランダム値（lottery_order）で抽選的に並べる（2026-10-14変更）。完了系グループは従来通り
-        // 案内日時（invited_at）の新しい順のまま
+        // 3段階の並び順（2026-10-14変更）: ①打診中/予約中/実施確認中（進行中で要対応）を最上位、
+        // ②応募/選考中（未打診、抽選順で待機中）を中間、③完了系（実施完了以降・キャンセル）を最下位。
+        // ①②の間は先着順（applied_at）ではなく、応募時点で確定したランダム値（lottery_order）で
+        // 抽選的に並べる。完了系グループは従来通り案内日時（invited_at）の新しい順のまま
         $query = $campaign->applications()->with(['user', 'course', 'statusLogs.changedBy', 'lineMessageJobs'])
-            ->orderByRaw("CASE WHEN status IN ('completed','reported','approved','point_granted','cancelled') THEN 1 ELSE 0 END ASC")
+            ->orderByRaw("CASE
+                WHEN status IN ('completed','reported','approved','point_granted','cancelled') THEN 2
+                WHEN status IN ('line_contacted','scheduled','confirming') THEN 0
+                ELSE 1
+            END ASC")
             ->orderByRaw("CASE WHEN status IN ('completed','reported','approved','point_granted','cancelled') THEN invited_at END DESC")
             ->orderBy('lottery_order', 'asc');
 
