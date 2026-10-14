@@ -16,3 +16,6 @@ Schedule::command('proposals:auto-cancel')->everyFiveMinutes();
 
 // 継続依頼LINE送信から24時間経過し未回答の応募を自動的に継続NGにする（毎5分）
 Schedule::command('continuations:auto-decline')->everyFiveMinutes();
+
+// 応募中（pending）の案内順抽選を毎朝9:00に振り直す（長く待ってる人ほど抽選回数が積み重なるようにするため）
+Schedule::command('applications:reshuffle-lottery')->dailyAt('09:00');
