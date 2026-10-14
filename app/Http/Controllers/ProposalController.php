@@ -25,59 +25,9 @@ class ProposalController extends Controller
             return response()->view('proposals.expired', [], 410);
         }
 
-        // PR打診の自動キャンセル（invited_end_at が過ぎた場合）
-        if ($application->status === 'line_contacted'
-            && $application->isPrIfCampaign()
-            && !$application->invited_at
-            && $application->invited_end_at
-            && now()->gte($application->invited_end_at)
-        ) {
-            $application->update([
-                'status'               => 'cancelled',
-                'proposal_answered_at' => now(),
-                'proposal_answer'      => 'expired',
-            ]);
-            ApplicationStatusLog::create([
-                'application_id' => $application->id,
-                'from_status'    => 'line_contacted',
-                'to_status'      => 'cancelled',
-                'changed_by'     => null,
-                'memo'           => 'PR打診期限を過ぎたため自動キャンセル',
-            ]);
-            return response()->view('proposals.expired', compact('application'), 410);
-        }
-
-        // 実施案内日時が過ぎていたら自動キャンセル（invited_end_at があれば終了時間、なければ開始時間）
-        $cancelAt = $application->invited_end_at ?? $application->invited_at;
-        if ($application->status === 'line_contacted'
-            && $application->invited_at
-            && $cancelAt
-            && now()->gte($cancelAt)
-        ) {
-            $application->update([
-                'status'               => 'cancelled',
-                'proposal_answered_at' => now(),
-                'proposal_answer'      => 'expired',
-            ]);
-            ApplicationStatusLog::create([
-                'application_id' => $application->id,
-                'from_status'    => 'line_contacted',
-                'to_status'      => 'cancelled',
-                'changed_by'     => null,
-                'memo'           => '実施案内日時終了までに回答なし・自動キャンセル',
-            ]);
-            return response()->view('proposals.expired', compact('application'), 410);
-        }
-
-        // 案内日時・期限を過ぎたリンクはステータス問わず無効
-        if ($application->invited_at && $cancelAt && now()->gte($cancelAt)) {
-            return response()->view('proposals.expired', compact('application'), 410);
-        }
-        if ($application->isPrIfCampaign() && !$application->invited_at
-            && $application->invited_end_at && now()->gte($application->invited_end_at)
-        ) {
-            return response()->view('proposals.expired', compact('application'), 410);
-        }
+        // 期限切れ判定＋自動処理（AutoCancelExpiredProposalsコマンドと共通のロジック。
+        // cronがまだ回っていないタイミングでユーザーが開いた場合もその場で同じ処理をする）
+        $application->expireProposalIfNeeded();
 
         if ($application->status !== 'line_contacted') {
             return response()->view('proposals.expired', compact('application'), 410);

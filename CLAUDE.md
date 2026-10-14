@@ -372,11 +372,19 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 `line_contacted` → 承諾: `scheduled` / 拒否+別日程: `scheduled` / 拒否+キャンセル: `cancelled`
 `scheduled` → 実施: `confirming` → `completed` → 報告: `reported` → 承認: `approved` → `point_granted`
 
-### 自動キャンセル
-- `proposals:auto-cancel` コマンド（5分ごと）が処理
-- 通常打診: `invited_end_at`（案内終了時間）が設定されていればその終了時間、未設定の場合のみ`invited_at`（開始時間）で未回答 → `cancelled`（実務上は開始〜終了の時間帯で案内するため、実質的には終了時間でキャンセルされる）
-- PR打診: `invited_end_at <= now()` で未回答 → `cancelled`（`invited_at` は null）
+### 自動キャンセル（2026-10-14改修：即キャンセルではなく再抽選方式に変更）
+- `Application::expireProposalIfNeeded()`が共通処理。`proposals:auto-cancel`コマンド（5分ごと）と`ProposalController::confirm()`（ユーザーが打診リンクを開いた時の保険的チェック、cronがまだ回ってないタイミング用）の**両方からこのメソッドを呼ぶ**。期限切れ判定・分岐ロジックをここ1箇所にまとめているのは、過去に同じロジックが複数箇所に重複実装されて片方だけ直し忘れる事故が起きたパターン（打診モーダルの件等）を踏まえた設計
+- **通常打診**（`invited_end_at`があればその終了時間、無ければ`invited_at`で判定）:
+  - 期限切れ1回目（`Application.unanswered_proposal_count === 0`）→ `pending`（応募）に戻す。`invited_at`/`invited_end_at`/`proposal_answered_at`/`proposal_answer`をクリアし、`lottery_order`を新しいランダム値に振り直して抽選待ちの列に戻す（再応募不要）。`unanswered_proposal_count`を+1
+  - 期限切れ2回連続（`unanswered_proposal_count >= 1`）→ `cancelled`（再応募必要）
+  - いずれの場合も残っている打診・案内・リマインドのLINEジョブはキャンセルする
+  - `unanswered_proposal_count`は管理画面から手動で`pending`に戻す操作（スタッフの意図的なやり直し判断）の際に0にリセットする（`ApplicationController::updateStatus()`）。打診に回答（承諾等）すればステータスが`scheduled`に進みこのループから外れるため、回答時のリセット処理は不要
+- **PR打診**（`invited_at`なし）: 変更なし。`invited_end_at <= now()`で未回答 → 即`cancelled`（再抽選なし。期限がそもそも実施可能期限そのものなので遅延させる意味がない）
 - `proposal_answer` は ENUM('yes', 'no', 'expired')
+- 打診送信時のLINE文言（`ApplicationController::updateStatus()`）:
+  - 通常打診は「※実施案内日時終了までに回答がない場合、再度抽選となり、当選後に改めてご案内いたします。」「※2回連続で回答がない場合は、自動キャンセルとなり、再度応募していただく必要があります。」の2段階で案内
+  - PR打診は「※期限までに回答がない場合、自動キャンセルとなります。」のみ（再抽選の概念なし）
+  - 再打診（スタッフ都合で日程が合わなくなった時に手動送信するメッセージ、`reschedule()`相当）はこの注意書き無しのまま変更していない（抽選とは無関係の別フロー）
 
 ### 打診ページ（`/proposals/{token}`）
 - 期限切れ・無効なリンクは全て「このリンクは無効になりました」ページ（410）

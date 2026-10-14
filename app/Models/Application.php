@@ -22,6 +22,7 @@ class Application extends Model
         'is_re_proposal',
         'course_id',
         'lottery_order',
+        'unanswered_proposal_count',
     ];
 
     protected function casts(): array
@@ -136,6 +137,84 @@ class Application extends Model
             'from_status'    => $oldStatus,
             'to_status'      => $newStatus,
             'changed_by'     => $adminId,
+            'memo'           => $memo,
+        ]);
+    }
+
+    // 打診の期限切れ判定＋自動処理（共通処理。AutoCancelExpiredProposalsコマンドと
+    // ProposalController::confirm()の両方から呼ばれる。片方だけ直して食い違う事故を防ぐため1箇所にまとめている）
+    // 期限切れでなければ何もせずfalseを返す。期限切れならDBを更新してtrueを返す
+    // （通常打診は1回目はpendingに戻して再抽選、2回連続でcancelled。PR打診は常に即cancelled）
+    public function expireProposalIfNeeded(): bool
+    {
+        if ($this->status !== 'line_contacted') {
+            return false;
+        }
+
+        if ($this->isPrIfCampaign() && !$this->invited_at && $this->invited_end_at) {
+            if (now()->lt($this->invited_end_at)) {
+                return false;
+            }
+            $this->cancelProposal('PR打診期限を過ぎたため自動キャンセル');
+            return true;
+        }
+
+        if ($this->invited_at) {
+            $cancelAt = $this->invited_end_at ?? $this->invited_at;
+            if (now()->lt($cancelAt)) {
+                return false;
+            }
+
+            if ($this->unanswered_proposal_count >= 1) {
+                $this->cancelProposal('2回連続で実施案内日時までに回答なし・自動キャンセル');
+            } else {
+                $this->returnToPendingAndRelottery('実施案内日時までに回答なし・再抽選のため応募に戻しました');
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private function cancelProposal(string $memo): void
+    {
+        $this->update([
+            'status'               => 'cancelled',
+            'proposal_answered_at' => now(),
+            'proposal_answer'      => 'expired',
+        ]);
+
+        ApplicationStatusLog::create([
+            'application_id' => $this->id,
+            'from_status'    => 'line_contacted',
+            'to_status'      => 'cancelled',
+            'changed_by'     => null,
+            'memo'           => $memo,
+        ]);
+    }
+
+    private function returnToPendingAndRelottery(string $memo): void
+    {
+        $this->update([
+            'status'                     => 'pending',
+            'invited_at'                 => null,
+            'invited_end_at'             => null,
+            'proposal_answered_at'       => null,
+            'proposal_answer'            => null,
+            'lottery_order'              => mt_rand() / mt_getrandmax(),
+            'unanswered_proposal_count'  => $this->unanswered_proposal_count + 1,
+        ]);
+
+        $this->lineMessageJobs()
+            ->whereIn('send_type', ['proposal', 'monitor_guide', 'reminder'])
+            ->where('status', 'pending')
+            ->update(['status' => 'canceled']);
+
+        ApplicationStatusLog::create([
+            'application_id' => $this->id,
+            'from_status'    => 'line_contacted',
+            'to_status'      => 'pending',
+            'changed_by'     => null,
             'memo'           => $memo,
         ]);
     }

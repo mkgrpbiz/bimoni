@@ -342,10 +342,12 @@ class ApplicationController extends Controller
         }
 
         // 応募中に戻す場合は案内日時をクリアし、残っている打診・案内・リマインドジョブもキャンセル
+        // スタッフが意図的にやり直し判断をした操作なので、自動キャンセル用の未回答カウントも0に戻す
         if ($request->status === 'pending') {
             $application->update([
-                'invited_at'     => null,
-                'invited_end_at' => null,
+                'invited_at'                => null,
+                'invited_end_at'            => null,
+                'unanswered_proposal_count' => 0,
             ]);
 
             LineMessageJob::where('application_id', $application->id)
@@ -422,23 +424,26 @@ class ApplicationController extends Controller
                 $deadlineLabel = $application->invited_end_at->format('m月d日(')
                     . $dayNames[$application->invited_end_at->dayOfWeek]
                     . $application->invited_end_at->format(') H:i');
-                $proposalMsg = "【PR打診のご案内】\n"
+                $proposalMsg = "【PRモニター当選のご案内】\n"
                     . $application->campaign->title . "\n\n"
                     . "実施期限: 今から{$deadlineLabel}まで\n\n"
                     . "期限内に実施可能な方は下記URLから今すぐご回答ください。\n"
                     . $proposalUrl . "\n\n"
-                    . "別日程をご希望の場合もURLから日程調整が可能です。";
+                    . "別日程をご希望の場合もURLから日程調整が可能です。\n"
+                    . "※期限までに回答がない場合、自動キャンセルとなります。";
             } else {
-                // 通常打診メッセージ
+                // 通常打診メッセージ（1回目の無回答期限切れは再抽選でpendingに戻るだけ、
+                // 2回連続で無回答の場合のみcancelled。Application::expireProposalIfNeeded()参照）
                 $invitedLabel = $application->invitedLabel('m月d日') ?? '（日時未設定）';
 
-                $proposalMsg = "【モニターご案内】\n"
+                $proposalMsg = "【モニター当選のご案内】\n"
                     . $application->campaign->title . "\n\n"
-                    . "実施案内日時: {$invitedLabel}\n\n"
+                    . "実施案内日時：{$invitedLabel}\n\n"
                     . "以下のURLよりご回答をお願いします。\n"
                     . $proposalUrl . "\n\n"
-                    . "※こちら受信時間から実施案内日時終了までに回答がない場合、自動キャンセルになり再度応募していただく必要があります。\n"
-                    . "上記の時間が難しい場合、別日程調整より都合の良い時間に予約お願いいたします。";
+                    . "上記の時間が難しい場合は、「別日程調整」よりご都合の良い時間をご予約ください。\n\n"
+                    . "※実施案内日時終了までに回答がない場合、再度抽選となり、当選後に改めてご案内いたします。\n"
+                    . "※2回連続で回答がない場合は、自動キャンセルとなり、再度応募していただく必要があります。";
             }
 
             // 「9:00に打診送信する」チェック時は、当日9時（すでに過ぎていれば翌日9時）まで送信を予約する
