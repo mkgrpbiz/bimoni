@@ -219,7 +219,8 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - グラフ「売上・協力金推移」（`getChartData()`）の協力金は、以前は`CampaignApprovalReflection.reflection_count × campaign.cooperation_fee`という**単価だけの概算**で、実際のモニター経費（`purchase_amount`）・継続報告の`continuation_cooperation_fee`・ボーナス・回収報告分が一切含まれておらず、メインKPIカードの「協力金」と桁違いに乖離するバグがあった → `MonitorReport`（`created_at`の年月で集計、承認済みのみ）＋`CollectionReport`を使い、メインKPIカードの`cooperationFee`と同じ計算式に統一
 
 ### 応募管理（案件別一覧）
-- 並び順: 実施完了/報告済/承認済/付与済/キャンセル以外のステータスは応募日時の古い順、それ以外（実施完了・キャンセル等の完了系グループ）は**案内日時（`invited_at`）の新しい順**（`ApplicationController::campaignIndex()` の `orderByRaw`）
+- 並び順: 実施完了/報告済/承認済/付与済/キャンセル以外のステータス（未対応グループ）は**抽選順（`lottery_order`）**、それ以外（実施完了・キャンセル等の完了系グループ）は**案内日時（`invited_at`）の新しい順**（`ApplicationController::campaignIndex()` の `orderByRaw`）
+  - **`Application.lottery_order`（2026-10-14追加）**: 応募件数が増え、先着順（応募日時順）だと「応募したのに全然案内が来ない」という体感が目立つようになったため、未対応グループの案内順を先着順から完全ランダムの抽選順に変更した。0〜1のランダム値を応募作成時に`Application`モデルの`creating`イベントで1回だけ割り当てて固定する方式（毎回表示をシャッフルする方式だと、スタッフが見るたびに順番が変わって対応済み/未対応の管理が崩れるため採用しなかった）。**新しく応募した人が、ずっと前から待っている人より先頭に来ることもある**（期間で区切らない完全ランダムという仕様）。既存の応募にも移行時に一括でランダム値を割り当て済み
 - 実施完了サマリーバーに「応募数（総数/残件数）」を表示。残件数はステータスが「応募」（pending）のまま未処理の件数
 - 詳細ページ（`admin/applications/{application}`）
   - 「応募情報」: ユーザー名 / 案件名 / 応募日時 / 案内日時 / ステータス / 継続ステータス（希望/不可/確認中/OK/NG、`admin/users/show.blade.php`と同じ継続バッジロジック）/ コース（コース設定が有の案件のみ）
