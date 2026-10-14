@@ -59,6 +59,30 @@ class ApplicationController extends Controller
         })->values();
     }
 
+    // 指定日の目標打診件数に対して実際の打診（案内）件数が未達成の案件一覧（当日/翌日どちらでも使う共通ロジック）
+    private function buildUnderAlerts(string $date, array $activeStatuses): Collection
+    {
+        $slots = CampaignDailySlot::where('target_date', $date)
+            ->where('planned_count', '>', 0)
+            ->whereHas('campaign', fn($q) => $q->whereIn('status', ['published', 'paused']))
+            ->with('campaign:id,title')
+            ->get();
+
+        $underAlerts = collect();
+        foreach ($slots as $slot) {
+            $booked = Application::where('campaign_id', $slot->campaign_id)
+                ->whereIn('status', $activeStatuses)
+                ->whereNotNull('invited_at')
+                ->whereDate('invited_at', $date)
+                ->count();
+            if ($booked < $slot->planned_count) {
+                $pendingCount = Application::where('campaign_id', $slot->campaign_id)->where('status', 'pending')->count();
+                $underAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count, 'pending' => $pendingCount]);
+            }
+        }
+        return $underAlerts->sortBy('pending')->values();
+    }
+
     public function index(Request $request): View
     {
         $campaignStatus = $request->input('status', 'published');
@@ -115,33 +139,16 @@ class ApplicationController extends Controller
         $tabCounts = $this->getTabCounts();
         $campaigns = Campaign::orderBy('sort_order')->orderBy('id')->get();
 
-        // アラート: 翌日未達成打診
-        $tomorrowDate  = now()->addDay()->toDateString();
+        // アラート: 当日・翌日未達成打診
         $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
-        $tomorrowSlots = CampaignDailySlot::where('target_date', $tomorrowDate)
-            ->where('planned_count', '>', 0)
-            ->whereHas('campaign', fn($q) => $q->whereIn('status', ['published', 'paused']))
-            ->with('campaign:id,title')
-            ->get();
-        $tomorrowUnderAlerts = collect();
-        foreach ($tomorrowSlots as $slot) {
-            $booked = Application::where('campaign_id', $slot->campaign_id)
-                ->whereIn('status', $activeStatuses)
-                ->whereNotNull('invited_at')
-                ->whereDate('invited_at', $tomorrowDate)
-                ->count();
-            if ($booked < $slot->planned_count) {
-                $pendingCount = Application::where('campaign_id', $slot->campaign_id)->where('status', 'pending')->count();
-                $tomorrowUnderAlerts->push(['slot' => $slot, 'booked' => $booked, 'planned' => $slot->planned_count, 'pending' => $pendingCount]);
-            }
-        }
-        $tomorrowUnderAlerts = $tomorrowUnderAlerts->sortBy('pending')->values();
+        $todayUnderAlerts    = $this->buildUnderAlerts(now()->toDateString(), $activeStatuses);
+        $tomorrowUnderAlerts = $this->buildUnderAlerts(now()->addDay()->toDateString(), $activeStatuses);
 
         $continuationRateAlerts = $this->continuationRateAlerts();
 
         return view('admin.applications.index', compact(
             'applications', 'campaigns', 'campaignStatus', 'tabCounts',
-            'tomorrowUnderAlerts', 'continuationRateAlerts'
+            'todayUnderAlerts', 'tomorrowUnderAlerts', 'continuationRateAlerts'
         ));
     }
 
