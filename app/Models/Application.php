@@ -21,6 +21,7 @@ class Application extends Model
         'bonus_amount',
         'is_re_proposal',
         'course_id',
+        'lottery_order',
     ];
 
     protected function casts(): array
@@ -62,6 +63,15 @@ class Application extends Model
     // 特定のコントローラ内だけでなくモデルイベントで一括フックする（2026-10-13追加）
     protected static function booted(): void
     {
+        // 案内順を先着順（applied_at）ではなく完全ランダム（抽選）にするための値を、
+        // 応募作成時に1回だけ割り当てる（2026-10-14追加）。毎回表示をシャッフルすると
+        // スタッフ側の対応済み/未対応の管理が崩れるため、応募時点で値を固定する
+        static::creating(function (Application $application) {
+            if ($application->lottery_order === null) {
+                $application->lottery_order = mt_rand() / mt_getrandmax();
+            }
+        });
+
         static::created(function (Application $application) {
             if ($application->status === 'completed') {
                 $application->cancelConflictingDuplicateApplications();
