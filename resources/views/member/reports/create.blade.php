@@ -8,6 +8,11 @@
     <h1 class="font-bold text-gray-700 mb-3">モニター報告</h1>
     <p class="text-xs text-gray-400 mb-4">実施が完了したモニター報告をお願いいたします。</p>
 
+    <div class="bg-amber-50 rounded-xl border border-amber-100 p-4 mb-4 text-sm text-gray-700">
+        <p>初回解約時に返送が必要な商品は返送後にまとめて報告お願いいたします。</p>
+        <p class="text-xs text-red-500 mt-1">※返送前に報告いただいても再度報告していただく形になります。</p>
+    </div>
+
     @if(session('error'))
         <div class="bg-red-100 text-red-800 rounded-xl px-4 py-3 text-sm mb-4">{{ session('error') }}</div>
     @endif
