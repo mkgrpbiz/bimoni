@@ -374,7 +374,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 
 ### 自動キャンセル
 - `proposals:auto-cancel` コマンド（5分ごと）が処理
-- 通常打診: `invited_at <= now()` で未回答 → `cancelled`
+- 通常打診: `invited_end_at`（案内終了時間）が設定されていればその終了時間、未設定の場合のみ`invited_at`（開始時間）で未回答 → `cancelled`（実務上は開始〜終了の時間帯で案内するため、実質的には終了時間でキャンセルされる）
 - PR打診: `invited_end_at <= now()` で未回答 → `cancelled`（`invited_at` は null）
 - `proposal_answer` は ENUM('yes', 'no', 'expired')
 
