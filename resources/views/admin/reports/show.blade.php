@@ -98,6 +98,16 @@
                     現在の紐付け先: 応募ID {{ $report->application_id }}
                 @endif
             </p>
+            @if($report->application_id)
+            <form method="POST" action="{{ route('admin.reports.unlink_application', $report) }}" class="mb-3">
+                @csrf @method('PATCH')
+                <button type="submit"
+                        onclick="return confirm('紐付けを解除して「その他」に戻しますか？案件・キャンペーン金額もクリアされます。')"
+                        class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-5 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-500 text-sm">
+                    紐付け解除してその他に戻す
+                </button>
+            </form>
+            @endif
             @if($linkableOptions->isEmpty())
                 <p class="text-sm text-gray-400">紐付け可能な応募がありません。</p>
             @else

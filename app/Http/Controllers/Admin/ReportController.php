@@ -254,6 +254,23 @@ class ReportController extends Controller
         return back()->with('success', '応募と紐付けました。');
     }
 
+    // linkApplication()で紐付けた内容を取り消し、「その他」の状態に戻す
+    // （linkApplication()がセットする項目をそのまま元に戻す形。紐付けた後に「その他」へ戻す手段が
+    // 無かったため、ここで紐付け解除とpurchase_typeの「その他」への変更を1回の操作でできるようにする）
+    public function unlinkApplication(MonitorReport $report): RedirectResponse
+    {
+        $report->update([
+            'application_id'     => null,
+            'campaign_id'        => null,
+            'referral_fee'       => null,
+            'bonus_amount'       => null,
+            'continuation_round' => null,
+            'purchase_type'      => 'other',
+        ]);
+
+        return back()->with('success', '紐付けを解除し、「その他」に戻しました。');
+    }
+
     // 案件変更・報告種別変更の直後に、同じユーザー・同じ案件・同じ報告種別で
     // 既に他の報告（却下済み以外）が無いか確認し、あれば警告を出す
     private function redirectWithDuplicateWarning(MonitorReport $report, string $successMessage): RedirectResponse

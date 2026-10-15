@@ -121,6 +121,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('reports/{report}/purchase-type', [ReportController::class, 'updatePurchaseType'])->name('reports.purchase_type');
         Route::patch('reports/{report}/campaign', [ReportController::class, 'updateCampaign'])->name('reports.campaign');
         Route::patch('reports/{report}/application', [ReportController::class, 'linkApplication'])->name('reports.link_application');
+        Route::patch('reports/{report}/unlink-application', [ReportController::class, 'unlinkApplication'])->name('reports.unlink_application');
         Route::get('agents', [AgentController::class, 'index'])->name('agents.index');
         Route::get('agents/create', [AgentController::class, 'create'])->name('agents.create');
         Route::post('agents', [AgentController::class, 'store'])->name('agents.store');
