@@ -31,6 +31,7 @@ class DashboardSummaryService
     {
         $today     = Carbon::today();
         $yesterday = $today->copy()->subDay();
+        $tomorrow  = $today->copy()->addDay();
 
         // LIFFを開いただけで登録未完了のユーザーは会員として数えない（$membersと同じ条件）
         $membersToday     = User::whereNotNull('profile_completed_at')->whereDate('created_at', $today)->count();
@@ -49,11 +50,20 @@ class DashboardSummaryService
         $scheduled     = Application::where('status', 'scheduled')->count();
         $confirming    = Application::where('status', 'confirming')->count();
 
+        // 打診中・予約中は案内日時（invited_at）が本日/明日のものを内訳として併記する
+        // （invited_at未設定のPR打診等は本日/明日どちらにもカウントされない）
+        $lineContactedToday    = Application::where('status', 'line_contacted')->whereDate('invited_at', $today)->count();
+        $lineContactedTomorrow = Application::where('status', 'line_contacted')->whereDate('invited_at', $tomorrow)->count();
+        $scheduledToday    = Application::where('status', 'scheduled')->whereDate('invited_at', $today)->count();
+        $scheduledTomorrow = Application::where('status', 'scheduled')->whereDate('invited_at', $tomorrow)->count();
+
         return compact(
             'membersToday', 'membersYesterday',
             'appliedToday', 'appliedYesterday',
             'completedToday', 'completedYesterday',
-            'lineContacted', 'scheduled', 'confirming'
+            'lineContacted', 'scheduled', 'confirming',
+            'lineContactedToday', 'lineContactedTomorrow',
+            'scheduledToday', 'scheduledTomorrow'
         );
     }
 

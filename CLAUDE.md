@@ -214,6 +214,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - 応募数（本日/昨日）: `applied_at`の日付で単純カウント
   - 実施完了数（本日/昨日）: `completed_at`の日付でカウント。ステータスは`completed`だけでなく`reported`/`approved`/`point_granted`も含める（実施完了後さらに進んでいても実施完了扱い、月次`$metrics`の実施数ロジックと同じ考え方）
   - 打診中・予約中・実施確認中: 日次比較ではなく**現在のパイプライン件数**のスナップショット（`status`別の単純カウント）
+  - 打診中・予約中カードには「本日◯件　明日◯件」の内訳も併記（2026-10-16追加）。案内日時（`invited_at`）が本日/明日の件数で、`invited_at`未設定（日時未指定のPR打診等）はどちらにもカウントされない
   - 昨日件数をカードに直接併記しているため、増減バッジ（`diffBadge()`）は表示しない（他の月次指標カードのみバッジ付き）
 - 打診アラート（`buildAlerts()`の重複ブッキング・翌日未達成）は**`campaign.status='published'`のみ対象**（`whereHas('campaign', ...)`）。終了済み案件でも`CampaignDailySlot`の目標件数が残っていると、実際には誰も応募しないため常に「未達成」として誤カウントされるバグがあったため、公開中の案件だけに絞るよう修正済み（`admin/daily-slots`一覧ページはデフォルトで`status=published`フィルタがかかっているため、ダッシュボード側が終了案件を含めていると件数が食い違って見える）
 - グラフ「売上・協力金推移」（`getChartData()`）の協力金は、以前は`CampaignApprovalReflection.reflection_count × campaign.cooperation_fee`という**単価だけの概算**で、実際のモニター経費（`purchase_amount`）・継続報告の`continuation_cooperation_fee`・ボーナス・回収報告分が一切含まれておらず、メインKPIカードの「協力金」と桁違いに乖離するバグがあった → `MonitorReport`（`created_at`の年月で集計、承認済みのみ）＋`CollectionReport`を使い、メインKPIカードの`cooperationFee`と同じ計算式に統一

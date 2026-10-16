@@ -129,10 +129,12 @@ $pm = $prevMetrics;
     <div class="bg-white rounded-lg shadow p-4">
         <p class="text-xs text-gray-700 mb-1">打診中</p>
         <p class="text-2xl font-bold text-orange-600">{{ number_format($dailyKpi['lineContacted']) }}件</p>
+        <p class="text-xs text-gray-400 mt-1">本日 {{ number_format($dailyKpi['lineContactedToday']) }}件　明日 {{ number_format($dailyKpi['lineContactedTomorrow']) }}件</p>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
         <p class="text-xs text-gray-700 mb-1">予約中</p>
         <p class="text-2xl font-bold text-orange-600">{{ number_format($dailyKpi['scheduled']) }}件</p>
+        <p class="text-xs text-gray-400 mt-1">本日 {{ number_format($dailyKpi['scheduledToday']) }}件　明日 {{ number_format($dailyKpi['scheduledTomorrow']) }}件</p>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
         <p class="text-xs text-gray-700 mb-1">実施確認中</p>
