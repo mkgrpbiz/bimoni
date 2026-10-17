@@ -429,7 +429,6 @@ class ApplicationController extends Controller
                     . "実施期限: 今から{$deadlineLabel}まで\n\n"
                     . "期限内に実施可能な方は下記URLから今すぐご回答ください。\n"
                     . $proposalUrl . "\n\n"
-                    . "別日程をご希望の場合もURLから日程調整が可能です。\n"
                     . "※期限までに回答がない場合、自動キャンセルとなります。";
             } else {
                 // 通常打診メッセージ（1回目の無回答期限切れは再抽選でpendingに戻るだけ、

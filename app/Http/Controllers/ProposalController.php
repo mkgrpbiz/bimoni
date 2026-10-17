@@ -93,7 +93,9 @@ class ProposalController extends Controller
 
         $isPrIf = $application->isPrIfCampaign();
 
-        $slots = $this->generateTimeSlots($application->user, null, $application);
+        // PR打診は期限内（24時間以内）の実施が前提で、候補日時生成が常に「明日以降」のため
+        // 別日程という概念自体が成立しない。候補は出さずキャンセル一択にする
+        $slots = $isPrIf ? [] : $this->generateTimeSlots($application->user, null, $application);
 
         return view('proposals.no_options', compact('application', 'slots', 'isPrIf'));
     }
@@ -112,6 +114,11 @@ class ProposalController extends Controller
 
         if ($application->status !== 'line_contacted') {
             return redirect()->route('proposals.confirm', $token);
+        }
+
+        // PR打診は別日程という概念が無いため、画面を経由しない直接POSTも念のため弾く
+        if ($application->isPrIfCampaign()) {
+            return redirect()->route('proposals.no', $token);
         }
 
         $application->update([

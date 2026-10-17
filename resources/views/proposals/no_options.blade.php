@@ -16,18 +16,17 @@
 
     <div class="px-6 py-5 space-y-3">
 
-        @if($isPrIf ?? false)
-        <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 text-xs text-pink-700">
-            こちらの商品はPR実施期限を過ぎるとご案内出来ない可能性があります。
-        </div>
-        @endif
-
-@if(session('error'))
+        @if(session('error'))
         <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-xs text-red-700">
             {{ session('error') }}
         </div>
         @endif
 
+        @if($isPrIf ?? false)
+        <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 text-xs text-pink-700">
+            こちらのPRモニターは期限内（24時間以内）の実施が必須のため、別日程への変更はできません。実施が難しい場合は下記よりキャンセルしてください。
+        </div>
+        @else
         <p class="text-sm text-gray-600">実施可能な日程をお選びください。</p>
 
         @php $prevDate = null; @endphp
@@ -51,6 +50,7 @@
 
         @if(empty($slots))
         <p class="text-sm text-gray-400 text-center py-4">現在選択可能な日程がありません。</p>
+        @endif
         @endif
 
         <hr class="border-gray-200 my-2">

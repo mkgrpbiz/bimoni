@@ -78,7 +78,7 @@
 
             <a href="{{ route('proposals.no', $application->proposal_token) }}"
                class="block w-full border-2 border-gray-300 text-gray-600 py-3 rounded-xl font-medium text-base text-center hover:border-gray-400 hover:bg-gray-50 transition-colors">
-                いいえ、別日程を希望します
+                {{ $isPrIf ? 'いいえ、実施できません' : 'いいえ、別日程を希望します' }}
             </a>
         </div>
 
