@@ -151,6 +151,7 @@
                         <option value="">選択してください</option>
                         <option value="published" @selected($report->campaign?->status === 'published')>公開中</option>
                         <option value="paused" @selected($report->campaign?->status === 'paused')>募集停止</option>
+                        <option value="proposal_stopped" @selected($report->campaign?->status === 'proposal_stopped')>打診ストップ</option>
                         <option value="closed" @selected($report->campaign?->status === 'closed')>案内終了</option>
                         <option value="draft" @selected($report->campaign?->status === 'draft')>下書き</option>
                     </select>

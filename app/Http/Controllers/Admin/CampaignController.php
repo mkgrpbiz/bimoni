@@ -235,7 +235,7 @@ class CampaignController extends Controller
 
     public function updateStatus(Request $request, Campaign $campaign, CampaignClosureService $closureService): RedirectResponse
     {
-        $request->validate(['status' => 'required|in:published,paused,closed,draft']);
+        $request->validate(['status' => 'required|in:published,paused,proposal_stopped,closed,draft']);
 
         $wasClosed = $campaign->status === 'closed';
         $campaign->update(['status' => $request->status]);
@@ -372,7 +372,7 @@ class CampaignController extends Controller
         return [
             'title'                  => 'required|string|max:255',
             'campaign_type'          => 'required|in:experience,product,pr',
-            'status'                 => 'required|in:draft,published,paused,closed',
+            'status'                 => 'required|in:draft,published,paused,proposal_stopped,closed',
             'category_id'            => 'nullable|exists:categories,id',
             'pr_media'               => 'nullable|in:AD,IF,LINE,monitor',
             'description'            => 'nullable|string',

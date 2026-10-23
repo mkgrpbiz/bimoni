@@ -97,6 +97,13 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - **継続報告（`purchase_type='continuation'`）の協力金は必ず `campaign.continuation_cooperation_fee` を使う**（`cooperation_fee` を使うと初回金額になるバグ）
 
 ### Campaign
+- **`status`**: ENUM('draft'下書き, 'published'公開中, 'paused'募集停止, 'proposal_stopped'打診ストップ, 'closed'案内終了)。`proposal_stopped`は2026-10-23追加、`paused`と`closed`の間の状態
+  - **「打診ストップ」の意味**: 募集停止（新規応募受付停止）はしてるけど、既存の待機中応募への打診（案内）は続けてる状態から、さらに打診自体も一時止めたい時に使う。案内終了（完全終了）とは違い、応募・報告等の進捗管理は継続する
+  - `ApplicationController::buildUnderAlerts()`（当日/翌日未達成打診アラート）と`campaignIndex()`内の重複実装（翌日未達成）は`whereIn('status', ['published', 'paused'])`のままで`proposal_stopped`を含めていない＝**自動的に未達成アラートから除外される**（除外のために何かを書いたわけではなく、対象リストに加えなかっただけ）。`continuationRateAlerts()`（未達成目標継続率）も同様に対象外
+  - `admin/applications`・`admin/campaigns`の案件ステータスタブ（`campaign_index.blade.php`にも同じタブが重複実装されているため**3箇所**: `campaigns/index.blade.php`・`applications/index.blade.php`・`applications/campaign_index.blade.php`）には追加済みなので、打診ストップ中でも応募の進捗（打診中・予約中・実施確認中など）は`admin/applications`から引き続き閲覧できる
+  - 打診再開は`published`（公開中）に手動で戻すだけ。特別な復帰処理は無い
+  - `CampaignController::updateStatus()`のバリデーション（`in:published,paused,proposal_stopped,closed,draft`）と`rules()`（`in:draft,published,paused,proposal_stopped,closed`）の両方に追加済み。DBは`ALTER TABLE ... ENUM(...)`で拡張（`2026_10_23_120000_add_proposal_stopped_to_campaigns_status.php`）
+  - 広告代理店共有ポータル（`ad_agency_share`）・`admin/daily-slots`一覧のタブには意図的に追加していない（内部運用の概念のため外部向け・日別目標管理までは広げなかった）
 - `collection_requirement`: ENUM('回収必須', '回収不要') nullable（旧称「回収前提」。2026-07-14に「前提」という表現が分かりにくいため「必須」に改称、マイグレーションで既存データも一括変換済み）
   - 条件チェックは必ず `=== '回収必須'`（truthy判定だと'回収不要'でも引っかかる）
   - 回収必須の場合、応募フォームに警告メッセージ表示

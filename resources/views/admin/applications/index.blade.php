@@ -16,10 +16,11 @@
 {{-- 案件ステータスタブ --}}
 @php
 $tabs = [
-    'published' => ['label' => '公開中',   'color' => 'bg-green-500'],
-    'paused'    => ['label' => '募集停止', 'color' => 'bg-orange-500'],
-    'closed'    => ['label' => '案内終了', 'color' => 'bg-gray-500'],
-    'draft'     => ['label' => '下書き',   'color' => 'bg-yellow-500'],
+    'published'        => ['label' => '公開中',       'color' => 'bg-green-500'],
+    'paused'           => ['label' => '募集停止',     'color' => 'bg-orange-500'],
+    'proposal_stopped' => ['label' => '打診ストップ', 'color' => 'bg-red-500'],
+    'closed'           => ['label' => '案内終了',     'color' => 'bg-gray-500'],
+    'draft'            => ['label' => '下書き',       'color' => 'bg-yellow-500'],
 ];
 @endphp
 <div class="flex border-b border-gray-200 mb-0">

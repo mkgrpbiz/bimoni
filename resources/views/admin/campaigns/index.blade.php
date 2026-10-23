@@ -18,10 +18,11 @@
 {{-- ステータスタブ --}}
 @php
 $tabs = [
-    'published' => ['label' => '公開中',   'color' => 'bg-green-500'],
-    'paused'    => ['label' => '募集停止', 'color' => 'bg-orange-500'],
-    'closed'    => ['label' => '案内終了', 'color' => 'bg-gray-500'],
-    'draft'     => ['label' => '下書き',   'color' => 'bg-yellow-500'],
+    'published'        => ['label' => '公開中',       'color' => 'bg-green-500'],
+    'paused'           => ['label' => '募集停止',     'color' => 'bg-orange-500'],
+    'proposal_stopped' => ['label' => '打診ストップ', 'color' => 'bg-red-500'],
+    'closed'           => ['label' => '案内終了',     'color' => 'bg-gray-500'],
+    'draft'            => ['label' => '下書き',       'color' => 'bg-yellow-500'],
 ];
 @endphp
 <div class="flex border-b border-gray-200 mb-4">
@@ -104,15 +105,17 @@ $tabs = [
                         <select name="status" onchange="this.form.submit()"
                                 class="border rounded px-1.5 py-0.5 text-xs
                                     {{ match($campaign->status) {
-                                        'published' => 'border-green-300 text-green-700 bg-green-50',
-                                        'paused'    => 'border-orange-300 text-orange-700 bg-orange-50',
-                                        'closed'    => 'border-gray-300 text-gray-600 bg-gray-50',
-                                        default     => 'border-yellow-300 text-yellow-700 bg-yellow-50',
+                                        'published'        => 'border-green-300 text-green-700 bg-green-50',
+                                        'paused'           => 'border-orange-300 text-orange-700 bg-orange-50',
+                                        'proposal_stopped' => 'border-red-300 text-red-700 bg-red-50',
+                                        'closed'           => 'border-gray-300 text-gray-600 bg-gray-50',
+                                        default            => 'border-yellow-300 text-yellow-700 bg-yellow-50',
                                     } }}">
-                            <option value="published" @selected($campaign->status === 'published')>公開中</option>
-                            <option value="paused"    @selected($campaign->status === 'paused')>募集停止</option>
-                            <option value="closed"    @selected($campaign->status === 'closed')>案内終了</option>
-                            <option value="draft"     @selected($campaign->status === 'draft')>下書き</option>
+                            <option value="published"        @selected($campaign->status === 'published')>公開中</option>
+                            <option value="paused"           @selected($campaign->status === 'paused')>募集停止</option>
+                            <option value="proposal_stopped" @selected($campaign->status === 'proposal_stopped')>打診ストップ</option>
+                            <option value="closed"           @selected($campaign->status === 'closed')>案内終了</option>
+                            <option value="draft"            @selected($campaign->status === 'draft')>下書き</option>
                         </select>
                     </form>
                 </td>

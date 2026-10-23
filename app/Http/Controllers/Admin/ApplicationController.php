@@ -769,10 +769,11 @@ class ApplicationController extends Controller
     private function getTabCounts(): \Illuminate\Support\Collection
     {
         return collect([
-            'published' => Application::whereHas('campaign', fn($q) => $q->where('status', 'published'))->count(),
-            'paused'    => Application::whereHas('campaign', fn($q) => $q->where('status', 'paused'))->count(),
-            'closed'    => Application::whereHas('campaign', fn($q) => $q->where('status', 'closed'))->count(),
-            'draft'     => Application::whereHas('campaign', fn($q) => $q->where('status', 'draft'))->count(),
+            'published'        => Application::whereHas('campaign', fn($q) => $q->where('status', 'published'))->count(),
+            'paused'           => Application::whereHas('campaign', fn($q) => $q->where('status', 'paused'))->count(),
+            'proposal_stopped' => Application::whereHas('campaign', fn($q) => $q->where('status', 'proposal_stopped'))->count(),
+            'closed'           => Application::whereHas('campaign', fn($q) => $q->where('status', 'closed'))->count(),
+            'draft'            => Application::whereHas('campaign', fn($q) => $q->where('status', 'draft'))->count(),
         ]);
     }
 

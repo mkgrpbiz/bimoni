@@ -120,10 +120,11 @@ class Campaign extends Model
     public function getStatusLabel(): string
     {
         return match($this->status) {
-            'draft'     => '下書き',
-            'published' => '公開中',
-            'paused'    => '募集停止',
-            'closed'    => '案内終了',
+            'draft'             => '下書き',
+            'published'         => '公開中',
+            'paused'            => '募集停止',
+            'proposal_stopped'  => '打診ストップ',
+            'closed'            => '案内終了',
             default     => $this->status,
         };
     }

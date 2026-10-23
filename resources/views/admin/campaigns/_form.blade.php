@@ -26,8 +26,9 @@
             <select name="status" class="w-full border rounded px-3 py-2 text-sm">
                 <option value="draft"     @selected(old('status', $campaign->status ?? 'draft') === 'draft')>下書き</option>
                 <option value="published" @selected(old('status', $campaign->status ?? '') === 'published')>公開中</option>
-                <option value="paused"    @selected(old('status', $campaign->status ?? '') === 'paused')>募集停止</option>
-                <option value="closed"    @selected(old('status', $campaign->status ?? '') === 'closed')>案内終了</option>
+                <option value="paused"           @selected(old('status', $campaign->status ?? '') === 'paused')>募集停止</option>
+                <option value="proposal_stopped" @selected(old('status', $campaign->status ?? '') === 'proposal_stopped')>打診ストップ</option>
+                <option value="closed"           @selected(old('status', $campaign->status ?? '') === 'closed')>案内終了</option>
             </select>
         </div>
 
