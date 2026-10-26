@@ -40,7 +40,7 @@
 <div class="bg-white rounded-lg shadow p-3 mb-4 flex items-center gap-2">
     <span class="text-xs text-gray-700">締め日の都合で実施0件の案件を追加:</span>
     @if($addableCampaigns->isEmpty())
-        <span class="text-xs text-gray-400">追加できる案件（募集終了日が2ヶ月以内）がありません</span>
+        <span class="text-xs text-gray-400">追加できる案件（案内終了になってから2ヶ月以内）がありません</span>
     @else
         <form method="POST" action="" id="add-campaign-form" class="flex items-center gap-2">
             @csrf

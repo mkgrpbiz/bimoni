@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Campaign;
 use App\Models\CampaignApprovalReflection;
 use Illuminate\Http\Request;
@@ -76,7 +77,9 @@ class ApprovalReflectionController extends Controller
         // 「案件を追加」用の候補（実施0件で一覧に出てこない案件を、締め日の都合で手動追加できるようにする）。
         // 月次モードのみ対象（累計はある月に追加されたレコードが自動で合算されるため追加操作自体が不要）。
         // 候補は、今の一覧条件（実施1件以上 or 反映レコードあり）で既に表示されている案件を除き、
-        // 募集終了日が2ヶ月以内のものだけに絞る（翌月末締めの運用上、それより古い案件を足す必要はないため）
+        // ステータスが「案内終了」に変わった日が2ヶ月以内のものだけに絞る（翌月末締めの運用上、
+        // それより古い案件を足す必要はないため）。「終了日」専用のカラムが無いため、監査ログ
+        // （AuditLog、2026-08-31以降の管理画面操作のみ記録）からstatus→closedへの最新の変更日時を使う
         $addableCampaigns = collect();
         if ($mode === 'monthly') {
             $visibleCampaignIds = $campaigns->filter(function ($c) use ($applicationStats, $reflections) {
@@ -84,9 +87,16 @@ class ApprovalReflectionController extends Controller
                 return $completedCount >= 1 || $reflections->has($c->id);
             })->pluck('id');
 
+            $recentlyClosedCampaignIds = AuditLog::where('model', Campaign::class)
+                ->where('action', 'updated')
+                ->where('changes->status->to', 'closed')
+                ->where('created_at', '>=', now()->subMonths(2))
+                ->pluck('model_id')
+                ->unique();
+
             $addableCampaigns = Campaign::whereNotIn('id', $visibleCampaignIds)
-                ->whereNotNull('application_end_at')
-                ->where('application_end_at', '>=', now()->subMonths(2))
+                ->where('status', 'closed')
+                ->whereIn('id', $recentlyClosedCampaignIds)
                 ->orderBy('sort_order')->orderBy('id')
                 ->get(['id', 'title']);
         }
