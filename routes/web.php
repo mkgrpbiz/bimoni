@@ -86,6 +86,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('approval-reflections', [ApprovalReflectionController::class, 'index'])->name('approval_reflections.index');
         Route::patch('approval-reflections/{campaign}', [ApprovalReflectionController::class, 'update'])->name('approval_reflections.update');
         Route::patch('approval-reflections/{campaign}/toggle-denied', [ApprovalReflectionController::class, 'toggleAllDenied'])->name('approval_reflections.toggle_denied');
+        Route::post('approval-reflections/{campaign}/add', [ApprovalReflectionController::class, 'addCampaign'])->name('approval_reflections.add');
         // 案件別応募管理
         Route::get('campaigns/{campaign}/applications', [ApplicationController::class, 'campaignIndex'])->name('campaigns.applications');
         // 日別件数管理（全案件一覧）

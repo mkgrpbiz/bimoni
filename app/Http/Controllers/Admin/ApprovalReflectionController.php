@@ -73,10 +73,46 @@ class ApprovalReflectionController extends Controller
         // 月一覧（セレクトボックス用）
         $months = $this->getAvailableMonths();
 
+        // 「案件を追加」用の候補（実施0件で一覧に出てこない案件を、締め日の都合で手動追加できるようにする）。
+        // 月次モードのみ対象（累計はある月に追加されたレコードが自動で合算されるため追加操作自体が不要）。
+        // 候補は、今の一覧条件（実施1件以上 or 反映レコードあり）で既に表示されている案件を除き、
+        // 募集終了日が2ヶ月以内のものだけに絞る（翌月末締めの運用上、それより古い案件を足す必要はないため）
+        $addableCampaigns = collect();
+        if ($mode === 'monthly') {
+            $visibleCampaignIds = $campaigns->filter(function ($c) use ($applicationStats, $reflections) {
+                $completedCount = $applicationStats->get($c->id)?->completed_count ?? 0;
+                return $completedCount >= 1 || $reflections->has($c->id);
+            })->pluck('id');
+
+            $addableCampaigns = Campaign::whereNotIn('id', $visibleCampaignIds)
+                ->whereNotNull('application_end_at')
+                ->where('application_end_at', '>=', now()->subMonths(2))
+                ->orderBy('sort_order')->orderBy('id')
+                ->get(['id', 'title']);
+        }
+
         return view('admin.approval_reflections.index', compact(
             'campaigns', 'reflections', 'applicationStats',
-            'year', 'month', 'mode', 'months', 'allDeniedCampaignIds'
+            'year', 'month', 'mode', 'months', 'allDeniedCampaignIds', 'addableCampaigns'
         ));
+    }
+
+    // 締め日の都合で実施0件の月にも案件を一覧に出したい時に使う。
+    // 空の反映レコード（反映数0）を作るだけで、一覧の表示条件（実施1件以上 or 反映レコードあり）に
+    // より次回以降もその月は表示され続ける
+    public function addCampaign(Request $request, Campaign $campaign)
+    {
+        $validated = $request->validate([
+            'year'  => 'required|integer|min:2020|max:2099',
+            'month' => 'required|integer|min:1|max:12',
+        ]);
+
+        CampaignApprovalReflection::firstOrCreate(
+            ['campaign_id' => $campaign->id, 'period_year' => $validated['year'], 'period_month' => $validated['month']],
+            ['reflection_count' => 0, 'updated_by' => Auth::id()]
+        );
+
+        return back()->with('success', '案件を追加しました。');
     }
 
     public function update(Request $request, Campaign $campaign)

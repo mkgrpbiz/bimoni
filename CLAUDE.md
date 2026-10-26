@@ -273,6 +273,11 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - **`is_all_denied`は`campaign_id`+`period_year`+`period_month`単位の月ごとの実績フラグ**。判定は必ず`CampaignApprovalReflection::allDeniedMap()`＋`reportIsAllDenied($map, $report)`（報告自身の`created_at`の年月と突き合わせる）経由で行うこと。過去は`campaign_id`だけで`is_all_denied=true`の行を検索していたため、**ある月だけ全否認だった案件の報告が無関係な他の月の紹介報酬・ダッシュボード集計にまで巻き込まれて誤って除外されるバグがあった**（2026-09-29発覚・修正。本番で実際に複数代理店・複数月で紹介報酬額のズレが発生していた）。影響していたのは`Admin\ReferralController`（index/show/exportCsv）・`Portal\RewardController`・`DashboardSummaryService`の5箇所
   - `Admin\ApprovalReflectionController::toggleAllDenied()`も以前は「全否認はキャンペーン単位のフラグだから月次/累計関係なく全期間を一括更新する」という設計で、1回トグルするとそのキャンペーンの過去～未来の全ての`period`行が一括で書き換わっていた。これが上記バグの主因（一度でも全否認判定した案件は以後ずっと全月が巻き込まれる）だったため、**指定した月のレコードだけを更新する**方式に変更（全否認が続く案件は月ごとに都度トグルする運用）
 
+### 承認反映管理（`admin/approval-reflections`）
+- `MonitorReport`ではなく`Application.completed_at`（実施完了日時）を基準にカレンダー月で集計する画面。**締め日（16日区切り等）は一切考慮しない**（`CollectionReport`の16日締めルールとは無関係、別の画面・別の集計軸）
+- 一覧の表示条件は「その月の実施完了数が1件以上、または`CampaignApprovalReflection`にその期間のレコードがある」（`index.blade.php`の`@if($completedCount >= 1 || $ref)`）。実施0件の案件はデフォルトでは一覧に出てこない
+- **「案件を追加」機能（2026-10-26追加）**: 「翌月末に確定売上を入れる」運用にすると、締め日の都合で当月実施0件の案件もその月の集計に含めたいケースが出てくるため追加。反映数0の空レコードを作るだけで、以後その月はずっと一覧に表示され続ける（`ApprovalReflectionController::addCampaign()`）。候補は、まだ一覧に出てない案件のうち`Campaign.application_end_at`（募集終了日）が2ヶ月以内のものに絞る（最長でも翌々月末締めの運用のため、それより古い案件を候補に出す必要がない）。月次モードのみ（累計モードは月ごとのレコードが自動で合算されるため追加操作自体が不要）
+
 ### ユーザー管理
 - 登録コード（`referred_by_code`）を表示
 - 詳細ページ（`admin/users/{user}`）: 応募履歴・モニター報告履歴・回収報告履歴・ユーザー招待履歴を`<details>`アコーディオンで表示。**アコーディオンが増えてきたため2026-08-22よりデフォルトは全て閉じた状態に統一**（以前は応募履歴のみopenだったが廃止）

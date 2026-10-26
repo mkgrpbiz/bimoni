@@ -36,6 +36,27 @@
     </div>
 </div>
 
+@if($mode === 'monthly')
+<div class="bg-white rounded-lg shadow p-3 mb-4 flex items-center gap-2">
+    <span class="text-xs text-gray-700">締め日の都合で実施0件の案件を追加:</span>
+    @if($addableCampaigns->isEmpty())
+        <span class="text-xs text-gray-400">追加できる案件（募集終了日が2ヶ月以内）がありません</span>
+    @else
+        <form method="POST" action="" id="add-campaign-form" class="flex items-center gap-2">
+            @csrf
+            <input type="hidden" name="year"  value="{{ $year }}">
+            <input type="hidden" name="month" value="{{ $month }}">
+            <select id="add-campaign-select" class="border rounded px-2 py-1.5 text-sm">
+                @foreach($addableCampaigns as $ac)
+                <option value="{{ $ac->id }}">{{ $ac->title }}</option>
+                @endforeach
+            </select>
+            <button type="submit" class="text-xs bg-gray-700 text-white px-3 py-1.5 rounded hover:bg-gray-800">追加</button>
+        </form>
+    @endif
+</div>
+@endif
+
 @if(session('success'))
 <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 text-sm">{{ session('success') }}</div>
 @endif
@@ -75,7 +96,7 @@
             $sales          = $reflectCount * ($campaign->campaign_unit_price ?? 0);
             $gross          = $reflectCount * ($campaign->gross_profit ?? 0);
             @endphp
-            @if($completedCount >= 1)
+            @if($completedCount >= 1 || $ref)
             @php
             $totalSales     += $sales;
             $totalGross     += $gross;
@@ -181,6 +202,15 @@ function updateTotals() {
     tg.textContent = '¥' + totalGross.toLocaleString();
     tg.className = tg.className.replace(/text-(red|green)-\d+/, '');
     tg.classList.add(totalGross < 0 ? 'text-red-600' : 'text-green-700');
+}
+
+const addCampaignForm = document.getElementById('add-campaign-form');
+if (addCampaignForm) {
+    const addCampaignSelect = document.getElementById('add-campaign-select');
+    addCampaignForm.action = `/admin/approval-reflections/${addCampaignSelect.value}/add`;
+    addCampaignSelect.addEventListener('change', () => {
+        addCampaignForm.action = `/admin/approval-reflections/${addCampaignSelect.value}/add`;
+    });
 }
 
 function syncMonth(sel) {
