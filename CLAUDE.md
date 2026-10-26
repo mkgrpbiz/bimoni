@@ -298,6 +298,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - 対策として「応募と紐付け」機能を追加。対象ユーザーの応募一覧（他の報告が既に紐付いている応募は選択肢から除外）から選んで紐付けると、`campaign_id`・`bonus_amount`（キャンペーン列。会員側の通常フローと同じく応募からコピー）を応募から引き継ぎ、その応募に既に初回/継続の非却下報告があれば紐付け自体を中止する（`ReportController::linkApplication()`）
   - 案件変更・報告種別変更の直後にも、同じユーザー・案件・報告種別の非却下報告が他に無いか確認し、あれば警告バナーを表示する（ハードブロックはしない。応募と紐付けた場合のみ確実にブロックされる）
   - **紐付け解除（`ReportController::unlinkApplication()`、2026-10-15追加）**: 一度紐付けると元の「その他」状態に戻す手段が無かったため追加。`linkApplication()`がセットする5項目（`application_id`/`campaign_id`/`referral_fee`/`bonus_amount`/`continuation_round`）をすべてnullに戻し、`purchase_type`も`'other'`にセットする1アクション。`admin/reports/{report}`の「応募と紐付け」カードに`application_id`がある時だけボタンを表示
+- **差戻し時のLINE自動送信（`ReportController::reject()`）**: 却下理由（`reject_reason`）と一緒に即時プッシュ送信（ジョブキュー経由ではなく同期送信）。本文には案件名も入れる（2026-10-26追加、それまでは「差戻しとなりました」のみで何の報告か分からなかった）。`campaign_id`が無い「その他」報告は「その他報告」とフォールバック表示。回収報告（`CollectionReportController::reject()`）も同様で、こちらは`CollectionReport::campaigns()`（`campaign_ids`配列から複数案件を取得）の全タイトルを「、」区切りで入れる（1件も紐付いてなければ「回収サービス」とフォールバック）
 
 ### 回収管理（`admin/collection_reports`）
 - 一覧列: 報告日時 / ユーザーID(`bimoni_user_id`) / 登録コード / LINE表示名 / 名前 / フリガナ / 商品数 / 到着予定日 / 追跡番号 / ステータス / 詳細

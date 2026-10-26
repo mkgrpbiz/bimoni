@@ -75,7 +75,13 @@ class CollectionReportController extends Controller
             'reviewed_at'      => now(),
         ]);
 
+        $productLabel = $collectionReport->campaigns()->pluck('title')->join('、');
+        if ($productLabel === '') {
+            $productLabel = '回収サービス';
+        }
+
         $msg = "【回収報告について】\n"
+            . "{$productLabel}\n\n"
             . "差戻しとなりました。\n\n"
             . "理由：{$request->rejection_reason}\n\n"
             . "お手数ですが、内容をご確認の上、再度報告フォームよりご報告ください。";

@@ -128,7 +128,10 @@ class ReportController extends Controller
 
         $report->application?->update(['status' => 'reported']);
 
+        $productLabel = $report->campaign?->title ?? 'その他報告';
+
         $msg = "【モニター報告について】\n"
+            . "{$productLabel}\n\n"
             . "差戻しとなりました。\n\n"
             . "理由：{$request->reject_reason}\n\n"
             . "お手数ですが、内容をご確認の上、再度報告フォームよりご報告ください。";
