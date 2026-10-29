@@ -431,6 +431,17 @@ class ApplicationController extends Controller
                     . "期限内に実施可能な方は下記URLから今すぐご回答ください。\n"
                     . $proposalUrl . "\n\n"
                     . "※期限までに回答がない場合、自動キャンセルとなります。";
+            } elseif ($isPrIf && $application->invited_at) {
+                // PR打診メッセージ（パターン2：9:00〜設定した締切時刻。スタッフが最初からこのパターンで送った場合。
+                // invited_atが入っているので表示は通常打診と同じ日付+時間帯形式だが、文言・自動キャンセル挙動
+                // （再抽選なし即キャンセル）はPR仕様のまま。Application::expireProposalIfNeeded()参照）
+                $invitedLabel = $application->invitedLabel('m月d日') ?? '（日時未設定）';
+                $proposalMsg = "【PRモニター当選のご案内】\n"
+                    . $application->campaign->title . "\n\n"
+                    . "実施期限: {$invitedLabel}\n\n"
+                    . "期限内に実施可能な方は下記URLから今すぐご回答ください。\n"
+                    . $proposalUrl . "\n\n"
+                    . "※期限までに回答がない場合、自動キャンセルとなります。";
             } else {
                 // 通常打診メッセージ（1回目の無回答期限切れは再抽選でpendingに戻るだけ、
                 // 2回連続で無回答の場合のみcancelled。Application::expireProposalIfNeeded()参照）

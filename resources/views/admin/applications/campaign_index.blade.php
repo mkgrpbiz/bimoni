@@ -468,9 +468,19 @@ $statusTabs = [
 
             {{-- PR打診フォーム（PR+IFのみ表示） --}}
             <div id="prProposalForm" class="hidden">
-                <div class="bg-pink-50 border border-pink-200 rounded-lg p-3 text-xs text-pink-700 mb-3">
+                <div class="bg-pink-50 border border-pink-200 rounded-lg p-3 text-xs text-pink-700 mb-3" id="prPatternHint">
                     期限内に実施可能な場合すぐに案内を送るパターンです。<br>
                     invited_at（開始時間）は未設定のまま送信し、ユーザーが確認した時点でセットされます。
+                </div>
+                <div class="flex gap-4 mb-2 text-xs text-gray-700">
+                    <label class="flex items-center gap-1">
+                        <input type="radio" name="prPattern" value="now" checked onchange="buildPrDeadline()">
+                        今から24時まで
+                    </label>
+                    <label class="flex items-center gap-1">
+                        <input type="radio" name="prPattern" value="morning" onchange="buildPrDeadline()">
+                        9:00〜設定時刻
+                    </label>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-700 mb-1">実施期限（締め切り日時） <span class="text-red-400">*</span></label>
@@ -530,8 +540,9 @@ let _selectedSlotStart = null, _selectedSlotEnd = null, _modalTab = 'normal', _m
 
 // PR打診は同じ締め切り日時で連続送信することが多いため、前回入力した締め切りを記憶して次回の初期値にする
 (function restorePrDeadline() {
-    const savedDate = localStorage.getItem('_pr_deadline_date');
-    const savedHour = localStorage.getItem('_pr_deadline_hour');
+    const savedDate    = localStorage.getItem('_pr_deadline_date');
+    const savedHour    = localStorage.getItem('_pr_deadline_hour');
+    const savedPattern = localStorage.getItem('_pr_pattern');
     const todayStr  = new Date().toISOString().slice(0, 10);
     // 過去日が保存されている場合は今日にリセット（誤って過去日のまま送信するのを防ぐ）
     if (savedDate && savedDate >= todayStr) {
@@ -539,6 +550,10 @@ let _selectedSlotStart = null, _selectedSlotEnd = null, _modalTab = 'normal', _m
     }
     if (savedHour !== null && savedHour !== '') {
         document.getElementById('prDeadlineHour').value = savedHour;
+    }
+    if (savedPattern === 'morning') {
+        const radio = document.querySelector('input[name="prPattern"][value="morning"]');
+        if (radio) radio.checked = true;
     }
 })();
 
@@ -563,11 +578,21 @@ function buildDatetimes() {
 }
 
 function buildPrDeadline() {
-    const date = document.getElementById('prDeadlineDate').value;
-    const hour = document.getElementById('prDeadlineHour').value;
+    const date    = document.getElementById('prDeadlineDate').value;
+    const hour    = document.getElementById('prDeadlineHour').value;
+    const pattern = document.querySelector('input[name="prPattern"]:checked')?.value || 'now';
     localStorage.setItem('_pr_deadline_date', date);
     localStorage.setItem('_pr_deadline_hour', hour);
-    document.getElementById('hiddenInvitedAt').value    = '';
+    localStorage.setItem('_pr_pattern', pattern);
+
+    const hint = document.getElementById('prPatternHint');
+    if (pattern === 'morning') {
+        document.getElementById('hiddenInvitedAt').value = date ? (date + ' 09:00:00') : '';
+        if (hint) hint.innerHTML = '9:00から設定した締め切り時刻までのパターンです。<br>invited_at（開始時間）を9:00で設定して送信します。';
+    } else {
+        document.getElementById('hiddenInvitedAt').value = '';
+        if (hint) hint.innerHTML = '期限内に実施可能な場合すぐに案内を送るパターンです。<br>invited_at（開始時間）は未設定のまま送信し、ユーザーが確認した時点でセットされます。';
+    }
     document.getElementById('hiddenInvitedEndAt').value = (date && hour !== '')
         ? date + ' ' + String(hour).padStart(2, '0') + ':00:00'
         : '';

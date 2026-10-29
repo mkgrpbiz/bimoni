@@ -151,8 +151,11 @@ class Application extends Model
             return false;
         }
 
-        if ($this->isPrIfCampaign() && !$this->invited_at && $this->invited_end_at) {
-            if (now()->lt($this->invited_end_at)) {
+        if ($this->isPrIfCampaign()) {
+            // PR打診はパターン1（invited_atなし）・パターン2（invited_at=9:00で設定済み）どちらでも
+            // 再抽選せず即キャンセル（期限がそもそも実施可能期限そのものなので遅延させる意味がない）
+            $cancelAt = $this->invited_end_at ?? $this->invited_at;
+            if (!$cancelAt || now()->lt($cancelAt)) {
                 return false;
             }
             $this->cancelProposal('PR打診期限を過ぎたため自動キャンセル');

@@ -417,6 +417,10 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - 選択すると`ProposalController::acceptPrTomorrow()`が、通常打診の別日程選択（`selectSlot()`）と同じ扱いで即座に`invited_at`=締切日9:00・`invited_end_at`=元の締切時刻・`status`=`scheduled`に確定し、モニター案内ジョブも生成する（表示条件と同じ判定をサーバー側でも再チェックし、表示後に埋まった場合は`confirm`にエラー付きで戻す）
   - `invited_at`が入ることで、以降はこの応募は通常打診と同じ「日付＋時間帯」表示（`invitedLabel()`）になる。ただし`campaign_type`はPRのままなので、重複ブッキング対象外・48h制限対象外などの`isPrIfCampaign()`系の扱いは変わらない
   - 「いいえ」はこの選択肢とは独立で、押すと今まで通りキャンセル確認のみ（別日程選択画面には行かない）
+- **PR打診のスタッフ側パターン選択（2026-10-29追加）**: 打診送信モーダルのPRタブに「今から24時まで」「9:00〜設定時刻」のラジオボタンを追加（`campaign_index.blade.php`・`applications/index.blade.php`の両方、打診モーダル重複箇所の定番パターン）。前者は従来通り`invited_at`を空で送信（ユーザーが確認した時点でセット）、後者は`invited_at`=選択した日付9:00を明示的に送信する（`hiddenInvitedAt`を`buildPrDeadline()`内でパターンに応じて切り替えるだけで、`ApplicationController::updateStatus()`側の`invited_at`有無による分岐は既存ロジックがそのまま使える）
+  - パターン2（`invited_at`あり）を直接送った場合のLINE文言は`updateStatus()`に専用の`elseif($isPrIf && $application->invited_at)`分岐を追加して対応：表示は`invitedLabel()`で通常打診と同じ日付+時間帯形式になるが、文言（別日程調整への言及なし）と自動キャンセル挙動はPR仕様のまま維持
+  - **`Application::expireProposalIfNeeded()`もこのタイミングで修正**：元々PRの即キャンセル分岐は`!$this->invited_at`も条件に含んでいたため、パターン2（`invited_at`あり）のPR打診が期限切れになると誤って通常打診の再抽選ロジック（`pending`に戻す）に流れてしまうバグがあった。`isPrIfCampaign()`のみで判定するよう修正し、PR打診は`invited_at`の有無に関わらず常に即キャンセルになるようにした
+  - ユーザー側の「{締切日}9:00〜締切時刻なら実施できます」ボタン（`prNextDaySlotAvailable()`）とは独立した別経路（スタッフが最初からパターン2で送るか、ユーザーがパターン1から途中でボタンを押すか）だが、どちらも最終的に同じ状態（`invited_at`=9:00、通常打診と同じ表示）に収束する
 
 ---
 
