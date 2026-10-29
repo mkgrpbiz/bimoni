@@ -419,11 +419,12 @@ class ApplicationController extends Controller
             $proposalUrl = route('proposals.confirm', $application->proposal_token);
 
             if ($isPrIf && !$application->invited_at && $application->invited_end_at) {
-                // PR打診メッセージ
-                $dayNames     = ['日', '月', '火', '水', '木', '金', '土'];
-                $deadlineLabel = $application->invited_end_at->format('m月d日(')
-                    . $dayNames[$application->invited_end_at->dayOfWeek]
-                    . $application->invited_end_at->format(') H:i');
+                // PR打診メッセージ。締切が翌日以降の場合、深夜帯（0:00〜9:00）は実施できる時間ではないため
+                // 本日分（今から24:00まで）だけ案内する。翌日分は打診ページの「{締切日}9:00〜締切時刻なら
+                // 実施できます」ボタン（ProposalController::prNextDaySlotAvailable()）で別途案内する
+                $deadlineLabel = $application->invited_end_at->isSameDay(now())
+                    ? $application->invited_end_at->format('H:i')
+                    : '24:00';
                 $proposalMsg = "【PRモニター当選のご案内】\n"
                     . $application->campaign->title . "\n\n"
                     . "実施期限: 今から{$deadlineLabel}まで\n\n"

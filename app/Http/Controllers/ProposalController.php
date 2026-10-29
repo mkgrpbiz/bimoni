@@ -35,7 +35,10 @@ class ProposalController extends Controller
 
         $isPrIf = $application->isPrIfCampaign();
 
-        return view('proposals.confirm', compact('application', 'isPrIf'));
+        // PR打診（締切が翌日以降）は「明日9:00〜締切時刻」の選択肢を出せるか判定
+        $prTomorrowAvailable = $isPrIf ? $this->prNextDaySlotAvailable($application) : false;
+
+        return view('proposals.confirm', compact('application', 'isPrIf', 'prTomorrowAvailable'));
     }
 
     // はい → 予約中
@@ -76,6 +79,47 @@ class ProposalController extends Controller
         if ($application->invited_at) {
             $this->createMonitorGuideJob($application);
         }
+
+        return redirect()->route('proposals.complete', $token);
+    }
+
+    // PR打診（締切が翌日以降）で「{締切日}9:00〜締切時刻」を選択 → 通常打診の別日程選択と同じ扱いで即確定
+    public function acceptPrTomorrow(string $token): RedirectResponse
+    {
+        $application = Application::where('proposal_token', $token)
+            ->with(['campaign', 'user'])
+            ->firstOrFail();
+
+        if ($application->status !== 'line_contacted') {
+            return redirect()->route('proposals.confirm', $token);
+        }
+
+        // 画面に出した後に埋まった場合の保険（表示条件と同じ判定をもう一度サーバー側で行う）
+        if (!$this->prNextDaySlotAvailable($application)) {
+            return redirect()->route('proposals.confirm', $token)->with('error', '申し訳ございません、この時間帯は既に埋まってしまいました。');
+        }
+
+        $newInvitedAt = $application->invited_end_at->copy()->startOfDay()->setTime(9, 0);
+
+        $application->update([
+            'status'               => 'scheduled',
+            'reserved_at'          => now(),
+            'proposal_answered_at' => now(),
+            'proposal_answer'      => 'yes',
+            'is_re_proposal'       => false,
+            'invited_at'           => $newInvitedAt,
+        ]);
+
+        ApplicationStatusLog::create([
+            'application_id' => $application->id,
+            'from_status'    => 'line_contacted',
+            'to_status'      => 'scheduled',
+            'changed_by'     => null,
+            'memo'           => '打診ページからユーザーが翌日9:00〜の実施を選択',
+        ]);
+
+        $application->refresh();
+        $this->createMonitorGuideJob($application);
 
         return redirect()->route('proposals.complete', $token);
     }
@@ -268,6 +312,38 @@ class ProposalController extends Controller
                 'status'         => 'pending',
             ]);
         }
+    }
+
+    // PR打診（パターン1：invited_atなし）に対して「締切日9:00〜締切時刻」を案内してよいか判定。
+    // 締切が今日中なら対象外（24時までのパターン1だけで完結するため）。締切日に目標打診数
+    // （CampaignDailySlot）が設定されていればその日の予約済み件数と比較し、未設定ならPRの通常ルール
+    // 通り無制限扱い（他の通常打診の日別件数管理と違い、PRは元々対象外のため）
+    private function prNextDaySlotAvailable(Application $application): bool
+    {
+        if (!$application->isPrIfCampaign() || $application->invited_at || !$application->invited_end_at) {
+            return false;
+        }
+        if ($application->invited_end_at->isSameDay(now())) {
+            return false;
+        }
+
+        $targetDate = $application->invited_end_at->toDateString();
+        $dailySlot = CampaignDailySlot::where('campaign_id', $application->campaign_id)
+            ->where('target_date', $targetDate)
+            ->first();
+
+        if (!$dailySlot || $dailySlot->planned_count === null) {
+            return true;
+        }
+
+        $activeStatuses = ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'];
+        $booked = Application::where('campaign_id', $application->campaign_id)
+            ->where('id', '!=', $application->id)
+            ->whereIn('status', $activeStatuses)
+            ->whereDate('invited_at', $targetDate)
+            ->count();
+
+        return $booked < $dailySlot->planned_count;
     }
 
     // available_times から候補スロットを生成（$minStart 以降3日分・枠かぶりチェック付き）

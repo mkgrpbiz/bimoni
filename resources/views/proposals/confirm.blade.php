@@ -16,6 +16,12 @@
 
     <div class="px-6 py-5 space-y-4">
 
+        @if(session('error'))
+        <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-xs text-red-700">
+            {{ session('error') }}
+        </div>
+        @endif
+
         @if($application->is_re_proposal)
         <div class="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-xs text-orange-700">
             申し訳ございませんが、ご指定の時間にご案内が出来なくなりました。<br>
@@ -35,11 +41,15 @@
             </div>
             @endif
             @if($isPrIf && !$application->invited_at && $application->invited_end_at)
-            {{-- PR打診：実施期限表示 --}}
+            {{-- PR打診：実施期限表示（締切が翌日以降の場合は本日分だけに絞る。翌日分は下の選択肢ボタンで案内） --}}
             <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-2">
                 <p class="text-xs text-pink-400 mb-1">【PR実施期限】</p>
                 <p class="text-lg font-bold text-pink-700">
-                    今から {{ $application->invited_end_at->format('m月d日(') }}{{ ['日','月','火','水','木','金','土'][$application->invited_end_at->dayOfWeek] }}{{ $application->invited_end_at->format(') H:i') }} まで
+                    @if($application->invited_end_at->isSameDay(now()))
+                        今から {{ $application->invited_end_at->format('H:i') }} まで
+                    @else
+                        今から 24:00 まで
+                    @endif
                 </p>
             </div>
             @elseif($application->invited_at)
@@ -78,9 +88,19 @@
                 @csrf
                 <button type="submit"
                         class="w-full bg-pink-600 text-white py-3 rounded-xl font-bold text-base hover:bg-pink-700 active:scale-95 transition-transform">
-                    はい、実施できます
+                    {{ $prTomorrowAvailable ?? false ? 'はい、今すぐ実施できます' : 'はい、実施できます' }}
                 </button>
             </form>
+
+            @if($prTomorrowAvailable ?? false)
+            <form method="POST" action="{{ route('proposals.pr_tomorrow', $application->proposal_token) }}">
+                @csrf
+                <button type="submit"
+                        class="w-full bg-pink-100 text-pink-700 py-3 rounded-xl font-bold text-base hover:bg-pink-200 active:scale-95 transition-transform">
+                    {{ $application->invited_end_at->format('m月d日(') }}{{ ['日','月','火','水','木','金','土'][$application->invited_end_at->dayOfWeek] }}{{ $application->invited_end_at->format(') 9:00〜H:i') }}なら実施できます
+                </button>
+            </form>
+            @endif
 
             <a href="{{ route('proposals.no', $application->proposal_token) }}"
                class="block w-full border-2 border-gray-300 text-gray-600 py-3 rounded-xl font-medium text-base text-center hover:border-gray-400 hover:bg-gray-50 transition-colors">
