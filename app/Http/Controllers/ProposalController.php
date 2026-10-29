@@ -18,7 +18,7 @@ class ProposalController extends Controller
     public function confirm(string $token): View|\Illuminate\Http\Response
     {
         $application = Application::where('proposal_token', $token)
-            ->with(['campaign', 'user'])
+            ->with(['campaign', 'user', 'course'])
             ->first();
 
         if (!$application) {

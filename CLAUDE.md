@@ -144,6 +144,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
   - `ApplicationController::updateStatus()`で`$request->has('course_id')`ならステータスに関わらず保存する（`line_contacted`遷移時限定にすると再打診や直接完了操作でコースが保存されないバグになる）
   - 打診確定後の案内文（`ProposalController::createMonitorGuideJob()`）は`$application->course_id`があれば`$course->invite_message`（空ならcampaign既定にフォールバック）を使用。モニター終了案内文（`monitor_end_message`）はコースに関わらず常に案件共通
   - コースが割り当てられた応募には**継続LINE送信ボタン（継続打診）を出さない**（`campaign_index.blade.php`のボタン条件に`&& !$app->course_id`）。コースの単発/継続は応募時点の`continuation_wish`とは別概念のため
+  - **打診ページ（`/proposals/{token}`、`confirm.blade.php`）にコース名を表示**（2026-10-29追加）。`course_id`がある場合のみ【商品名】の直下に【コース】行を出す（`ProposalController::confirm()`で`course`リレーションをeager load）。それまでは商品名しか出ておらず、ユーザーがどのコースの案内か分からない状態だった
 - **継続率指標はコース未指定（`course_id === null`）の応募のみで集計する**（`ApplicationController::index()`の「未達成目標継続率」アラート、`campaignIndex()`の継続率サマリー、いずれも`whereNull('course_id')`）。コースの「継続」タイプは商品として継続が確定しており確率的な継続確認の対象ではないため
 - 応募管理一覧・案件別ページ・応募詳細に「コース」列/欄を表示。テーブルは`overflow-x-auto`で横スクロールするため列追加で窮屈にはならない
 

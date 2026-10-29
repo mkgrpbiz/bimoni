@@ -28,6 +28,12 @@
                 <span class="text-gray-400 w-24 shrink-0">【商品名】</span>
                 <span class="font-medium text-gray-800">{{ $application->campaign->title }}</span>
             </div>
+            @if($application->course_id && $application->course)
+            <div class="flex gap-2">
+                <span class="text-gray-400 w-24 shrink-0">【コース】</span>
+                <span class="font-medium text-gray-800">{{ $application->course->name }}</span>
+            </div>
+            @endif
             @if($isPrIf && !$application->invited_at && $application->invited_end_at)
             {{-- PR打診：実施期限表示 --}}
             <div class="bg-pink-50 border border-pink-200 rounded-xl px-4 py-3 mt-2">
