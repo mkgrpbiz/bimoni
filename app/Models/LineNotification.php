@@ -9,7 +9,7 @@ class LineNotification extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'user_id', 'application_id', 'notification_type', 'message', 'status', 'sent_at',
+        'user_id', 'application_id', 'notification_type', 'message', 'status', 'error_message', 'sent_at',
     ];
 
     protected function casts(): array
