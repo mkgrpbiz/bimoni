@@ -502,6 +502,8 @@ AI OFFICE側の「全体テンプレート」機能（正常に運用されて�
 - STGのcrontab編集は `crontab -e`（viが開く）ではなく PHP経由で: `php8.3 -r "file_put_contents('/tmp/nc.txt', '...' . PHP_EOL); passthru('crontab /tmp/nc.txt');"`
 - 再応募（cancelled→update）時に古いLineMessageJobが残存する問題 → update前に `status='canceled'` に更新すること
 - **LINE送信失敗の原因が追えない問題を修正（2026-10-30）**: `LineMessagingService::sendPush()`は以前、成功/失敗のbool・固定文字列しか記録しておらず、LINE Messaging APIが実際に返したエラー内容（追加メッセージのquota超過・トークン不正等）が一切分からなかった（スタンダードプランで月30,000通の無料枠を使い切り追加メッセージ課金に入っているのに自動送信が失敗する、という本番障害で発覚）。`sendPush()`失敗時にレスポンスのstatus+`message`（無ければbody全文）を`$this->lastError`（public プロパティ）にセットし、`LineNotification.error_message`（新規カラム）にも保存するよう修正。`line:send-messages`コマンド（`SendLineMessages`）も`LineMessageJob.error_message`に固定文字列「送信失敗」ではなく`$lineService->lastError`を保存するよう変更
+  - **ハマりポイント①**: マイグレーションで`error_message`カラムを追加したが`LineNotification.$fillable`に追加し忘れており、値が黙って保存されずnullのままになっていた（`php -l`では検知できないタイプのバグ）
+  - **ハマりポイント②（本命）**: `admin/notifications/line`（`LineNotificationController`、LINE通知の送信履歴・個別送信・失敗分の再送信/対応済みを扱う管理画面）の`resend()`が、`LineMessagingService`を経由せず**独自にHTTPリクエストを直書き**していたため、上記の修正が一切効いていなかった（打診モーダルの件と同種の「同じ機能が複数箇所に重複実装されている」パターン）。`resend()`だけ`sendPush()`を直接呼ぶと再送信のたびにログ行が増えてしまう（この画面は既存1行を更新する設計のため）ので、HTTPリクエスト自体は直書きのまま維持しつつ、エラー内容の記録ロジックだけ`sendPush()`と同じ形式に揃えた。管理画面側（`admin/notifications/line.blade.php`）にも`error_message`を失敗バッジの下に表示するようにした
 - ライトボックスは純JS実装（`openLightbox(src)` / `closeLightbox()`）、クリックまたはEscで閉じる。回収詳細・報告詳細で使用
 - CSVインポートはBOM付きUTF-8（`"\xEF\xBB\xBF"`プレフィックス）でExcel対応
 - ¥・カンマ除去は `preg_replace('/[^\d]/', '', $value)` を使う

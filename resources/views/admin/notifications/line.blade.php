@@ -78,6 +78,9 @@
                                     {{ $log->status === 'sent' ? 'bg-green-500 text-white' : ($log->status === 'resolved' ? 'bg-gray-400 text-white' : 'bg-red-500 text-white') }}">
                                     {{ $log->status === 'sent' ? '送信済' : ($log->status === 'resolved' ? '対応済' : '失敗') }}
                                 </span>
+                                @if($log->status === 'failed' && $log->error_message)
+                                <span class="text-xs text-red-600 dark:text-red-400 block w-full">{{ $log->error_message }}</span>
+                                @endif
                                 @if($log->status === 'failed')
                                 <form method="POST" action="{{ route('admin.notifications.line.resend', $log) }}" class="inline">
                                     @csrf
