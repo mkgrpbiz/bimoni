@@ -9,12 +9,18 @@ use Illuminate\Support\Facades\Log;
 
 class LineMessagingService
 {
+    // sendPush()が失敗した直後に、呼び出し元がLINEから実際に返ってきたエラー内容を読めるようにする
+    // （戻り値はbool互換を保ったまま、追加メッセージのquota超過等の原因特定に使う。2026-10-30追加）
+    public ?string $lastError = null;
+
     public function sendPush(int $userId, string $message, string $type = 'general', ?int $applicationId = null): bool
     {
+        $this->lastError = null;
         $user = User::find($userId);
 
         if (!$user || !$user->line_user_id) {
-            $this->log($userId, $applicationId, $type, $message, 'failed');
+            $this->lastError = 'LINE UID未設定';
+            $this->log($userId, $applicationId, $type, $message, 'failed', $this->lastError);
             return false;
         }
 
@@ -34,7 +40,11 @@ class LineMessagingService
             ]);
 
         $status = $response->successful() ? 'sent' : 'failed';
-        $this->log($userId, $applicationId, $type, $message, $status);
+        if (!$response->successful()) {
+            // LINE APIのエラーレスポンスは通常 {"message": "...", "details": [...]} 形式
+            $this->lastError = $response->status() . ': ' . ($response->json('message') ?? $response->body());
+        }
+        $this->log($userId, $applicationId, $type, $message, $status, $this->lastError);
 
         return $response->successful();
     }
@@ -81,7 +91,7 @@ class LineMessagingService
         return $results;
     }
 
-    private function log(int $userId, ?int $applicationId, string $type, string $message, string $status): void
+    private function log(int $userId, ?int $applicationId, string $type, string $message, string $status, ?string $errorMessage = null): void
     {
         LineNotification::create([
             'user_id'           => $userId,
@@ -89,6 +99,7 @@ class LineMessagingService
             'notification_type' => $type,
             'message'           => $message,
             'status'            => $status,
+            'error_message'     => $errorMessage,
             'sent_at'           => now(),
         ]);
     }

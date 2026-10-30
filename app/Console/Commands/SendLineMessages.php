@@ -43,7 +43,7 @@ class SendLineMessages extends Command
             $job->update([
                 'status'  => $success ? 'sent' : 'failed',
                 'sent_at' => now(),
-                'error_message' => $success ? null : '送信失敗',
+                'error_message' => $success ? null : ($lineService->lastError ?? '送信失敗'),
             ]);
 
             $this->line($success
