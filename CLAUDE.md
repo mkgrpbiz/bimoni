@@ -311,6 +311,7 @@ Xserver側にDB自動バックアップの設定がなく、コース機能の�
 - 戻るボタンのルートは `['year' => $month->year, 'month' => $month->month]`（`'month' => 'Y-m'` 形式はNG→500エラー）
 - 期待報酬0円の場合は「処理不要」バッジ表示
 - 承認ユーザー一覧CSVダウンロード機能あり（`referrals.csv` ルート）
+- **月選択クエリパラメータ（`?month=Y-m`）の繰り上がりバグを修正（2026-10-31）**: `Carbon::createFromFormat('Y-m', $request->month)`は日付部分を「今日の日」で補完するため、**月末31日に30日までの月（9月等）を指定すると翌月に繰り上がる**（例: 10/31に'2026-09'を渡すと`2026-10-01`になる）。代理店ポータルの報告管理（`Portal\ReportController`）で「9月だけ表示できない」障害として発覚したが、同じパターンが`Portal\UserController`・`Portal\RewardController`・`Admin\PointController`（`markReserved`/`markPaid`/`exportZengin`、**支払い処理に直結**）・`Admin\ReferralController`（`markDone`/`markPending`/`exportCsv`/`show`）の計10箇所に存在していた。`App\Support\DateParsing::monthStart(?string $raw)`（年月を正規表現で分離して`Carbon::createFromDate($y, $m, 1)`で1日固定にする）を新設し、該当箇所を全てこれに置き換えた。**月をまたいで日付を組み立てる新しいコードを書く時は、`createFromFormat('Y-m', ...)`ではなく必ずこのヘルパーを使うこと**
 
 ### 協力金管理（`admin/points`）
 - 先月・当月ブロックで予約済み・支払済み処理

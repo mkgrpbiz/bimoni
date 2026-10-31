@@ -25,12 +25,7 @@ class RewardController extends Controller
         // コードフィルター適用
         $filteredCodes = ($codeFilter && in_array($codeFilter, $codes)) ? [$codeFilter] : $codes;
 
-        $month = null;
-        if ($mode === 'month') {
-            $month = $request->filled('month')
-                ? \Carbon\Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-                : \Carbon\Carbon::now()->startOfMonth();
-        }
+        $month = $mode === 'month' ? \App\Support\DateParsing::monthStart($request->month) : null;
 
         $reports = \App\Services\PortalService::approvedReports($filteredCodes, $month);
         $rejectedReports = \App\Services\PortalService::rejectedReports($filteredCodes, $month);

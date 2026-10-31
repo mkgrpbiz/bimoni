@@ -30,9 +30,7 @@ class UserController extends Controller
 
         $users = \App\Services\PortalService::users($codes);
 
-        $month = $request->filled('month')
-            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-            : Carbon::now()->startOfMonth();
+        $month = \App\Support\DateParsing::monthStart($request->month);
 
         $userIds = $users->pluck('id');
 

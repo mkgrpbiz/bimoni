@@ -141,7 +141,7 @@ class ReferralController extends Controller
             'month'    => 'required|date_format:Y-m',
         ]);
 
-        $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        $month = \App\Support\DateParsing::monthStart($request->month);
         ReferralPaymentStatus::markDone(
             (int) $request->agent_id,
             (int) $month->format('Y'),
@@ -158,7 +158,7 @@ class ReferralController extends Controller
             'month'    => 'required|date_format:Y-m',
         ]);
 
-        $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        $month = \App\Support\DateParsing::monthStart($request->month);
         ReferralPaymentStatus::markPending(
             (int) $request->agent_id,
             (int) $month->format('Y'),
@@ -170,9 +170,7 @@ class ReferralController extends Controller
 
     public function exportCsv(Request $request, Agent $agent)
     {
-        $month = $request->filled('month')
-            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-            : Carbon::now()->startOfMonth();
+        $month = \App\Support\DateParsing::monthStart($request->month);
 
         $agent->load(['codes', 'children.codes']);
         $codeStrings = $agent->getAllCodeStrings();
@@ -238,9 +236,7 @@ class ReferralController extends Controller
 
     public function show(Request $request, Agent $agent): View
     {
-        $month = $request->filled('month')
-            ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-            : Carbon::now()->startOfMonth();
+        $month = \App\Support\DateParsing::monthStart($request->month);
 
         $agent->load(['codes', 'children.codes']);
         $codeStrings = $agent->getAllCodeStrings();

@@ -205,7 +205,7 @@ class PointController extends Controller
     public function markReserved(Request $request): RedirectResponse
     {
         $request->validate(['month' => 'required|date_format:Y-m']);
-        $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        $month = \App\Support\DateParsing::monthStart($request->month);
 
         $start = $month->copy()->startOfMonth();
         $end   = $month->copy()->endOfMonth();
@@ -231,7 +231,7 @@ class PointController extends Controller
     public function markPaid(Request $request): RedirectResponse
     {
         $request->validate(['month' => 'required|date_format:Y-m']);
-        $month = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        $month = \App\Support\DateParsing::monthStart($request->month);
 
         $start = $month->copy()->startOfMonth();
         $end   = $month->copy()->endOfMonth();
@@ -270,7 +270,7 @@ class PointController extends Controller
             'transfer_date' => 'required|date',
         ]);
 
-        $month        = Carbon::createFromFormat('Y-m', $request->month)->startOfMonth();
+        $month        = \App\Support\DateParsing::monthStart($request->month);
         $transferDate = Carbon::parse($request->transfer_date)->format('md');
 
         $zenginStart = $month->copy()->startOfMonth();

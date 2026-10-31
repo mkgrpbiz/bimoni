@@ -25,12 +25,7 @@ class ReportController extends Controller
         // コードフィルター
         $codes = ($codeFilter && in_array($codeFilter, $allCodes)) ? [$codeFilter] : $allCodes;
 
-        $month = null;
-        if ($mode === 'month') {
-            $month = $request->filled('month')
-                ? \Carbon\Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
-                : \Carbon\Carbon::now()->startOfMonth();
-        }
+        $month = $mode === 'month' ? \App\Support\DateParsing::monthStart($request->month) : null;
 
         $reports = \App\Services\PortalService::approvedReports($codes, $month);
 
