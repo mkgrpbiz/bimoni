@@ -23,6 +23,7 @@ class CollectionReport extends Model
         'item_count', 'other_count', 'cooperation_fee',
         'adjustment_amount', 'adjustment_reason',
         'status', 'rejection_reason', 'reviewed_by', 'reviewed_at',
+        'payment_status', 'paid_at', 'zengin_batch',
     ];
 
     protected function casts(): array

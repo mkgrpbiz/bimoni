@@ -8,7 +8,7 @@ class UserReferralReward extends Model
 {
     protected $fillable = [
         'referrer_user_id', 'referred_user_id', 'monitor_report_id',
-        'amount', 'payment_status', 'paid_at',
+        'amount', 'payment_status', 'paid_at', 'zengin_batch',
     ];
 
     protected function casts(): array

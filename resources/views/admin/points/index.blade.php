@@ -78,32 +78,56 @@
             </div>
         </div>
 
-        <div class="flex gap-2 flex-wrap items-end">
-            <form method="GET" action="{{ route('admin.points.zengin') }}" class="flex items-end gap-1.5">
-                <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-0.5">振込日</label>
-                    <input type="date" name="transfer_date" required value="{{ now()->format('Y-m-d') }}"
-                           class="border rounded px-2 py-1 text-xs">
+        {{-- 住信の一括振込が1日300万円までのため、振込先単位で300万円ごとに①②③…とバッチ分割 --}}
+        <div class="flex flex-col gap-2">
+            @forelse($block['batches'] as $b)
+            <div class="border rounded-lg px-3 py-2 {{ $b['overLimit'] ? 'border-red-300 bg-red-50' : 'border-gray-200' }}">
+                <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span class="font-bold text-gray-700">{{ $b['label'] }}</span>
+                    <span class="text-sm font-bold {{ $b['overLimit'] ? 'text-red-600' : 'text-gray-700' }}">¥{{ number_format($b['total']) }}</span>
+                    <span class="text-xs text-gray-400">{{ $b['count'] }}件</span>
+                    @if($b['allPaid'])
+                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">支払い済</span>
+                    @elseif($b['hasPending'])
+                        <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">予約待ち</span>
+                    @else
+                        <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">予約済</span>
+                    @endif
+                    @if($b['overLimit'])
+                        <span class="text-xs text-red-600 font-medium">⚠️ この振込先単独で300万円超</span>
+                    @endif
                 </div>
-                <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">全銀出力</button>
-            </form>
+                <div class="flex gap-1.5 flex-wrap items-end">
+                    <form method="GET" action="{{ route('admin.points.zengin') }}" class="flex items-end gap-1.5">
+                        <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
+                        <input type="hidden" name="batch" value="{{ $b['batch'] }}">
+                        <input type="date" name="transfer_date" required value="{{ now()->format('Y-m-d') }}"
+                               class="border rounded px-2 py-1 text-xs">
+                        <button type="submit" class="bg-blue-600 text-white px-2.5 py-1 rounded text-xs hover:bg-blue-700">全銀出力</button>
+                    </form>
 
-            @if($block['hasPending'] && $block['total'] > 0)
-            <form method="POST" action="{{ route('admin.points.mark_reserved') }}"
-                  onsubmit="return confirm('{{ $block['month']->format('Y年n月') }}のポイント還元をすべて予約済にしますか？')">
-                @csrf @method('PATCH')
-                <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
-                <button type="submit" class="bg-green-500 text-white px-3 py-1.5 rounded text-sm hover:bg-green-600">→ 予約済にする</button>
-            </form>
-            @elseif(!$block['hasPending'] && $block['total'] > 0)
-            <form method="POST" action="{{ route('admin.points.mark_paid') }}"
-                  onsubmit="return confirm('{{ $block['month']->format('Y年n月') }}のポイント還元をすべて支払い済にしますか？')">
-                @csrf @method('PATCH')
-                <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
-                <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">→ 支払い済にする</button>
-            </form>
-            @endif
+                    @if($b['hasPending'])
+                    <form method="POST" action="{{ route('admin.points.mark_reserved') }}"
+                          onsubmit="return confirm('{{ $block['month']->format('Y年n月') }} {{ $b['label'] }}の支払いをすべて予約済にしますか？')">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
+                        <input type="hidden" name="batch" value="{{ $b['batch'] }}">
+                        <button type="submit" class="bg-green-500 text-white px-2.5 py-1 rounded text-xs hover:bg-green-600">→ 予約済にする</button>
+                    </form>
+                    @elseif(!$b['allPaid'])
+                    <form method="POST" action="{{ route('admin.points.mark_paid') }}"
+                          onsubmit="return confirm('{{ $block['month']->format('Y年n月') }} {{ $b['label'] }}の支払いをすべて支払い済にしますか？')">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="month" value="{{ $block['month']->format('Y-m') }}">
+                        <input type="hidden" name="batch" value="{{ $b['batch'] }}">
+                        <button type="submit" class="bg-blue-600 text-white px-2.5 py-1 rounded text-xs hover:bg-blue-700">→ 支払い済にする</button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+            @empty
+            <p class="text-xs text-gray-400">対象データなし</p>
+            @endforelse
         </div>
     </div>
     @endforeach
@@ -138,14 +162,60 @@ function syncMonth(sel) {
 }
 </script>
 
-<div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600 flex items-center gap-4">
-    <span>{{ $month->format('Y年n月') }} 合計: <strong>¥{{ number_format($totalAmount) }}</strong></span>
-    <form method="POST" action="{{ route('admin.points.mark_paid') }}"
-          onsubmit="return confirm('{{ $month->format('Y年n月') }}のポイント還元をすべて支払い済にしますか？')">
-        @csrf @method('PATCH')
-        <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
-        <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">→ 支払い済にする</button>
-    </form>
+<div class="bg-white rounded-lg shadow mb-2 px-4 py-3 text-sm text-gray-600">
+    <div class="mb-2">{{ $month->format('Y年n月') }} 合計: <strong>¥{{ number_format($totalAmount) }}</strong></div>
+
+    {{-- 住信の一括振込が1日300万円までのため、振込先単位で300万円ごとに①②③…とバッチ分割 --}}
+    <div class="flex flex-col gap-2">
+        @forelse($batches as $b)
+        <div class="border rounded-lg px-3 py-2 {{ $b['overLimit'] ? 'border-red-300 bg-red-50' : 'border-gray-200' }}">
+            <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span class="font-bold text-gray-700">{{ $b['label'] }}</span>
+                <span class="text-sm font-bold {{ $b['overLimit'] ? 'text-red-600' : 'text-gray-700' }}">¥{{ number_format($b['total']) }}</span>
+                <span class="text-xs text-gray-400">{{ $b['count'] }}件</span>
+                @if($b['allPaid'])
+                    <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">支払い済</span>
+                @elseif($b['hasPending'])
+                    <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">予約待ち</span>
+                @else
+                    <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">予約済</span>
+                @endif
+                @if($b['overLimit'])
+                    <span class="text-xs text-red-600 font-medium">⚠️ この振込先単独で300万円超</span>
+                @endif
+            </div>
+            <div class="flex gap-1.5 flex-wrap items-end">
+                <form method="GET" action="{{ route('admin.points.zengin') }}" class="flex items-end gap-1.5">
+                    <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+                    <input type="hidden" name="batch" value="{{ $b['batch'] }}">
+                    <input type="date" name="transfer_date" required value="{{ now()->format('Y-m-d') }}"
+                           class="border rounded px-2 py-1 text-xs">
+                    <button type="submit" class="bg-blue-600 text-white px-2.5 py-1 rounded text-xs hover:bg-blue-700">全銀出力</button>
+                </form>
+
+                @if($b['hasPending'])
+                <form method="POST" action="{{ route('admin.points.mark_reserved') }}"
+                      onsubmit="return confirm('{{ $month->format('Y年n月') }} {{ $b['label'] }}の支払いをすべて予約済にしますか？')">
+                    @csrf @method('PATCH')
+                    <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+                    <input type="hidden" name="batch" value="{{ $b['batch'] }}">
+                    <button type="submit" class="bg-green-500 text-white px-2.5 py-1 rounded text-xs hover:bg-green-600">→ 予約済にする</button>
+                </form>
+                @elseif(!$b['allPaid'])
+                <form method="POST" action="{{ route('admin.points.mark_paid') }}"
+                      onsubmit="return confirm('{{ $month->format('Y年n月') }} {{ $b['label'] }}の支払いをすべて支払い済にしますか？')">
+                    @csrf @method('PATCH')
+                    <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+                    <input type="hidden" name="batch" value="{{ $b['batch'] }}">
+                    <button type="submit" class="bg-blue-600 text-white px-2.5 py-1 rounded text-xs hover:bg-blue-700">→ 支払い済にする</button>
+                </form>
+                @endif
+            </div>
+        </div>
+        @empty
+        <p class="text-xs text-gray-400">対象データなし</p>
+        @endforelse
+    </div>
 </div>
 
 <div class="bg-white rounded-lg shadow overflow-x-auto">
@@ -160,6 +230,7 @@ function syncMonth(sel) {
                 <th class="px-4 py-3 text-right">回収件数</th>
                 <th class="px-4 py-3 text-right">紹介報酬件数</th>
                 <th class="px-4 py-3 text-right">ポイント還元合計</th>
+                <th class="px-4 py-3 text-center">バッチ</th>
                 <th class="px-4 py-3 text-center">ステータス</th>
             </tr>
         </thead>
@@ -175,6 +246,7 @@ function syncMonth(sel) {
                 <td class="px-4 py-3 text-right text-blue-600">{{ $row['collectionCount'] }}件</td>
                 <td class="px-4 py-3 text-right text-purple-600">{{ $row['referralCount'] }}件</td>
                 <td class="px-4 py-3 text-right font-bold text-gray-800">¥{{ number_format($row['total']) }}</td>
+                <td class="px-4 py-3 text-center text-gray-500">{{ $row['batchLabel'] }}</td>
                 <td class="px-4 py-3 text-center">
                     @if($row['total'] === 0)
                         <span class="bg-gray-100 text-gray-400 text-xs px-2 py-0.5 rounded-full">予約不要</span>
@@ -189,7 +261,7 @@ function syncMonth(sel) {
             </tr>
             @empty
             <tr>
-                <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                <td colspan="10" class="px-4 py-8 text-center text-gray-400">
                     {{ $month->format('Y年n月') }}の承認済み報告はありません
                 </td>
             </tr>

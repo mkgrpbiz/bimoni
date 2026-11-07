@@ -9,6 +9,8 @@ use App\Models\MonitorReport;
 use App\Models\User;
 use App\Models\UserReferralReward;
 use App\Services\PointService;
+use App\Services\ZenginBatchService;
+use App\Support\ZenginRecipient;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,10 @@ use Illuminate\View\View;
 
 class PointController extends Controller
 {
+    public function __construct(private ZenginBatchService $zenginBatchService)
+    {
+    }
+
     private function monitorFee(MonitorReport $r): int
     {
         $coopFee = $r->purchase_type === 'continuation'
@@ -65,6 +71,7 @@ class PointController extends Controller
                 'count'      => $monitors->count(),
                 'hasPending' => $hasPending,
                 'allPaid'    => $allPaid,
+                'batches'    => $this->zenginBatchService->summarize($start, $end),
             ];
         }
 
@@ -184,15 +191,23 @@ class PointController extends Controller
             }
         }
 
+        $monthStart = $month->copy()->startOfMonth();
+        $monthEnd   = $month->copy()->endOfMonth();
+        $batchLabels = $this->zenginBatchService->batchLabelsByUser($monthStart, $monthEnd);
+        $batches     = $this->zenginBatchService->summarize($monthStart, $monthEnd);
+
         $userSummary = collect($userMap)
-            ->map(fn($r) => array_merge($r, ['total' => $r['monitorTotal'] + $r['collectionTotal'] + $r['referralTotal']]))
+            ->map(fn($r, $uid) => array_merge($r, [
+                'total'      => $r['monitorTotal'] + $r['collectionTotal'] + $r['referralTotal'],
+                'batchLabel' => $batchLabels[$uid] ?? '-',
+            ]))
             ->sortByDesc('total')
             ->values();
 
         $totalAmount = $userSummary->sum('total');
 
         return view('admin.points.index', compact(
-            'blocks', 'month', 'year', 'mon', 'months', 'userSummary', 'totalAmount'
+            'blocks', 'month', 'year', 'mon', 'months', 'userSummary', 'totalAmount', 'batches'
         ));
     }
 
@@ -204,40 +219,56 @@ class PointController extends Controller
 
     public function markReserved(Request $request): RedirectResponse
     {
-        $request->validate(['month' => 'required|date_format:Y-m']);
+        $request->validate([
+            'month' => 'required|date_format:Y-m',
+            'batch' => 'required|integer|min:1',
+        ]);
         $month = \App\Support\DateParsing::monthStart($request->month);
+        $batch = (int) $request->batch;
 
         $start = $month->copy()->startOfMonth();
         $end   = $month->copy()->endOfMonth();
 
+        $this->zenginBatchService->ensureBatches($start, $end);
+
         MonitorReport::where('status', 'approved')
             ->where('payment_status', 'pending')
+            ->where('zengin_batch', $batch)
             ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'reserved']);
 
         CollectionReport::where('status', 'approved')
             ->where('payment_status', 'pending')
+            ->where('zengin_batch', $batch)
             ->whereRaw(CollectionReport::monthCutoffSql() . ' BETWEEN ? AND ?', [$start, $end])
             ->update(['payment_status' => 'reserved']);
 
         UserReferralReward::where('payment_status', 'pending')
+            ->where('zengin_batch', $batch)
             ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'reserved']);
 
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
-            ->with('success', $month->format('Y年n月') . 'の支払いを予約済みにしました。');
+            ->with('success', $month->format('Y年n月') . ' ' . ZenginBatchService::circled($batch) . 'の支払いを予約済みにしました。');
     }
 
     public function markPaid(Request $request): RedirectResponse
     {
-        $request->validate(['month' => 'required|date_format:Y-m']);
+        $request->validate([
+            'month' => 'required|date_format:Y-m',
+            'batch' => 'required|integer|min:1',
+        ]);
         $month = \App\Support\DateParsing::monthStart($request->month);
+        $batch = (int) $request->batch;
 
         $start = $month->copy()->startOfMonth();
         $end   = $month->copy()->endOfMonth();
 
+        $this->zenginBatchService->ensureBatches($start, $end);
+
         $reports = MonitorReport::where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'reserved'])
+            ->where('zengin_batch', $batch)
             ->whereBetween('created_at', [$start, $end])
             ->get();
 
@@ -252,15 +283,17 @@ class PointController extends Controller
 
         CollectionReport::where('status', 'approved')
             ->whereIn('payment_status', ['pending', 'reserved'])
+            ->where('zengin_batch', $batch)
             ->whereRaw(CollectionReport::monthCutoffSql() . ' BETWEEN ? AND ?', [$start, $end])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
         UserReferralReward::whereIn('payment_status', ['pending', 'reserved'])
+            ->where('zengin_batch', $batch)
             ->whereBetween('created_at', [$start, $end])
             ->update(['payment_status' => 'paid', 'paid_at' => now()]);
 
         return redirect()->route('admin.points.index', ['year' => $month->year, 'month' => $month->month])
-            ->with('success', $month->format('Y年n月') . 'の支払いを支払済みにしました。');
+            ->with('success', $month->format('Y年n月') . ' ' . ZenginBatchService::circled($batch) . 'の支払いを支払済みにしました。');
     }
 
     public function exportZengin(Request $request): Response
@@ -268,28 +301,35 @@ class PointController extends Controller
         $request->validate([
             'month'         => 'required|date_format:Y-m',
             'transfer_date' => 'required|date',
+            'batch'         => 'required|integer|min:1',
         ]);
 
         $month        = \App\Support\DateParsing::monthStart($request->month);
         $transferDate = Carbon::parse($request->transfer_date)->format('md');
+        $batch        = (int) $request->batch;
 
         $zenginStart = $month->copy()->startOfMonth();
         $zenginEnd   = $month->copy()->endOfMonth();
 
+        $this->zenginBatchService->ensureBatches($zenginStart, $zenginEnd);
+
         $monitors = MonitorReport::with(['user', 'campaign'])
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
+            ->where('zengin_batch', $batch)
             ->whereBetween('created_at', [$zenginStart, $zenginEnd])
             ->get();
 
         $collections = CollectionReport::with('user')
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
+            ->where('zengin_batch', $batch)
             ->whereRaw(CollectionReport::monthCutoffSql() . ' BETWEEN ? AND ?', [$zenginStart, $zenginEnd])
             ->get();
 
         $referralRewards = UserReferralReward::with('referrer')
             ->where('payment_status', 'pending')
+            ->where('zengin_batch', $batch)
             ->whereBetween('created_at', [$zenginStart, $zenginEnd])
             ->get();
 
@@ -298,24 +338,20 @@ class PointController extends Controller
         $recipients = [];
 
         $accumulate = function ($user, int $amount) use (&$recipients) {
-            if (!$user || !$user->bank_code || !$user->bank_account_number || $amount <= 0) {
+            if ($amount <= 0) {
                 return;
             }
-            $bankCode   = str_pad($this->digitsOnly($user->bank_code), 4, '0', STR_PAD_LEFT);
-            $branchCode = str_pad($this->digitsOnly($user->bank_branch_code), 3, '0', STR_PAD_LEFT);
-            $account    = str_pad($this->digitsOnly($user->bank_account_number), 7, '0', STR_PAD_LEFT);
-            $name       = $this->normalizeRecipientName($user->bank_account_name);
-            if ($name === '') {
+            $key = ZenginRecipient::key($user);
+            if ($key === null) {
                 return;
             }
 
-            $key = $bankCode . '|' . $branchCode . '|' . $account . '|' . $name;
             if (!isset($recipients[$key])) {
                 $recipients[$key] = [
-                    'bankCode'   => $bankCode,
-                    'branchCode' => $branchCode,
-                    'account'    => $account,
-                    'name'       => $name,
+                    'bankCode'   => ZenginRecipient::bankCode($user),
+                    'branchCode' => ZenginRecipient::branchCode($user),
+                    'account'    => ZenginRecipient::account($user),
+                    'name'       => ZenginRecipient::name($user),
                     'amount'     => 0,
                 ];
             }
@@ -376,44 +412,12 @@ class PointController extends Controller
 
         $content  = implode("\r\n", $lines);
         $content  = mb_convert_encoding($content, 'SJIS-win', 'UTF-8');
-        $filename = 'bimoni_' . $transferDate . '.csv';
+        $filename = 'bimoni_' . $transferDate . '_' . $batch . '.csv';
 
         return response($content, 200, [
             'Content-Type'        => 'application/octet-stream',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
-    }
-
-    private function digitsOnly(?string $value): string
-    {
-        return preg_replace('/\D/', '', $value ?? '') ?? '';
-    }
-
-    // スプレッドシート運用時に実際に使っていたGASマクロ（normalizeRecipientName）と同じ正規化ロジック
-    private function normalizeRecipientName(?string $value): string
-    {
-        $s = trim($value ?? '');
-
-        // スペース除去
-        $s = str_replace(['　', ' '], '', $s);
-
-        // 全角英数字 → 半角（記号は対象外。mb_convert_kanaの'a'は記号も変換してしまうため使わない）
-        $s = preg_replace_callback('/[\x{FF21}-\x{FF3A}\x{FF41}-\x{FF5A}\x{FF10}-\x{FF19}]/u', function ($m) {
-            return mb_chr(mb_ord($m[0], 'UTF-8') - 0xFEE0, 'UTF-8');
-        }, $s);
-
-        // よくある記号を銀行向けに寄せる
-        $s = str_replace(
-            ['‐', '‑', '‒', '–', '—', '―', 'ー', '－', '−', '・', '（', '）', '．', '／'],
-            ['ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', 'ｰ', '･', '(', ')', '.', '/'],
-            $s
-        );
-
-        // 全角カナ → 半角カナ
-        $s = mb_convert_kana($s, 'k', 'UTF-8');
-
-        // 銀行向けに許容しやすい文字だけ残す
-        return preg_replace('/[^0-9A-Za-z\x{FF66}-\x{FF9F}().\/-]/u', '', $s) ?? '';
     }
 
     public function adjust(Request $request): RedirectResponse

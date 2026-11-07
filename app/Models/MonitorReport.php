@@ -10,7 +10,7 @@ class MonitorReport extends Model
         'application_id', 'user_id', 'campaign_id', 'referral_fee',
         'report_body', 'purchase_type', 'continuation_round', 'purchase_amount', 'bonus_amount', 'adjustment_amount', 'adjustment_reason', 'payment_method', 'payment_method_other',
         'status', 'reviewed_by', 'reviewed_at', 'reject_reason',
-        'payment_status', 'paid_at',
+        'payment_status', 'paid_at', 'zengin_batch',
         'report_image',
     ];
 
