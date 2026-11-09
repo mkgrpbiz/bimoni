@@ -51,22 +51,24 @@
             @if($section->steps->isNotEmpty())
             <div class="space-y-4 mt-2">
                 @foreach($section->steps as $i => $step)
-                <div class="flex gap-3 {{ !$loop->first ? 'pt-4 border-t border-dashed border-gray-200' : '' }}">
-                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-pink-400 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-                        {{ $i + 1 }}
+                <div class="{{ !$loop->first ? 'pt-4 border-t border-dashed border-gray-200' : '' }}">
+                    <div class="flex gap-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-pink-400 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                            {{ $i + 1 }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-base text-gray-800">{{ $step->title }}</p>
+                            @if($step->description)
+                            <p class="text-sm text-gray-600 whitespace-pre-wrap mt-0.5">{{ $step->description }}</p>
+                            @endif
+                            @if($step->sub_text)
+                            <p class="text-xs text-gray-400 mt-1">※ {{ $step->sub_text }}</p>
+                            @endif
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-bold text-base text-gray-800">{{ $step->title }}</p>
-                        @if($step->description)
-                        <p class="text-sm text-gray-600 whitespace-pre-wrap mt-0.5">{{ $step->description }}</p>
-                        @endif
-                        @if($step->sub_text)
-                        <p class="text-xs text-gray-400 mt-1">※ {{ $step->sub_text }}</p>
-                        @endif
-                        @if($step->image)
-                        <img src="{{ asset('storage/' . $step->image) }}" alt="{{ $step->title }}" class="mt-2 rounded-lg border border-gray-100 w-full">
-                        @endif
-                    </div>
+                    @if($step->image)
+                    <img src="{{ asset('storage/' . $step->image) }}" alt="{{ $step->title }}" class="mt-2 rounded-lg border border-gray-100 w-full">
+                    @endif
                 </div>
                 @endforeach
             </div>
