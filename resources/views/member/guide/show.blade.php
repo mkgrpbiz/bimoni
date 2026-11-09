@@ -64,7 +64,7 @@
                         <p class="text-xs text-gray-400 mt-1">※ {{ $step->sub_text }}</p>
                         @endif
                         @if($step->image)
-                        <img src="{{ asset('storage/' . $step->image) }}" alt="{{ $step->title }}" class="mt-2 rounded-lg border border-gray-100">
+                        <img src="{{ asset('storage/' . $step->image) }}" alt="{{ $step->title }}" class="mt-2 rounded-lg border border-gray-100 w-full">
                         @endif
                     </div>
                 </div>
