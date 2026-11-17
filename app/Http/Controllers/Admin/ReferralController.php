@@ -244,7 +244,7 @@ class ReferralController extends Controller
         $referredUsers   = User::whereIn('referred_by_code', $codeStrings)->orderBy('created_at')->get();
         $referredUserIds = $referredUsers->pluck('id');
 
-        $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referred_by_code', 'campaign:id,title,cooperation_fee,referral_fee'])
+        $reports = MonitorReport::with(['user:id,name,bimoni_user_id,referred_by_code', 'campaign:id,title,cooperation_fee,referral_fee', 'application.course'])
             ->whereIn('user_id', $referredUserIds)
             ->where('status', 'approved')
             ->where('purchase_type', 'initial')

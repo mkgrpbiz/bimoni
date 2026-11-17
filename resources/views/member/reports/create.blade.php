@@ -58,7 +58,7 @@
                     <option value="">選択してください</option>
                     @foreach($monitorInitialApps as $app)
                     <option value="{{ $app->id }}"
-                            data-fee="{{ $app->campaign->cooperation_fee ?? 0 }}"
+                            data-fee="{{ $app->course?->cooperation_fee ?? $app->campaign->cooperation_fee ?? 0 }}"
                             data-bonus="{{ $app->bonus_amount ?? 0 }}"
                             {{ (string) old('application_id') === (string) $app->id ? 'selected' : '' }}>
                         {{ $app->campaign->title }}
@@ -78,7 +78,7 @@
                     @php $optApp = $opt['application']; $optRound = $opt['round']; @endphp
                     <option value="{{ $optApp->id }}"
                             data-round="{{ $optRound }}"
-                            data-fee="{{ $optApp->campaign->continuation_cooperation_fee ?? 0 }}"
+                            data-fee="{{ $optApp->course?->continuation_cooperation_fee ?? $optApp->campaign->continuation_cooperation_fee ?? 0 }}"
                             data-bonus="{{ $optApp->bonus_amount ?? 0 }}"
                             {{ (string) old('application_id') === (string) $optApp->id && (string) old('continuation_round') === (string) $optRound ? 'selected' : '' }}>
                         {{ $optApp->campaign->title }}{{ $optRound ? '/'.$optRound.'回目' : '' }}

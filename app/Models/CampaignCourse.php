@@ -10,6 +10,7 @@ class CampaignCourse extends Model
         'campaign_id', 'name', 'initial_purchase_fee', 'course_type',
         'continuation_count', 'continuation_judgment_enabled', 'continuation_rate',
         'continuation_fee_2', 'continuation_fee_3', 'continuation_fee_4',
+        'cooperation_fee', 'continuation_cooperation_fee',
         'percentage', 'invite_message', 'sort_order',
     ];
 

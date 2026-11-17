@@ -95,12 +95,7 @@
         <h2 class="font-bold text-gray-700 dark:text-gray-200 mb-3">実績サマリー</h2>
         @php
             $approvedReports = $reports->where('status', 'approved');
-            $calcReportTotal = function ($r) {
-                $coopFee = $r->purchase_type === 'continuation'
-                    ? ($r->campaign?->continuation_cooperation_fee ?? 0)
-                    : ($r->campaign?->cooperation_fee ?? 0);
-                return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
-            };
+            $calcReportTotal = fn ($r) => $r->totalPayout();
             $pendingPay = $approvedReports->where('payment_status', 'pending')->sum($calcReportTotal);
             $paidTotal  = $approvedReports->where('payment_status', 'paid')->sum($calcReportTotal);
         @endphp

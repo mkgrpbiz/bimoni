@@ -66,13 +66,7 @@ $tabs = [
                 <td class="px-3 py-2 text-gray-700">{{ $user?->name_kana ?? '-' }}</td>
                 <td class="px-3 py-2 text-gray-700 whitespace-nowrap">{{ $report->campaign?->title ?? '-' }}</td>
                 <td class="px-3 py-2 text-right whitespace-nowrap font-medium text-pink-600">
-                    @php
-                        $coopFee = $report->purchase_type === 'continuation'
-                            ? ($report->campaign?->continuation_cooperation_fee ?? 0)
-                            : ($report->campaign?->cooperation_fee ?? 0);
-                        $total = ($report->purchase_amount ?? 0) + $coopFee + ($report->bonus_amount ?? 0) + ($report->adjustment_amount ?? 0);
-                    @endphp
-                    ¥{{ number_format($total) }}
+                    ¥{{ number_format($report->totalPayout()) }}
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap">
                     <div class="flex items-center gap-1.5">

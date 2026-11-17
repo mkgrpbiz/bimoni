@@ -19,9 +19,7 @@
         if ($report->status === 'approved' && $report->payment_status === 'paid') {
             $badge = ['label' => '支払い済', 'color' => 'bg-teal-100 text-teal-700'];
         }
-        $coopFee = $report->purchase_type === 'continuation'
-            ? ($report->campaign?->continuation_cooperation_fee ?? 0)
-            : ($report->campaign?->cooperation_fee ?? 0);
+        $coopFee = $report->cooperationFee();
         $purchaseAmt  = $report->purchase_amount ?? 0;
         $adjustAmt    = $report->adjustment_amount ?? 0;
         $total        = $purchaseAmt + $coopFee + ($report->bonus_amount ?? 0) + $adjustAmt;

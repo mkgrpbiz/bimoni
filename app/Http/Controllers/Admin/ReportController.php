@@ -19,7 +19,7 @@ class ReportController extends Controller
     {
         $status = $request->input('status', 'pending');
 
-        $query = MonitorReport::with(['user', 'campaign', 'images'])
+        $query = MonitorReport::with(['user', 'campaign', 'images', 'application.course'])
             ->where('status', $status)
             ->latest();
 
@@ -43,10 +43,10 @@ class ReportController extends Controller
 
     public function show(MonitorReport $report): View
     {
-        $report->load(['user', 'campaign', 'application', 'images', 'reviewedBy']);
+        $report->load(['user', 'campaign', 'application.course', 'images', 'reviewedBy']);
 
         $duplicates = $report->campaign_id
-            ? MonitorReport::with('images')
+            ? MonitorReport::with(['images', 'application.course'])
                 ->where('user_id', $report->user_id)
                 ->where('campaign_id', $report->campaign_id)
                 ->where('id', '!=', $report->id)

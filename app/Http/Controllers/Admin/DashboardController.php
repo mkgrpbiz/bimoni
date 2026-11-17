@@ -118,15 +118,9 @@ class DashboardController extends Controller
             $monthGross = (int) round($this->summary->monthlyMetrics($y, $m, 'monthly')['grossProfit']);
 
             // 協力金 = 承認済み報告のモニター経費+協力金+ボーナス（メインKPIカードと同じ計算式）
-            $monthReports = MonitorReport::with('campaign')->where('status', 'approved')
+            $monthReports = MonitorReport::with(['campaign', 'application.course'])->where('status', 'approved')
                 ->whereYear('created_at', $y)->whereMonth('created_at', $m)->get();
-            $monthFee = $monthReports->sum(function ($r) {
-                $c       = $r->campaign;
-                $coopFee = $r->purchase_type === 'continuation'
-                    ? ($c?->continuation_cooperation_fee ?? 0)
-                    : ($c?->cooperation_fee ?? 0);
-                return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
-            }) + CollectionReport::where('status', 'approved')
+            $monthFee = $monthReports->sum(fn ($r) => $r->totalPayout()) + CollectionReport::where('status', 'approved')
                 ->whereRaw('YEAR(' . CollectionReport::monthCutoffSql() . ') = ? AND MONTH(' . CollectionReport::monthCutoffSql() . ') = ?', [$y, $m])
                 ->get()->sum(fn($r) => $r->totalFee())
                 + \App\Models\UserReferralReward::whereYear('created_at', $y)->whereMonth('created_at', $m)->sum('amount');

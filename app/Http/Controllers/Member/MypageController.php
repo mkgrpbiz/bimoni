@@ -27,17 +27,12 @@ class MypageController extends Controller
         $thisMonthStart = $now->copy()->startOfMonth();
         $thisMonthEnd   = $now->copy()->endOfMonth();
 
-        $calcMonitorFee = function (MonitorReport $r): int {
-            $coopFee = $r->purchase_type === 'continuation'
-                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
-                : ($r->campaign?->cooperation_fee ?? 0);
-            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
-        };
+        $calcMonitorFee = fn (MonitorReport $r): int => $r->totalPayout();
 
         // 先月報告（created_at）→ 今月10日支払い
         $lastMonthReports = MonitorReport::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->with('campaign')
+            ->with(['campaign', 'application.course'])
             ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
             ->get();
         $payCurrentMonth = $lastMonthReports->sum($calcMonitorFee);
@@ -50,7 +45,7 @@ class MypageController extends Controller
         // 今月報告（created_at）→ 来月10日支払い
         $thisMonthReports = MonitorReport::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->with('campaign')
+            ->with(['campaign', 'application.course'])
             ->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])
             ->get();
         $payNextMonth = $thisMonthReports->sum($calcMonitorFee);

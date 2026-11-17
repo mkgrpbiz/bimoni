@@ -43,9 +43,7 @@
                     $report->payment_method === 'none'        => 'お支払い無し',
                     default => $report->payment_method ?? '-',
                 };
-                $coopFee = $report->purchase_type === 'continuation'
-                    ? ($report->campaign?->continuation_cooperation_fee ?? 0)
-                    : ($report->campaign?->cooperation_fee ?? 0);
+                $coopFee = $report->cooperationFee();
                 $purchaseAmt = $report->purchase_amount ?? 0;
                 $bonusAmt = $report->bonus_amount ?? 0;
                 $adjustAmt = $report->adjustment_amount ?? 0;
@@ -323,7 +321,7 @@
                     <dl class="grid grid-cols-2 gap-y-2 text-sm">
                         <dt class="text-gray-500">報告種別</dt><dd>{{ $dupPurchaseLabel }}</dd>
                         <dt class="text-gray-500">モニター経費</dt><dd>¥{{ number_format($dup->purchase_amount ?? 0) }}</dd>
-                        <dt class="text-gray-500">ポイント還元</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->purchase_type === 'continuation' ? ($dup->campaign?->continuation_cooperation_fee ?? 0) : ($dup->campaign?->cooperation_fee ?? 0)) }}</dd>
+                        <dt class="text-gray-500">ポイント還元</dt><dd class="text-pink-600 font-medium">¥{{ number_format($dup->cooperationFee()) }}</dd>
                         @if($dup->purchase_type !== 'other')
                         <dt class="text-gray-500">支払方法</dt><dd>{{ $dupPayLabel }}</dd>
                         @endif

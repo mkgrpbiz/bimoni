@@ -191,6 +191,9 @@ class CampaignController extends Controller
                 'continuation_fee_2'   => $usesContinuationFees ? ($row['continuation_fee_2'] ?? 0) : null,
                 'continuation_fee_3'   => ($usesContinuationFees && $count >= 3) ? ($row['continuation_fee_3'] ?? 0) : null,
                 'continuation_fee_4'   => ($judgmentEnabled && $count >= 4) ? ($row['continuation_fee_4'] ?? 0) : null,
+                // 空欄=案件共通の協力金/継続協力金を使う（0円を明示的に設定したい場合と区別するためnullのまま保持）
+                'cooperation_fee'              => filled($row['cooperation_fee'] ?? null) ? (int) $row['cooperation_fee'] : null,
+                'continuation_cooperation_fee' => filled($row['continuation_cooperation_fee'] ?? null) ? (int) $row['continuation_cooperation_fee'] : null,
                 'percentage'           => $row['percentage'] ?? 0,
                 'invite_message'       => $row['invite_message'] ?? null,
                 'sort_order'           => $i,
@@ -417,6 +420,8 @@ class CampaignController extends Controller
             'courses.*.continuation_fee_2'     => 'nullable|integer|min:0',
             'courses.*.continuation_fee_3'     => 'nullable|integer|min:0',
             'courses.*.continuation_fee_4'     => 'nullable|integer|min:0',
+            'courses.*.cooperation_fee'               => 'nullable|integer|min:0',
+            'courses.*.continuation_cooperation_fee'  => 'nullable|integer|min:0',
             'courses.*.percentage'             => 'nullable|numeric|min:0|max:100',
             'courses.*.invite_message'         => 'nullable|string',
             'collection_requirement'    => 'nullable|in:回収必須,回収不要',

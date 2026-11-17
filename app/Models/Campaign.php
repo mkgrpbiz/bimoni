@@ -76,10 +76,14 @@ class Campaign extends Model
             : $default;
     }
 
-    // コース設定が有効な場合、通常案内％分の既定コスト＋各コースの初回/継続購入費×％の加重平均でモニターコストを算出
+    // コース設定が有効な場合、通常案内％分の既定コスト＋各コースの初回/継続購入費×％の加重平均でモニターコストを算出。
+    // 協力金（cooperation_fee）はコースごとに個別設定できる（CampaignCourse.cooperation_fee）ため、
+    // コース設定が有効な場合は通常案内分・各コース分それぞれで「コース別設定があれば優先、無ければ案件共通」の
+    // 協力金を使って加重平均する（コース別設定が無ければ全コース合計で案件共通の協力金と同じ値になり、
+    // 従来の「協力金を1回だけ単純加算する」挙動と完全に一致する）
     public function calculatedMonitorCost(): float
     {
-        $extra = ($this->cooperation_fee ?? 0) + ($this->referral_fee ?? 0);
+        $referral = $this->referral_fee ?? 0;
         $normalCost = ($this->initial_purchase_fee ?? 0)
             + ($this->recurring_purchase_fee ?? 0) * (($this->continuation_rate ?? 0) / 100);
 
@@ -90,12 +94,16 @@ class Campaign extends Model
         }
 
         if ($this->course_settings_enabled && $this->courses->isNotEmpty()) {
-            $weighted = $normalCost * (($this->course_normal_percentage ?? 0) / 100);
-            $weighted += $this->courses->sum(fn($c) => $c->cost() * (($c->percentage ?? 0) / 100));
-            return $weighted + $extra;
+            $normalCoop = $this->cooperation_fee ?? 0;
+            $weighted = ($normalCost + $normalCoop) * (($this->course_normal_percentage ?? 0) / 100);
+            $weighted += $this->courses->sum(function ($c) {
+                $coop = $c->cooperation_fee ?? ($this->cooperation_fee ?? 0);
+                return ($c->cost() + $coop) * (($c->percentage ?? 0) / 100);
+            });
+            return $weighted + $referral;
         }
 
-        return $normalCost + $extra;
+        return $normalCost + ($this->cooperation_fee ?? 0) + $referral;
     }
 
     // 継続前提（'2回前提'/'3回前提'）商品の合計購入回数。継続前提でなければnull

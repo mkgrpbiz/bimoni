@@ -235,7 +235,7 @@ class ZenginBatchService
 
     private function monitorsInRange(Carbon $start, Carbon $end): Collection
     {
-        return MonitorReport::with(['user', 'campaign'])
+        return MonitorReport::with(['user', 'campaign', 'application.course'])
             ->where('status', 'approved')
             ->whereBetween('created_at', [$start, $end])
             ->get();
@@ -258,10 +258,7 @@ class ZenginBatchService
 
     private function monitorAmount(MonitorReport $r): int
     {
-        $coopFee = $r->purchase_type === 'continuation'
-            ? ($r->campaign?->continuation_cooperation_fee ?? 0)
-            : ($r->campaign?->cooperation_fee ?? 0);
-        return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
+        return $r->totalPayout();
     }
 
     public static function circled(int $n): string

@@ -26,7 +26,7 @@ class ReportController extends Controller
         if ($report->user_id !== $user->id) {
             abort(403);
         }
-        $report->load(['campaign', 'images']);
+        $report->load(['campaign', 'images', 'application.course']);
         return view('member.reports.show', compact('report'));
     }
 
@@ -50,7 +50,7 @@ class ReportController extends Controller
         // 全完了済み応募
         $allCompleted = Application::where('user_id', $user->id)
             ->whereIn('status', ['completed', 'reported', 'approved', 'point_granted'])
-            ->with('campaign')
+            ->with(['campaign', 'course'])
             ->get()
             ->filter(fn($a) => $a->campaign !== null);
 

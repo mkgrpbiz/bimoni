@@ -69,16 +69,10 @@ class DashboardSummaryService
 
     public function pendingApprovals(): array
     {
-        $pendingReports = MonitorReport::where('status', 'pending')->with('campaign')->get();
+        $pendingReports = MonitorReport::where('status', 'pending')->with(['campaign', 'application.course'])->get();
 
         $pendingReportsCount  = $pendingReports->count();
-        $pendingReportsAmount = $pendingReports->sum(function ($r) {
-            $coopFee = $r->purchase_type === 'continuation'
-                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
-                : ($r->campaign?->cooperation_fee ?? 0);
-
-            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
-        });
+        $pendingReportsAmount = $pendingReports->sum(fn ($r) => $r->totalPayout());
 
         $pendingCollectionCount = CollectionReport::where('status', 'pending')->count();
 
@@ -127,7 +121,7 @@ class DashboardSummaryService
         $approvedCount = $reflections->filter(fn ($r) => ! $r->is_all_denied)->sum('reflection_count');
 
         // 協力金 = 承認済み報告の初回費/継続費 + 協力金の実績合計（回収報告含む）
-        $reportQuery = MonitorReport::with(['campaign', 'application'])->where('status', 'approved');
+        $reportQuery = MonitorReport::with(['campaign', 'application.course'])->where('status', 'approved');
         if ($mode === 'monthly') {
             $reportQuery->whereYear('created_at', $year)->whereMonth('created_at', $month);
         } else {
@@ -152,14 +146,8 @@ class DashboardSummaryService
         $reports = $reportQuery->get();
         $collectionReports = $collectionQuery->get();
         $referralRewards = $referralRewardQuery->get();
-        $cooperationFee = $reports->sum(function ($r) {
-            $c = $r->campaign;
-            $coopFee = $r->purchase_type === 'continuation'
-                ? ($c?->continuation_cooperation_fee ?? 0)
-                : ($c?->cooperation_fee ?? 0);
-
-            return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
-        }) + $collectionReports->sum(fn ($r) => $r->totalFee()) + $referralRewards->sum('amount');
+        $cooperationFee = $reports->sum(fn ($r) => $r->totalPayout())
+            + $collectionReports->sum(fn ($r) => $r->totalFee()) + $referralRewards->sum('amount');
 
         $cooperationFeeLastApprovedAt = $reports->pluck('reviewed_at')
             ->merge($collectionReports->pluck('reviewed_at'))

@@ -25,10 +25,7 @@ class PointController extends Controller
 
     private function monitorFee(MonitorReport $r): int
     {
-        $coopFee = $r->purchase_type === 'continuation'
-            ? ($r->campaign?->continuation_cooperation_fee ?? 0)
-            : ($r->campaign?->cooperation_fee ?? 0);
-        return ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0);
+        return $r->totalPayout();
     }
 
     public function index(Request $request): View
@@ -40,7 +37,7 @@ class PointController extends Controller
             $start = $m->copy()->startOfMonth();
             $end   = $m->copy()->endOfMonth();
 
-            $monitors = MonitorReport::with(['campaign', 'application'])
+            $monitors = MonitorReport::with(['campaign', 'application.course'])
                 ->where('status', 'approved')
                 ->whereBetween('created_at', [$start, $end])
                 ->get();
@@ -313,7 +310,7 @@ class PointController extends Controller
 
         $this->zenginBatchService->ensureBatches($zenginStart, $zenginEnd);
 
-        $monitors = MonitorReport::with(['user', 'campaign'])
+        $monitors = MonitorReport::with(['user', 'campaign', 'application.course'])
             ->where('status', 'approved')
             ->where('payment_status', 'pending')
             ->where('zengin_batch', $batch)
@@ -359,10 +356,7 @@ class PointController extends Controller
         };
 
         foreach ($monitors as $r) {
-            $coopFee = $r->purchase_type === 'continuation'
-                ? ($r->campaign?->continuation_cooperation_fee ?? 0)
-                : ($r->campaign?->cooperation_fee ?? 0);
-            $accumulate($r->user, ($r->purchase_amount ?? 0) + $coopFee + ($r->bonus_amount ?? 0) + ($r->adjustment_amount ?? 0));
+            $accumulate($r->user, $r->totalPayout());
         }
 
         foreach ($collections as $r) {

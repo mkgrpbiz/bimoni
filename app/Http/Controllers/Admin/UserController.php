@@ -32,7 +32,7 @@ class UserController extends Controller
 
         $userIds = $users->pluck('id');
 
-        $reportRows = MonitorReport::with('campaign:id,cooperation_fee,continuation_cooperation_fee')
+        $reportRows = MonitorReport::with(['campaign:id,cooperation_fee,continuation_cooperation_fee', 'application.course'])
             ->whereIn('user_id', $userIds)
             ->where('status', 'approved')
             ->get();
@@ -40,12 +40,7 @@ class UserController extends Controller
         $completedMap = $reportRows->groupBy('user_id')
             ->map(fn($r) => $r->count());
 
-        $calcFee = function ($row) {
-            $coopFee = $row->purchase_type === 'continuation'
-                ? ($row->campaign?->continuation_cooperation_fee ?? 0)
-                : ($row->campaign?->cooperation_fee ?? 0);
-            return ($row->purchase_amount ?? 0) + $coopFee + ($row->bonus_amount ?? 0) + ($row->adjustment_amount ?? 0);
-        };
+        $calcFee = fn ($row) => $row->totalPayout();
 
         $pendingMap = $reportRows->where('payment_status', 'pending')
             ->groupBy('user_id')
@@ -63,7 +58,7 @@ class UserController extends Controller
         $user->load('referrer:id,bimoni_user_id,name');
 
         $reports = $user->monitorReports()
-            ->with('campaign:id,title,cooperation_fee,continuation_cooperation_fee')
+            ->with(['campaign:id,title,cooperation_fee,continuation_cooperation_fee', 'application.course'])
             ->orderByDesc('created_at')
             ->get();
 

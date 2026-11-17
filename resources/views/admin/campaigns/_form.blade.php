@@ -376,6 +376,8 @@
         'continuation_fee_2'   => $c->continuation_fee_2,
         'continuation_fee_3'   => $c->continuation_fee_3,
         'continuation_fee_4'   => $c->continuation_fee_4,
+        'cooperation_fee'              => $c->cooperation_fee,
+        'continuation_cooperation_fee' => $c->continuation_cooperation_fee,
         'percentage'           => $c->percentage,
         'invite_message'       => $c->invite_message,
     ])->values()->toArray());
@@ -539,6 +541,24 @@
                             </div>
                         </template>
                     </div>
+                    {{-- コース別協力金（空欄=案件共通のポイント還元/継続ポイント還元を使用） --}}
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+                        <div class="md:col-span-3">
+                            <label class="block text-xs text-gray-500 mb-1">協力金（円）</label>
+                            <input type="number" :name="`courses[${index}][cooperation_fee]`" x-model="course.cooperation_fee"
+                                   min="0" oninput="calcGross()" placeholder="空欄=案件共通"
+                                   class="w-full border rounded px-2 py-1.5 text-sm">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="block text-xs text-gray-500 mb-1">継続協力金（円）</label>
+                            <input type="number" :name="`courses[${index}][continuation_cooperation_fee]`" x-model="course.continuation_cooperation_fee"
+                                   min="0" oninput="calcGross()" placeholder="空欄=案件共通"
+                                   class="w-full border rounded px-2 py-1.5 text-sm">
+                        </div>
+                        <div class="md:col-span-6 flex items-end">
+                            <p class="text-xs text-gray-400 pb-2">空欄の場合、このコースの報告には案件共通のポイント還元/継続ポイント還元（上の「ポイント還元」「継続ポイント還元」）がそのまま使われます。</p>
+                        </div>
+                    </div>
                     {{-- 3行目: モニター案内メッセージ --}}
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">モニター案内メッセージ（打診時にこのコースを選ぶと使用）</label>
@@ -587,7 +607,7 @@
             </template>
             <button type="button" @click="addCourse()"
                     class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-200">+ 行追加</button>
-            <p class="text-xs text-gray-400">通常案内％+各コースの目標％の合計が100%になるようにしてください。モニターコストは「通常案内の既定コスト×通常割合」＋「各コースのコスト×目標％」の加重平均で自動計算されます（単発=初回購入費のみ、継続前提=初回購入費+継続購入費2〈3回前提の場合はさらに+継続購入費3〉）。「有」にした案件は打診時にコース選択プルダウンが表示され、指定したコースの「モニター案内メッセージ」が案件共通の案内文の代わりに送信されます（モニター終了案内文は共通のまま）。継続前提は継続が確定しているコース向けで判定は不要です。単発コースで「継続判定の有無」を「有」にすると、実際に継続するかを通常コースと同じように確認・追跡でき、応募管理の継続打診ボタンが使えるようになり「目標」欄に目標継続率も表示されます。この場合の継続購入費2〜4（継続回数まで）は目標継続率を掛けた期待値としてコストに反映されます（例: 初回1,000円+継続購入費2が500円・目標継続率50%なら 1,000+500×0.5=1,250円）。</p>
+            <p class="text-xs text-gray-400">通常案内％+各コースの目標％の合計が100%になるようにしてください。モニターコストは「通常案内の既定コスト×通常割合」＋「各コースのコスト×目標％」の加重平均で自動計算されます（単発=初回購入費のみ、継続前提=初回購入費+継続購入費2〈3回前提の場合はさらに+継続購入費3〉）。「有」にした案件は打診時にコース選択プルダウンが表示され、指定したコースの「モニター案内メッセージ」が案件共通の案内文の代わりに送信されます（モニター終了案内文は共通のまま）。継続前提は継続が確定しているコース向けで判定は不要です。単発コースで「継続判定の有無」を「有」にすると、実際に継続するかを通常コースと同じように確認・追跡でき、応募管理の継続打診ボタンが使えるようになり「目標」欄に目標継続率も表示されます。この場合の継続購入費2〜4（継続回数まで）は目標継続率を掛けた期待値としてコストに反映されます（例: 初回1,000円+継続購入費2が500円・目標継続率50%なら 1,000+500×0.5=1,250円）。各コースの「協力金」「継続協力金」は空欄なら案件共通のポイント還元/継続ポイント還元を使い、入力すればそのコースの報告のみ金額を上書きできます（モニターコストの自動計算にも反映されます）。</p>
         </div>
     </template>
 </div>
@@ -713,7 +733,9 @@ function calcMonitorCost() {
     let cost;
     if (courseEnabled) {
         const normalPct = parseFloat(document.querySelector('[name="course_normal_percentage"]')?.value) || 0;
-        let weighted = normalCost * (normalPct / 100);
+        // 協力金もコース別設定（空欄=案件共通）があれば優先し、通常案内％・各コース％で加重平均する
+        // （PHP側Campaign::calculatedMonitorCost()と同じ式。コース別設定が無ければ従来通り単純加算と一致する）
+        let weighted = (normalCost + coop) * (normalPct / 100);
         document.querySelectorAll('.course-row').forEach(row => {
             const initialFee = parseFloat(row.querySelector('[name$="[initial_purchase_fee]"]')?.value) || 0;
             const type       = row.querySelector('[name$="[course_type]"]')?.value;
@@ -740,9 +762,11 @@ function calcMonitorCost() {
                     courseCost = initialFee + continuationFees * (rate / 100);
                 }
             }
-            weighted += courseCost * (pct / 100);
+            const rawCoop = row.querySelector('[name$="[cooperation_fee]"]')?.value;
+            const courseCoop = (rawCoop !== undefined && rawCoop !== '') ? (parseFloat(rawCoop) || 0) : coop;
+            weighted += (courseCost + courseCoop) * (pct / 100);
         });
-        cost = weighted + coop + referral;
+        cost = weighted + referral;
     } else {
         cost = normalCost + coop + referral;
     }
@@ -789,6 +813,7 @@ function courseSettings() {
                 name: '', initial_purchase_fee: '', course_type: '単発',
                 continuation_count: '2', continuation_judgment_enabled: '0', continuation_rate: '',
                 continuation_fee_2: '', continuation_fee_3: '', continuation_fee_4: '',
+                cooperation_fee: '', continuation_cooperation_fee: '',
                 percentage: '', invite_message: '',
             });
             this.$nextTick(() => calcGross());
