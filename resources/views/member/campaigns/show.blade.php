@@ -154,19 +154,37 @@
                     応募する対象のコースを選択してください <span class="text-red-500 text-xs">必須</span>
                 </p>
                 <p class="text-xs text-gray-500 mb-2">※コースの詳細は案件案内説明をお読みください。</p>
+                @php
+                    $courseFeeLabel = function ($initialFee, $coopFee) {
+                        $initialFee = $initialFee ?? 0;
+                        $coopFee    = $coopFee ?? 0;
+                        if ($initialFee && $coopFee) {
+                            return number_format($initialFee) . '+' . number_format($coopFee) . 'P';
+                        } elseif ($initialFee) {
+                            return number_format($initialFee) . 'P';
+                        }
+                        return number_format($coopFee) . 'P';
+                    };
+                @endphp
                 <div class="space-y-2">
                     <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
                         <input type="radio" name="course_id" value="0"
                                {{ old('course_id') === '0' ? 'checked' : '' }}
                                class="text-pink-500">
-                        <span class="text-sm text-gray-800">{{ $campaign->course_normal_name ?: '通常コース' }}</span>
+                        <span class="flex-1">
+                            <span class="block text-sm text-gray-800">{{ $campaign->course_normal_name ?: '通常コース' }}</span>
+                            <span class="block text-xs font-bold text-pink-600">ポイント還元 {{ $courseFeeLabel($campaign->initial_purchase_fee, $campaign->cooperation_fee) }}</span>
+                        </span>
                     </label>
                     @foreach($campaign->courses as $course)
                     <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
                         <input type="radio" name="course_id" value="{{ $course->id }}"
                                {{ (string) old('course_id') === (string) $course->id ? 'checked' : '' }}
                                class="text-pink-500">
-                        <span class="text-sm text-gray-800">{{ $course->name }}</span>
+                        <span class="flex-1">
+                            <span class="block text-sm text-gray-800">{{ $course->name }}</span>
+                            <span class="block text-xs font-bold text-pink-600">ポイント還元 {{ $courseFeeLabel($course->initial_purchase_fee, $course->cooperation_fee ?? $campaign->cooperation_fee) }}</span>
+                        </span>
                     </label>
                     @endforeach
                 </div>
