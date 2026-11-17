@@ -25,13 +25,21 @@
         @endif
 
         {{-- 料金情報 --}}
+        @php
+            // 応募時のコース選択が有の場合、コースごとのポイント還元額を下のコース選択欄で表示するため、
+            // ここでは案件共通の値（どのコースにも当てはまらない場合がある）を重複表示しない
+            $showTopCoop = !($campaign->course_settings_enabled && $campaign->course_selection_enabled && $campaign->courses->isNotEmpty());
+            $hasTopFeeInfo = $campaign->initial_purchase_fee || $showTopCoop || $activeBonus;
+        @endphp
+        @if($hasTopFeeInfo)
         <div class="bg-white rounded-xl border border-gray-100 p-4 space-y-2">
             @if($campaign->initial_purchase_fee)
-            <div class="flex justify-between items-center py-1 border-b border-gray-50">
+            <div class="flex justify-between items-center py-1 {{ ($showTopCoop || $activeBonus) ? 'border-b border-gray-50' : '' }}">
                 <span class="text-sm text-gray-600">初回購入費</span>
                 <span class="font-bold text-gray-800">{{ number_format($campaign->initial_purchase_fee) }}円</span>
             </div>
             @endif
+            @if($showTopCoop)
             <div class="flex justify-between items-center py-1 {{ $activeBonus ? 'border-b border-gray-50' : '' }}">
                 <span class="text-sm text-gray-600">ポイント還元</span>
                 <span class="font-bold text-pink-600">
@@ -44,6 +52,7 @@
                     @endif
                 </span>
             </div>
+            @endif
             @if($activeBonus)
             <div class="flex justify-between items-center py-1">
                 <span class="text-sm text-gray-600">キャンペーン</span>
@@ -51,6 +60,7 @@
             </div>
             @endif
         </div>
+        @endif
         @if($campaign->initial_purchase_fee)
         <p class="text-xs text-gray-400 -mt-1">※支払い方法などで多少前後する場合があります。</p>
         @endif
