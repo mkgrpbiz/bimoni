@@ -147,6 +147,35 @@
             </div>
             @endif
 
+            {{-- コース選択（コース指定設定が有、かつ応募時のコース選択が有の場合のみ） --}}
+            @if($campaign->course_settings_enabled && $campaign->course_selection_enabled && $campaign->courses->isNotEmpty())
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-1">
+                    応募する対象のコースを選択してください <span class="text-red-500 text-xs">必須</span>
+                </p>
+                <p class="text-xs text-gray-500 mb-2">※コースの詳細は案件案内説明をお読みください。</p>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
+                        <input type="radio" name="course_id" value="0"
+                               {{ old('course_id') === '0' ? 'checked' : '' }}
+                               class="text-pink-500">
+                        <span class="text-sm text-gray-800">{{ $campaign->course_normal_name ?: '通常コース' }}</span>
+                    </label>
+                    @foreach($campaign->courses as $course)
+                    <label class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 cursor-pointer">
+                        <input type="radio" name="course_id" value="{{ $course->id }}"
+                               {{ (string) old('course_id') === (string) $course->id ? 'checked' : '' }}
+                               class="text-pink-500">
+                        <span class="text-sm text-gray-800">{{ $course->name }}</span>
+                    </label>
+                    @endforeach
+                </div>
+                @error('course_id')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            @endif
+
             {{-- 購入可能時間 --}}
             <div>
                 <p class="text-sm font-medium text-gray-700 mb-2">

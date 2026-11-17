@@ -128,6 +128,7 @@ class CampaignController extends Controller
 
         $hasContinuation   = $campaign->continuation_cooperation_fee || $campaign->recurring_purchase_fee;
         $continuationFixed = in_array($campaign->continuation_condition, ['2回前提', '3回前提']);
+        $courseSelection   = $campaign->course_settings_enabled && $campaign->course_selection_enabled && $campaign->courses->isNotEmpty();
 
         $rules = [
             'purchase_available_times'   => 'required|array|min:1',
@@ -135,6 +136,10 @@ class CampaignController extends Controller
         ];
         if ($hasContinuation && !$continuationFixed) {
             $rules['continuation_wish'] = 'required|in:希望,不可';
+        }
+        if ($courseSelection) {
+            $validCourseIds = array_merge(['0'], $campaign->courses->pluck('id')->map(fn($id) => (string) $id)->all());
+            $rules['course_id'] = ['required', 'in:' . implode(',', $validCourseIds)];
         }
         $request->validate($rules);
 
@@ -150,6 +155,7 @@ class CampaignController extends Controller
             'bonus_amount'             => $activeBonus?->bonus_amount,
             'continuation_wish'        => $continuationFixed ? '希望' : ($hasContinuation ? $request->continuation_wish : null),
             'purchase_available_times' => $request->purchase_available_times,
+            'course_id'                => ($courseSelection && $request->course_id !== '0') ? (int) $request->course_id : null,
             'selected_at'              => null, 'line_contacted_at'   => null,
             'sounded_at'               => null, 'schedule_confirmed_at' => null,
             'reserved_at'              => null, 'monitoring_confirmed_at' => null,

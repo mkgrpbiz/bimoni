@@ -70,9 +70,10 @@ class CampaignController extends Controller
 
         $courses = $validated['courses'] ?? [];
         unset($validated['courses']);
-        $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
-        $validated['collection_available']    = ($validated['collection_available'] ?? '1') === '1';
-        $validated['has_return_fee']          = ($validated['has_return_fee'] ?? '0') === '1';
+        $validated['course_settings_enabled']  = ($validated['course_settings_enabled'] ?? '0') === '1';
+        $validated['course_selection_enabled'] = ($validated['course_selection_enabled'] ?? '0') === '1';
+        $validated['collection_available']     = ($validated['collection_available'] ?? '1') === '1';
+        $validated['has_return_fee']           = ($validated['has_return_fee'] ?? '0') === '1';
 
         $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
         unset($validated['duplicate_campaign_ids']);
@@ -142,9 +143,10 @@ class CampaignController extends Controller
 
         $courses = $validated['courses'] ?? [];
         unset($validated['courses']);
-        $validated['course_settings_enabled'] = ($validated['course_settings_enabled'] ?? '0') === '1';
-        $validated['collection_available']    = ($validated['collection_available'] ?? '1') === '1';
-        $validated['has_return_fee']          = ($validated['has_return_fee'] ?? '0') === '1';
+        $validated['course_settings_enabled']  = ($validated['course_settings_enabled'] ?? '0') === '1';
+        $validated['course_selection_enabled'] = ($validated['course_selection_enabled'] ?? '0') === '1';
+        $validated['collection_available']     = ($validated['collection_available'] ?? '1') === '1';
+        $validated['has_return_fee']           = ($validated['has_return_fee'] ?? '0') === '1';
 
         $duplicateCampaignIds = $validated['duplicate_campaign_ids'] ?? [];
         unset($validated['duplicate_campaign_ids']);
@@ -403,6 +405,7 @@ class CampaignController extends Controller
             'course_settings_enabled'          => 'nullable|in:0,1',
             'course_normal_name'               => 'nullable|string|max:255',
             'course_normal_percentage'         => 'nullable|numeric|min:0|max:100',
+            'course_selection_enabled'         => 'nullable|in:0,1',
             'courses'                          => 'nullable|array',
             'courses.*.id'                     => 'nullable|integer',
             'courses.*.name'                   => 'nullable|string|max:255',

@@ -18,6 +18,7 @@ class Campaign extends Model
         'cooperation_fee', 'cooperation_fee_formula',
         'continuation_cooperation_fee', 'continuation_cooperation_fee_formula',
         'continuation_condition', 'course_settings_enabled', 'course_normal_name', 'course_normal_percentage',
+        'course_selection_enabled',
         'referral_fee', 'campaign_unit_price',
         'initial_purchase_fee', 'recurring_purchase_fee', 'gross_profit',
         'continuation_rate', 'continuation_rate_calc_from', 'closing_date', 'payment_timing',
@@ -42,6 +43,7 @@ class Campaign extends Model
             'cancellation_visible'    => 'boolean',
             'cancellation_draft'      => 'boolean',
             'course_settings_enabled' => 'boolean',
+            'course_selection_enabled' => 'boolean',
             'collection_available'    => 'boolean',
             'has_return_fee'          => 'boolean',
         ];
