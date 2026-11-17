@@ -733,9 +733,10 @@ function calcMonitorCost() {
     let cost;
     if (courseEnabled) {
         const normalPct = parseFloat(document.querySelector('[name="course_normal_percentage"]')?.value) || 0;
-        // 協力金もコース別設定（空欄=案件共通）があれば優先し、通常案内％・各コース％で加重平均する
-        // （PHP側Campaign::calculatedMonitorCost()と同じ式。コース別設定が無ければ従来通り単純加算と一致する）
-        let weighted = (normalCost + coop) * (normalPct / 100);
+        // 協力金は従来通り案件共通分を単純加算し、コース別オーバーライドは案件共通との「差額」だけを
+        // そのコースの％で加重して加算する（PHP側Campaign::calculatedMonitorCost()と同じ式）。
+        // オーバーライドが無ければ差額は常に0なので、％合計が100%になっていない案件でも従来の結果と一致する
+        let weighted = normalCost * (normalPct / 100);
         document.querySelectorAll('.course-row').forEach(row => {
             const initialFee = parseFloat(row.querySelector('[name$="[initial_purchase_fee]"]')?.value) || 0;
             const type       = row.querySelector('[name$="[course_type]"]')?.value;
@@ -764,9 +765,10 @@ function calcMonitorCost() {
             }
             const rawCoop = row.querySelector('[name$="[cooperation_fee]"]')?.value;
             const courseCoop = (rawCoop !== undefined && rawCoop !== '') ? (parseFloat(rawCoop) || 0) : coop;
-            weighted += (courseCost + courseCoop) * (pct / 100);
+            const coopDelta = courseCoop - coop;
+            weighted += (courseCost + coopDelta) * (pct / 100);
         });
-        cost = weighted + referral;
+        cost = weighted + coop + referral;
     } else {
         cost = normalCost + coop + referral;
     }

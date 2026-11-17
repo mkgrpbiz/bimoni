@@ -77,13 +77,16 @@ class Campaign extends Model
     }
 
     // コース設定が有効な場合、通常案内％分の既定コスト＋各コースの初回/継続購入費×％の加重平均でモニターコストを算出。
-    // 協力金（cooperation_fee）はコースごとに個別設定できる（CampaignCourse.cooperation_fee）ため、
-    // コース設定が有効な場合は通常案内分・各コース分それぞれで「コース別設定があれば優先、無ければ案件共通」の
-    // 協力金を使って加重平均する（コース別設定が無ければ全コース合計で案件共通の協力金と同じ値になり、
-    // 従来の「協力金を1回だけ単純加算する」挙動と完全に一致する）
+    // 協力金（cooperation_fee）はコースごとに個別設定できる（CampaignCourse.cooperation_fee）が、
+    // 協力金自体は従来通り案件共通分を1回だけ単純加算し、コース別オーバーライドは「案件共通との差額」だけを
+    // そのコースの％で加重して加算する。オーバーライドが無ければ差額は常に0なので、本番の既存案件に
+    // 実際にあった「通常％+各コース％の合計が100%になっていない」ケース（合計65%・合計0%の案件が実在した）でも
+    // 旧ロジック（単純加算）の結果と完全に一致する。差額方式ではなく単純に(cost+coop)を%で加重する実装だと、
+    // ％合計が100%からズレている既存案件だけ次回保存時にモニターコスト・粗利が意図せず変わってしまうため注意
     public function calculatedMonitorCost(): float
     {
         $referral = $this->referral_fee ?? 0;
+        $coop = $this->cooperation_fee ?? 0;
         $normalCost = ($this->initial_purchase_fee ?? 0)
             + ($this->recurring_purchase_fee ?? 0) * (($this->continuation_rate ?? 0) / 100);
 
@@ -94,16 +97,15 @@ class Campaign extends Model
         }
 
         if ($this->course_settings_enabled && $this->courses->isNotEmpty()) {
-            $normalCoop = $this->cooperation_fee ?? 0;
-            $weighted = ($normalCost + $normalCoop) * (($this->course_normal_percentage ?? 0) / 100);
-            $weighted += $this->courses->sum(function ($c) {
-                $coop = $c->cooperation_fee ?? ($this->cooperation_fee ?? 0);
-                return ($c->cost() + $coop) * (($c->percentage ?? 0) / 100);
+            $weighted = $normalCost * (($this->course_normal_percentage ?? 0) / 100);
+            $weighted += $this->courses->sum(function ($c) use ($coop) {
+                $coopDelta = ($c->cooperation_fee ?? $coop) - $coop;
+                return ($c->cost() + $coopDelta) * (($c->percentage ?? 0) / 100);
             });
-            return $weighted + $referral;
+            return $weighted + $coop + $referral;
         }
 
-        return $normalCost + ($this->cooperation_fee ?? 0) + $referral;
+        return $normalCost + $coop + $referral;
     }
 
     // 継続前提（'2回前提'/'3回前提'）商品の合計購入回数。継続前提でなければnull
