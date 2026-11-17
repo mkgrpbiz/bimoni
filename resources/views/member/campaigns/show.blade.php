@@ -26,20 +26,21 @@
 
         {{-- 料金情報 --}}
         @php
-            // 応募時のコース選択が有の場合、コースごとのポイント還元額を下のコース選択欄で表示するため、
-            // ここでは案件共通の値（どのコースにも当てはまらない場合がある）を重複表示しない
-            $showTopCoop = !($campaign->course_settings_enabled && $campaign->course_selection_enabled && $campaign->courses->isNotEmpty());
-            $hasTopFeeInfo = $campaign->initial_purchase_fee || $showTopCoop || $activeBonus;
+            // 応募時のコース選択が有の場合、初回購入費・ポイント還元はコースによって金額が異なるため
+            // 下のコース選択欄でコースごとに表示する。ここでは案件共通の値（どのコースにも
+            // 当てはまらない場合がある）を重複表示しない
+            $showTopFees = !($campaign->course_settings_enabled && $campaign->course_selection_enabled && $campaign->courses->isNotEmpty());
+            $hasTopFeeInfo = $showTopFees || $activeBonus;
         @endphp
         @if($hasTopFeeInfo)
         <div class="bg-white rounded-xl border border-gray-100 p-4 space-y-2">
-            @if($campaign->initial_purchase_fee)
-            <div class="flex justify-between items-center py-1 {{ ($showTopCoop || $activeBonus) ? 'border-b border-gray-50' : '' }}">
+            @if($showTopFees && $campaign->initial_purchase_fee)
+            <div class="flex justify-between items-center py-1 border-b border-gray-50">
                 <span class="text-sm text-gray-600">初回購入費</span>
                 <span class="font-bold text-gray-800">{{ number_format($campaign->initial_purchase_fee) }}円</span>
             </div>
             @endif
-            @if($showTopCoop)
+            @if($showTopFees)
             <div class="flex justify-between items-center py-1 {{ $activeBonus ? 'border-b border-gray-50' : '' }}">
                 <span class="text-sm text-gray-600">ポイント還元</span>
                 <span class="font-bold text-pink-600">
@@ -61,7 +62,7 @@
             @endif
         </div>
         @endif
-        @if($campaign->initial_purchase_fee)
+        @if($campaign->initial_purchase_fee || ($campaign->course_settings_enabled && $campaign->courses->contains(fn($c) => $c->initial_purchase_fee > 0)))
         <p class="text-xs text-gray-400 -mt-1">※支払い方法などで多少前後する場合があります。</p>
         @endif
 
@@ -183,6 +184,9 @@
                                class="text-pink-500">
                         <span class="flex-1">
                             <span class="block text-sm text-gray-800">{{ $campaign->course_normal_name ?: '通常コース' }}</span>
+                            @if($campaign->initial_purchase_fee)
+                            <span class="block text-xs text-gray-500">初回購入費 {{ number_format($campaign->initial_purchase_fee) }}円</span>
+                            @endif
                             <span class="block text-xs font-bold text-pink-600">ポイント還元 {{ $courseFeeLabel($campaign->initial_purchase_fee, $campaign->cooperation_fee) }}</span>
                         </span>
                     </label>
@@ -193,6 +197,9 @@
                                class="text-pink-500">
                         <span class="flex-1">
                             <span class="block text-sm text-gray-800">{{ $course->name }}</span>
+                            @if($course->initial_purchase_fee)
+                            <span class="block text-xs text-gray-500">初回購入費 {{ number_format($course->initial_purchase_fee) }}円</span>
+                            @endif
                             <span class="block text-xs font-bold text-pink-600">ポイント還元 {{ $courseFeeLabel($course->initial_purchase_fee, $course->cooperation_fee ?? $campaign->cooperation_fee) }}</span>
                         </span>
                     </label>
