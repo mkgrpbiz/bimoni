@@ -62,7 +62,7 @@
             @endif
         </div>
         @endif
-        @if($campaign->initial_purchase_fee || ($campaign->course_settings_enabled && $campaign->courses->contains(fn($c) => $c->initial_purchase_fee > 0)))
+        @if($showTopFees && $campaign->initial_purchase_fee)
         <p class="text-xs text-gray-400 -mt-1">※支払い方法などで多少前後する場合があります。</p>
         @endif
 
@@ -208,6 +208,9 @@
                 @error('course_id')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror
+                @if($campaign->initial_purchase_fee || $campaign->courses->contains(fn($c) => $c->initial_purchase_fee > 0))
+                <p class="text-xs text-gray-400 mt-1">※支払い方法などで多少前後する場合があります。</p>
+                @endif
             </div>
             @endif
 
