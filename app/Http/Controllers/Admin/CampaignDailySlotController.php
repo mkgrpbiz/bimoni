@@ -8,6 +8,7 @@ use App\Models\CampaignDailySlot;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CampaignDailySlotController extends Controller
@@ -186,9 +187,35 @@ class CampaignDailySlotController extends Controller
         return back()->with('success', $msg);
     }
 
+    // 打診済/予約済/実施完了はCampaignDailySlotの実カラムだが、どこからも書き込まれないため
+    // 常に0のまま（ApplicationController::campaignIndex()の「応募管理」ヘッダー集計が本日/明日/
+    // 翌々日の3日分だけ同じロジックで一時的に計算しているが、この画面には反映されていなかった）。
+    // この画面（全日付）でも応募の案内日時（invited_at、無ければPR打診用にinvited_end_at）を
+    // 元にステータス別件数をその場で動的集計して表示する
     public function index(Campaign $campaign): View
     {
         $slots = $campaign->dailySlots()->paginate(30);
+
+        $targetDates = $slots->getCollection()->map(fn($s) => $s->target_date->toDateString())->all();
+
+        $appCounts = $campaign->applications()
+            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'])
+            ->where(function ($q) use ($targetDates) {
+                $q->whereIn(DB::raw('DATE(invited_at)'), $targetDates)
+                  ->orWhereIn(DB::raw('DATE(invited_end_at)'), $targetDates);
+            })
+            ->selectRaw('DATE(COALESCE(invited_at, invited_end_at)) as inv_date, status, COUNT(*) as cnt')
+            ->groupBy(DB::raw('DATE(COALESCE(invited_at, invited_end_at))'), 'status')
+            ->get()
+            ->groupBy('inv_date');
+
+        $slots->getCollection()->each(function ($slot) use ($appCounts) {
+            $dayCounts = $appCounts->get($slot->target_date->toDateString(), collect());
+            $slot->invited_count   = $dayCounts->where('status', 'line_contacted')->sum('cnt');
+            $slot->reserved_count  = $dayCounts->where('status', 'scheduled')->sum('cnt');
+            $slot->completed_count = $dayCounts->filter(fn($r) => in_array($r->status, ['confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
+        });
+
         return view('admin.daily_slots.index', compact('campaign', 'slots'));
     }
 
