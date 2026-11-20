@@ -191,7 +191,13 @@ class CampaignDailySlotController extends Controller
     // 常に0のまま（ApplicationController::campaignIndex()の「応募管理」ヘッダー集計が本日/明日/
     // 翌々日の3日分だけ同じロジックで一時的に計算しているが、この画面には反映されていなかった）。
     // この画面（全日付）でも応募の案内日時（invited_at、無ければPR打診用にinvited_end_at）を
-    // 元にステータス別件数をその場で動的集計して表示する
+    // 元にステータス別件数をその場で動的集計して表示する。
+    // 打診済＝その日に案内した総数（現在のステータスに関わらず。cancelledになっても打診した事実は
+    // 残すためinvited_at/invited_end_atでの絞り込みのみで、ステータスでの絞り込みはしない。
+    // changeStatus('cancelled', ...)・cancelProposal()はinvited_at/invited_end_atをクリアしないため、
+    // 手動キャンセル・自動キャンセルいずれでも打診済の母数から消えない）。予約済・実施完了は
+    // その母数のうち該当ステータス以上に進んだ件数（＝予約済は実施完了も含む累積のファネル件数）として
+    // 打診済→予約済→実施完了の推移が追えるようにする
     public function index(Campaign $campaign): View
     {
         $slots = $campaign->dailySlots()->paginate(30);
@@ -199,7 +205,6 @@ class CampaignDailySlotController extends Controller
         $targetDates = $slots->getCollection()->map(fn($s) => $s->target_date->toDateString())->all();
 
         $appCounts = $campaign->applications()
-            ->whereIn('status', ['line_contacted', 'scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted'])
             ->where(function ($q) use ($targetDates) {
                 $q->whereIn(DB::raw('DATE(invited_at)'), $targetDates)
                   ->orWhereIn(DB::raw('DATE(invited_end_at)'), $targetDates);
@@ -211,9 +216,10 @@ class CampaignDailySlotController extends Controller
 
         $slots->getCollection()->each(function ($slot) use ($appCounts) {
             $dayCounts = $appCounts->get($slot->target_date->toDateString(), collect());
-            $slot->invited_count   = $dayCounts->where('status', 'line_contacted')->sum('cnt');
-            $slot->reserved_count  = $dayCounts->where('status', 'scheduled')->sum('cnt');
+            $slot->invited_count   = $dayCounts->sum('cnt');
+            $slot->reserved_count  = $dayCounts->filter(fn($r) => in_array($r->status, ['scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
             $slot->completed_count = $dayCounts->filter(fn($r) => in_array($r->status, ['confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
+            $slot->completion_rate = $slot->invited_count > 0 ? round($slot->completed_count / $slot->invited_count * 100, 1) : null;
         });
 
         return view('admin.daily_slots.index', compact('campaign', 'slots'));

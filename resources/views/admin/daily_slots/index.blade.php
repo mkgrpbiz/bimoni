@@ -25,6 +25,7 @@
                         <th class="px-4 py-3 text-center">打診済</th>
                         <th class="px-4 py-3 text-center">予約済</th>
                         <th class="px-4 py-3 text-center">実施完了</th>
+                        <th class="px-4 py-3 text-center">完了率</th>
                         <th class="px-4 py-3 text-left">メモ</th>
                         <th class="px-4 py-3 text-left">操作</th>
                     </tr>
@@ -37,6 +38,7 @@
                         <td class="px-4 py-2 text-center text-purple-600">{{ $slot->invited_count }}</td>
                         <td class="px-4 py-2 text-center text-indigo-600">{{ $slot->reserved_count }}</td>
                         <td class="px-4 py-2 text-center text-teal-600">{{ $slot->completed_count }}</td>
+                        <td class="px-4 py-2 text-center text-gray-700">{{ $slot->completion_rate !== null ? $slot->completion_rate . '%' : '-' }}</td>
                         <td class="px-4 py-2 text-gray-700 text-xs">{{ $slot->memo ?? '-' }}</td>
                         <td class="px-4 py-2">
                             <div class="flex gap-2">
@@ -52,7 +54,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-700">登録がありません</td>
+                        <td colspan="8" class="px-4 py-8 text-center text-gray-700">登録がありません</td>
                     </tr>
                     @endforelse
                 </tbody>
