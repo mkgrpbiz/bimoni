@@ -74,9 +74,10 @@ $tabs = [
             <tr>
                 <th class="px-4 py-3 text-left">案件名</th>
                 <th class="px-3 py-3 text-right whitespace-nowrap">{{ $viewMonth->format('n月') }}目標</th>
-                <th class="px-3 py-3 text-right whitespace-nowrap">本日（{{ now()->format('m/d') }}）</th>
-                <th class="px-3 py-3 text-right whitespace-nowrap">明日（{{ now()->addDay()->format('m/d') }}）</th>
-                <th class="px-3 py-3 text-right whitespace-nowrap">明後日（{{ now()->addDays(2)->format('m/d') }}）</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">{{ $viewMonth->format('n月') }}打診</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">{{ $viewMonth->format('n月') }}予約</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">{{ $viewMonth->format('n月') }}完了</th>
+                <th class="px-3 py-3 text-right whitespace-nowrap">{{ $viewMonth->format('n月') }}完了率</th>
                 <th class="px-3 py-3 text-center">詳細</th>
             </tr>
         </thead>
@@ -85,22 +86,15 @@ $tabs = [
             @php
                 $campaignSlots = $slots->get($campaign->id, collect());
                 $monthTotal    = $campaignSlots->sum('planned_count');
-                $todaySlot     = $campaignSlots->get($today);
-                $tomorrowSlot  = $campaignSlots->get($tomorrow);
-                $dayAfterSlot  = $campaignSlots->get($dayAfter);
+                $stats         = $monthStats->get($campaign->id);
             @endphp
             <tr class="even:bg-gray-50 hover:bg-gray-100">
                 <td class="px-4 py-3 font-medium">{{ $campaign->title }}</td>
                 <td class="px-3 py-3 text-right font-bold">{{ number_format($monthTotal) }}</td>
-                <td class="px-3 py-3 text-right {{ $todaySlot ? 'text-pink-600 font-bold' : 'text-gray-400' }}">
-                    {{ $todaySlot ? $todaySlot->planned_count : '-' }}
-                </td>
-                <td class="px-3 py-3 text-right {{ $tomorrowSlot ? 'text-gray-800' : 'text-gray-400' }}">
-                    {{ $tomorrowSlot ? $tomorrowSlot->planned_count : '-' }}
-                </td>
-                <td class="px-3 py-3 text-right {{ $dayAfterSlot ? 'text-gray-800' : 'text-gray-400' }}">
-                    {{ $dayAfterSlot ? $dayAfterSlot->planned_count : '-' }}
-                </td>
+                <td class="px-3 py-3 text-right">{{ number_format($stats['invited']) }}</td>
+                <td class="px-3 py-3 text-right">{{ number_format($stats['reserved']) }}</td>
+                <td class="px-3 py-3 text-right">{{ number_format($stats['completed']) }}</td>
+                <td class="px-3 py-3 text-right">{{ $stats['rate'] !== null ? $stats['rate'] . '%' : '-' }}</td>
                 <td class="px-3 py-3 text-center">
                     <a href="{{ route('admin.campaigns.daily_slots.index', $campaign) }}"
                        class="text-xs bg-pink-500 text-white px-3 py-1 rounded hover:bg-pink-600">
@@ -110,7 +104,7 @@ $tabs = [
             </tr>
             @empty
             <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-400">案件がありません</td>
             </tr>
             @endforelse
         </tbody>

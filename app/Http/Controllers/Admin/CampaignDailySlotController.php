@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Application;
 use App\Models\Campaign;
 use App\Models\CampaignDailySlot;
 use Carbon\Carbon;
@@ -17,16 +18,15 @@ class CampaignDailySlotController extends Controller
     {
         $status = $request->input('status', 'published');
         $now    = now();
-        $today    = $now->toDateString();
-        $tomorrow = $now->copy()->addDay()->toDateString();
-        $dayAfter = $now->copy()->addDays(2)->toDateString();
 
         // 表示対象月（デフォルトは今月）。過去に取り込んだ来月分等も確認できるよう切り替え可能にする
         $year  = (int) $request->input('year', $now->year);
         $month = (int) $request->input('month', $now->month);
-        $viewMonth = Carbon::createFromDate($year, $month, 1);
-        $prevMonth = $viewMonth->copy()->subMonth();
-        $nextMonth = $viewMonth->copy()->addMonth();
+        $viewMonth  = Carbon::createFromDate($year, $month, 1);
+        $prevMonth  = $viewMonth->copy()->subMonth();
+        $nextMonth  = $viewMonth->copy()->addMonth();
+        $monthStart = $viewMonth->copy()->startOfMonth();
+        $monthEnd   = $viewMonth->copy()->endOfMonth();
 
         $campaigns = Campaign::where('status', $status)
             ->orderBy('sort_order')->orderBy('id')->get();
@@ -34,21 +34,45 @@ class CampaignDailySlotController extends Controller
         $campaignIds = $campaigns->pluck('id');
 
         $slots = CampaignDailySlot::whereIn('campaign_id', $campaignIds)
-            ->whereBetween('target_date', [
-                $viewMonth->copy()->startOfMonth()->toDateString(),
-                $viewMonth->copy()->endOfMonth()->toDateString(),
-            ])
+            ->whereBetween('target_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
             ->get()
-            ->groupBy('campaign_id')
-            ->map(fn($cs) => $cs->keyBy(fn($s) => $s->target_date->toDateString()));
+            ->groupBy('campaign_id');
+
+        // 打診（母数。現在のステータスに関わらずinvited_at/invited_end_atがその月に該当する件数。
+        // キャンセルしてもinvited_at等はクリアされないため含まれる）・予約（うち予約以上に進んだ
+        // 累積件数）・完了（うち完了以上に進んだ累積件数）を案件横断で一括集計する（案件別詳細の
+        // CampaignDailySlotController::index()と同じ定義・ロジック）。日別の内訳はこの一覧ではなく
+        // 案件別詳細（「詳細・編集」リンク先）で確認する運用のため、ここでは月合計のみ出す
+        $appCounts = Application::whereIn('campaign_id', $campaignIds)
+            ->where(function ($q) use ($monthStart, $monthEnd) {
+                $q->whereBetween('invited_at', [$monthStart, $monthEnd])
+                  ->orWhereBetween('invited_end_at', [$monthStart, $monthEnd]);
+            })
+            ->selectRaw('campaign_id, status, COUNT(*) as cnt')
+            ->groupBy('campaign_id', 'status')
+            ->get()
+            ->groupBy('campaign_id');
+
+        $monthStats = $campaigns->mapWithKeys(function ($campaign) use ($appCounts) {
+            $rows      = $appCounts->get($campaign->id, collect());
+            $invited   = $rows->sum('cnt');
+            $reserved  = $rows->filter(fn($r) => in_array($r->status, ['scheduled', 'confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
+            $completed = $rows->filter(fn($r) => in_array($r->status, ['confirming', 'completed', 'reported', 'approved', 'point_granted']))->sum('cnt');
+
+            return [$campaign->id => [
+                'invited'   => $invited,
+                'reserved'  => $reserved,
+                'completed' => $completed,
+                'rate'      => $invited > 0 ? round($completed / $invited * 100, 1) : null,
+            ]];
+        });
 
         $statusCounts = Campaign::selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
 
         return view('admin.daily_slots.list', compact(
-            'campaigns', 'slots', 'status', 'statusCounts',
-            'today', 'tomorrow', 'dayAfter',
+            'campaigns', 'slots', 'status', 'statusCounts', 'monthStats',
             'viewMonth', 'prevMonth', 'nextMonth'
         ));
     }
