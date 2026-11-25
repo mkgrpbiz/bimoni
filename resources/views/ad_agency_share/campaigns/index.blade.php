@@ -71,6 +71,7 @@ $tabs = [
                 <th class="px-3 py-3 text-left">種別</th>
                 <th class="px-3 py-3 text-right">応募総数</th>
                 <th class="px-3 py-3 text-right bg-pink-50">応募残数</th>
+                <th class="px-3 py-3 text-right">実施完了数</th>
             </tr>
         </thead>
         <tbody class="divide-y">
@@ -97,9 +98,10 @@ $tabs = [
                 <td class="px-3 py-3 text-gray-700">{{ $campaign->getTypeLabel() }}</td>
                 <td class="px-3 py-3 text-right text-gray-700">{{ number_format($campaign->applications_total_count) }}件</td>
                 <td class="px-3 py-3 text-right text-gray-700 bg-pink-50">{{ number_format($campaign->applications_pending_count) }}件</td>
+                <td class="px-3 py-3 text-right text-gray-700">{{ number_format($campaign->applications_completed_count) }}件</td>
             </tr>
             @empty
-            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
+            <tr><td colspan="7" class="px-4 py-8 text-center text-gray-700">案件がありません</td></tr>
             @endforelse
         </tbody>
     </table>

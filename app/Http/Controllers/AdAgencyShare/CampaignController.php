@@ -19,6 +19,7 @@ class CampaignController extends Controller
         $query = Campaign::withCount([
                 'applications as applications_total_count',
                 'applications as applications_pending_count' => fn ($q) => $q->where('status', 'pending'),
+                'applications as applications_completed_count' => fn ($q) => $q->whereIn('status', ['completed', 'reported', 'approved', 'point_granted']),
             ])
             ->orderBy('sort_order')->orderBy('id')
             ->where('status', $status);
